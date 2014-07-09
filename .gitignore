@@ -38,3 +38,6 @@ DerivedData
 
 # VIM
 *.swp
+
+# Boost
+boost/
