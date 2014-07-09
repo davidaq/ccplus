@@ -17,7 +17,7 @@ Technology Selections
 ---------------------
 
  - **C++(version C++11)** - main programming language
- - **boost** - the one and only depended library for the core part
+ - **Boost** - the one and only depended library for the core part
  - **GYP** - project organization and multi-platform build
  - **JSON** - serialize persisted data
  - **MinGW** - support for windows
@@ -25,10 +25,20 @@ Technology Selections
 Platform support
 ----------------
 
-CC Plus provide (or will provide) each of the following platforms
-with a working component (executables or libraries) used to render
-videos
+CCPlus provide (or will provide) each of the following platforms
+with a working component (executables or libraries) providing an 
+interface to access the features of CCPlus.
 
  - **Windows/Linux/OS X** - a command line executable tool
- - **android** - a *.so dynamic library 
+ - **Android** - a *.so dynamic library 
  - **iOS** - a framework package
+
+Differences with Adobe After Effects Render Engine
+--------------------------------------------------
+
+ - no gui, every operation can only be done by calling api/cli
+ - less supported effects, only the basic ones will be supported
+ - no inline expression support
+ - available on iOS/Android/Windows/Linux/OS X platforms
+ - human readable file structures, allowing easy modification
+ - less startup overhead, making it easier for distributed computing

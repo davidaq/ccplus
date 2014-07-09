@@ -20,50 +20,45 @@ A typical timeline is expressed as below when serialzed in JSON format:
         "version" : 0.01,
         "main" : "renderthis",
         "compositions" : {
-                "renderthis" : {
-                    "resolution" : {
-                        "width" : 1280,
-                        "height" : 720
-                    },
-                    "duration" : 12,
-                    "layers" : [
-                        {
-                            "uri" : "composition://subcomp",
-                            "properties" : {
-                                "position" : [100, 20],
-                                "scale" : [
-                                        {
-                                            "time" : 0,
-                                            "value" : [0.1, 0.1]
-                                        },
-                                        {
-                                            "time" : 10,
-                                            "value" : [1, 1]
-                                        },
-                                    ]
-                                },
-                                ......
-                            ],
-                            "time" : 0,
-                            "duration" : 10,
-                            "starfrom" : 5,
-                            "endat" : 12
-                        },
-                        {
-                            "uri" : "text://hello world",
-                            ......
-                        },
-                        {
-                            "uri" : "file://path to a footage image",
-                            ......
-                        },
-                        {
-                            "uri" : "http://web url to a footage",
-                        }
-                    ]
+            "renderthis" : {
+                "resolution" : {
+                    "width" : 1280,
+                    "height" : 720
                 },
-                "subcomp" : { 
-                    ......
-                }
+                "duration" : 12,
+                "layers" : [
+                    {
+                        "uri" : "composition://subcomp",
+                        "properties" : {
+                            "position" : [100, 20],
+                            "scale" : [
+                                    {
+                                        "time" : 0,
+                                        "value" : [0.1, 0.1]
+                                    }, {
+                                        "time" : 10,
+                                        "value" : [1, 1]
+                                    }
+                                ],
+                            ......
+                        },
+                        "time" : 0,
+                        "duration" : 10,
+                        "starfrom" : 5,
+                        "endat" : 12
+                    }, {
+                        "uri" : "text://hello world",
+                        ......
+                    }, {
+                        "uri" : "file://path to a footage image",
+                        ......
+                    }, {
+                        "uri" : "http://web url to a footage",
+                    }
+                ]
+            },
+            "subcomp" : { 
+                ......
             }
+        }
     }
