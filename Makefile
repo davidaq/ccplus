@@ -12,16 +12,13 @@ clean:
 	-rm -rf test_ldb
 	-rm test.sqlite
 	-rm play
+	-rm -rf .deps
 
-gyp: ./deps/gyp
+gyp: .deps/gyp
 
-./deps/gyp:
-	#git clone --depth 1 https://chromium.googlesource.com/external/gyp.git ./deps/gyp
-	# Use github source instead
-	git clone --depth 1 https://github.com/svn2github/gyp.git
-
-#./deps/json11:
-#	git submodule update --init
+.deps/gyp:
+	git clone --depth 1 https://chromium.googlesource.com/external/gyp.git .deps/gyp
+	# git clone --depth 1 https://github.com/svn2github/gyp.git .deps/gyp
 
 # TODO: Currently they are useless
 #build_mac/mx3.xcodeproj: deps/gyp deps/json11 mx3.gyp
@@ -47,9 +44,13 @@ gyp: ./deps/gyp
 #android: GypAndroid.mk
 #	GYP_CONFIGURATION=Release NDK_PROJECT_PATH=. ndk-build NDK_APPLICATION_MK=Application.mk -j4
 
-build_mac/makefile: deps/gyp deps/boost
-	# TODO
-	echo "TODO"
+build_mac/makefile: gyp
+	.deps/gyp/gyp -DOS=mac --depth=. -f make -generator-output=./build_mac -Icommon.gypi
 
-test: build_mac/mx3.xcodeproj
-	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
+test: build_mac/makefile
+
+#test: build_mac/mx3.xcodeproj
+#	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
+
+#test:
+	

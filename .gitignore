@@ -41,3 +41,6 @@ DerivedData
 
 # Boost
 boost/
+
+# Deps
+.deps/
