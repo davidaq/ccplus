@@ -45,12 +45,13 @@ gyp: .deps/gyp
 #
 #android: GypAndroid.mk
 #	GYP_CONFIGURATION=Release NDK_PROJECT_PATH=. ndk-build NDK_APPLICATION_MK=Application.mk -j4
+#
+#test: build_mac/mx3.xcodeproj
+#	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
+#	
 
 build_mac/Makefile: gyp
 	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build_mac -Icommon.gypi
 
 test: build_mac/Makefile
-	#BUILDTYPE=DEBUG V=1 $(MAKE) -C build_mac test && ./build_mac/out/Debug/test 
-#test: build_mac/mx3.xcodeproj
-#	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
-#	
+	BUILDTYPE=Debug make -C build_mac test && ./build_mac/out/Debug/test 
