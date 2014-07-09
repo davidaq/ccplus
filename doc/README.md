@@ -20,6 +20,7 @@ Technology Selections
  - **boost** - the one and only depended library for the core part
  - **GYP** - project organization and multi-platform build
  - **JSON** - serialize persisted data
+ - **MinGW** - support for windows
 
 Platform support
 ----------------
@@ -28,6 +29,6 @@ CC Plus provide (or will provide) each of the following platforms
 with a working component (executables or libraries) used to render
 videos
 
- - ***nix PC/MAC/Server** - a command line executable tool
+ - **Windows/Linux/OS X** - a command line executable tool
  - **android** - a *.so dynamic library 
  - **iOS** - a framework package
