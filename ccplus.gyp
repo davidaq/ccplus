@@ -7,11 +7,7 @@
             'dependencies': [
             ],
             'sources': [
-                # just automatically include all cpp and hpp files in src/ (for now)
-                # '<!' is shell expand
-                # '@' is to splat the arguments into list items
-                # todo(kabbes) this will not work on windows
-                '<!@(find src -name "*.cpp" -o -name "*.hpp")',
+                '<!@(find src -name "*.cpp")',
             ],
             'include_dirs': [
                 '.', 
@@ -19,7 +15,7 @@
             'all_dependent_settings': {
                 'include_dirs': [
                     'include',
-                ],
+                ]
             },
         },
         {
@@ -34,10 +30,10 @@
                 'gtest',
             ],
             'libraries': [
-                '../gtest/gtest_main.a'
+                '<!(pwd)/gtest/gtest_main.a'
             ],
             'sources': [
-                '<!@(find test -name "*.cpp" -o -name "*.hpp")',
+                '<!@(find test -name "*.cpp")"',
             ]
         },
     ],

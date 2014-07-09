@@ -1,7 +1,5 @@
 # build dirs
 build/
-build_ios/
-build_mac/
 
 # gyp + android
 deps/gyp

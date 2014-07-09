@@ -19,7 +19,6 @@ clean-all: clean
 gyp: .deps/gyp
 
 .deps/gyp:
-	#git clone --depth 1 https://chromium.googlesource.com/external/gyp.git .deps/gyp
 	git clone --depth 1 https://github.com/svn2github/gyp.git .deps/gyp
 
 # TODO: Currently they are useless
@@ -50,8 +49,8 @@ gyp: .deps/gyp
 #	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
 #	
 
-build_mac/Makefile: gyp
-	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build_mac -Icommon.gypi
+build/mac/Makefile: gyp
+	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/mac -Icommon.gypi
 
-test: build_mac/Makefile
-	BUILDTYPE=Debug make -C build_mac test && ./build_mac/out/Debug/test 
+test: build/mac/Makefile
+	BUILDTYPE=Debug make -C build/mac test && ./build/mac/out/Debug/test 
