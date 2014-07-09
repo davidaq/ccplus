@@ -50,4 +50,4 @@ build_mac/Makefile: gyp
 	.deps/gyp/gyp --depth=. -f make --generator-output=./build_mac -Icommon.gypi
 
 test: build_mac/Makefile
-	BUILDTYPE=DEBUG $(MAKE) -C build_mac && ./build_mac/out/Debug/test
+	BUILDTYPE=DEBUG $(MAKE) -C build_mac test && ./build_mac/out/Debug/test 

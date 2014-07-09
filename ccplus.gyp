@@ -31,11 +31,13 @@
                 # Assume gtest is put on root too
             ],
             'include_dirs': [
-                '.',
                 'test',
+                'gtest',
             ],
             'sources': [
                 '<!@(find test -name "*.cpp" -o -name "*.hpp")',
+                "gtest/libgtest.a",
+                "gtest/libgtest_main.a",
             ]
         },
     ],
