@@ -39,6 +39,9 @@ DerivedData
 # VIM
 *.swp
 
+# GEDIT
+*~
+
 # Boost
 boost/
 
