@@ -14,8 +14,7 @@
                 '<!@(find src -name "*.cpp" -o -name "*.hpp")',
             ],
             'include_dirs': [
-                '.', # Assume boost is put on root
-                'include',
+                '.', 
             ],
             'all_dependent_settings': {
                 'include_dirs': [
@@ -34,10 +33,11 @@
                 'test',
                 'gtest',
             ],
+            'libraries': [
+                '../gtest/gtest_main.a'
+            ],
             'sources': [
                 '<!@(find test -name "*.cpp" -o -name "*.hpp")',
-                "gtest/libgtest.a",
-                "gtest/libgtest_main.a",
             ]
         },
     ],

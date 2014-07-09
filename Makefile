@@ -23,8 +23,8 @@ gyp: .deps/gyp
 	git clone --depth 1 https://github.com/svn2github/gyp.git .deps/gyp
 
 # TODO: Currently they are useless
-#build_mac/mx3.xcodeproj: deps/gyp deps/json11 mx3.gyp
-#	deps/gyp/gyp mx3.gyp -DOS=mac --depth=. -f xcode --generator-output=./build_mac -Icommon.gypi
+#build_mac/mx3.xcodeproj: 
+#	.deps/gyp/gyp mx3.gyp -DOS=mac --depth=. -f xcode --generator-output=./build_mac -Icommon.gypi
 #
 #build_ios/mx3.xcodeproj: deps/gyp deps/json11 mx3.gyp
 #	deps/gyp/gyp mx3.gyp -DOS=ios --depth=. -f xcode --generator-output=./build_ios -Icommon.gypi
@@ -47,7 +47,10 @@ gyp: .deps/gyp
 #	GYP_CONFIGURATION=Release NDK_PROJECT_PATH=. ndk-build NDK_APPLICATION_MK=Application.mk -j4
 
 build_mac/Makefile: gyp
-	.deps/gyp/gyp --depth=. -f make --generator-output=./build_mac -Icommon.gypi
+	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build_mac -Icommon.gypi
 
 test: build_mac/Makefile
-	BUILDTYPE=DEBUG $(MAKE) -C build_mac test && ./build_mac/out/Debug/test 
+	#BUILDTYPE=DEBUG V=1 $(MAKE) -C build_mac test && ./build_mac/out/Debug/test 
+#test: build_mac/mx3.xcodeproj
+#	xcodebuild -project build_mac/mx3.xcodeproj -configuration Debug -target test | ${xb-prettifier} && ./build/Debug/test
+#	
