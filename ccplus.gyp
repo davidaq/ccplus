@@ -10,7 +10,7 @@
                 '<!@(find src -name "*.cpp")',
             ],
             'include_dirs': [
-                'dependencies', 
+                'dependency', 
             ],
             'all_dependent_settings': {
                 'include_dirs': [
