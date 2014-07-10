@@ -11,8 +11,8 @@ The timeline is serialized as a JSON document when persisted or sent
 as streams. A specific file extension name is not required for saving
 timeline as file, but *.tml is recommended.
 
-Basic structure
----------------
+Basic file structure
+--------------------
 
 A typical timeline is expressed as below when serialzed in JSON format:
 
@@ -102,6 +102,7 @@ the layer element would last in context of the layer element. If the "duration"
 property and "last" property are not identical, the time axis of the element 
 layer would stretch or shrink, causing fast or slow motion. If the "last"
 property is larger than the actual duration of the element, looping will occur.
+All time metrics are measured in seconds.
 
 In-memory data structure
 ------------------------
