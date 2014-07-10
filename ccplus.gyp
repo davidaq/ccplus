@@ -11,6 +11,7 @@
             ],
             'include_dirs': [
                 '.', 
+                'include',
             ],
             'all_dependent_settings': {
                 'include_dirs': [
