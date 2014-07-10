@@ -2,7 +2,7 @@
 #include "tmlreader.hpp"
 #include "composition.hpp"
 
-TEST(tmlreadertest, boringtest)  {
+TEST(demotest, boringtest)  {
     EXPECT_EQ(1, 1);
 }
 

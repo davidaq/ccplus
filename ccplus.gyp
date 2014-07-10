@@ -7,7 +7,7 @@
             'dependencies': [
             ],
             'sources': [
-                '<!@(find src -name "*.cpp")',
+                '<!@(find src -type f -name "*.cpp")',
             ],
             'include_dirs': [
                 '.', 
