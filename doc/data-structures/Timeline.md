@@ -104,6 +104,13 @@ layer would stretch or shrink, causing fast or slow motion. If the "last"
 property is larger than the actual duration of the element, looping will occur.
 All time metrics are measured in seconds.
 
+The "properties" property in a layer describes how this layer should be at some
+key point time. The elements in the properties may define a transform or some
+sort of filtering. The values of the elements may be literal (scalar number, 
+vector or matrix), or timelined. Timelined values should be interpolated during
+the timeline interpretation.
+
+
 In-memory data structure
 ------------------------
 
