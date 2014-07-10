@@ -7,7 +7,7 @@
             'dependencies': [
             ],
             'sources': [
-                '<!@(find src -name "*.cpp")',
+                '<!@(find src -type f -name "*.cpp")',
             ],
             'include_dirs': [
                 '.', 
@@ -35,7 +35,7 @@
                 '<!(pwd)/dependency/gtest/gtest_main.a'
             ],
             'sources': [
-                '<!@(find test -name "*.cpp")"',
+                '<!@(find test -type f -name "*.cpp")',
             ]
         },
     ],
