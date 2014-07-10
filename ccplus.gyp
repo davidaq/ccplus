@@ -16,7 +16,7 @@
             ],
             'all_dependent_settings': {
                 'include_dirs': [
-                    'include',
+                    #'include',
                 ]
             },
         },
@@ -29,13 +29,14 @@
             ],
             'include_dirs': [
                 'test',
+                'include',
                 'dependency/gtest',
             ],
             'libraries': [
                 '<!(pwd)/dependency/gtest/gtest_main.a'
             ],
             'sources': [
-                '<!@(find test -name "*.cpp")"',
+                '<!@(find test -type f -name "*.cpp")',
             ]
         },
     ],
