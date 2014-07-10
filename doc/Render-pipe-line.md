@@ -55,20 +55,33 @@ The workflow of a single render process is as follows:
                                                  |
                                                  |
                                                  V
-     +---------------------+      +---------------------------+
-     | Pre-render Elements |  <-- | Locate & Collect Resource |
-     +---------------------+      +---------------------------+
-               |
-               |
-               V
-      +----------------------+      +-----------------------+
-      | Interpolate Timeline | ---> | Render Image Sequence |
-      +----------------------+      +-----------------------+
-                                                   |
-                                                   |
-                                                   V
-       +------------------------------+     +-------------+
-       | Merge Image & Audio to Video | <-- | Remix Audio |
+    +-----------------------------+      +---------------------------+
+    | Calculate Render Dependency |  <-- | Locate & Collect Resource |
+    +-----------------------------+      +---------------------------+
+                        |
+                        |
+    ====================|==================================================
+                        |
+               +--------+--------------------<----------------------+
+               |        |                                           |
+               |   OR   |         Done with each render object      ^
+               |        V                                           |                
+               |    +-----------------------+                       |
+               |    | Split Video to frames |----------->-------+   |     
+               |    +-----------------------+                   |   |
+               |                                                |   |
+               |                                                +->-+ OR
+               V                                                |   |
+      +----------------------+      +-----------------------+   |   |
+      | Interpolate Timeline | ---> | Render Image Sequence |---+   |
+      +----------------------+      +-----------------------+       |
+                                                                    V
+                                                                    |
+    ================================================================|=======
+                                                                    |
+                                                                    |
+       +------------------------------+     +-------------+         |
+       | Merge Image & Audio to Video | <-- | Remix Audio |<--------+
        +------------------------------+     +-------------+
        
 #### Interpret Timeline
@@ -93,15 +106,9 @@ app context.
 If any missing resource is detecetd, the engine quits and throws an error unless
 the user indicates a flag telling the engine try to continue even on error.
 
-#### Pre-render Elements
+#### Calculate Render Dependency
 
-This is a very crucial and tricky step in the render pipe line. In this step,
-every involved animated resource (video/gif/sub-composition) are pre-rendered.
-For videos, the pre-render step will split the video into frame images and an 
-audio file. For GIF images, only image sequence is generated. And for
-sub-compositions, are being rendered into image squence with an audio file.
-The render process of a sub-composition is just as the whole workflow, expcet
-not doing the last step of merging.
+In this step, the engine has to calculate how compositions are
 
 #### Interpolate Timeline
 
