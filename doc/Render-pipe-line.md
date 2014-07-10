@@ -49,9 +49,9 @@ Pipe line in the box
 
 The workflow of a single render process is as follows:
 
-    +--------------------+     +---------------------------------+
-    | Interpret Timeline | --> | Calculate Resource Requirements |
-    +--------------------+     +---------------------------------+
+    +--------------------+        +---------------------------------+
+    | Interpret Timeline | -----> | Calculate Resource Requirements |
+    +--------------------+        +---------------------------------+
                                                  |
                                                  |
                                                  V
@@ -62,11 +62,12 @@ The workflow of a single render process is as follows:
                         |
     ====================|==================================================
                         |
+                        |     Done with each render object
+                        |
                +--------+--------------------<----------------------+
-               |        |                                           |
-               |   OR   |         Done with each render object      ^
+               |   OR   |                                           |
                |        V                                           |                
-               |    +-----------------------+                       |
+               |    +-----------------------+                       ^
                |    | Split Video to frames |----------->-------+   |     
                |    +-----------------------+                   |   |
                |                                                |   |
@@ -80,9 +81,9 @@ The workflow of a single render process is as follows:
     ================================================================|=======
                                                                     |
                                                                     |
-       +------------------------------+     +-------------+         |
-       | Merge Image & Audio to Video | <-- | Remix Audio |<--------+
-       +------------------------------+     +-------------+
+      +------------------------------+     +-------------+          |
+      | Merge Image & Audio to Video | <-- | Remix Audio | <--------+
+      +------------------------------+     +-------------+
        
 #### Interpret Timeline
 
