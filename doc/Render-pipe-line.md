@@ -90,15 +90,15 @@ directly access. For most cases, this just involves downloading web resources.
 On iOS, this process performs copying images/videos/music from the album into
 app context.
 
-If any missing resource, the engine quits and throws an error unless the user
-indicates a flag telling the engine try to continue even on error.
+If any missing resource is detecetd, the engine quits and throws an error unless
+the user indicates a flag telling the engine try to continue even on error.
 
 #### Pre-render Elements
 
 This is a very crucial and tricky step in the render pipe line. In this step,
 every involved animated resource (video/gif/sub-composition) are pre-rendered.
 For videos, the pre-render step will split the video into frame images and an 
-audio file. For GIF images, only image sequence is generated. And as for
+audio file. For GIF images, only image sequence is generated. And for
 sub-compositions, are being rendered into image squence with an audio file.
 The render process of a sub-composition is just as the whole workflow, expcet
 not doing the last step of merging.
