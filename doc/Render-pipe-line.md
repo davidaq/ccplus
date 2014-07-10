@@ -27,8 +27,7 @@ The input arguments are:
                 of the final video
  - **duration** - maximum duration of the output video
  - **output path** - file path where the output video should be saved
- - **quality** - a quality metric telling the engine whether to be faster
-                   or to produce better graphics quality
+ - **flags** - some additional flags slightly changing the behavior of the engine
 
 #### How preview is done during a render
 
@@ -48,8 +47,7 @@ project of our team, and will not be further discussed here.
 Pipe line in the box
 --------------------
 
-Despite piece dividing as described above, the workflow of a single render 
-process is as follows:
+The workflow of a single render process is as follows:
 
     +--------------------+     +---------------------------------+
     | Interpret Timeline | --> | Calculate Resource Requirements |
@@ -64,7 +62,7 @@ process is as follows:
                |
                V
       +----------------------+      +-----------------------+
-      | Interpolate Timeline | ---> | Render Image sequence |
+      | Interpolate Timeline | ---> | Render Image Sequence |
       +----------------------+      +-----------------------+
                                                    |
                                                    |
@@ -73,3 +71,57 @@ process is as follows:
        | Merge Image & Audio to Video | <-- | Remix Audio |
        +------------------------------+     +-------------+
        
+#### Interpret Timeline
+
+The timeline is present as JSON format when saved in file or passed by stream.
+Interpreting the timeline is the process of reading and converting the timeline
+into calculation efficient in-memory data structure.
+
+#### Calculate Resource Requirements
+
+This step, the engine will scan over the timeline and figure out a listing of
+all the resource needed to render the video clip, taking into account the start
+time and duration specified in the input arguments.
+
+#### Locate & Collect Resource
+
+Resources should be located and collected into a place where the engine can
+directly access. For most cases, this just involves downloading web resources.
+On iOS, this process performs copying images/videos/music from the album into
+app context.
+
+If any missing resource, the engine quits and throws an error unless the user
+indicates a flag telling the engine try to continue even on error.
+
+#### Pre-render Elements
+
+This is a very crucial and tricky step in the render pipe line. In this step,
+every involved animated resource (video/gif/sub-composition) are pre-rendered.
+For videos, the pre-render step will split the video into frame images and an 
+audio file. For GIF images, only image sequence is generated. And as for
+sub-compositions, are being rendered into image squence with an audio file.
+The render process of a sub-composition is just as the whole workflow, expcet
+not doing the last step of merging.
+
+#### Interpolate Timeline
+
+The timeline read from input only defines key points. In order to render out the
+graphics, the timeline should be interoplated to every frame, so that we have
+enough information for each frame of how it should be rendered.
+
+#### Render Image Sequence
+
+This step is just rendering each frame with the information calculated in the
+previous step. Transforms, filters and masks should be apllied in this step.
+
+#### Remix Audio
+
+In this step, the audios of the resources/sub-compositions are mixed into one
+audio according to the timeline.
+
+
+#### Merge Image & Audio to Video
+
+The last step in the pipe line, is to compile the image sequences and audio in
+to a h264 encoded and mp4 formated single video file. This would just be done
+using FFmpeg.
