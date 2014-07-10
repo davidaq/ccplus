@@ -108,7 +108,14 @@ the user indicates a flag telling the engine try to continue even on error.
 
 #### Calculate Render Dependency
 
-In this step, the engine has to calculate how compositions are
+In this step, the engine has to calculate how compositions and footages are
+depended with each other taking time span into account. The on going renders
+should be ordered using this dependency. The final render should only render
+visible parts of the timeline of all animated elements.
+
+#### Split Video to frames
+
+Depended video footages will be split into single frames for easy use.
 
 #### Interpolate Timeline
 
@@ -124,7 +131,8 @@ previous step. Transforms, filters and masks should be apllied in this step.
 #### Remix Audio
 
 In this step, the audios of the resources/sub-compositions are mixed into one
-audio according to the timeline.
+audio according to the timeline. The mix depends on how objects with audio track
+align on the time axis.
 
 
 #### Merge Image & Audio to Video
