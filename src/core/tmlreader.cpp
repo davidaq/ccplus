@@ -1,5 +1,8 @@
 #include "tmlreader.hpp"
 #include <boost/property_tree/json_parser.hpp> 
+#include "composition.hpp"
+
+using namespace CCPlus;
 
 TMLReader::TMLReader() {
 

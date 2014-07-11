@@ -1,7 +1,8 @@
 #pragma once
 #include <string>
+#include "ccplus.hpp"
 
-class Composition {
+class CCPlus::Composition {
 
 public:
     Composition();

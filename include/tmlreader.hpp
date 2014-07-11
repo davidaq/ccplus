@@ -2,9 +2,9 @@
 #include <sstream>
 #include <string>
 
-#include "composition.hpp"
+#include "ccplus.hpp"
 
-class TMLReader {
+class CCPlus::TMLReader {
 
 public:
     TMLReader(); 

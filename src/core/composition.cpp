@@ -1,5 +1,7 @@
 #include <composition.hpp>
 
+using namespace CCPlus;
+
 Composition::Composition() {
 
 }
