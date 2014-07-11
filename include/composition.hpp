@@ -21,4 +21,8 @@ public:
 private:
     // data
     CCPlus::Context* context;
+    std::vector<Composition> dependency(float, float) const;
+
+    std::vector<Layer> getLayers() const;
+
 };

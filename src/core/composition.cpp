@@ -30,3 +30,14 @@ float Composition::getWidth() const {
 float Composition::getHeight() const {
     return 0;
 }
+
+std::vector<Composition> Composition::dependency(float from, float to) const {
+    // TODO: calculate dependency
+    std::vector<Composition> dps;
+    return dps;
+}
+
+std::vector<Layer> Composition::getLayers() const {
+    std::vector<Layer> layers;
+    return layers;
+}
