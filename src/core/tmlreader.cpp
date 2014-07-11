@@ -21,6 +21,8 @@ Composition* TMLReader::read(const std::string& s) const {
     using boost::property_tree::ptree;
     ptree pt;
     read_json(s, pt);
+    fstream.close();
+
     std::string main_name = pt.get<std::string>("main");
 
     for (auto& child: pt.get_child("compositions")) {
@@ -34,8 +36,6 @@ Composition* TMLReader::read(const std::string& s) const {
 
         context->putRenderable("composition://" + new_comp->getName(), new_comp);
     }
-
-    //std::cout << pt.get<std::string>("main") << std::endl;
 
     return (Composition*)context->getRenderable("composition://" + main_name);
 }

@@ -18,6 +18,7 @@ public:
 
     Renderable* getRenderable(std::string uri);
     void putRenderable(std::string uri, Renderable*);
+    bool hasRenderable(std::string);
 
     // inquery
 
