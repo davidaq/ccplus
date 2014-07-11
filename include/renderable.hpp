@@ -2,7 +2,7 @@
 #include "global.hpp"
 
 // @ base class of anything that could be referenced by a layer
-class CCPlus::Renderable {
+class CCPlus::Renderable : public CCPlus::Object {
 public:
     
     // virtual void render(float start,float duration) = 0;

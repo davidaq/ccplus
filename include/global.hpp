@@ -18,6 +18,8 @@ namespace CCPlus {
     class TextLayer;
     
     class CompositionDependency;
+    
+    class Object;
     // TODO: other classes
 }
 

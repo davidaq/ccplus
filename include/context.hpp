@@ -5,7 +5,7 @@
 
 // @ Context objects contains data that should be shared between process stages.
 // @ This class should not be inherited
-class CCPlus::Context : public Object {
+class CCPlus::Context : public CCPlus::Object {
 public:
     Context(const std::string& storagePath);
     ~Context();
