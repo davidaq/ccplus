@@ -2,30 +2,15 @@
 
 using namespace CCPlus;
 
-Composition::Composition() {}
-
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
         float _dur, float _width, float _height) :
-    context(ctx), name(_name), 
-    duration(_dur), width(_width), height(_height)
+    Renderable(_dur, _width, _height), context(ctx), name(_name) 
 {
 }
 
 std::string Composition::getName() const {
     return name;
-}
-
-float Composition::getDuration() const {
-    return duration;
-}
-
-float Composition::getWidth() const {
-    return width;
-}
-
-float Composition::getHeight() const {
-    return height;
 }
 
 std::vector<CompositionDependency> Composition::dependency(float from, float to) const {
@@ -35,6 +20,11 @@ std::vector<CompositionDependency> Composition::dependency(float from, float to)
 }
 
 std::vector<Layer> Composition::getLayers() const {
-    std::vector<Layer> layers;
     return layers;
 }
+
+void Composition::putLayer(const Layer& layer) {
+    layers.push_back(layer);
+}
+
+

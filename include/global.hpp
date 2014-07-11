@@ -31,7 +31,6 @@ namespace CCPlus {
 #include <iostream>
 
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
-//#include <boost>
 #endif
 
 // public headers
@@ -41,3 +40,4 @@ namespace CCPlus {
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
+
