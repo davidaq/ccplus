@@ -4,7 +4,7 @@
 class CCPlus::CompositionDependency {
 public:
     Renderable* renderable;
-    float start, duration;
+    float from, to;
 };
 
 class CCPlus::Composition : public CCPlus::Renderable {
@@ -24,6 +24,7 @@ private:
     // data
     CCPlus::Context* context = 0;
     std::vector<CompositionDependency> directDependency(float from, float to) const;
+    std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
     std::string name = "";
 
