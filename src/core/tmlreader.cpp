@@ -30,8 +30,8 @@ Composition* TMLReader::read(const std::string& s) const {
                 comp.get<std::string>("name"), 
                 comp.get("version", 0.0f),
                 comp.get("duration", 0.0f),
-                comp.get_child("resolution").front().second.data(),
-                comp.get_child("resolution").back().second.data());
+                comp.get_child("resolution").front().second.get("width", 0),
+                comp.get_child("resolution").back().second.get("height", 0));
 
         context->putRenderable("composition://" + new_comp->getName(), new_comp);
     }
