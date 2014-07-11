@@ -26,3 +26,6 @@ TEST_F(TMLReaderTest, MainCompSizeTest) {
     EXPECT_EQ(mainComp.getHeight(), 1080);
 }
 
+TEST_F(TMLReaderTest, LayersTest) {
+    EXPECT_EQ(0, 0);       
+}

@@ -16,4 +16,8 @@ public:
 
     float getHeight() const;
 
+    std::vector<Composition> dependency(float, float) const;
+
+    std::vector<Layer> getLayers() const;
+
 };

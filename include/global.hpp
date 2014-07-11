@@ -20,6 +20,7 @@ namespace CCPlus {
 
 // system dependencies
 #include <string>
+#include <vector>
 
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
 //#include <boost>
@@ -29,4 +30,4 @@ namespace CCPlus {
 #include "context.hpp"
 #include "tmlreader.hpp"
 #include "composition.hpp"
-//#include "layer.hpp"
+#include "layer.hpp"
