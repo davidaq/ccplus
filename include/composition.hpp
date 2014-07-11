@@ -11,7 +11,9 @@ class CCPlus::Composition : public CCPlus::Renderable {
 
 public:
     Composition();
-    explicit Composition(CCPlus::Context* context);
+    explicit Composition(
+            CCPlus::Context* context,
+            std::string, float, float, float, float);
     
     // access
     std::string getName() const; 

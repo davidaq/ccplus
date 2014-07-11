@@ -4,8 +4,12 @@ using namespace CCPlus;
 
 Composition::Composition() {}
 
-Composition::Composition(CCPlus::Context* ctx) :
-    context(ctx)
+Composition::Composition(
+        CCPlus::Context* ctx, std::string _name,
+        float _v, float _dur,
+        float _width, float _height) :
+    context(ctx), name(_name), version(_v), 
+    duration(_dur), width(_width), height(_height)
 {
 }
 
