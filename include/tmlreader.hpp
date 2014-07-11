@@ -5,7 +5,7 @@
 class CCPlus::TMLReader {
 
 public:
-    explicit TMLReader(CCPlus::Context& context); 
+    explicit TMLReader(CCPlus::Context* context); 
 
     // operation
     Composition read(const std::string& s) const; 

@@ -5,34 +5,21 @@
 using namespace CCPlus;
 
 class TMLReaderTest : public ::testing::Test {
-<<<<<<< HEAD
- public:
-  TMLReaderTest() : ctx("res/tmp") {};
- protected:
-  virtual void SetUp() {
-    TMLReader reader(ctx);
-    this->mainComp = reader.read("res/test1.tml");
-  }
-=======
->>>>>>> 370fe4f0cb636e693f542a657a26f4f900ee7d3c
 
 protected:
     virtual void SetUp() {
-        Context ctx("res/tmp");
+        ctx = new Context("res/tmp");
         this->reader = new TMLReader(ctx);
     }
 
-<<<<<<< HEAD
-  Context ctx;
-  Composition mainComp;
-=======
     virtual void TearDown() {
         delete reader;
+        delete ctx;
     }
 
     Composition mainComp;
     TMLReader* reader;
->>>>>>> 370fe4f0cb636e693f542a657a26f4f900ee7d3c
+    Context* ctx;
 };
 
 TEST_F(TMLReaderTest, IOTest) {

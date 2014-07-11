@@ -8,8 +8,8 @@
 
 using namespace CCPlus;
 
-TMLReader::TMLReader(CCPlus::Context& ctx) :
-    context(&ctx)
+TMLReader::TMLReader(CCPlus::Context* ctx) :
+    context(ctx)
 {
 
 }

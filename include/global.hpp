@@ -33,6 +33,7 @@ namespace CCPlus {
 #endif
 
 // public headers
+#include "object.hpp"
 #include "context.hpp"
 #include "renderable.hpp"
 #include "tmlreader.hpp"
