@@ -40,6 +40,18 @@ TEST(ObjectTest, DoubleRetain) {
         a2.retain(b);
     }
     EXPECT_EQ(testValue, 20 + 2);
+
+    testValue = 0;
+    TestA* a1 = new TestA();
+    TestA* a2 = new TestA();
+    TestB* b = new TestB();
+    a1->retain(b);
+    a2->retain(b);
+    delete a1;
+    EXPECT_EQ(testValue, 10);
+    testValue = 0;
+    delete a2;
+    EXPECT_EQ(testValue, 11);
 }
 
 TEST(ObjectTest, ChainRetain) {
