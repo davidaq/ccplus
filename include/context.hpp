@@ -12,6 +12,9 @@ public:
     const std::string& getStoragePath() const;
     
     // inquery
+    
+    // static data
+    static const Context invalid;
 private:
     
     // data

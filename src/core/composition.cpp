@@ -2,8 +2,13 @@
 
 using namespace CCPlus;
 
-Composition::Composition() {
+Composition::Composition() :
+    context(0)
+{}
 
+Composition::Composition(CCPlus::Context* ctx) :
+    context(ctx)
+{
 }
 
 std::string Composition::getName() const {
