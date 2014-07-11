@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include <stdio.h>
 
 using namespace CCPlus;
 

@@ -2,7 +2,7 @@
 
 #include "global.hpp"
 
-class CCPlus::TMLReader {
+class CCPlus::TMLReader : public CCPlus::Object {
 
 public:
     explicit TMLReader(CCPlus::Context* context); 

@@ -10,10 +10,10 @@ protected:
     virtual void SetUp() {
         ctx = new Context("res/tmp");
         this->reader = new TMLReader(ctx);
+        ctx->retain(this->reader);
     }
 
     virtual void TearDown() {
-        delete reader;
         delete ctx;
     }
 

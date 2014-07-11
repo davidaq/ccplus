@@ -1,7 +1,7 @@
 #pragma once
 #include "global.hpp"
 
-class CCPlus::Layer {
+class CCPlus::Layer : public CCPlus::Object {
 
 public:
     Layer();
