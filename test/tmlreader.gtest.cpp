@@ -5,16 +5,25 @@
 
 using namespace CCPlus;
 
-TEST(demotest, boringtest)  {
-    EXPECT_EQ(1, 1);
+class TMLReaderTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+      this->mainComp = TMLReader::read("res/test1.tml");
+  }
+
+  // virtual void TearDown() {}
+
+  Composition mainComp;
+};
+
+TEST_F(TMLReaderTest, MainCompBasicTest) {
+    EXPECT_EQ(mainComp.getName(), "MAIN");
+    EXPECT_EQ(mainComp.getVersion(), 0.0);
+    EXPECT_EQ(mainComp.getDuration(), 0);
 }
 
-TEST(TMLReaderTest, BasicTest) {
-    Composition mainComp = TMLReader::read("res/test1.tml");
-    EXPECT_EQ(mainComp.getName(), "MAIN");
-    /*
-    EXPECT_EQ(comp.getVersion(), "0.01");
-    EXPECT_EQ(comp.getResolution(), {1920, 1080});
-    EXPECT_EQ(comp.getDuration(), 10.0);
-    */
+TEST_F(TMLReaderTest, MainCompSizeTest) {
+    EXPECT_EQ(mainComp.getWidth(), 1920);
+    EXPECT_EQ(mainComp.getHeight(), 1080);
 }
+
