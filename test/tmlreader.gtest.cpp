@@ -5,6 +5,7 @@
 using namespace CCPlus;
 
 class TMLReaderTest : public ::testing::Test {
+<<<<<<< HEAD
  public:
   TMLReaderTest() : ctx("res/tmp") {};
  protected:
@@ -12,12 +13,31 @@ class TMLReaderTest : public ::testing::Test {
     TMLReader reader(ctx);
     this->mainComp = reader.read("res/test1.tml");
   }
+=======
+>>>>>>> 370fe4f0cb636e693f542a657a26f4f900ee7d3c
 
-  // virtual void TearDown() {}
+protected:
+    virtual void SetUp() {
+        Context ctx("res/tmp");
+        this->reader = new TMLReader(ctx);
+    }
 
+<<<<<<< HEAD
   Context ctx;
   Composition mainComp;
+=======
+    virtual void TearDown() {
+        delete reader;
+    }
+
+    Composition mainComp;
+    TMLReader* reader;
+>>>>>>> 370fe4f0cb636e693f542a657a26f4f900ee7d3c
 };
+
+TEST_F(TMLReaderTest, IOTest) {
+    ASSERT_NO_THROW(this->mainComp = reader->read("test/res/test1.tml"));
+}
 
 TEST_F(TMLReaderTest, MainCompBasicTest) {
     EXPECT_EQ(mainComp.getName(), "MAIN");
