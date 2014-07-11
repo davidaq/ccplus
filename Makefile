@@ -25,4 +25,4 @@ build/test/Makefile: gyp
 	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
 
 test: build/test/Makefile
-	BUILDTYPE=Debug make -C build/test test && ./build/test/out/Debug/test 
+	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
