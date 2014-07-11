@@ -18,7 +18,7 @@ const std::string& Context::getStoragePath() const {
 }
 
 Renderable* Context::getRenderable(std::string uri) {
-    return renderables[uri];
+    return renderables.at(uri);
 }
 
 void Context::putRenderable(std::string uri, Renderable* renderable) {

@@ -13,12 +13,10 @@ public:
     Composition();
     explicit Composition(
             CCPlus::Context* context,
-            std::string, float, float, float, float);
+            std::string, float, float, float);
     
     // access
     std::string getName() const; 
-
-    float getVersion() const;
 
     float getDuration() const;
 
@@ -34,7 +32,6 @@ private:
     std::vector<Layer> getLayers() const;
 
     std::string name = "";
-    float version = 0;
     float duration = 0;
     float width = 0;
     float height = 0;

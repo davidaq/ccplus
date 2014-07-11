@@ -28,8 +28,7 @@ TEST_F(TMLReaderTest, IOTest) {
 
 TEST_F(TMLReaderTest, MainCompBasicTest) {
     EXPECT_EQ(mainComp->getName(), "MAIN");
-    EXPECT_EQ(mainComp->getVersion(), 0.0);
-    EXPECT_EQ(mainComp->getDuration(), 0);
+    EXPECT_EQ(mainComp->getDuration(), 10);
 }
 
 TEST_F(TMLReaderTest, MainCompSizeTest) {

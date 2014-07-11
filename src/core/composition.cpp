@@ -6,19 +6,14 @@ Composition::Composition() {}
 
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
-        float _v, float _dur,
-        float _width, float _height) :
-    context(ctx), name(_name), version(_v), 
+        float _dur, float _width, float _height) :
+    context(ctx), name(_name), 
     duration(_dur), width(_width), height(_height)
 {
 }
 
 std::string Composition::getName() const {
-    return "lovely heck!";
-}
-
-float Composition::getVersion() const {
-    return version;
+    return name;
 }
 
 float Composition::getDuration() const {
