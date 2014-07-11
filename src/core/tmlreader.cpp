@@ -4,10 +4,12 @@
 
 using namespace CCPlus;
 
-TMLReader::TMLReader() {
+TMLReader::TMLReader(CCPlus::Context& ctx) :
+    context(&ctx)
+{
 
 }
 
-Composition TMLReader::read(const std::string s) {
-    return Composition();
+Composition TMLReader::read(const std::string& s) const {
+    return Composition(context);
 }

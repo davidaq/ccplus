@@ -7,7 +7,9 @@ using namespace CCPlus;
 class TMLReaderTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-      this->mainComp = TMLReader::read("res/test1.tml");
+    Context ctx("res/tmp");
+    TMLReader reader(ctx);
+    this->mainComp = reader.read("res/test1.tml");
   }
 
   // virtual void TearDown() {}

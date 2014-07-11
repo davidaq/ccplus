@@ -5,7 +5,9 @@ class CCPlus::Composition {
 
 public:
     Composition();
+    explicit Composition(CCPlus::Context* context);
     
+    // access
     std::string getName() const; 
 
     float getVersion() const;
@@ -16,4 +18,7 @@ public:
 
     float getHeight() const;
 
+private:
+    // data
+    CCPlus::Context* context;
 };
