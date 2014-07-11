@@ -16,19 +16,19 @@ std::string Composition::getName() const {
 }
 
 float Composition::getVersion() const {
-    return 0.00;
+    return version;
 }
 
 float Composition::getDuration() const {
-    return 0;
+    return duration;
 }
 
 float Composition::getWidth() const {
-    return 0;
+    return width;
 }
 
 float Composition::getHeight() const {
-    return 0;
+    return height;
 }
 
 std::vector<Composition> Composition::dependency(float from, float to) const {

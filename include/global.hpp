@@ -21,6 +21,9 @@ namespace CCPlus {
 // system dependencies
 #include <string>
 #include <vector>
+#include <utility>
+#include <cstdio>
+#include <iostream>
 
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
 //#include <boost>
