@@ -1,7 +1,13 @@
 #pragma once
 #include "global.hpp"
 
-class CCPlus::Composition {
+class CCPlus::CompositionDependency {
+public:
+    Renderable* renderable;
+    float start, duration;
+};
+
+class CCPlus::Composition : public CCPlus::Renderable {
 
 public:
     Composition();
@@ -21,7 +27,7 @@ public:
 private:
     // data
     CCPlus::Context* context;
-    std::vector<Composition> dependency(float, float) const;
+    std::vector<CompositionDependency> dependency(float, float) const;
 
     std::vector<Layer> getLayers() const;
 

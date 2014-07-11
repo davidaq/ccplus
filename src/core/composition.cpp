@@ -31,9 +31,9 @@ float Composition::getHeight() const {
     return 0;
 }
 
-std::vector<Composition> Composition::dependency(float from, float to) const {
+std::vector<CompositionDependency> Composition::dependency(float from, float to) const {
     // TODO: calculate dependency
-    std::vector<Composition> dps;
+    std::vector<CompositionDependency> dps;
     return dps;
 }
 

@@ -4,6 +4,8 @@
 namespace CCPlus {
     
     class Context;
+    
+    class Renderable;
 
     class TMLReader;
 
@@ -15,6 +17,7 @@ namespace CCPlus {
 
     class TextLayer;
     
+    class CompositionDependency;
     // TODO: other classes
 }
 
@@ -28,6 +31,7 @@ namespace CCPlus {
 
 // public headers
 #include "context.hpp"
+#include "renderable.hpp"
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
