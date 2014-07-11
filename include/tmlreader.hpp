@@ -1,8 +1,7 @@
 #pragma once
 #include <sstream>
-#include <string>
 
-#include "ccplus.hpp"
+#include "global.hpp"
 
 class CCPlus::TMLReader {
 

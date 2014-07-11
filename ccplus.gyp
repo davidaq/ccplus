@@ -19,6 +19,9 @@
                     #'include',
                 ]
             },
+            'defines': [
+                'IN_CCPLUS_PRIVATE_CONTEXT'
+            ]
         },
         {
             'target_name': 'test',

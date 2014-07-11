@@ -1,7 +1,6 @@
 #include "gtest/gtest.h" 
 
-#include "tmlreader.hpp"
-#include "composition.hpp"
+#include "global.hpp"
 
 using namespace CCPlus;
 
