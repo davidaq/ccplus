@@ -37,6 +37,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
             pt.get("duration", 0.0f),
             pt.get("resolution.width", 0.0),
             pt.get("resolution.height", 0.0));
+    context->retain(comp);
 
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
@@ -48,7 +49,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
 }
 
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt) const {
-    return Layer(
-            new Renderable(0, 0, 0), pt.get("time", 0.0f), pt.get("duration", 0.0f),
+    std::string uri = pt.get("uri", "");
+    return Layer(context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f));
 }

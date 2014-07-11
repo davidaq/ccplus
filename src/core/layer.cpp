@@ -6,13 +6,16 @@ Layer::Layer() {}
 
 
 Layer::Layer(
-    Renderable* _renderobject, 
+    Context* ctx,
+    const std::string& _renderableUri, 
     float _time, 
     float _duration, 
     float _start, 
     float _last
 ) :
-    renderObject(_renderobject),
+    context(ctx),
+    renderableUri(_renderableUri),
+    renderObject(0),
     time(_time),
     duration(_duration),
     start(_start),
@@ -20,7 +23,9 @@ Layer::Layer(
 {
 }
 
-Renderable* Layer::getRenderObject() const {
+Renderable* Layer::getRenderObject() {
+    if(!renderObject)
+        renderObject = context->getRenderable(renderableUri);
     return renderObject;
 }
 

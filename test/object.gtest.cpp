@@ -40,7 +40,10 @@ TEST(ObjectTest, DoubleRetain) {
         a2.retain(b);
     }
     EXPECT_EQ(testValue, 20 + 2);
+}
 
+
+TEST(ObjectTest, RetainTransport) {
     testValue = 0;
     TestA* a1 = new TestA();
     TestA* a2 = new TestA();

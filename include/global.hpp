@@ -13,10 +13,6 @@ namespace CCPlus {
 
     class Layer;
     
-    class CompLayer;
-
-    class TextLayer;
-    
     class CompositionDependency;
     
     class Object;
@@ -40,4 +36,3 @@ namespace CCPlus {
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
-
