@@ -10,7 +10,6 @@ public:
 class CCPlus::Composition : public CCPlus::Renderable {
 
 public:
-    Composition();
     explicit Composition(
             CCPlus::Context* context,
             std::string, float, float, float);
@@ -18,23 +17,16 @@ public:
     // access
     std::string getName() const; 
 
-    float getDuration() const;
-
-    float getWidth() const;
-
-    float getHeight() const;
+    void putLayer(const Layer&);
+    std::vector<Layer> getLayers() const;
 
 private:
     // data
     CCPlus::Context* context = 0;
     std::vector<CompositionDependency> directDependency(float from, float to) const;
     std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
-    
-    std::vector<Layer> getLayers() const;
 
     std::string name = "";
-    float duration = 0;
-    float width = 0;
-    float height = 0;
 
+    std::vector<Layer> layers;
 };

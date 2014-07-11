@@ -1,9 +1,5 @@
 #include <fstream>
 
-#include <boost/property_tree/json_parser.hpp> 
-#include <boost/property_tree/ptree.hpp> 
-
-#include "composition.hpp"
 #include "tmlreader.hpp"
 
 using namespace CCPlus;
@@ -27,15 +23,32 @@ Composition* TMLReader::read(const std::string& s) const {
 
     for (auto& child: pt.get_child("compositions")) {
         ptree& comp = child.second;
-        Composition* new_comp = new Composition(
-                context, 
-                child.first.data(), 
-                comp.get("duration", 0.0f),
-                comp.get("resolution.width", 0.0),
-                comp.get("resolution.height", 0.0));
 
-        context->putRenderable("composition://" + new_comp->getName(), new_comp);
+        initComposition(child.first.data(), comp);
     }
 
     return (Composition*)context->getRenderable("composition://" + main_name);
+}
+
+void TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
+    Composition* comp = new Composition(
+            context, 
+            name,
+            pt.get("duration", 0.0f),
+            pt.get("resolution.width", 0.0),
+            pt.get("resolution.height", 0.0));
+
+    for (auto& child: pt.get_child("layers")) {
+        auto& t = child.second;
+
+        comp->putLayer(initLayer(t));
+    }
+
+    context->putRenderable("composition://" + comp->getName(), comp);
+}
+
+Layer TMLReader::initLayer(const boost::property_tree::ptree& pt) const {
+    return Layer(
+            new Renderable(0, 0, 0), pt.get("time", 0.0f), pt.get("duration", 0.0f),
+            pt.get("start", 0.0f), pt.get("last", 0.0f));
 }

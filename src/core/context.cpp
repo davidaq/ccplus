@@ -25,6 +25,10 @@ void Context::putRenderable(std::string uri, Renderable* renderable) {
     renderables[uri] = renderable;
 }
 
-bool Context::hasRenderable(std::string uri) {
+bool Context::hasRenderable(std::string uri) const {
     return (renderables.find(uri) != renderables.end());
+}
+
+int Context::numberOfRenderable() const {
+    return renderables.size();
 }
