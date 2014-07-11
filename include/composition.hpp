@@ -29,7 +29,7 @@ public:
 private:
     // data
     CCPlus::Context* context = 0;
-    std::vector<CompositionDependency> dependency(float from, float to) const;
+    std::vector<CompositionDependency> directDependency(float from, float to) const;
     
     std::vector<Layer> getLayers() const;
 

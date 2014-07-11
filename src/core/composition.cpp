@@ -33,9 +33,17 @@ float Composition::getHeight() const {
     return height;
 }
 
-std::vector<CompositionDependency> Composition::dependency(float from, float to) const {
-    // TODO: calculate dependency
+std::vector<CompositionDependency> Composition::directDependency(float from, float to) const {
     std::vector<CompositionDependency> dps;
+    for(Layer layer : getLayers()) {
+        if(layer.getTime() < to && layer.getTime() + layer.getDuration() > from) {
+            CompositionDependency dp;
+            dp.renderable = layer.getRenderObject();
+            dp.start = layer.getStart();
+            dp.duration = layer.getLast();
+            dps.push_back(dp);
+        }
+    }
     return dps;
 }
 
