@@ -32,5 +32,5 @@ private:
     CCPlus::Renderable* renderObject = 0;
     
     float time = 0, duration = 0, start = 0, last = 0;
-    std::map<std::string, std::map<float, std::vector<float>>> properties;
+    std::map<std::string, Property> properties;
 };

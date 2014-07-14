@@ -84,7 +84,8 @@ TEST_F(TMLReaderTest, PropertiesScaleTest) {
 
     // Position
     EXPECT_TRUE(mp.find("scale") != mp.end());
-    EXPECT_TRUE(mp["scale"].find(1.0) != mp["scale"].end());
+    // Eps is 1e-5
+    EXPECT_TRUE(mp["scale"].find(1.0000001) != mp["scale"].end());
     EXPECT_TRUE(mp["scale"].find(0) != mp["scale"].end());
     EXPECT_TRUE(mp["scale"].find(10.0) != mp["scale"].end());
     EXPECT_TRUE(mp["scale"].find(0.1) == mp["scale"].end());

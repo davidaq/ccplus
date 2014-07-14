@@ -52,3 +52,45 @@ void Layer::setProperties(const std::map<std::string, Property>& prop) {
 std::map<std::string, Property> Layer::getProperties() const {
     return properties;
 }
+
+std::vector<float> Layer::interpolate(const std::string& name, float time) const {
+    std::vector<float> ret;
+    if (properties.find(name) == properties.end()) {
+        //std::cout << "Fatal error: this layer doesn't contains this property: " << name << std::endl;
+        return ret;
+    }
+    const Property& prop = properties.at(name);
+    float low_time, high_time;
+    const std::vector<float>* low = nullptr;
+    const std::vector<float>* high = nullptr;
+    if (prop.find(time) != prop.end())
+        return prop.at(time);
+
+    for (const auto& kv : prop ) {
+        if (kv.first < time) {
+            low_time = kv.first;
+            low = &kv.second;
+        }
+        if (kv.first > time) {
+            high_time = kv.first;
+            high = &kv.second;
+            break; // Because map are always sorted 
+        }
+    }
+    if (low == nullptr || high == nullptr) 
+        return ret;
+
+    for (int i = 0; i < low->size(); i++) {
+        float y = high->at(i);
+        float x = low->at(i);
+        float tmp = (time - low_time) / (high_time - low_time);
+        //std::cout << low_time << high_time << std::endl;
+        tmp = tmp * (y - x) + x; 
+
+        //std::cout << tmp << std::endl;
+
+        ret.push_back(tmp);
+    }
+    
+    return ret;
+}
