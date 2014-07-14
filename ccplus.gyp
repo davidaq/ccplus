@@ -28,15 +28,11 @@
             'type': 'executable',
             'dependencies': [
                 'libccplus',
-                # Assume gtest is put on root too
+                'dependency/gtest/gtest.gyp:gtest'
             ],
             'include_dirs': [
                 'test',
                 'include',
-                'dependency/gtest',
-            ],
-            'libraries': [
-                '<!(pwd)/dependency/gtest/gtest_main.a'
             ],
             'sources': [
                 '<!@(find test -type f -name "*.cpp")',
