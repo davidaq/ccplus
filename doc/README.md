@@ -25,7 +25,6 @@ Technology Selections
  - **OpenCV** - image manipulation
  - **SOX** - audio manipulation
 
-
 Platform support
 ----------------
 
