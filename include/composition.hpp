@@ -19,12 +19,13 @@ public:
 
     void putLayer(const Layer&);
     std::vector<Layer> getLayers() const;
+    
+    std::vector<CompositionDependency> directDependency(float from, float to) const;
+    std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
 private:
     // data
     CCPlus::Context* context = 0;
-    std::vector<CompositionDependency> directDependency(float from, float to) const;
-    std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
     std::string name = "";
 

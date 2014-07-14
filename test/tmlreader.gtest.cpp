@@ -46,6 +46,9 @@ TEST_F(TMLReaderTest, SubCompTest) {
     EXPECT_EQ(ctx->getRenderable(name)->getDuration(), 20);
     EXPECT_EQ(ctx->getRenderable(name)->getWidth(), 100);
     EXPECT_EQ(ctx->getRenderable(name)->getHeight(), 200);
+    
+    
+    EXPECT_EQ(((Composition*)ctx->getRenderable(name))->getName(), "the minor");
 }
 
 TEST_F(TMLReaderTest, LayersTest) {

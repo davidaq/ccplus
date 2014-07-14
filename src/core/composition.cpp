@@ -33,6 +33,7 @@ bool compositionDependencyCompare(CompositionDependency c1, CompositionDependenc
 }
 
 std::vector<CompositionDependency> Composition::fullOrderedDependency(float from, float to) const {
+    // do a tree traverse
     std::list<CompositionDependency> ordered;
     std::list<CompositionDependency> unexamined;
     CompositionDependency dp;
@@ -51,7 +52,7 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
             }
         }
     }
-    // Merge dependency
+    // Merge dependency of the same renderables
     std::list<Renderable*> renderableDependOrder;
     std::map<Renderable*,std::vector<CompositionDependency> > map;
     for(CompositionDependency dep : ordered) {
@@ -60,7 +61,6 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
         }
         map[dep.renderable].push_back(dep);
     }
-    
     ordered.clear();
     for(Renderable* r : renderableDependOrder) {
         std::sort(map[r].begin(), map[r].end(), compositionDependencyCompare);
@@ -80,7 +80,6 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
             }
         }
     }
-    
     return std::vector<CompositionDependency>(ordered.begin(), ordered.end());
 }
 

@@ -13,10 +13,6 @@ namespace CCPlus {
 
     class Layer;
     
-    class CompLayer;
-
-    class TextLayer;
-    
     class CompositionDependency;
     
     class Object;
@@ -47,4 +43,3 @@ typedef std::map<float, std::vector<float>> Property;
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
-
