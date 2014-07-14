@@ -20,6 +20,7 @@ private:
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
     void initComposition(const std::string&, const boost::property_tree::ptree&) const; 
     Layer initLayer(const boost::property_tree::ptree&) const;
+    std::map<std::string, Property> readProperties(const boost::property_tree::ptree&) const;
 #endif
     
     // data

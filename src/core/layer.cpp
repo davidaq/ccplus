@@ -44,3 +44,11 @@ float Layer::getStart() const {
 float Layer::getLast() const {
     return last;
 }
+
+void Layer::setProperties(const std::map<std::string, Property>& prop) {
+    properties = prop;
+}
+
+std::map<std::string, Property> Layer::getProperties() const {
+    return properties;
+}

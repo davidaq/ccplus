@@ -30,7 +30,9 @@ A typical timeline is expressed as below when serialzed in JSON format:
                     {
                         "uri" : "composition://subcomp",
                         "properties" : {
-                            "position" : [100, 20],
+                            "position" : {
+                                "0" : [100, 20]
+                            },
                             "scale" : {
                                 "0" : [0.1, 0.1],
                                 "10" : [1, 1]
@@ -114,4 +116,4 @@ the timeline interpretation.
 In-memory data structure
 ------------------------
 
-*Waiting to be specified*
+*TODO: Waiting to be specified*

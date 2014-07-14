@@ -20,6 +20,11 @@ public:
     float getDuration() const;
     float getStart() const;
     float getLast() const;
+
+    void setProperties(const std::map<std::string, Property>&);
+    std::map<std::string, Property> getProperties() const;
+
+    std::vector<float> interpolate(const std::string&, float) const;
 private:
     // data
     Context* context;
@@ -27,4 +32,5 @@ private:
     CCPlus::Renderable* renderObject = 0;
     
     float time = 0, duration = 0, start = 0, last = 0;
+    std::map<std::string, std::map<float, std::vector<float>>> properties;
 };
