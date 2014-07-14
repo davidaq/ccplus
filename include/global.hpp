@@ -20,17 +20,24 @@ namespace CCPlus {
     class CompositionDependency;
     
     class Object;
+
     // TODO: other classes
 }
 
 // system dependencies
 #include <string>
 #include <vector>
+#include <tuple>
+#include <map>
 #include <utility>
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
+#include <complex>
 
+typedef std::map<float, std::vector<float>> Property;
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
+//typedef std::map<float, std::vector<float>> Property;
 #endif
 
 // public headers
