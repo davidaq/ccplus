@@ -2,6 +2,7 @@ all: mac ios android
 
 clean:
 	-rm -rf build/
+	-rm -rf .dep/
 	-rm -rf deps/build/
 	-rm -rf build_mac/
 	-rm -rf build_ios/
@@ -15,14 +16,13 @@ clean:
 
 clean-all: clean
 	-rm -rf .deps
+	-rm -rf dependency
 
-gyp: .deps/gyp
+.dependency:
+	./load-dependency/load
 
-.deps/gyp:
-	git clone --depth 1 https://github.com/svn2github/gyp.git .deps/gyp
-
-build/test/Makefile: gyp
-	.deps/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
+build/test/Makefile: .dependency
+	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
 
 test: build/test/Makefile
 	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
