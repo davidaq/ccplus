@@ -28,7 +28,8 @@
             'type': 'executable',
             'dependencies': [
                 'libccplus',
-                'dependency/gtest/gtest.gyp:gtest'
+                'dependency/gtest/gtest.gyp:gtest',
+                'dependency/opencv/opencv.gyp:opencv'
             ],
             'include_dirs': [
                 'test',
