@@ -21,6 +21,10 @@ Technology Selections
  - **GYP** - project organization and multi-platform build
  - **JSON** - serialize persisted data
  - **MinGW** - support for windows
+ - **FFmpeg** - media decode/encode
+ - **OpenCV** - image manipulation
+ - **SOX** - audio manipulation
+
 
 Platform support
 ----------------
