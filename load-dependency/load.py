@@ -13,13 +13,14 @@ listing = decoder.decode(urllib.urlopen(REPO_URL).read())
 
 for item in listing:
     try:
-        print '>> Load dependency library ['+item+']'
+        print '>> Load depending library ['+item+']'
         os.mkdir('dependency/' + item)
         try:
             os.remove('tmp.zip')
         except:
             pass
         os.system('curl ' + listing[item]['url'] + ' > tmp.zip')
+        print 'unpacking....'
         os.system('unzip -o tmp.zip -d dependency > /dev/null')
         try:
             os.remove('tmp.zip')
