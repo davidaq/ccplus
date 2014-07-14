@@ -84,10 +84,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         float y = high->at(i);
         float x = low->at(i);
         float tmp = (time - low_time) / (high_time - low_time);
-        //std::cout << low_time << high_time << std::endl;
         tmp = tmp * (y - x) + x; 
-
-        //std::cout << tmp << std::endl;
 
         ret.push_back(tmp);
     }
