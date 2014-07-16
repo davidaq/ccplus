@@ -52,5 +52,10 @@ def loaditem(item):
     except:
         pass
 
-__main__()
+try:
+    __main__()
+except IOError, e:
+    pass
+except:
+    pass
 
