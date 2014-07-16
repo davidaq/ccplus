@@ -12,6 +12,10 @@ Image::Image(const char* filepath) {
     }
 }
 
+Image::Image() {
+
+}
+
 void Image::write(const char* file) {
 
 }
@@ -36,8 +40,13 @@ const cv::Mat* Image::getData() const {
     return &data;
 }
 
+// Only for testing ;
+void Image::setData(const cv::Mat& m) {
+    this->data = m;
+}
+
 /**
- * Put img on top of this image
+ * Put img *UNDER* this image
  * REQUIRE: img must be a RGBA imaga
  */
 void Image::overlayImage(const Image* input) {
@@ -56,8 +65,8 @@ void Image::overlayImage(const Image* input) {
             //std::cout << i << " " << j << std::endl;
             uchar alpha_this = data.at<Vec4b>(i, j)[3];
             uchar alpha_img = img->at<Vec4b>(i, j)[3];
-            float falpha_this = (float) (alpha_this / 255);
-            float falpha_img = (float) (alpha_img / 255);
+            float falpha_this = alpha_this / 255.0;
+            float falpha_img = alpha_img / 255.0;
             float fnew_alpha = falpha_this + (1.0 - falpha_this) * falpha_img;
             for (int k = 0; k < 3; k++) {
                 float x = (float) data.at<Vec4b>(i, j)[k];
