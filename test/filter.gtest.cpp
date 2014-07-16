@@ -4,12 +4,10 @@
 
 using namespace CCPlus;
 
-CCPLUS_FILTER(ExampleX) {
-    printf("Hello, this is from example filter\n");
-}
-
 TEST(Filter, Example) {
-    Filter testExample("Example");
+    // This test currently asserts nothing, passes if no segment fault occurs
+    printf("This test should print PASS on the next line\n");
     std::vector<float> empty;
-    testExample.apply(0, 0, empty);
+    Image src("test/res/test.png"), dest("test/res/test.png");
+    Filter("Example").apply(&src, &dest, empty);
 }

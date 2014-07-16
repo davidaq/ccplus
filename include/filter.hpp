@@ -6,28 +6,37 @@
 #include <map>
 
 namespace CCPlus {
+    class FilterLoader;
     class Filter;
     class Image;
 }
 
-typedef void (*FilterFunction)(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+typedef void (*CCPLUS_FILTER_FUNC) (const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
 
 class CCPlus::Filter : public CCPlus::Object {
 public:
     Filter(const std::string& name);
-    Filter(const std::string& name, FilterFunction logic);
     
-    void apply(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+    virtual void apply(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
     
 private:
-    FilterFunction filterFunction;
-
-    static std::map<std::string, FilterFunction> filterFunctions;
+    CCPLUS_FILTER_FUNC func;
 };
 
+class CCPlus::FilterLoader {
+public:
+    FilterLoader();
+    ~FilterLoader();
+};
+
+extern CCPlus::FilterLoader CCPlus__FilterLoader;
+
 #define CCPLUS_FILTER(NAME) \
-void _CCPLUS_FILTER_##NAME##_IMPLEMENTATION_FUNCTION (const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters); \
-CCPlus::Filter _CCPLUS_FILTER_##NAME##_IMPLEMENTATION_OBJ = CCPlus::Filter(#NAME, _CCPLUS_FILTER_##NAME##_IMPLEMENTATION_FUNCTION); \
-void _CCPLUS_FILTER_##NAME##_IMPLEMENTATION_FUNCTION (const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters)
+void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+#include "filter-list.hpp"
+#undef CCPLUS_FILTER
+
+#define CCPLUS_FILTER(NAME) \
+void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters)
 
 #include "global.hpp"
