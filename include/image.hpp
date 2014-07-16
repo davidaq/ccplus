@@ -16,8 +16,12 @@ public:
     
     int getWidth() const;
     int getHeight() const;
+    int getChannels() const;
+
+    void overlayImage(const Image* img);
     
-    cv::Mat getData();
+    cv::Mat* getData();
+    const cv::Mat* getData() const;
     
 private:
     cv::Mat data;
