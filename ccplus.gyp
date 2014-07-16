@@ -6,7 +6,7 @@
             'conditions': [],
             'dependencies': [
                 'dependency/boost/boost.gyp:boost',
-                'dependency/opencv/opencv.gyp:opencv'
+                'dependency/opencv/opencv.gyp:opencv_headers'
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',
