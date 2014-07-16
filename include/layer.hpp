@@ -15,7 +15,7 @@ public:
     );
 
     // access
-    CCPlus::Renderable* getRenderObject();
+    CCPlus::Renderable* getRenderObject(); 
     float getTime() const;
     float getDuration() const;
     float getStart() const;

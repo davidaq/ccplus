@@ -13,6 +13,9 @@ public:
     explicit Composition(
             CCPlus::Context* context,
             std::string, float, float, float);
+
+    void render(float start, float duration);
+    //Image getFrame(float time);
     
     // access
     std::string getName() const; 
@@ -25,8 +28,6 @@ public:
 
 private:
     // data
-    CCPlus::Context* context = 0;
-
     std::string name = "";
 
     std::vector<Layer> layers;

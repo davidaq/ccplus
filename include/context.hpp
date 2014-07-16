@@ -7,7 +7,7 @@
 // @ This class should not be inherited
 class CCPlus::Context : public CCPlus::Object {
 public:
-    Context(const std::string& storagePath);
+    Context(const std::string& storagePath, int _fps);
     ~Context();
     
     // operations
@@ -20,6 +20,7 @@ public:
     void putRenderable(std::string uri, Renderable*);
     bool hasRenderable(std::string) const;
     int numberOfRenderable() const;
+    int getFPS() const;
 
     // inquery
 
@@ -29,6 +30,8 @@ private:
     std::string storagePath;
     
     std::map<std::string, Renderable*> renderables;
-    
+
+    int fps;
+
     // operations
 };

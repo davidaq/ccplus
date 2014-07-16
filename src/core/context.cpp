@@ -2,8 +2,8 @@
 
 using namespace CCPlus;
 
-Context::Context(const std::string& _storagePath):
-    storagePath(_storagePath)
+Context::Context(const std::string& _storagePath, int _fps):
+    storagePath(_storagePath), fps(_fps)
 {
     // TODO make sure storagePath directory exists
 }
@@ -31,4 +31,8 @@ bool Context::hasRenderable(std::string uri) const {
 
 int Context::numberOfRenderable() const {
     return renderables.size();
+}
+
+int Context::getFPS() const {
+    return fps;
 }
