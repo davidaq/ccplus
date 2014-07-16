@@ -5,7 +5,8 @@
             'type': 'static_library',
             'conditions': [],
             'dependencies': [
-                'dependency/boost/boost.gyp:boost'
+                'dependency/boost/boost.gyp:boost',
+                'dependency/opencv/opencv.gyp:opencv'
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',

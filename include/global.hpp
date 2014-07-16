@@ -53,3 +53,5 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
+#include "image.hpp"
+#include "filter.hpp"
