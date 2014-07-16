@@ -14,12 +14,11 @@ public:
     
     void write(const char* file);
     
-    int getWidth();
-    int getHeight();
+    int getWidth() const;
+    int getHeight() const;
     
     cv::Mat getData();
     
 private:
     cv::Mat data;
-    int width, height;
 };
