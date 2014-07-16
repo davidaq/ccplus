@@ -6,7 +6,7 @@ using namespace CCPlus;
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
         float _dur, float _width, float _height) :
-    Renderable(_dur, _width, _height), context(ctx), name(_name) 
+    Renderable(ctx, _dur, _width, _height), name(_name) 
 {
 }
 
@@ -91,4 +91,24 @@ void Composition::putLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
+void Composition::render(float start, float duration) {
+    float fps = (float) context->getFPS();
+    float inter = 1.0 / fps;
+    int nslots = (int) (duration / inter + 1.0);
 
+    for (int i = 0; i < nslots; i++) {
+        std::string tmp_name = uuid + "_" + std::to_string(i);
+        float tm = start + (float) (i * inter);
+
+        // Image ret;
+        for (const Layer& l : layers) {
+            //ret.merge(l.getFrame());
+        }
+        // Save ret to storagePath / name_tmp
+    }
+    this->rendered = true;
+}
+
+//Image getFrame(float time) {
+//
+//}

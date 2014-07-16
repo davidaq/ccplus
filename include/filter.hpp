@@ -21,7 +21,7 @@ public:
     
 private:
     FilterFunction filterFunction;
-    
+
     static std::map<std::string, FilterFunction> filterFunctions;
 };
 

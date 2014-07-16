@@ -8,7 +8,7 @@ class TMLReaderTest : public ::testing::Test {
 
 protected:
     virtual void SetUp() {
-        ctx = new Context("res/tmp");
+        ctx = new Context("res/tmp", 18);
         this->reader = new TMLReader(ctx);
         ctx->retain(this->reader);
         ASSERT_NO_THROW(this->mainComp = reader->read("test/res/test1.tml"));

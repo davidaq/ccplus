@@ -5,7 +5,7 @@
 using namespace CCPlus;
 
 TEST(CompositionDependencyTest, DirectDependency) {
-    Context ctx("");
+    Context ctx("", 18);
     TMLReader reader(&ctx);
     Composition* mainComp = reader.read("test/res/test1.tml");
     EXPECT_EQ(mainComp->directDependency(0, 5).size(), 1);
