@@ -19,7 +19,7 @@ private:
     //using boost::property_tree::ptree;
 #ifdef IN_CCPLUS_PRIVATE_CONTEXT
     void initComposition(const std::string&, const boost::property_tree::ptree&) const; 
-    Layer initLayer(const boost::property_tree::ptree&) const;
+    Layer initLayer(const boost::property_tree::ptree&, int width, int height) const;
     std::map<std::string, Property> readProperties(const boost::property_tree::ptree&) const;
 #endif
     

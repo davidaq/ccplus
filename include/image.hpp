@@ -10,11 +10,14 @@ namespace CCPlus {
 
 class CCPlus::Image : public CCPlus::Object {
 public:
-    Image(const char* filepath);
+    Image(const std::string& filepath);
     // For testing only
     Image();
+
+    static Image emptyImage(int, int);
     
     void write(const char* file);
+    void write(const std::string&);
     
     int getWidth() const;
     int getHeight() const;

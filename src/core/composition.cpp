@@ -5,7 +5,7 @@ using namespace CCPlus;
 
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
-        float _dur, float _width, float _height) :
+        float _dur, int _width, int _height) :
     Renderable(ctx, _dur, _width, _height), name(_name) 
 {
 }
@@ -92,23 +92,29 @@ void Composition::putLayer(const Layer& layer) {
 }
 
 void Composition::render(float start, float duration) {
-    float fps = (float) context->getFPS();
-    float inter = 1.0 / fps;
-    int nslots = (int) (duration / inter + 1.0);
+    float inter = 1.0 / context->getFPS();
 
-    for (int i = 0; i < nslots; i++) {
-        std::string tmp_name = uuid + "_" + std::to_string(i);
-        float tm = start + (float) (i * inter);
+    for (float t = 0; t <= start + duration; t += inter) {
+        int f = getFrameNumber(t);
+        std::string fp = this->getFramePath(f);
 
-        // Image ret;
-        for (const Layer& l : layers) {
-            //ret.merge(l.getFrame());
+        Image ret = Image::emptyImage(width, height);
+        for (Layer& l : layers) {
+            Image img = l.applyFiltersToFrame(t);
+            ret.overlayImage(&img);
         }
         // Save ret to storagePath / name_tmp
+        ret.write(fp);
     }
-    this->rendered = true;
 }
 
-//Image getFrame(float time) {
-//
-//}
+std::string Composition::getFramePath(int f) const {
+    return context->getStoragePath() + "/" + uuid + "_" + std::to_string(f);
+}
+
+Image Composition::getFrame(float time) const {
+    int f = getFrameNumber(time);
+    rendered.at(f); // If it hasn't been renderd throw exception
+    Image img(getFramePath(f));
+    return img;
+}

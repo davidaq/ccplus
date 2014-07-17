@@ -11,7 +11,9 @@ public:
         float time, 
         float duration, 
         float start, 
-        float last
+        float last,
+        int width,
+        int height
     );
 
     // access
@@ -20,6 +22,9 @@ public:
     float getDuration() const;
     float getStart() const;
     float getLast() const;
+
+    // Assume the renderable stuff is rendered
+    Image applyFiltersToFrame(float); 
 
     void setProperties(const std::map<std::string, Property>&);
     std::map<std::string, Property> getProperties() const;
@@ -32,5 +37,7 @@ private:
     CCPlus::Renderable* renderObject = 0;
     
     float time = 0, duration = 0, start = 0, last = 0;
+    int width = 0;
+    int height = 0;
     std::map<std::string, Property> properties;
 };

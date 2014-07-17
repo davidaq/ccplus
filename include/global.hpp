@@ -17,6 +17,8 @@ namespace CCPlus {
     
     class Object;
 
+    class Image;
+
     // TODO: other classes
 }
 

@@ -12,10 +12,10 @@ class CCPlus::Composition : public CCPlus::Renderable {
 public:
     explicit Composition(
             CCPlus::Context* context,
-            std::string, float, float, float);
+            std::string, float, int, int);
 
     void render(float start, float duration);
-    //Image getFrame(float time);
+    Image getFrame(float time) const;
     
     // access
     std::string getName() const; 
@@ -27,8 +27,11 @@ public:
     std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
 private:
+    std::string getFramePath(int f) const;
     // data
     std::string name = "";
 
     std::vector<Layer> layers;
+
+    std::map<int, bool> rendered;
 };

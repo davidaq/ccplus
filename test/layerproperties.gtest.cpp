@@ -5,7 +5,7 @@
 using namespace CCPlus;
 
 TEST(LayerInterpolate, BasicTest) {
-    Layer l(nullptr, "", 0, 0, 0, 0);
+    Layer l(nullptr, "", 0, 0, 0, 0, 800, 600);
     PropertyMap mp;
     Property posProp;
     posProp[1.5].push_back(10.0);

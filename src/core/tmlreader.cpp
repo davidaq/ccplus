@@ -42,7 +42,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
 
-        comp->putLayer(initLayer(t));
+        comp->putLayer(initLayer(t, comp->getWidth(), comp->getHeight()));
     }
 
     context->putRenderable("composition://" + comp->getName(), comp);
@@ -63,11 +63,11 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
     return ret;
 }
 
-Layer TMLReader::initLayer(const boost::property_tree::ptree& pt) const {
+Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
     Layer l = Layer(
             context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
-            pt.get("start", 0.0f), pt.get("last", 0.0f));
+            pt.get("start", 0.0f), pt.get("last", 0.0f), width, height);
     l.setProperties(readProperties(pt));
     return l;
 }

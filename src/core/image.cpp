@@ -5,7 +5,7 @@
 using namespace CCPlus;
 using namespace cv;
 
-Image::Image(const char* filepath) {
+Image::Image(const std::string& filepath) {
     data = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
     if (!data.data) {
         throw std::ios_base::failure("File not exists");
@@ -18,6 +18,10 @@ Image::Image() {
 
 void Image::write(const char* file) {
 
+}
+
+void Image::write(const std::string& file) {
+    
 }
 
 int Image::getWidth() const {
@@ -77,4 +81,11 @@ void Image::overlayImage(const Image* input) {
             data.at<Vec4b>(i, j)[3] = (uchar) (255 * fnew_alpha);
         }
     }
+}
+
+Image Image::emptyImage(int width, int height) {
+    Mat m = Mat::zeros(height, width, CV_8UC4);
+    Image ret;
+    ret.setData(m);
+    return ret;
 }
