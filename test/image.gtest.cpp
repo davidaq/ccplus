@@ -63,3 +63,16 @@ TEST(Image, To4ChannelsTest) {
     EXPECT_EQ(img.getData()->at<Vec4b>(256, 3)[2], mat.at<Vec3b>(256, 3)[2]);
     EXPECT_EQ(img.getData()->at<Vec4b>(0, 0)[0], mat.at<Vec3b>(0, 0)[0]);
 }
+
+TEST(Image, CompressAndDecompress) {
+    Image img("test/res/test.png");
+    
+    img.write("test/res/compress-test.zim");
+    Image img2("test/res/compress-test.zim");
+    
+    remove("test/res/compress-test.zim");
+    
+    EXPECT_EQ(img.getWidth(), img2.getWidth());
+    EXPECT_EQ(img.getHeight(), img2.getHeight());
+    EXPECT_EQ(img.getData()->data[5], img2.getData()->data[5]);
+}

@@ -1,5 +1,6 @@
 #include "global.hpp"
 #include "util.hpp"
+#include "zip.hpp"
 #include <ios>
 #include <stdexcept>
 
@@ -8,7 +9,30 @@ using namespace cv;
 
 Image::Image(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
-        // read zipped argb data
+        FILE* inFile = fopen(filepath.c_str(), "rb");       
+        if(!inFile)
+            throw std::ios_base::failure("File not exists");
+        fseek(inFile, 0, SEEK_END);       
+        size_t len = ftell(inFile);
+        if(len < 5) {
+            fclose(inFile);
+            throw std::ios_base::failure("File too small to be a image");
+        }       
+        fseek(inFile, 0, SEEK_SET);       
+        unsigned char* compressedBytes = new unsigned char[len];
+        fread(compressedBytes, sizeof(char), len, inFile);       
+        fclose(inFile);
+        unsigned short width = *((unsigned short*)compressedBytes);
+        unsigned short height = *((unsigned short*)(compressedBytes + sizeof(unsigned short))); 
+        unsigned char* bgraBytes = new unsigned char[width * height * 4];       
+        unsigned long destLen = width * height * 4;
+        uncompress(bgraBytes, &destLen, compressedBytes + sizeof(unsigned short) * 2, len - sizeof(unsigned short) * 2);
+        if(destLen != width * height * 4) {
+            throw std::ios_base::failure("Unexpected uncompressed length");       
+        }
+        data = cv::Mat(height, width, CV_8UC4, bgraBytes);       
+        delete[] bgraBytes;
+        delete[] compressedBytes;
     } else {
         // read from file system
         data = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
@@ -36,7 +60,24 @@ void Image::to4Channels() {
 }
 
 void Image::write(const std::string& file) {
-    
+    if(stringEndsWith(file, ".zim")) {       
+        unsigned char* compressedBytes = new unsigned char[data.cols * data.rows * 4];
+        unsigned long len = data.cols * data.rows * 4;       
+        compress(compressedBytes, &len, data.data, data.cols * data.rows * 4);
+        FILE* outFile = fopen(file.c_str(), "wb");       
+        if(!outFile)
+            throw std::ios_base::failure("File path [" + file + "] unwritable");
+        unsigned short metric;
+        metric = (unsigned short)getWidth();
+        fwrite(&metric, sizeof(metric), 1, outFile);
+        metric = (unsigned short)getHeight();
+        fwrite(&metric, sizeof(metric), 1, outFile);
+        fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
+        fclose(outFile);       
+        delete[] compressedBytes;
+    } else {
+        cv::imwrite(file, data);
+    }
 }
 
 int Image::getWidth() const {
