@@ -17,13 +17,22 @@ Image::Image(const std::string& filepath) {
         }
         // TODO take EXIF into account
     }
+
+    if (data.channels() == 3) {
+        to4Channels();
+    } else if (data.channels() < 3) {
+        throw std::invalid_argument("Can't take image with less than 3 channels");
+    }
 }
 
 Image::Image() {
 }
 
-void Image::write(const char* file) {
-
+void Image::to4Channels() {
+    Mat newdata = Mat(getHeight(), getWidth(), CV_8UC4, {0, 0, 0, 255});
+    int from_to[] = {0, 0, 1, 1, 2, 2};
+    mixChannels(&data, 1, &newdata, 1, from_to, 3);
+    data = newdata;
 }
 
 void Image::write(const std::string& file) {

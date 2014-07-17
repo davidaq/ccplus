@@ -39,7 +39,27 @@ TEST(Image, OverlayImageTest2) {
     EXPECT_EQ(img2.getData()->at<Vec4b>(0, 0)[0], 127);
     EXPECT_LE(std::abs(img2.getData()->at<Vec4b>(1, 0)[0]) - 147, 1);
     EXPECT_LE(std::abs(img2.getData()->at<Vec4b>(1, 0)[1]) - 152, 1);
-    //EXPECT_EQ(img2.at<Vec4b>(0, 1)[2], 127);
-    //EXPECT_EQ(img2.at<Vec4b>(0, 1)[2], 127);
-    //EXPECT_EQ(img1.getData()->at<Vec4b>(100, 200)[0], img2.getData()->at<Vec4b>(100, 200)[0]);
+}
+
+TEST(Image, EmtpyImageTest) {
+    Image img = Image::emptyImage(2, 3);
+    EXPECT_EQ(img.getWidth(), 2);
+    EXPECT_EQ(img.getHeight(), 3);
+} 
+
+TEST(Image, To4ChannelsTest) {
+    Image img("test/res/test.png");
+    Mat mat = imread("test/res/test.png", CV_LOAD_IMAGE_UNCHANGED);
+
+    // Pick some random pixel to make sure 4th channel is presented
+    EXPECT_EQ(img.getHeight(), mat.rows);
+    EXPECT_EQ(img.getWidth(), mat.cols);
+    EXPECT_EQ(img.getData()->channels(), 4);
+    EXPECT_EQ(img.getData()->at<Vec4b>(100, 200)[3], 255);
+    EXPECT_EQ(img.getData()->at<Vec4b>(600, 800)[3], 255);
+
+    // Pick some random pixels to make sure color is the same
+    EXPECT_EQ(img.getData()->at<Vec4b>(1024, 800)[2], mat.at<Vec3b>(1024, 800)[2]);
+    EXPECT_EQ(img.getData()->at<Vec4b>(256, 3)[2], mat.at<Vec3b>(256, 3)[2]);
+    EXPECT_EQ(img.getData()->at<Vec4b>(0, 0)[0], mat.at<Vec3b>(0, 0)[0]);
 }

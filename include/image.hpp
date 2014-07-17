@@ -16,7 +16,6 @@ public:
 
     static Image emptyImage(int, int);
     
-    void write(const char* file);
     void write(const std::string&);
     
     int getWidth() const;
@@ -32,5 +31,7 @@ public:
     void setData(const cv::Mat&);
     
 private:
+    void to4Channels();
+
     cv::Mat data;
 };
