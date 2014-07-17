@@ -24,6 +24,7 @@ public:
     int getChannels() const;
 
     void overlayImage(const Image* img);
+    void setWhiteBackground();
     
     cv::Mat* getData();
     const cv::Mat* getData() const;
