@@ -1,4 +1,5 @@
 #include "global.hpp"
+#include "stringutil.hpp"
 #include <ios>
 #include <stdexcept>
 
@@ -6,14 +7,19 @@ using namespace CCPlus;
 using namespace cv;
 
 Image::Image(const char* filepath) {
-    data = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
-    if (!data.data) {
-        throw std::ios_base::failure("File not exists");
+    if(stringEndsWith(filepath, ".zim")) {
+        // read zipped argb data
+    } else {
+        // read from file system
+        data = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
+        if (!data.data) {
+            throw std::ios_base::failure("File not exists");
+        }
+        // TODO take EXIF into account
     }
 }
 
 Image::Image() {
-
 }
 
 void Image::write(const char* file) {
@@ -47,7 +53,7 @@ void Image::setData(const cv::Mat& m) {
 
 /**
  * Put img *UNDER* this image
- * REQUIRE: img must be a RGBA imaga
+ * REQUIRE: img must be a RGBA image
  */
 void Image::overlayImage(const Image* input) {
     const Mat* img = input->getData();
@@ -75,6 +81,20 @@ void Image::overlayImage(const Image* input) {
                 data.at<Vec4b>(i, j)[k] = (uchar) ret;
             }
             data.at<Vec4b>(i, j)[3] = (uchar) (255 * fnew_alpha);
+        }
+    }
+}
+
+/**
+ * Eliminate alpha, set transparent parts to white
+ */
+void Image::setWhiteBackground() {
+    for (int i = 0; i < this->getHeight(); i++) { 
+        for (int j = 0; j < this->getWidth(); j++) {
+            int alpha = data.at<Vec4b>(i, j)[3];
+            for(int k = 0; k < 3; k++) {
+                data.at<Vec4b>(i, j)[k] = alpha * data.at<Vec4b>(i, j)[k] / 0xff + (0xff - alpha);
+            }
         }
     }
 }
