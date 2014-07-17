@@ -60,18 +60,18 @@ void Image::to4Channels() {
 }
 
 void Image::write(const std::string& file) {
-    if(stringEndsWith(file, ".zim")) {       
-        unsigned char* compressedBytes = new unsigned char[data.cols * data.rows * 4];
-        unsigned long len = data.cols * data.rows * 4;       
-        compress(compressedBytes, &len, data.data, data.cols * data.rows * 4);
+    if(stringEndsWith(file, ".zim")) {   
         FILE* outFile = fopen(file.c_str(), "wb");       
         if(!outFile)
-            throw std::ios_base::failure("File path [" + file + "] unwritable");
-        unsigned short metric;
+            throw std::ios_base::failure("File path [" + file + "] unwritable");   
+        unsigned short metric; 
         metric = (unsigned short)getWidth();
         fwrite(&metric, sizeof(metric), 1, outFile);
         metric = (unsigned short)getHeight();
         fwrite(&metric, sizeof(metric), 1, outFile);
+        unsigned char* compressedBytes = new unsigned char[data.cols * data.rows * 4];
+        unsigned long len = data.cols * data.rows * 4;       
+        compress(compressedBytes, &len, data.data, data.cols * data.rows * 4);
         fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
         fclose(outFile);       
         delete[] compressedBytes;
