@@ -1,5 +1,5 @@
 #include "global.hpp"
-#include "stringutil.hpp"
+#include "util.hpp"
 #include <ios>
 #include <stdexcept>
 
