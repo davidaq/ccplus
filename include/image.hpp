@@ -13,7 +13,6 @@ public:
     Image(const std::string& filepath);
     Image(int width, int height);
     Image(const cv::Mat& data);
-    // For testing only
     Image();
 
     static Image emptyImage(int, int);

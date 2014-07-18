@@ -107,7 +107,6 @@ const cv::Mat& Image::getData() const {
     return data;
 }
 
-// Only for testing ;
 void Image::setData(const cv::Mat& m) {
     this->data = m;
 }

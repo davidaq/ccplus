@@ -1,7 +1,6 @@
 #pragma once
 
-#include <string>
-#include <opencv2/opencv.hpp>
+#include "image.hpp"
 
 namespace CCPlus {
     class VideoDecoder;
@@ -15,7 +14,10 @@ struct CCPlus::VideoInfo {
 
 class CCPlus::VideoDecoder {
 public:
-    VideoDecoder(const std::string& inputFile);
+    VideoDecoder(const std::string& inputFile, int decoderFlag=CCPlus::VideoDecoder::DECODE_VIDEO|CCPlus::VideoDecoder::DECODE_AUDIO);
+    ~VideoDecoder();
+    
+    const static int DECODE_VIDEO = 1, DECODE_AUDIO = 2;
     
     // Retrieve video basic information
     VideoInfo getVideoInfo();
@@ -25,14 +27,11 @@ public:
     
     // Try to decode an image frame at the current cursor poisition
     // @return the time (in seconds) of the decoded frame
-    // @return -1 if no frame can be decoded
+    // @return negative value if no frame can be decoded
     float decodeImage();
-
-    // Writes the last decoded image frame to an output file
-    void writeLastDecodedImageDataTo(const std::string& outputFile);
     
-    // Writes the frame before the last decoded image frame to an output file
-    void writePreviousDecodedImageDataTo(const std::string& outputFile);
+    // @return the frame image in the previous successful decode from calling decodeImage()
+    CCPlus::Image getDecodedImage();
     
     // Decode audio stream into PCM raw data, and write to outputFile
     // Can be used for both video & audio files
@@ -40,5 +39,12 @@ public:
     
 private:
     std::string inputFile;
-    float cursorTime;
+    int decoderFlag;
+    float cursorTime = 0;
+    void* decodeContext = 0;
+    bool haveDecodedImage = false;
+    
+    void initContext();
+    void releaseContext();
+    bool readNextFrameIfNeeded();
 };
