@@ -32,6 +32,7 @@ public:
     void setData(const cv::Mat&);
     
 private:
+    void rotateCWRightAngle(int angle);
     void to4Channels();
 
     cv::Mat data;

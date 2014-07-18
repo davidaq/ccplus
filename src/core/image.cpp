@@ -1,5 +1,5 @@
 #include "global.hpp"
-#include "util.hpp"
+#include "utils.hpp"
 #include "zip.hpp"
 #include <ios>
 #include <stdexcept>
@@ -39,7 +39,6 @@ Image::Image(const std::string& filepath) {
         if (!data.data) {
             throw std::ios_base::failure("File not exists");
         }
-        // TODO take EXIF into account
     }
 
     if (data.channels() == 3) {
@@ -47,7 +46,14 @@ Image::Image(const std::string& filepath) {
     } else if (data.channels() < 3) {
         throw std::invalid_argument("Can't take image with less than 3 channels");
     }
+
+    // TODO take EXIF into account
+    if (stringEndsWith(toLower(filepath), ".jpg")) {
+        int degree = getImageRotation(filepath);
+        rotateCWRightAngle(degree);
+    }
 }
+
 Image::Image(int width, int height) {
     data = Mat::zeros(height, width, CV_8UC4);
 }
@@ -57,6 +63,23 @@ Image::Image(const cv::Mat& _data) {
 }
 
 Image::Image() {
+}
+
+void Image::rotateCWRightAngle(int angle) {
+    if (angle % 90 != 0)
+        throw std::invalid_argument("Only allowed right angle rotation 90, 180, 270");
+
+    Mat newdata = Mat(getHeight(), getWidth(), CV_8UC4, {0, 0, 0, 255});
+    if (angle == 180) {
+        flip(data, newdata, -1); 
+    } else if (angle == 90) {
+        transpose(data, newdata);
+        flip(newdata, newdata, 1); 
+    } else if (angle == 270) {
+        transpose(data, newdata);
+        flip(newdata, newdata, 0); 
+    }
+    data = newdata;
 }
 
 void Image::to4Channels() {
