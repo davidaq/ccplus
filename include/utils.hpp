@@ -95,6 +95,11 @@ static inline int getImageRotation(const std::string& s) {
     
     // Assume 2 bytes reading is OK
     while (state != DONE && (fscanf(f, "%c%c", &tmp[0], &tmp[1]) > 0)) {
+        //if (ftell(f) % 2 == 0) {
+        //    printf("prt = %ld, tmp[0] = %x, tmp[1] = %x\n", ftell(f), (unsigned char)tmp[0], (unsigned char)tmp[1]);
+        //}
+        //if (ftell(f) > 22) 
+        //    break;
         if (state == START) {
             // Found ffe1 -> app1 marker !!
             if ((unsigned char) tmp[0] == 0xff && (unsigned char) tmp[1] == 0xe1) {
