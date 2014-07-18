@@ -1,6 +1,8 @@
 #include "video-decoder.hpp"
 #include "image.hpp"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 extern "C" {
     #include <libavutil/imgutils.h>
     #include <libavutil/samplefmt.h>
@@ -11,6 +13,7 @@ extern "C" {
 using namespace CCPlus;
 
 // TODO consider mp4 orientation
+// TODO implement seek
 
 struct DecodeContext {
     AVFormatContext *fmt_ctx = NULL;
@@ -56,6 +59,7 @@ VideoInfo VideoDecoder::getVideoInfo() {
 }
 
 void VideoDecoder::seekTo(float time) {
+    cursorTime = time;
 }
 
 bool VideoDecoder::readNextFrameIfNeeded() {
