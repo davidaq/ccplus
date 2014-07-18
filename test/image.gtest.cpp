@@ -20,8 +20,8 @@ TEST(Image, OverlayImageTest1) {
     Image img3("test/res/test.png");
     Image img4("test/res/test.png");
     //EXPECT_NO_THROW(img1.overlayImage(&img2));
-    EXPECT_THROW(img1.overlayImage(&img3), std::invalid_argument);
-    EXPECT_THROW(img3.overlayImage(&img1), std::invalid_argument);
+    EXPECT_THROW(img1.overlayImage(img3), std::invalid_argument);
+    EXPECT_THROW(img3.overlayImage(img1), std::invalid_argument);
 }
 
 TEST(Image, OverlayImageTest2) {
@@ -34,11 +34,11 @@ TEST(Image, OverlayImageTest2) {
     img1.setData(m1);
     img2.setData(m2);
 
-    img2.overlayImage(&img1);
+    img2.overlayImage(img1);
     
-    EXPECT_EQ(img2.getData()->at<Vec4b>(0, 0)[0], 127);
-    EXPECT_LE(std::abs(img2.getData()->at<Vec4b>(1, 0)[0]) - 147, 1);
-    EXPECT_LE(std::abs(img2.getData()->at<Vec4b>(1, 0)[1]) - 152, 1);
+    EXPECT_EQ(img2.getData().at<Vec4b>(0, 0)[0], 127);
+    EXPECT_LE(std::abs(img2.getData().at<Vec4b>(1, 0)[0]) - 147, 1);
+    EXPECT_LE(std::abs(img2.getData().at<Vec4b>(1, 0)[1]) - 152, 1);
 }
 
 TEST(Image, EmtpyImageTest) {
@@ -54,12 +54,25 @@ TEST(Image, To4ChannelsTest) {
     // Pick some random pixel to make sure 4th channel is presented
     EXPECT_EQ(img.getHeight(), mat.rows);
     EXPECT_EQ(img.getWidth(), mat.cols);
-    EXPECT_EQ(img.getData()->channels(), 4);
-    EXPECT_EQ(img.getData()->at<Vec4b>(100, 200)[3], 255);
-    EXPECT_EQ(img.getData()->at<Vec4b>(600, 800)[3], 255);
+    EXPECT_EQ(img.getData().channels(), 4);
+    EXPECT_EQ(img.getData().at<Vec4b>(100, 200)[3], 255);
+    EXPECT_EQ(img.getData().at<Vec4b>(600, 800)[3], 255);
 
     // Pick some random pixels to make sure color is the same
-    EXPECT_EQ(img.getData()->at<Vec4b>(1024, 800)[2], mat.at<Vec3b>(1024, 800)[2]);
-    EXPECT_EQ(img.getData()->at<Vec4b>(256, 3)[2], mat.at<Vec3b>(256, 3)[2]);
-    EXPECT_EQ(img.getData()->at<Vec4b>(0, 0)[0], mat.at<Vec3b>(0, 0)[0]);
+    EXPECT_EQ(img.getData().at<Vec4b>(1024, 800)[2], mat.at<Vec3b>(1024, 800)[2]);
+    EXPECT_EQ(img.getData().at<Vec4b>(256, 3)[2], mat.at<Vec3b>(256, 3)[2]);
+    EXPECT_EQ(img.getData().at<Vec4b>(0, 0)[0], mat.at<Vec3b>(0, 0)[0]);
+}
+
+TEST(Image, CompressAndDecompress) {
+    Image img("test/res/test.png");
+    
+    img.write("test/res/compress-test.zim");
+    Image img2("test/res/compress-test.zim");
+    
+    remove("test/res/compress-test.zim");
+    
+    EXPECT_EQ(img.getWidth(), img2.getWidth());
+    EXPECT_EQ(img.getHeight(), img2.getHeight());
+    EXPECT_EQ(img.getData().data[5], img2.getData().data[5]);
 }

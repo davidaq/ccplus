@@ -101,7 +101,7 @@ void Composition::render(float start, float duration) {
         Image ret = Image::emptyImage(width, height);
         for (Layer& l : layers) {
             Image img = l.applyFiltersToFrame(t);
-            ret.overlayImage(&img);
+            ret.overlayImage(img);
         }
         // Save ret to storagePath / name_tmp
         ret.write(fp);

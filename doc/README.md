@@ -23,7 +23,6 @@ Technology Selections
  - **MinGW** - support for windows
  - **FFmpeg** - media decode/encode
  - **OpenCV** - image manipulation
- - **SOX** - audio manipulation
 
 Platform support
 ----------------
