@@ -64,6 +64,23 @@ TEST(Image, To4ChannelsTest) {
     EXPECT_EQ(img.getData().at<Vec4b>(0, 0)[0], mat.at<Vec3b>(0, 0)[0]);
 }
 
+TEST(Image, ImageRotateTest) {
+    Image img("test/res/test3.jpg");
+    Mat mat = imread("test/res/test3.jpg", CV_LOAD_IMAGE_UNCHANGED);
+
+    EXPECT_EQ(mat.rows, img.getWidth());
+    EXPECT_EQ(mat.cols, img.getHeight());
+
+    EXPECT_EQ(mat.at<Vec3b>(0, 0)[0], 
+            img.getData().at<Vec4b>(img.getHeight() - 1, 0)[0]);
+    EXPECT_EQ(mat.at<Vec3b>(0, 0)[1], 
+            img.getData().at<Vec4b>(img.getHeight() - 1, 0)[1]);
+    EXPECT_EQ(mat.at<Vec3b>(0, 0)[2], 
+            img.getData().at<Vec4b>(img.getHeight() - 1, 0)[2]);
+    
+    //img.write("test/res/test3_result.jpg");
+}
+
 TEST(Image, CompressAndDecompress) {
     Image img("test/res/test.png");
     

@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <algorithm>
+#include <string>
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
     return content.rfind(suffix) == (content.length() - suffix.length());
@@ -10,6 +12,17 @@ static inline bool stringEndsWith(std::string content, std::string suffix) {
 
 static inline bool stringStartsWith(std::string content, std::string prefix) {
     return content.find(prefix) == 0;
+}
+
+static inline std::string toLower(const std::string& s) {
+    std::string data = s;
+    auto tol = [](char c) {
+        if (c >= 'A' && c <= 'Z')
+            return char(c - 'Z' + 'z');
+        return c;
+    };
+    std::transform(data.begin(), data.end(), data.begin(), tol);
+    return data;
 }
 
 template<class T> static inline 
