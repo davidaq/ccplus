@@ -66,32 +66,25 @@ static inline std::string trim(std::string str) {
     return rtrim(ltrim(str));
 }
 
-static inline int bytesToInt(const char* s, int n) {
-    int ret = 0;
-    for (int i = 0; i < n; i++) {
-        ret = ret * 256 + s[i];
-    }
-    return ret;
-}
-
-static inline int getImageRotation(const std::string& s) {
-    FILE* f = fopen(s.c_str(), "rb");   
+static inline int getImageRotation(const std::string& jpgpath) {
+    FILE* f = fopen(jpgpath.c_str(), "rb");   
     int ret = -1;
     if (f == NULL) return ret; 
-    char tmp[128];
+    char tmp[64];
 
     auto consume = [](FILE* f, int n) {
-        //char _t;
-        //for (int i = 0; i < n; i++) {
-        //    fscanf(f, "%c", &_t);
-        //}
         fseek(f, n, SEEK_CUR);
     };
 
     auto nread = [](FILE* f, char* tmp, int origin, int offset) {
-        for (int i = 0; i < offset; i++) {
-            fscanf(f, "%c", &tmp[origin + i]);
-        }
+        for (int i = 0; i < offset; i++)  fscanf(f, "%c", &tmp[origin + i]);
+    };
+
+    auto bytesToInt = [](const char* s, int n) {
+        int ret = 0;
+        for (int i = 0; i < n; i++) 
+            ret = ret * 256 + s[i];
+        return ret;
     };
 
     std::map<int, int> formatBytes = {
@@ -99,7 +92,9 @@ static inline int getImageRotation(const std::string& s) {
         {7, 1}, {8, 2}, {9, 4}, {10, 8}, {11, 4}, {12, 8}
     };
 
-    //std::map<int, int> retTable = {};
+    std::map<int, int> retTable = {
+        {-1, -1}, {1, 0}, {3, 180}, {8, 270}, {6, 90}
+    };
 
     enum State {
         START = 0, EXIF, TIFF, IFD, ORIENTATION, DONE
@@ -109,11 +104,6 @@ static inline int getImageRotation(const std::string& s) {
     
     // Assume 2 bytes reading is OK
     while (state != DONE && (fscanf(f, "%c%c", &tmp[0], &tmp[1]) > 0)) {
-        //if (ftell(f) % 2 == 0) {
-        //    printf("state = %d, prt = %ld, tmp[0] = %x, tmp[1] = %x\n", state, ftell(f), (unsigned char)tmp[0], (unsigned char)tmp[1]);
-        //}
-        //if (ftell(f) > 22) 
-        //    break;
         if (state == START) {
             // Found ffe1 -> app1 marker !!
             if ((unsigned char) tmp[0] == 0xff && (unsigned char) tmp[1] == 0xe1) {
@@ -154,9 +144,8 @@ static inline int getImageRotation(const std::string& s) {
                 // Read tag number
                 nread(f, tmp, 0, 2);
                 // Not rotation
-                if (bytesToInt(tmp, 2) == 0x0112) {
+                if (bytesToInt(tmp, 2) == 0x0112) 
                     state = ORIENTATION;   
-                }
 
                 // Read format
                 nread(f, tmp, 0, 2);
@@ -169,12 +158,14 @@ static inline int getImageRotation(const std::string& s) {
                 
                 int ncomp = bytesToInt(tmp, 4);
 
+                // If total bytes more than 4, then skip
                 int totalb = sz * ncomp;
                 if (totalb > 4) {
                     consume(f, 4);
                     continue;
                 }
-                // Read orientation
+
+                // Read data
                 for (int j = 0; j < ncomp; j++)
                     nread(f, tmp, 0, sz);
                 
@@ -190,9 +181,5 @@ static inline int getImageRotation(const std::string& s) {
 
     fclose(f);
     // CW
-    if (ret == 1) return 0;
-    if (ret == 3) return 180;
-    if (ret == 8) return 270;
-    if (ret == 6) return 90;
-    return ret;
+    return retTable[ret];
 }
