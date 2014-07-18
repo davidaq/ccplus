@@ -6,7 +6,8 @@
             'conditions': [],
             'dependencies': [
                 'dependency/boost/boost.gyp:boost',
-                'dependency/opencv/opencv.gyp:opencv_headers'
+                'dependency/opencv/opencv.gyp:opencv',
+                'dependency/ffmpeg/ffmpeg.gyp:ffmpeg',
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',
@@ -30,9 +31,7 @@
             'type': 'executable',
             'dependencies': [
                 'libccplus',
-                'dependency/gtest/gtest.gyp:gtest',
-                'dependency/boost/boost.gyp:boost',
-                'dependency/opencv/opencv.gyp:opencv'
+                'dependency/gtest/gtest.gyp:gtest'
             ],
             'include_dirs': [
                 'test',
