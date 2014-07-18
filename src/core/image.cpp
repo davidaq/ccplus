@@ -48,6 +48,13 @@ Image::Image(const std::string& filepath) {
         throw std::invalid_argument("Can't take image with less than 3 channels");
     }
 }
+Image::Image(int width, int height) {
+    data = Mat::zeros(height, width, CV_8UC4);
+}
+
+Image::Image(const cv::Mat& _data) {
+    data = _data;
+}
 
 Image::Image() {
 }
@@ -92,12 +99,12 @@ int Image::getChannels() const {
     return data.channels();
 }
 
-cv::Mat* Image::getData() {
-    return &data;
+cv::Mat& Image::getData() {
+    return data;
 }
 
-const cv::Mat* Image::getData() const {
-    return &data;
+const cv::Mat& Image::getData() const {
+    return data;
 }
 
 // Only for testing ;
@@ -109,28 +116,28 @@ void Image::setData(const cv::Mat& m) {
  * Put img *UNDER* this image
  * REQUIRE: img must be a RGBA image
  */
-void Image::overlayImage(const Image* input) {
-    const Mat* img = input->getData();
-    if (this->getHeight() != input->getHeight() || this->getWidth() != input->getWidth()) {
+void Image::overlayImage(const Image& input) {
+    const Mat& img = input.getData();
+    if (this->getHeight() != input.getHeight() || this->getWidth() != input.getWidth()) {
         throw std::invalid_argument("overlayImage: images have to be with the same size");
     }
 
-    if (this->getChannels() != 4 || input->getChannels() != 4) {
+    if (this->getChannels() != 4 || input.getChannels() != 4) {
         throw std::invalid_argument("overlayImage: images have to have alpha channels");
     }
 
-    //std::cout << (float) img->at<Vec3b>(1079, 1692)[0] << std::endl;
+    //std::cout << (float) img.at<Vec3b>(1079, 1692)[0] << std::endl;
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
             //std::cout << i << " " << j << std::endl;
             uchar alpha_this = data.at<Vec4b>(i, j)[3];
-            uchar alpha_img = img->at<Vec4b>(i, j)[3];
+            uchar alpha_img = img.at<Vec4b>(i, j)[3];
             float falpha_this = alpha_this / 255.0;
             float falpha_img = alpha_img / 255.0;
             float fnew_alpha = falpha_this + (1.0 - falpha_this) * falpha_img;
             for (int k = 0; k < 3; k++) {
                 float x = (float) data.at<Vec4b>(i, j)[k];
-                float y = (float) img->at<Vec4b>(i, j)[k];
+                float y = (float) img.at<Vec4b>(i, j)[k];
                 float ret = falpha_this * x + (1 - falpha_this) * falpha_img * y;
                 data.at<Vec4b>(i, j)[k] = (uchar) ret;
             }
@@ -140,10 +147,7 @@ void Image::overlayImage(const Image* input) {
 }
 
 Image Image::emptyImage(int width, int height) {
-    Mat m = Mat::zeros(height, width, CV_8UC4);
-    Image ret;
-    ret.setData(m);
-    return ret;
+    return Image(width, height);
 }
 
 /**

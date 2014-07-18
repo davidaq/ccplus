@@ -11,6 +11,8 @@ namespace CCPlus {
 class CCPlus::Image : public CCPlus::Object {
 public:
     Image(const std::string& filepath);
+    Image(int width, int height);
+    Image(const cv::Mat& data);
     // For testing only
     Image();
 
@@ -22,11 +24,11 @@ public:
     int getHeight() const;
     int getChannels() const;
 
-    void overlayImage(const Image* img);
+    void overlayImage(const Image& img);
     void setWhiteBackground();
     
-    cv::Mat* getData();
-    const cv::Mat* getData() const;
+    cv::Mat& getData();
+    const cv::Mat& getData() const;
 
     void setData(const cv::Mat&);
     
