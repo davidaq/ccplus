@@ -68,10 +68,11 @@ static inline int getImageRotation(const std::string& s) {
     char tmp[128];
 
     auto consume = [](FILE* f, int n) {
-        char _t;
-        for (int i = 0; i < n; i++) {
-            fscanf(f, "%c", &_t);
-        }
+        //char _t;
+        //for (int i = 0; i < n; i++) {
+        //    fscanf(f, "%c", &_t);
+        //}
+        fseek(f, n, SEEK_CUR);
     };
 
     auto nread = [](FILE* f, char* tmp, int origin, int offset) {
@@ -96,7 +97,7 @@ static inline int getImageRotation(const std::string& s) {
     // Assume 2 bytes reading is OK
     while (state != DONE && (fscanf(f, "%c%c", &tmp[0], &tmp[1]) > 0)) {
         //if (ftell(f) % 2 == 0) {
-        //    printf("prt = %ld, tmp[0] = %x, tmp[1] = %x\n", ftell(f), (unsigned char)tmp[0], (unsigned char)tmp[1]);
+        //    printf("state = %d, prt = %ld, tmp[0] = %x, tmp[1] = %x\n", state, ftell(f), (unsigned char)tmp[0], (unsigned char)tmp[1]);
         //}
         //if (ftell(f) > 22) 
         //    break;
@@ -152,8 +153,14 @@ static inline int getImageRotation(const std::string& s) {
 
                 // Read component number -> must be 0x00000001
                 nread(f, tmp, 0, 4);
-
+                
                 int ncomp = bytesToInt(tmp, 4);
+
+                int totalb = sz * ncomp;
+                if (totalb > 4) {
+                    consume(f, 4);
+                    continue;
+                }
                 // Read orientation
                 for (int j = 0; j < ncomp; j++)
                     nread(f, tmp, 0, sz);
@@ -169,9 +176,10 @@ static inline int getImageRotation(const std::string& s) {
     }
 
     fclose(f);
+    // CW
     if (ret == 1) return 0;
     if (ret == 3) return 180;
-    if (ret == 8) return 90;
-    if (ret == 6) return 270;
+    if (ret == 8) return 270;
+    if (ret == 6) return 90;
     return ret;
 }
