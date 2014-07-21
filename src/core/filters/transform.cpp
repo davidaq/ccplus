@@ -12,6 +12,9 @@ CCPLUS_FILTER(transform) {
     //float scale_y = parameters[5];
     //float rotate = parameters[6];
 
-    Mat tmp(input, Rect(pos_col, pos_row, input.cols, input.rows));
-    return tmp;
+    // Put original image into the large layer image 
+    Mat ret(height, width, CV_8UC4);
+    Mat tmp(ret, Rect(pos_col, pos_row, input.cols, input.rows));
+    input.copyTo(tmp);
+    return ret;
 }

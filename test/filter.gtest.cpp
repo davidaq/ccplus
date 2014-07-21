@@ -14,24 +14,19 @@ TEST(Filter, Example) {
 }
 
 TEST(Filter, Transform) {
-    Image src("test/res/test1.jpg");
+    Image img("test/res/test1.jpg");
     
-    cv::Mat original = src.getData().clone();
+    cv::Mat original = img.getData().clone();
     
+    int width = img.getWidth();
+    int height = img.getHeight();
     
-    int width = src.getWidth();
-    int height = src.getHeight();
-    
-    Filter("transform").apply(src, {100, 50, 0, 0, 0, 0, 0}, 500, 500);
-                    
-
-    //dest.write("test/res/p.jpg");
-    printf("%dx%d\n", width, height);
+    Filter("transform").apply(img, {100, 50, 0, 0, 0, 0, 0}, 500, 500);
 
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
-                src.getData()(
+                img.getData()(
                     Range(100, 100 + height), 
                     Range(50, 50 + width)).begin<uchar>()));
 }
