@@ -69,17 +69,17 @@ void Image::rotateCWRightAngle(int angle) {
     if (angle % 90 != 0)
         throw std::invalid_argument("Only allowed right angle rotation 90, 180, 270");
 
-    Mat newdata = Mat(getHeight(), getWidth(), CV_8UC4, {0, 0, 0, 255});
+    //Mat newdata = Mat(getHeight(), getWidth(), CV_8UC4, {0, 0, 0, 255});
     if (angle == 180) {
-        flip(data, newdata, -1); 
+        flip(data, data, -1); 
     } else if (angle == 90) {
-        transpose(data, newdata);
-        flip(newdata, newdata, 1); 
+        transpose(data, data);
+        flip(data, data, 1); 
     } else if (angle == 270) {
-        transpose(data, newdata);
-        flip(newdata, newdata, 0); 
+        transpose(data, data);
+        flip(data, data, 0); 
     }
-    data = newdata;
+    //data = newdata;
 }
 
 void Image::to4Channels() {
