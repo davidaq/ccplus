@@ -1,6 +1,6 @@
 #pragma once
 
-#include "object.hpp"
+#include "image.hpp"
 #include <vector>
 #include <string>
 #include <map>
@@ -11,13 +11,13 @@ namespace CCPlus {
     class Image;
 }
 
-typedef void (*CCPLUS_FILTER_FUNC) (const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+typedef cv::Mat (*CCPLUS_FILTER_FUNC) (cv::Mat input, const std::vector<float>& parameters, int width, int height);
 
 class CCPlus::Filter : public CCPlus::Object {
 public:
     Filter(const std::string& name);
     
-    virtual void apply(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+    virtual void apply(CCPlus::Image& image, const std::vector<float>& parameters, int width, int height);
     
 private:
     CCPLUS_FILTER_FUNC func;
@@ -32,11 +32,11 @@ public:
 extern CCPlus::FilterLoader CCPlus__FilterLoader;
 
 #define CCPLUS_FILTER(NAME) \
-void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters);
+cv::Mat _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(cv::Mat input, const std::vector<float>& parameters, int width, int height);
 #include "filter-list.hpp"
 #undef CCPLUS_FILTER
 
 #define CCPLUS_FILTER(NAME) \
-void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters)
+cv::Mat _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(cv::Mat input, const std::vector<float>& parameters, int width, int height)
 
 #include "global.hpp"

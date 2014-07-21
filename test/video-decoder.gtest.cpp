@@ -53,3 +53,17 @@ TEST(VideoDecoder, DecodeFrameImage) {
     EXPECT_EQ(img.getData().data[1], 0xbc);
     EXPECT_EQ(img.getData().data[2], 0xc2);
 }
+
+TEST(VideoDecoder, Seek) {
+    VideoDecoder decoder("test/res/test.mp4");
+    decoder.seekTo(8);
+    EXPECT_EQ(8, (int)decoder.decodeImage());
+}
+
+TEST(VideoDecoder, Rotate) {
+    VideoDecoder decoder("test/res/test.mov");
+    decoder.decodeImage();
+    Image img = decoder.getDecodedImage();
+    EXPECT_EQ(img.getWidth(), 1080);
+    EXPECT_EQ(img.getHeight(), 1920);
+}

@@ -12,7 +12,6 @@ CCPLUS_FILTER(transform) {
     //float scale_y = parameters[5];
     //float rotate = parameters[6];
 
-    Mat oldData = src->getData();
-    Mat tmp(dest->getData(), Rect(pos_col, pos_row, oldData.cols, oldData.rows));
-    oldData.copyTo(tmp);
+    Mat tmp(input, Rect(pos_col, pos_row, input.cols, input.rows));
+    return tmp;
 }
