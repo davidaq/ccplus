@@ -10,22 +10,28 @@ TEST(Filter, Example) {
     printf("This test should print PASS on the next line\n");
     std::vector<float> empty;
     Image src("test/res/test.png"), dest("test/res/test.png");
-    Filter("Example").apply(&src, &dest, empty);
+    Filter("Example").apply(src, empty, src.getWidth(), src.getHeight());
 }
 
 TEST(Filter, Transform) {
     Image src("test/res/test1.jpg");
+    
+    cv::Mat original = src.getData().clone();
+    
+    
     int width = src.getWidth();
     int height = src.getHeight();
-    Image dest = Image::emptyImage(500, 500);
-    Filter("transform").apply(&src, &dest, {100, 50, 0, 0, 0, 0, 0});
+    
+    Filter("transform").apply(src, {100, 50, 0, 0, 0, 0, 0}, 500, 500);
+                    
 
     //dest.write("test/res/p.jpg");
+    printf("%dx%d\n", width, height);
 
     EXPECT_TRUE(std::equal(
-                src.getData().begin<uchar>(), 
-                src.getData().end<uchar>(), 
-                dest.getData()(
+                original.begin<uchar>(), 
+                original.end<uchar>(), 
+                src.getData()(
                     Range(100, 100 + height), 
                     Range(50, 50 + width)).begin<uchar>()));
 }

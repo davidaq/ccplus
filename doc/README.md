@@ -17,7 +17,7 @@ Technology Selections
 ---------------------
 
  - **C++(version C++11)** - main programming language
- - **Boost** - the one and only depended library for the core part
+ - **Boost** - for making C++ a better place
  - **GYP** - project organization and multi-platform build
  - **JSON** - serialize persisted data
  - **MinGW** - support for windows

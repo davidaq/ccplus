@@ -11,9 +11,9 @@ Filter::Filter(const std::string& name) {
     func = (*filterMap)[name];
 }
 
-void Filter::apply(const CCPlus::Image * const src, CCPlus::Image* dest, const std::vector<float>& parameters) {
+void Filter::apply(Image& image, const std::vector<float>& parameters, int width, int height) {
     if(func) {
-        func(src, dest, parameters);
+        image.setData(func(image.getData(), parameters, width, height));
     }
 }
 

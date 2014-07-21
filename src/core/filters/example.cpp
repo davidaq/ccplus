@@ -2,5 +2,5 @@
 
 CCPLUS_FILTER(Example) {
     printf("PASS!\n");
-    dest->getData();
+    return input;
 }
