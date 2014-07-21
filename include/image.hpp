@@ -2,7 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "Object.hpp"
+#include "object.hpp"
 
 namespace CCPlus {
     class Image;
