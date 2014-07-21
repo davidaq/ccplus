@@ -1,5 +1,6 @@
 #include "video-decoder.hpp"
 #include "image.hpp"
+#include "utils.hpp"
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define __STDC_FORMAT_MACROS
@@ -13,7 +14,6 @@ extern "C" {
 using namespace CCPlus;
 
 // TODO consider mp4 orientation
-// TODO implement seek
 
 struct DecodeContext {
     AVFormatContext *fmt_ctx = NULL;
@@ -35,6 +35,7 @@ struct DecodeContext {
     int haveCurrentPkt = 0;
     int video_frame_count = 0;
     int audio_frame_count = 0;
+    int rotate = 0;
     VideoInfo info;
 };
 
@@ -46,7 +47,6 @@ VideoDecoder::VideoDecoder(const std::string& _inputFile, int _decoderFlag) :
     cursorTime(0),
     decodeContext(0)
 {
-    
 }
 
 VideoDecoder::~VideoDecoder() {
@@ -59,7 +59,15 @@ VideoInfo VideoDecoder::getVideoInfo() {
 }
 
 void VideoDecoder::seekTo(float time) {
-    cursorTime = time;
+    if (decoderFlag & DECODE_VIDEO) {
+        initContext();
+        cursorTime = time;
+        time -= 1;
+        if(time < 1) {
+            time = 0;
+        }
+        av_seek_frame(CTX.fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+    }
 }
 
 bool VideoDecoder::readNextFrameIfNeeded() {
@@ -78,21 +86,23 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 
 float VideoDecoder::decodeImage() {
     haveDecodedImage = false;
-    int gotFrame = 0;
     float retTime = -1;
-    while(!gotFrame) {
+    while(!haveDecodedImage) {
         if(!readNextFrameIfNeeded())
             return -1;
         if (CTX.pkt.stream_index == CTX.video_stream_idx) {
+            int gotFrame = 0;
             int ret = avcodec_decode_video2(CTX.video_dec_ctx, CTX.frame, &gotFrame, &(CTX.pkt));
             if(ret < 0)
                 return -1;
             if(gotFrame) {
-                haveDecodedImage = true;
                 retTime = av_rescale_q(av_frame_get_best_effort_timestamp(CTX.frame), 
                                         CTX.fmt_ctx->streams[CTX.pkt.stream_index]->time_base, 
                                         AV_TIME_BASE_Q)
                             * 0.000001;
+                if(retTime + 0.01 >= cursorTime) {
+                    haveDecodedImage = true;
+                }
             }
             CTX.pkt.data += ret;
             CTX.pkt.size -= ret;
@@ -113,9 +123,6 @@ Image VideoDecoder::getDecodedImage() {
     if(!haveDecodedImage)
         return Image();
     else {
-        av_image_copy(CTX.video_dst_data, CTX.video_dst_linesize,
-                      (const uint8_t **)(CTX.frame->data), CTX.frame->linesize,
-                      CTX.video_dec_ctx->pix_fmt, CTX.video_dec_ctx->width, CTX.video_dec_ctx->height);
         AVPicture avImg;
         SwsContext* swsContext = sws_getContext(CTX.info.width, CTX.info.height, 
                                                 CTX.video_dec_ctx->pix_fmt,
@@ -124,8 +131,22 @@ Image VideoDecoder::getDecodedImage() {
         avImg.linesize[0] = CTX.info.width * 4;
         avImg.data[0] = (uint8_t*)malloc(avImg.linesize[0] * CTX.info.height);
         sws_scale(swsContext, CTX.frame->data, CTX.frame->linesize, 0, CTX.info.height, avImg.data, avImg.linesize);
-        cv::Mat imgData = cv::Mat(CTX.info.height, CTX.info.width, CV_8UC4, avImg.data[0]);
-        return Image(imgData);
+        cv::Mat data = cv::Mat(CTX.info.height, CTX.info.width, CV_8UC4, avImg.data[0]);
+        if(CTX.rotate) {
+            switch(CTX.rotate) {
+            case 180:
+                flip(data, data, -1); 
+                break;
+            case 90:
+                transpose(data, data);
+                flip(data, data, 1); 
+                break;
+            case 270:
+                transpose(data, data);
+                flip(data, data, 0); 
+            }
+        }
+        return Image(data);
     }
 }
 
@@ -203,6 +224,13 @@ void VideoDecoder::initContext() {
         CTX.video_dst_bufsize = ret;
         CTX.info.width = CTX.video_dec_ctx->width;
         CTX.info.height = CTX.video_dec_ctx->height;
+        
+        
+        AVDictionaryEntry *tag = NULL;
+        tag = av_dict_get(CTX.video_stream->metadata, "rotate", tag, AV_DICT_MATCH_CASE);
+        if(tag) {
+            CTX.rotate = parseString<int>(tag->value);
+        }
     }
     if (decoderFlag & DECODE_AUDIO && open_codec_context(&(CTX.audio_stream_idx), CTX.fmt_ctx, AVMEDIA_TYPE_AUDIO) >= 0) {
         CTX.audio_stream = CTX.fmt_ctx->streams[CTX.audio_stream_idx];
