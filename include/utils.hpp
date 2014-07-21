@@ -77,7 +77,9 @@ static inline int getImageRotation(const std::string& jpgpath) {
     };
 
     auto nread = [](FILE* f, char* tmp, int origin, int offset) {
-        for (int i = 0; i < offset; i++)  fscanf(f, "%c", &tmp[origin + i]);
+        for (int i = 0; i < offset; i++)  
+            if (fscanf(f, "%c", &tmp[origin + i]) != 1) 
+                throw std::ios_base::failure("Unrecgonized file format");
     };
 
     auto bytesToInt = [](const char* s, int n) {
@@ -93,7 +95,7 @@ static inline int getImageRotation(const std::string& jpgpath) {
     };
 
     std::map<int, int> retTable = {
-        {-1, -1}, {1, 0}, {3, 180}, {8, 270}, {6, 90}
+        {-1, 0}, {1, 0}, {3, 180}, {8, 270}, {6, 90}
     };
 
     enum State {
@@ -102,8 +104,8 @@ static inline int getImageRotation(const std::string& jpgpath) {
 
     State state = START;
     
-    // Assume 2 bytes reading is OK
-    while (state != DONE && (fscanf(f, "%c%c", &tmp[0], &tmp[1]) > 0)) {
+    // Assume 2 bytes reading is OK 
+    while (state != DONE && (fscanf(f, "%c%c", &tmp[0], &tmp[1]) > 1)) {
         if (state == START) {
             // Found ffe1 -> app1 marker !!
             if ((unsigned char) tmp[0] == 0xff && (unsigned char) tmp[1] == 0xe1) {
@@ -112,7 +114,7 @@ static inline int getImageRotation(const std::string& jpgpath) {
             }
         } else if (state == EXIF) {
             if (!strncmp(tmp, "Ex", 2)) {
-                fscanf(f, "%c%c", &tmp[2], &tmp[3]);
+                nread(f, tmp, 2, 2);
                 if (!strncmp(tmp, "Exif", 4)) {
                     state = TIFF;
                     // Eat empty bytes
