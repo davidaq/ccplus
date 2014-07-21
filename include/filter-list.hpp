@@ -1,1 +1,2 @@
 CCPLUS_FILTER(Example)
+CCPLUS_FILTER(transform)
