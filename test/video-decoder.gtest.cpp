@@ -67,3 +67,14 @@ TEST(VideoDecoder, Rotate) {
     EXPECT_EQ(img.getWidth(), 1080);
     EXPECT_EQ(img.getHeight(), 1920);
 }
+
+TEST(VideoDecoder, DecodeAudioAll) {
+    VideoDecoder decoder("test/res/test.mp4");
+    decoder.decodeAudio("tmp/p.pcm");
+}
+
+TEST(VideoDecoder, DecodeAudioPartial) {
+    VideoDecoder decoder("test/res/test.mp4");
+    decoder.seekTo(3);
+    decoder.decodeAudio("tmp/p.pcm", 2);
+}

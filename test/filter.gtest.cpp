@@ -24,7 +24,7 @@ TEST(Filter, BasicTransform) {
     
     // Test position
     Filter("transform").apply(img1, {100, 50, 0, 0, 1.0, 1.0, 0}, 500, 500);
-    //img1.write("wtf.jpg");
+    img1.write("tmp/wtf.jpg");
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
@@ -34,6 +34,7 @@ TEST(Filter, BasicTransform) {
 
     // Test anchor + position
     Filter("transform").apply(img2, {0, 0, 10, 50, 1.0, 1.0, 0}, 500, 500);
+    img2.write("tmp/wtf2.jpg");
     Mat sample = original(Range(10, original.rows - 10), Range(50, original.cols - 50));
     Mat result = img1.getData()(Range(10, original.rows - 10), Range(50, original.cols - 50));
     EXPECT_TRUE(std::equal(original.begin<uchar>(), 
