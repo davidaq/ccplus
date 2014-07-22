@@ -24,6 +24,7 @@ TEST(Filter, BasicTransform) {
     
     // Test position
     Filter("transform").apply(img1, {100, 50, 0, 0, 1.0, 1.0, 0}, 500, 500);
+    //img1.write("wtf.jpg");
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
@@ -38,4 +39,12 @@ TEST(Filter, BasicTransform) {
     EXPECT_TRUE(std::equal(original.begin<uchar>(), 
                 original.begin<uchar>(),
                 result.begin<uchar>()));
+}
+
+TEST(Filter, ScaleAndRotateTransform) {
+    printf("Go check the tmp dir\n");
+    
+    Image img1("test/res/test1.jpg");
+    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 0}, 500, 500);
+    img1.write("tmp/result.jpg");
 }

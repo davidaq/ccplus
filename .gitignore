@@ -47,3 +47,6 @@ boost
 # Deps
 .deps/
 dependency/
+
+# tmp
+tmp/

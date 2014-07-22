@@ -15,6 +15,7 @@ CCPLUS_FILTER(transform) {
 
     // Put original image into the large layer image 
     Mat ret(height, width, CV_8UC4);
+    angle = angle * M_PI / 180.0;
     double ct = cos(angle);
     double st = sin(angle);
 
@@ -37,9 +38,9 @@ CCPLUS_FILTER(transform) {
             ct, st, 0,
             -st, ct, 0, 
             0, 0, 1);
-    trans = scale * trans;
+    trans = rotate * trans;
 
-    //std::cout << "After rotate: " << std::endl << trans << std::endl;
+    std::cout << "After rotate: " << std::endl << trans << std::endl;
 
     Mat translate_back = (Mat_<double>(3, 3) << 
             1, 0, -pos_col - anchor_col,
@@ -79,7 +80,7 @@ CCPLUS_FILTER(transform) {
             // TODO: bilinear interpolate   
             int ix = std::round(x);
             int iy = std::round(y);
-            ret.at<Vec4b>(i, j) = input.at<Vec4b>(y - top_bound, x - left_bound);
+            ret.at<Vec4b>(i, j) = input.at<Vec4b>(iy - top_bound, ix - left_bound);
         }
     return ret;
 }
