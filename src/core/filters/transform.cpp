@@ -1,4 +1,5 @@
 #include "filter.hpp"
+#include <cmath>
 
 using namespace cv;
 
@@ -8,31 +9,77 @@ CCPLUS_FILTER(transform) {
     int pos_col = (int)parameters[1];
     int anchor_row = (int)parameters[2];
     int anchor_col = (int)parameters[3];
-    //float scale_x = parameters[4];
-    //float scale_y = parameters[5];
-    //float rotate = parameters[6];
+    float scale_row = parameters[4];
+    float scale_col = parameters[5];
+    float angle = parameters[6];
 
     // Put original image into the large layer image 
     Mat ret(height, width, CV_8UC4);
+    double ct = cos(angle);
+    double st = sin(angle);
+
+    Mat trans = (Mat_<double>(3, 3) << 
+            1, 0, pos_col + anchor_col, 
+            0, 1, pos_row + anchor_row, 
+            0, 0, 1);
+
+    //std::cout << "Init : " << std::endl << trans << std::endl;
+
+    Mat scale = (Mat_<double>(3, 3) << 
+            scale_col, 0, 0,
+            0, scale_row, 0,
+            0, 0, 1);
+    trans = scale * trans;
+
+    //std::cout << "After scale: " << std::endl << trans << std::endl;
+
+    Mat rotate = (Mat_<double>(3, 3) << 
+            ct, st, 0,
+            -st, ct, 0, 
+            0, 0, 1);
+    trans = scale * trans;
+
+    //std::cout << "After rotate: " << std::endl << trans << std::endl;
+
+    Mat translate_back = (Mat_<double>(3, 3) << 
+            1, 0, -pos_col - anchor_col,
+            0, 1, -pos_row - anchor_row, 
+            0, 0, 1);
+    trans = translate_back * trans;
+
+    //std::cout << "After translate back: " << std::endl << trans << std::endl;
+
+    if (std::abs(determinant(trans) - 0.0) < 0.001) {
+        // Not invertable
+        throw std::invalid_argument("Arguments results in an uninvertable matrix");
+    }
+    invert(trans, trans);
+
+    auto bilinear_interpolate = []() {
+        // TODO TODO TODO TODO TODO
+        // TLTDI = TOO LAZY TO DO IT
+    };
+    
+    // Boundary of src image
     int top_bound = pos_row - anchor_row;
     int left_bound = pos_col - anchor_col;
     int right_bound = left_bound + input.cols;
     int down_bound = top_bound + input.rows;
-    // Make sure they intersect
-    if (right_bound > 0 && down_bound > 0 && 
-        left_bound < width && top_bound < height) {
-        int real_top = std::max(top_bound, 0);
-        int real_left = std::max(left_bound, 0);
-        int real_right = std::min(right_bound, width);
-        int real_down = std::min(down_bound, height);
 
-        Mat tmp(ret, Rect(real_left, real_top, real_right - real_left, real_down - real_top));
+    for (int i = 0; i < height; i++)
+        for (int j = 0; j < width; j++) {
+            Mat pos = trans * (Mat_<double>(3, 1) << j , i, 1);
 
-        int inner_top = real_top - top_bound;
-        int inner_left = real_left - left_bound;
-        int inner_right  = inner_left + (real_right - real_left);
-        int inner_down  = inner_top + (real_down - real_top);
-        input(Range(inner_top, inner_down), Range(inner_left, inner_right)).copyTo(tmp);
-    }
+            // Nomalize
+            double x = pos.at<double>(0, 0) / pos.at<double>(2, 0);
+            double y = pos.at<double>(1, 0) / pos.at<double>(2, 0);
+            if (y < (double)top_bound  || y >= (double)down_bound || 
+                x < (double)left_bound || x >= (double)right_bound)
+                continue;
+            // TODO: bilinear interpolate   
+            int ix = std::round(x);
+            int iy = std::round(y);
+            ret.at<Vec4b>(i, j) = input.at<Vec4b>(y - top_bound, x - left_bound);
+        }
     return ret;
 }

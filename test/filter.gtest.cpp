@@ -13,7 +13,7 @@ TEST(Filter, Example) {
     Filter("Example").apply(src, empty, src.getWidth(), src.getHeight());
 }
 
-TEST(Filter, Transform) {
+TEST(Filter, BasicTransform) {
     Image img1("test/res/test1.jpg");
     Image img2("test/res/test1.jpg");
     
@@ -23,7 +23,7 @@ TEST(Filter, Transform) {
     int height = img1.getHeight();
     
     // Test position
-    Filter("transform").apply(img1, {100, 50, 0, 0, 0, 0, 0}, 500, 500);
+    Filter("transform").apply(img1, {100, 50, 0, 0, 1.0, 1.0, 0}, 500, 500);
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
@@ -32,12 +32,10 @@ TEST(Filter, Transform) {
                     Range(50, 50 + width)).begin<uchar>()));
 
     // Test anchor + position
-    Filter("transform").apply(img2, {0, 0, 10, 50, 0, 0, 0}, 500, 500);
+    Filter("transform").apply(img2, {0, 0, 10, 50, 1.0, 1.0, 0}, 500, 500);
     Mat sample = original(Range(10, original.rows - 10), Range(50, original.cols - 50));
     Mat result = img1.getData()(Range(10, original.rows - 10), Range(50, original.cols - 50));
     EXPECT_TRUE(std::equal(original.begin<uchar>(), 
                 original.begin<uchar>(),
                 result.begin<uchar>()));
-
-    // TODO more test cases
 }
