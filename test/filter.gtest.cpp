@@ -24,7 +24,6 @@ TEST(Filter, BasicTransform) {
     
     // Test position
     Filter("transform").apply(img1, {100, 50, 0, 0, 1.0, 1.0, 0}, 500, 500);
-    //img1.write("wtf.jpg");
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
@@ -35,7 +34,7 @@ TEST(Filter, BasicTransform) {
     // Test anchor + position
     Filter("transform").apply(img2, {0, 0, 10, 50, 1.0, 1.0, 0}, 500, 500);
     Mat sample = original(Range(10, original.rows - 10), Range(50, original.cols - 50));
-    Mat result = img1.getData()(Range(10, original.rows - 10), Range(50, original.cols - 50));
+    Mat result = img2.getData()(Range(10, original.rows - 10), Range(50, original.cols - 50));
     EXPECT_TRUE(std::equal(original.begin<uchar>(), 
                 original.begin<uchar>(),
                 result.begin<uchar>()));
@@ -45,6 +44,19 @@ TEST(Filter, ScaleAndRotateTransform) {
     printf("Go check the tmp dir\n");
     
     Image img1("test/res/test1.jpg");
-    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 0}, 500, 500);
-    img1.write("tmp/result.jpg");
+    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 45}, 500, 500);
+    img1.write("tmp/rotateCW45.jpg");
+
+    img1 = Image("test/res/test1.jpg");
+    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 90}, 500, 500);
+    img1.write("tmp/rotateCW90_1.jpg");
+
+    img1 = Image("test/res/test1.jpg");
+    Filter("transform").apply(img1, {0, 243, 0, 0, 1.0, 1.0, 90}, 500, 500);
+    img1.write("tmp/rotateCW90_2.jpg");
+
+    img1 = Image("test/res/test1.jpg");
+    //Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 0}, 500, 500);
+    Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 0}, 500, 500);
+    img1.write("tmp/center_and_scale.jpg");
 }

@@ -20,10 +20,11 @@ CCPLUS_FILTER(transform) {
     double st = sin(angle);
 
     Mat trans = (Mat_<double>(3, 3) << 
-            1, 0, pos_col + anchor_col, 
-            0, 1, pos_row + anchor_row, 
+            1, 0, -pos_col, 
+            0, 1, -pos_row, 
             0, 0, 1);
 
+    //std::cout << "====================================" << std::endl;
     //std::cout << "Init : " << std::endl << trans << std::endl;
 
     Mat scale = (Mat_<double>(3, 3) << 
@@ -35,16 +36,16 @@ CCPLUS_FILTER(transform) {
     //std::cout << "After scale: " << std::endl << trans << std::endl;
 
     Mat rotate = (Mat_<double>(3, 3) << 
-            ct, st, 0,
-            -st, ct, 0, 
+            ct, -st, 0,
+            st, ct, 0, 
             0, 0, 1);
     trans = rotate * trans;
 
-    std::cout << "After rotate: " << std::endl << trans << std::endl;
+    //std::cout << "After rotate: " << std::endl << trans << std::endl;
 
     Mat translate_back = (Mat_<double>(3, 3) << 
-            1, 0, -pos_col - anchor_col,
-            0, 1, -pos_row - anchor_row, 
+            1, 0, pos_col,
+            0, 1, pos_row, 
             0, 0, 1);
     trans = translate_back * trans;
 
