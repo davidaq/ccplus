@@ -14,7 +14,7 @@ CCPLUS_FILTER(transform) {
     float angle = parameters[6];
 
     // Put original image into the large layer image 
-    Mat ret(height, width, CV_8UC4);
+    Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     angle = angle * M_PI / 180.0;
     double ct = cos(angle);
     double st = sin(angle);
