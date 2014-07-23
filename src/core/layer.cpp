@@ -98,25 +98,6 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 Image Layer::applyFiltersToFrame(float time) {
-    /*
-    // Write in this way so img* could be rvalue
-    Image img1 = Image::emptyImage(width, height); 
-    Image img2 = renderObject->getFrame(time);
-
-    // Lovely DOUBLE BUFFER WHOOA!
-    Image* dest[2];
-    bool flag = true;
-    dest[0] = &img1;
-    dest[1] = &img2;
-    for (auto& kv : properties) {
-        if (flag) 
-            Filter(kv.first).apply(dest[1], dest[0], interpolate(kv.first, time));
-        else
-            Filter(kv.first).apply(dest[0], dest[1], interpolate(kv.first, time));
-        flag = !flag;
-    }
-    return flag ? *dest[0] : *dest[1];
-    */
     Image img = renderObject->getFrame(time);
     for (auto& kv : properties) {
         Filter(kv.first).apply(img, interpolate(kv.first, time), width, height);

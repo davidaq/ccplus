@@ -1,6 +1,8 @@
 #include <fstream>
 
 #include "tmlreader.hpp"
+#include "utils.hpp"
+#include "image-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -65,6 +67,15 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
 
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
+    if (!context->hasRenderable(uri)) {
+        if (stringStartsWith(uri, "image://")) {
+            context->putRenderable(uri, new ImageRenderable(context, uri));
+        } else if (stringStartsWith(uri, "video://")) {
+
+        } else {
+            // What the f
+        }
+    }
     Layer l = Layer(
             context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height);
