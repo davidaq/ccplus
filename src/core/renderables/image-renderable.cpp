@@ -1,6 +1,7 @@
 #include "image-renderable.hpp"
 #include <limits>
 #include "utils.hpp"
+#include <iostream>
 
 using namespace CCPlus;
 

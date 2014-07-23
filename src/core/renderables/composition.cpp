@@ -12,6 +12,12 @@ Composition::Composition(
 {
 }
 
+Composition::~Composition() {
+    //for (int i : rendered) {
+    //    TODO remove file
+    //}
+}
+
 std::string Composition::getName() const {
     return name;
 }

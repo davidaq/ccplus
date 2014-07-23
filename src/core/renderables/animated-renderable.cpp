@@ -9,7 +9,7 @@ AnimatedRenderable::AnimatedRenderable(Context* context) :
 }
 
 std::string AnimatedRenderable::getFramePath(int f) const {
-    return context->getStoragePath() + "/" + uuid + "_" + std::to_string(f);
+    return context->getStoragePath() + "/" + uuid + "_" + std::to_string(f) + ".jpg";
 }
 
 void AnimatedRenderable::render(float start, float duration) {
@@ -31,9 +31,9 @@ void AnimatedRenderable::render(float start, float duration) {
 }
 
 Image AnimatedRenderable::getFrame(float time) const {
+    while(time > getDuration())
+        time -= getDuration();
     int f = getFrameNumber(time);
-    while(f > getDuration())
-        f -= getDuration();
     if(rendered.count(f))
         return Image(getFramePath(f));
     return Image();
