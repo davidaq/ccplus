@@ -3,5 +3,5 @@
 #include "ccplus.hpp"
 
 TEST(Integration, SimpleTest) {
-    CCPlus::go("test/res/test2.tml", "tmp/integration_simpletest");   
+    CCPlus::go("test/res/test2.tml", "tmp/", 0.0, 1.0);   
 }
