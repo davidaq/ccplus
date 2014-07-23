@@ -10,7 +10,7 @@
             "duration" : 1,
             "layers" : [
                 {
-                    "uri" : "image://test/res/test1.jpg",
+                    "uri" : "file://test/res/test1.jpg",
                     "properties" : {
                         "position" : {
                             "0" : [0, 0],
