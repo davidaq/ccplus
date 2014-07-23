@@ -102,4 +102,5 @@ Image Layer::applyFiltersToFrame(float time) {
     for (auto& kv : properties) {
         Filter(kv.first).apply(img, interpolate(kv.first, time), width, height);
     }
+    return img;
 }

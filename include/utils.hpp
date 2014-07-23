@@ -25,6 +25,21 @@ static inline std::string toLower(const std::string& s) {
     return data;
 }
 
+static inline char getSeperator() {
+#ifdef _WIN32
+    return '\\';
+#else
+    return '/';
+#endif
+}
+
+static inline std::string generatePath(const std::string& dir, const std::string& fn) {
+    if (dir == "") return fn;
+    if (dir[dir.length() - 1] != getSeperator())
+        return dir + getSeperator() + fn;
+    return dir + fn;
+}
+
 template<class T> static inline 
 T parseString(const std::string& str) {
     T value;

@@ -23,10 +23,6 @@ protected:
     Context* ctx;
 };
 
-//TEST_F(TMLReaderTest, IOTest) {
-//    ASSERT_NO_THROW(this->mainComp = reader->read("test/res/test1.tml"));
-//}
-
 TEST_F(TMLReaderTest, MainCompBasicTest) {
     EXPECT_EQ(mainComp->getName(), "MAIN");
     EXPECT_EQ(mainComp->getDuration(), 10);

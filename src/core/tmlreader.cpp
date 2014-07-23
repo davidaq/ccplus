@@ -18,7 +18,9 @@ Composition* TMLReader::read(const std::string& s) const {
 
     using boost::property_tree::ptree;
     ptree pt;
+    printf("reading json\n");
     read_json(s, pt);
+    printf("read json done\n");
     fstream.close();
 
     std::string main_name = pt.get<std::string>("main");

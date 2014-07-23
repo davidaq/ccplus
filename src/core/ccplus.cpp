@@ -1,12 +1,13 @@
 #include "global.hpp"
 #include "ccplus.hpp"
+#include "utils.hpp"
 
 void CCPlus::go(
         const std::string& tmlpath,
         const std::string& storagePath, 
-        float start = 0,
-        float length = 5,
-        int fps = 18) {
+        float start,
+        float length,
+        int fps) {
 
     CCPlus::Context* ctx = new CCPlus::Context(storagePath, fps);   
     CCPlus::TMLReader* reader = new CCPlus::TMLReader(ctx);
@@ -23,6 +24,8 @@ void CCPlus::go(
     float inter = 1.0 / fps;
     for (float i = 0.0; i < length; i += inter) {
         float t = start + i;
+        Image img = mainComp->getFrame(t);
+        img.write(generatePath(storagePath, "test" + std::to_string(i) + ".jpg"));
         // getFrame(t) 
         // Bluh bluh
     }

@@ -36,6 +36,7 @@ DerivedData
 
 # VIM
 *.swp
+*.swo
 
 # GEDIT
 *~
