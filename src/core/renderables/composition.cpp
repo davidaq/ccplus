@@ -69,9 +69,9 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
         CompositionDependency candidate;
         candidate.renderable = r;
         candidate.from = 0;
-        candidate.to = 0;
+        candidate.to = -1;
         for(CompositionDependency dep : map[r]) {
-            if(dep.from + 0.001 > candidate.to) {
+            if(dep.from > candidate.to) {
                 if(candidate.to > candidate.from) {
                     ordered.push_back(candidate);
                 }
