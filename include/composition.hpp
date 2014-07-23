@@ -26,6 +26,10 @@ public:
     std::vector<CompositionDependency> directDependency(float from, float to) const;
     std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
+    virtual int getWidth() const;
+    virtual int getHeight() const;
+    virtual float getDuration() const;
+
 private:
     std::string getFramePath(int f) const;
     // data
@@ -34,4 +38,7 @@ private:
     std::vector<Layer> layers;
 
     std::map<int, bool> rendered;
+
+    int width, height;
+    float duration;
 };

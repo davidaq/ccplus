@@ -6,7 +6,7 @@ using namespace CCPlus;
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
         float _dur, int _width, int _height) :
-    Renderable(ctx, _dur, _width, _height), name(_name) 
+    Renderable(ctx), name(_name), width(_width), height(_height), duration(_dur)
 {
 }
 
@@ -117,4 +117,16 @@ Image Composition::getFrame(float time) const {
     rendered.at(f); // If it hasn't been renderd throw exception
     Image img(getFramePath(f));
     return img;
+}
+
+int Composition::getWidth() const {
+    return width;
+}
+
+int Composition::getHeight() const {
+    return height;
+}
+
+float Composition::getDuration() const {
+    return duration;
 }

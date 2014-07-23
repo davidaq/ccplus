@@ -9,8 +9,8 @@
 
 using namespace CCPlus;
 
-Renderable::Renderable(Context* _ctx, float _dur, int _width, int _height) 
-    : context(_ctx), duration(_dur), width(_width), height(_height) 
+Renderable::Renderable(Context* _ctx) 
+    : context(_ctx)
 {
     boost::uuids::uuid u = boost::uuids::random_generator()();
     uuid = boost::lexical_cast<std::string>(u);

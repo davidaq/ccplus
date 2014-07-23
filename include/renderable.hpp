@@ -1,19 +1,22 @@
 #pragma once
-#include "global.hpp"
+#include "object.hpp"
+#include "image.hpp"
 
+namespace CCPlus {
+    class Renderable;
+    class Context;
+}
 // @ base class of anything that could be referenced by a layer
 class CCPlus::Renderable : public CCPlus::Object {
 public:
-    Renderable(CCPlus::Context*, float, int, int);
+    Renderable(CCPlus::Context*);
     
     virtual void render(float start, float duration) = 0;
     virtual Image getFrame(float time) const = 0;
     
-    float getDuration() const;
-
-    int getWidth() const;
-
-    int getHeight() const;
+    virtual float getDuration() const = 0;
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
 
     int getFrameNumber(float time) const;
 

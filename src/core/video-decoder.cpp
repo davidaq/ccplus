@@ -359,3 +359,4 @@ void VideoDecoder::releaseContext() {
     decodeContext = 0;
     cursorTime = -1;
 }
+
