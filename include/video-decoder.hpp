@@ -33,9 +33,10 @@ public:
     // @return the frame image in the previous successful decode from calling decodeImage()
     CCPlus::Image getDecodedImage();
     
-    // Decode audio stream into PCM raw data, and write to outputFile
+    // Decode audio stream into PCM raw data from current position
     // Can be used for both video & audio files
-    void decodeAudio(float from, float to, const std::string& outputFile);
+    // Output writen to file
+    void decodeAudio(const std::string& outputFile, float durationLimit = -1);
     
 private:
     std::string inputFile;
@@ -47,4 +48,7 @@ private:
     void initContext();
     void releaseContext();
     bool readNextFrameIfNeeded();
+
+    void decodeAudio(FILE* destFile, float durationLimit);
+    int decodeAudioFrame(FILE* destFile, float durationLimit, float &start, float &gap);
 };

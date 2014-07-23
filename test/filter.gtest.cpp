@@ -33,6 +33,7 @@ TEST(Filter, BasicTransform) {
 
     // Test anchor + position
     Filter("transform").apply(img2, {0, 0, 10, 50, 1.0, 1.0, 0}, 500, 500);
+    img2.write("tmp/wtf2.jpg");
     Mat sample = original(Range(10, original.rows - 10), Range(50, original.cols - 50));
     Mat result = img2.getData()(Range(10, original.rows - 10), Range(50, original.cols - 50));
     EXPECT_TRUE(std::equal(original.begin<uchar>(), 
