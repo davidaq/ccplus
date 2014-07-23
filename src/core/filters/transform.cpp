@@ -117,9 +117,6 @@ CCPLUS_FILTER(transform) {
             if (y < (double)top_bound  || y >= (double)down_bound || 
                 x < (double)left_bound || x >= (double)right_bound)
                 continue;
-            // TODO: bilinear interpolate   
-            int ix = std::round(x);
-            int iy = std::round(y);
             ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x - left_bound, y - top_bound);
             //ret.at<Vec4b>(i, j) = input.at<Vec4b>(iy - top_bound, ix - left_bound);
         }

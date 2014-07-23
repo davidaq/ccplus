@@ -16,18 +16,6 @@ Renderable::Renderable(Context* _ctx)
     uuid = boost::lexical_cast<std::string>(u);
 }
 
-float Renderable::getDuration() const {
-    return duration;
-}
-
-int Renderable::getWidth() const {
-    return width;
-}
-
-int Renderable::getHeight() const {
-    return height;
-}
-
 int Renderable::getFrameNumber(float time) const {
     float inter = 1.0 / context->getFPS(); 
     return std::round(time / inter);

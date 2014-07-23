@@ -26,9 +26,9 @@ public:
     std::vector<CompositionDependency> directDependency(float from, float to) const;
     std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
 
-    virtual int getWidth() const;
-    virtual int getHeight() const;
-    virtual float getDuration() const;
+    int getWidth() const;
+    int getHeight() const;
+    float getDuration() const;
 
 private:
     std::string getFramePath(int f) const;
