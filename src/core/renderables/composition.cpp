@@ -59,7 +59,7 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
     std::map<Renderable*,std::vector<CompositionDependency> > map;
     for(CompositionDependency dep : ordered) {
         if(!map.count(dep.renderable)) {
-            renderableDependOrder.push_front(dep.renderable);
+            renderableDependOrder.push_back(dep.renderable);
         }
         map[dep.renderable].push_back(dep);
     }
