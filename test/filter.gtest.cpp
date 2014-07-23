@@ -57,6 +57,6 @@ TEST(Filter, ScaleAndRotateTransform) {
 
     img1 = Image("test/res/test1.jpg");
     //Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 0}, 500, 500);
-    Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 0}, 500, 500);
+    Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 90}, 500, 500);
     img1.write("tmp/center_and_scale.jpg");
 }
