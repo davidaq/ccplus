@@ -1,13 +1,17 @@
 #include "video-renderable.hpp"
 #include "context.hpp"
 #include "video-decoder.hpp"
+#include "utils.hpp"
 
 using namespace CCPlus;
 
 VideoRenderable::VideoRenderable(Context* context, const std::string& uri) :
-    AnimatedRenderable(context),
-    decoder(new VideoDecoder(uri, VideoDecoder::DECODE_VIDEO))
+    AnimatedRenderable(context)
 {
+    std::string path = uri;
+    if (stringStartsWith(path, "file://")) 
+        path = path.substr(7);
+    decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
 }
 
 VideoRenderable::~VideoRenderable() {

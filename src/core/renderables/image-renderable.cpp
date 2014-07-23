@@ -8,8 +8,8 @@ ImageRenderable::ImageRenderable(Context* context, const std::string& uri) :
     Renderable(context) 
 {
     std::string path = uri;
-    if (stringStartsWith(path, "image://")) 
-        path = uri.substr(8);
+    if (stringStartsWith(path, "file://")) 
+        path = uri.substr(7);
     image = Image(path);
 }
 
