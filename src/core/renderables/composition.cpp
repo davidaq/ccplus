@@ -96,7 +96,7 @@ void Composition::putLayer(const Layer& layer) {
 void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
-    for (float t = 0; t <= start + duration; t += inter) {
+    for (float t = start; t <= start + duration; t += inter) {
         int f = getFrameNumber(t);
         if(rendered.count(f))
             continue;

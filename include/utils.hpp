@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <string>
 
+//#include "boost/filesystem.hpp"   
+
 static inline bool stringEndsWith(std::string content, std::string suffix) {
     return content.rfind(suffix) == (content.length() - suffix.length());
 }
@@ -35,6 +37,8 @@ static inline char getSeperator() {
 
 static inline std::string generatePath(const std::string& dir, const std::string& fn) {
     if (dir == "") return fn;
+    //if (!boost::filesystem::exists(dir))
+    //    boost::filesystem::create_directory(dir);
     if (dir[dir.length() - 1] != getSeperator())
         return dir + getSeperator() + fn;
     return dir + fn;
