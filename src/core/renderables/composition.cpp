@@ -72,11 +72,11 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
         candidate.to = 0;
         for(CompositionDependency dep : map[r]) {
             if(dep.from + 0.001 > candidate.to) {
-                candidate.from = dep.from;
-                candidate.to = dep.to;
                 if(candidate.to > candidate.from) {
                     ordered.push_back(candidate);
                 }
+                candidate.to = dep.to;
+                candidate.from = dep.from;
             } else {
                 candidate.to = dep.to;
             }
@@ -85,7 +85,6 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
             ordered.push_back(candidate);
         }
     }
-    printf("=== %lu\n", ordered.size());
     return std::vector<CompositionDependency>(ordered.begin(), ordered.end());
 }
 
