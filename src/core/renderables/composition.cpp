@@ -31,7 +31,7 @@ std::vector<CompositionDependency> Composition::directDependency(float from, flo
 }
 
 bool compositionDependencyCompare(CompositionDependency c1, CompositionDependency c2) {
-    return c1.from > c2.from;
+    return c1.from < c2.from;
 }
 
 std::vector<CompositionDependency> Composition::fullOrderedDependency(float from, float to) const {
@@ -71,17 +71,21 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
         candidate.from = 0;
         candidate.to = 0;
         for(CompositionDependency dep : map[r]) {
-            if(dep.from > candidate.to) {
+            if(dep.from + 0.001 > candidate.to) {
+                candidate.from = dep.from;
+                candidate.to = dep.to;
                 if(candidate.to > candidate.from) {
                     ordered.push_back(candidate);
                 }
-                candidate.from = dep.from;
-                candidate.to = dep.to;
             } else {
                 candidate.to = dep.to;
             }
         }
+        if(candidate.to > candidate.from) {
+            ordered.push_back(candidate);
+        }
     }
+    printf("=== %lu\n", ordered.size());
     return std::vector<CompositionDependency>(ordered.begin(), ordered.end());
 }
 
