@@ -1,4 +1,5 @@
-#include <composition.hpp>
+#include "composition.hpp"
+#include "global.hpp"
 #include <list>
 
 using namespace CCPlus;
@@ -6,7 +7,8 @@ using namespace CCPlus;
 Composition::Composition(
         CCPlus::Context* ctx, std::string _name,
         float _dur, int _width, int _height) :
-    Renderable(ctx), name(_name), width(_width), height(_height), duration(_dur)
+    AnimatedRenderable(ctx), 
+    name(_name), width(_width), height(_height), duration(_dur)
 {
 }
 
@@ -91,12 +93,14 @@ void Composition::putLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
-void Composition::render(float start, float duration) {
+void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
     for (float t = 0; t <= start + duration; t += inter) {
         int f = getFrameNumber(t);
-        std::string fp = this->getFramePath(f);
+        if(rendered.count(f))
+            continue;
+        std::string fp = getFramePath(f);
 
         Image ret = Image::emptyImage(width, height);
         for (Layer& l : layers) {
@@ -105,18 +109,8 @@ void Composition::render(float start, float duration) {
         }
         // Save ret to storagePath / name_tmp
         ret.write(fp);
+        rendered.insert(f);
     }
-}
-
-std::string Composition::getFramePath(int f) const {
-    return context->getStoragePath() + "/" + uuid + "_" + std::to_string(f);
-}
-
-Image Composition::getFrame(float time) const {
-    int f = getFrameNumber(time);
-    rendered.at(f); // If it hasn't been renderd throw exception
-    Image img(getFramePath(f));
-    return img;
 }
 
 int Composition::getWidth() const {

@@ -1,5 +1,11 @@
 #pragma once
-#include "global.hpp"
+#include "animated-renderable.hpp"
+#include "layer.hpp"
+
+namespace CCPlus {
+    class CompositionDependency;
+    class Composition;
+}
 
 class CCPlus::CompositionDependency {
 public:
@@ -7,15 +13,13 @@ public:
     float from, to;
 };
 
-class CCPlus::Composition : public CCPlus::Renderable {
+class CCPlus::Composition : public CCPlus::AnimatedRenderable {
 
 public:
-    explicit Composition(
-            CCPlus::Context* context,
+    Composition( CCPlus::Context* context,
             std::string, float, int, int);
 
-    void render(float start, float duration);
-    Image getFrame(float time) const;
+    void renderPart(float start, float duration);
     
     // access
     std::string getName() const; 
@@ -31,13 +35,10 @@ public:
     float getDuration() const;
 
 private:
-    std::string getFramePath(int f) const;
     // data
     std::string name = "";
 
     std::vector<Layer> layers;
-
-    std::map<int, bool> rendered;
 
     int width, height;
     float duration;
