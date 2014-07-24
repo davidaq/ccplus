@@ -1,6 +1,18 @@
 #include "global.hpp"
 #include "ccplus.hpp"
 #include "utils.hpp"
+
+//using namespace CCPlus;
+
+
+
+void* initContext(const char* storagePath, int fps) {
+    //Context* ctx = new Context(storagePath, fps);
+    //TMLReader reader(ctx);
+    //reader.read(tmlPath);
+    //return (void*) ctx;
+}
+
 void CCPlus::go(
         const std::string& tmlpath,
         const std::string& storagePath, 

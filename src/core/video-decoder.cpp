@@ -1,5 +1,5 @@
 #include "video-decoder.hpp"
-#include "image.hpp"
+#include "global.hpp"
 #include "utils.hpp"
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

@@ -25,4 +25,5 @@ build/test/Makefile: .dependency
 	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
 
 test: build/test/Makefile
+	-rm -rf tmp/
 	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
