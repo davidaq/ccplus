@@ -21,7 +21,7 @@
                     "time" : 9,
                     "duration" : 1,
                     "start" : 0,
-                    "last" : 10
+                    "last" : 90909
                 },
                 {
                     "uri" : "file://test/res/test.mp4",
@@ -33,7 +33,7 @@
                         }
                     },
                     "time": 0.5,
-                    "duration" : 9,
+                    "duration" : 5,
                     "start" : 0,
                     "last" : 10
                 }

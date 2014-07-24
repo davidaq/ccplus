@@ -107,6 +107,7 @@ void Composition::renderPart(float start, float duration) {
 
     // Plus an inter to make sure no lost frame
     for (float t = start; t <= start + duration + inter; t += inter) {
+        //printf("t = %f\n", t);
         int f = getFrameNumber(t);
         if(rendered.count(f))
             continue;

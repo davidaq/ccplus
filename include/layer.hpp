@@ -18,8 +18,17 @@ public:
 
     // access
     CCPlus::Renderable* getRenderObject(); 
+    /*
+     * @time and @duration are to upper layer 
+     * comp's timeline
+     * @duration is length
+     */
     float getTime() const;
     float getDuration() const;
+    /*
+     * Here @start and @last are to local timeline of @Renderable object
+     * @last is length
+     */
     float getStart() const;
     float getLast() const;
 
