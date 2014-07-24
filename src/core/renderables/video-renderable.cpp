@@ -31,7 +31,7 @@ void VideoRenderable::renderPart(float start, float duration) {
             int insf = j + last_f;
             if(!rendered.count(insf)) {
                 std::string fp = getFramePath(insf);
-                lost.write(fp);
+                lost.write(fp, 75);
                 rendered.insert(insf);
             }
         }
@@ -43,22 +43,11 @@ void VideoRenderable::renderPart(float start, float duration) {
         std::string fp = getFramePath(f);
 
         // Make up lost frames
-        //if (lastFrame != -1 && f - lastFrame > 1) {
-        //    Image lost = decoder->getDecodedImage();
-        //    for (int j = 1; j + lastFrame < f; j++) {
-        //        int insf = j + lastFrame;
-        //        if(!rendered.count(insf)) {
-        //            std::string fp = getFramePath(insf);
-        //            lost.write(fp);
-        //            rendered.insert(insf);
-        //        }
-        //    }
-        //}
         makeup_frames(f, lastFrame, decoder);
         
         if (!rendered.count(f)) {
             Image ret = decoder->getDecodedImage();
-            ret.write(fp);
+            ret.write(fp, 75);
             rendered.insert(f);
             lastFrame = f;
         }
