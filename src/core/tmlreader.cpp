@@ -3,6 +3,7 @@
 #include "tmlreader.hpp"
 #include "utils.hpp"
 #include "image-renderable.hpp"
+#include "video-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -70,14 +71,13 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     if (!context->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "file://")) {
-            if(
-                stringEndsWith(uri, ".jpg") ||
-                stringEndsWith(uri, ".png") 
-              ) {
+            if(stringEndsWith(uri, ".jpg") || 
+                stringEndsWith(uri, ".png")) {
                 renderable = new ImageRenderable(context, uri);
+            } else if (stringEndsWith(uri, ".mov") || 
+                    stringEndsWith(uri, ".mp4")) {
+                renderable = new VideoRenderable(context, uri);
             }
-        } else if (stringStartsWith(uri, "video://")) {
-
         } else {
             // What the f
         }

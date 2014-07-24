@@ -22,7 +22,7 @@ void VideoRenderable::renderPart(float start, float duration) {
     decoder->seekTo(start);
     float gap = -1;
     float pos = -1;
-    while((pos = decoder->decodeImage()) > 0) {
+    while((pos = decoder->decodeImage()) + 0.001 > 0) {
         if(gap < 0.001)
             gap = (pos - start) / 3;
         int f = getFrameNumber(pos);

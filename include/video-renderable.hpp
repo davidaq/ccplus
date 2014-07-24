@@ -20,7 +20,6 @@ private:
     
     VideoDecoder* decoder;
 
-    std::string getFramePath(int f) const;
     void renderPart(float start, float duration);
 };
 
