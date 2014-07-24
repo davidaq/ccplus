@@ -86,6 +86,7 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 
 float VideoDecoder::decodeImage() {
     haveDecodedImage = false;
+    decodedImage = 0;
     float retTime = -1;
     while(!haveDecodedImage) {
         if(!readNextFrameIfNeeded())
@@ -123,7 +124,7 @@ float VideoDecoder::decodeImage() {
 Image VideoDecoder::getDecodedImage() {
     if(!haveDecodedImage)
         return Image();
-    else {
+    else if(!decodedImage) {
         if(!CTX.swsContext) {
             CTX.swsContext = sws_getContext(CTX.info.width, CTX.info.height, 
                                             CTX.video_dec_ctx->pix_fmt,
@@ -148,8 +149,9 @@ Image VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        return Image(data);
+        decodedImage = new Image(data);
     }
+    return *decodedImage;
 }
 
 int VideoDecoder::decodeAudioFrame(FILE* destFile, float duration, float &start, float &gap) {

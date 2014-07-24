@@ -88,8 +88,8 @@ TEST(Image, CompressAndDecompress) {
     Image img2("test/res/compress-test.zim");
     
     remove("test/res/compress-test.zim");
-    /*
+    
     EXPECT_EQ(img.getWidth(), img2.getWidth());
     EXPECT_EQ(img.getHeight(), img2.getHeight());
-    EXPECT_EQ(img.getData().data[5], img2.getData().data[5]);*/
+    EXPECT_EQ(img.getData().data[5], img2.getData().data[5]);
 }

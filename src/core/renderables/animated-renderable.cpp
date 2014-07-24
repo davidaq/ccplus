@@ -34,7 +34,9 @@ Image AnimatedRenderable::getFrame(float time) const {
     while(time > getDuration())
         time -= getDuration();
     int f = getFrameNumber(time);
-    if(rendered.count(f))
+    if(rendered.count(f)) {
+        PASS
         return Image(getFramePath(f));
+    }
     return Image();
 }
