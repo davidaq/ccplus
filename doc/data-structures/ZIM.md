@@ -11,7 +11,7 @@ We tried compressing raw bgra data with zip which gave a working but not optimiz
 solution, and that's why the format is called zim (zipped image).
 Now the format is basically a concatenation of jpg and zipped alpha channel.
 
-This format is only for tempory storage, not for comunicating between devices and
+This format is only for temporary storage, not for comunicating between devices and
 thus will not garantee portability between different platforms.
 
 File binary structure
