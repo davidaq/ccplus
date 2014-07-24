@@ -23,6 +23,18 @@ void VideoRenderable::renderPart(float start, float duration) {
     float gap = -1;
     float pos = -1;
     int lastFrame = -1;
+    auto makeup_frames = [&](int f, int last_f, auto decoder) {
+        if (last_f == 0 || f - last_f <= 1) return;
+        Image lost = decoder->getDecodedImage();
+        for (int j = 1; j + lastFrame < f; j++) {
+            int insf = j + lastFrame;
+            if(!rendered.count(insf)) {
+                std::string fp = getFramePath(insf);
+                lost.write(fp);
+                rendered.insert(insf);
+            }
+        }
+    };
     while((pos = decoder->decodeImage()) + 0.001 > 0) {
         if(gap < 0.001)
             gap = (pos - start) / 3;
@@ -53,6 +65,10 @@ void VideoRenderable::renderPart(float start, float duration) {
             break;
         }
     }
+
+    // Make up some missed frame :
+    // Used while rendering low fps video
+    makeup_frames(getFrameNumber(start + duration), lastFrame, decoder);
 }
 
 float VideoRenderable::getDuration() const {

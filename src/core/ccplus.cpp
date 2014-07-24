@@ -66,30 +66,4 @@ void CCPlus::go(
     void* ctx = initContext(tmlpath.c_str(), storagePath.c_str(), fps);
     renderPart(ctx, start, length);
     encodeVideo(ctx, start, length);
-    
-   // CCPlus::Context* ctx = new CCPlus::Context(storagePath, fps);   
-   // CCPlus::TMLReader* reader = new CCPlus::TMLReader(ctx);
-   // ctx->retain(reader);
-
-   // CCPlus::Composition* mainComp = reader->read(tmlpath);
-   // ctx->retain(mainComp);
-
-   // // TODO: support multi-thread rendering
-   // std::vector<CCPlus::CompositionDependency> deps = mainComp->fullOrderedDependency(start, length); 
-   // for (auto& dep : deps) {
-   //     dep.renderable->render(dep.from, dep.to);
-   // }
-
-   // float inter = 1.0 / fps;
-   // for (float i = 0.0; i < length; i += inter) {
-   //     float t = start + i;
-   //     Image img = mainComp->getFrame(t);
-   //     img.write(generatePath(storagePath, "test" + std::to_string(i) + ".jpg"));
-   //     // getFrame(t) 
-   //     // Bluh bluh
-   // }
-
-   // //TODO 
-   // // Remix audio and image seqs
-   // delete ctx;
 }

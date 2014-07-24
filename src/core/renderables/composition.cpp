@@ -105,7 +105,8 @@ void Composition::putLayer(const Layer& layer) {
 void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
-    for (float t = start; t <= start + duration; t += inter) {
+    // Plus an inter to make sure no lost frame
+    for (float t = start; t <= start + duration + inter; t += inter) {
         int f = getFrameNumber(t);
         if(rendered.count(f))
             continue;
@@ -114,7 +115,9 @@ void Composition::renderPart(float start, float duration) {
         Image ret = Image::emptyImage(width, height);
         for (Layer& l : layers) {
             Image img = l.applyFiltersToFrame(t);
-            ret.overlayImage(img);
+            // In some cases it will be empty
+            if (!img.getData().empty())
+                ret.overlayImage(img);
         }
         // Save ret to storagePath / name_tmp
         ret.write(fp);
