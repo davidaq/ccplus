@@ -2,6 +2,18 @@
 #include "ccplus.hpp"
 #include "utils.hpp"
 #define PASS printf("passed line %d\n", __LINE__);
+
+//using namespace CCPlus;
+
+
+
+void* initContext(const char* storagePath, int fps) {
+    //Context* ctx = new Context(storagePath, fps);
+    //TMLReader reader(ctx);
+    //reader.read(tmlPath);
+    //return (void*) ctx;
+}
+
 void CCPlus::go(
         const std::string& tmlpath,
         const std::string& storagePath, 
@@ -19,6 +31,7 @@ void CCPlus::go(
 
     // TODO: support multi-thread rendering
     std::vector<CCPlus::CompositionDependency> deps = mainComp->fullOrderedDependency(start, length); 
+    printf("deps : %d\n", deps.size());
     PASS
     for (auto& dep : deps)
         dep.renderable->render(dep.from, dep.to);
