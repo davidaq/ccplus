@@ -8,10 +8,9 @@ using namespace CCPlus;
 ImageRenderable::ImageRenderable(Context* context, const std::string& uri) :
     Renderable(context) 
 {
-    std::string path = uri;
+    path = uri;
     if (stringStartsWith(path, "file://")) 
         path = uri.substr(7);
-    image = Image(path);
 }
 
 int ImageRenderable::getWidth() const {
@@ -27,7 +26,9 @@ float ImageRenderable::getDuration() const {
 }
 
 void ImageRenderable::render(float start, float duration) {
-    // Nothing shall be done
+    if (!loaded)
+        image = Image(path);
+    loaded = true;
 }
 
 Image ImageRenderable::getFrame(float time) const {

@@ -22,15 +22,28 @@ void VideoRenderable::renderPart(float start, float duration) {
     decoder->seekTo(start);
     float gap = -1;
     float pos = -1;
+    int lastFrame = -1;
     while((pos = decoder->decodeImage()) + 0.001 > 0) {
         if(gap < 0.001)
             gap = (pos - start) / 3;
         int f = getFrameNumber(pos);
         std::string fp = getFramePath(f);
+
+        // Make up lost frames
+        if (lastFrame != -1 && f - lastFrame > 1) {
+            Image lost(getFramePath(lastFrame));
+            for (int j = 1; j + lastFrame < f; j++) {
+                std::string fp = getFramePath(j + lastFrame);
+                lost.write(fp);
+            }
+        }
         
-        Image ret = decoder->getDecodedImage();
-        ret.write(fp);
-        rendered.insert(f);
+        if (!rendered.count(f)) {
+            Image ret = decoder->getDecodedImage();
+            ret.write(fp);
+            rendered.insert(f);
+            lastFrame = f;
+        }
 
         if(pos - start + gap > duration) {
             break;

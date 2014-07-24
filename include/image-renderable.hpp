@@ -19,6 +19,8 @@ public:
     int getHeight() const;
 
 protected:
+    bool loaded = false;
+    std::string path;
     Image image;
 };
 
