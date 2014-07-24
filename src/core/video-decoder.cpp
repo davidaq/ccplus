@@ -19,9 +19,6 @@ struct DecodeContext {
     AVFormatContext *fmt_ctx = NULL;
     AVCodecContext *video_dec_ctx = NULL, *audio_dec_ctx = NULL;
     AVStream *video_stream = NULL, *audio_stream = NULL;
-    const char *src_filename = NULL;
-    const char *video_dst_filename = NULL;
-    const char *audio_dst_filename = NULL;
     
     int video_stream_idx = -1, audio_stream_idx = -1;
     AVFrame *frame = NULL;
@@ -86,6 +83,9 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 
 float VideoDecoder::decodeImage() {
     haveDecodedImage = false;
+    if(decodedImage)
+        delete decodedImage;
+    decodedImage = 0;
     float retTime = -1;
     while(!haveDecodedImage) {
         if(!readNextFrameIfNeeded())
@@ -121,9 +121,10 @@ float VideoDecoder::decodeImage() {
 }
 
 Image VideoDecoder::getDecodedImage() {
-    if(!haveDecodedImage)
+    if(!haveDecodedImage) {
+        PASS
         return Image();
-    else {
+    } else if(!decodedImage) {
         if(!CTX.swsContext) {
             CTX.swsContext = sws_getContext(CTX.info.width, CTX.info.height, 
                                             CTX.video_dec_ctx->pix_fmt,
@@ -133,7 +134,8 @@ Image VideoDecoder::getDecodedImage() {
             CTX.imagebuff.data[0] = (uint8_t*)malloc(CTX.imagebuff.linesize[0] * CTX.info.height);
         }
         sws_scale(CTX.swsContext, CTX.frame->data, CTX.frame->linesize, 0, CTX.info.height, CTX.imagebuff.data, CTX.imagebuff.linesize);
-        cv::Mat data = cv::Mat(CTX.info.height, CTX.info.width, CV_8UC4, CTX.imagebuff.data[0]);
+        cv::Mat data = cv::Mat(CTX.info.height, CTX.info.width, CV_8UC4);
+        memcpy(data.data, CTX.imagebuff.data[0], CTX.imagebuff.linesize[0] * CTX.info.height);
         if(CTX.rotate) {
             switch(CTX.rotate) {
             case 180:
@@ -148,8 +150,9 @@ Image VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        return Image(data);
+        decodedImage = new Image(data);
     }
+    return *decodedImage;
 }
 
 int VideoDecoder::decodeAudioFrame(FILE* destFile, float duration, float &start, float &gap) {

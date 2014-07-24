@@ -44,6 +44,7 @@ private:
     float cursorTime = 0;
     void* decodeContext = 0;
     bool haveDecodedImage = false;
+    Image* decodedImage = 0;
     
     void initContext();
     void releaseContext();

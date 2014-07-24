@@ -84,4 +84,6 @@ TEST(VideoDecoder, VideoRenderable) {
     Context ctx("tmp", 18);
     VideoRenderable v(&ctx, "test/res/test.mp4");
     //v.render(0, 10);
+    Image img("test/res/test.zim");
+    img.write("tmp/zim2png.png");
 }

@@ -47,7 +47,6 @@ Image::Image(const std::string& filepath) {
         throw std::invalid_argument("Can't take image with less than 3 channels");
     }
 
-    // TODO take EXIF into account
     if (stringEndsWith(toLower(filepath), ".jpg")) {
         try {
             int degree = getImageRotation(filepath);

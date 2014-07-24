@@ -31,10 +31,14 @@ void VideoRenderable::renderPart(float start, float duration) {
 
         // Make up lost frames
         if (lastFrame != -1 && f - lastFrame > 1) {
-            Image lost(getFramePath(lastFrame));
+            Image lost = decoder->getDecodedImage();
             for (int j = 1; j + lastFrame < f; j++) {
-                std::string fp = getFramePath(j + lastFrame);
-                lost.write(fp);
+                int insf = j + lastFrame;
+                if(!rendered.count(insf)) {
+                    std::string fp = getFramePath(insf);
+                    lost.write(fp);
+                    rendered.insert(insf);
+                }
             }
         }
         
