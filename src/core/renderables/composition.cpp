@@ -115,7 +115,9 @@ void Composition::renderPart(float start, float duration) {
         Image ret = Image::emptyImage(width, height);
         for (Layer& l : layers) {
             Image img = l.applyFiltersToFrame(t);
-            ret.overlayImage(img);
+            // In some cases it will be empty
+            if (!img.getData().empty())
+                ret.overlayImage(img);
         }
         // Save ret to storagePath / name_tmp
         ret.write(fp);

@@ -34,16 +34,16 @@ TEST(CompositionDependencyTest, FullDependency) {
     std::string uri = "file://test/res/test.mp4";
     VideoRenderable* render = new VideoRenderable(ctx, uri);
     ctx->putRenderable(uri, render);
-    Layer l(ctx, uri, 0, 10, 0, 10, 500, 500);
-    Composition* mainComp = new Composition(ctx, "main", 1, 500, 500);
+    Layer l(ctx, uri, 0, 1, 0, 1, 500, 500);
+    Composition* mainComp = new Composition(ctx, "main", 100, 500, 500);
 
     mainComp->putLayer(l);
 
     std::vector<CompositionDependency> deps;
-    ASSERT_NO_THROW(deps = mainComp->fullOrderedDependency(0, 1));
+    ASSERT_NO_THROW(deps = mainComp->fullOrderedDependency(0, 10));
     EXPECT_EQ(2, deps.size());
     EXPECT_EQ(0, deps[0].from);
-    EXPECT_EQ(10, deps[0].to);
+    EXPECT_EQ(1, deps[0].to);
 
     delete ctx;
 }

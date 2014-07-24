@@ -18,6 +18,9 @@ clean-all: clean
 	-rm -rf .deps
 	-rm -rf dependency
 
+clean-zim: 
+	-rm -rf tmp/*.zim
+
 .dependency:
 	./load-dependency/load
 
