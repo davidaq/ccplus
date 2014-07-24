@@ -28,3 +28,7 @@ test: build/test/Makefile
 	-rm -rf tmp/
 	mkdir tmp/
 	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
+
+todo:
+	@grep TODO `find src -type f -name *.cpp -o -name *.hpp`
+	@grep TODO `find include -type f -name *.cpp -o -name *.hpp`
