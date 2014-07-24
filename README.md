@@ -1,13 +1,11 @@
 CCPlus
 ======
-This is a video render/preview engine targeting to support android, iOS and *nix systems.
 
-The build results should be *.so dynamic libraries along with JNI classes for android, *.a and header files for iOS and executables for *nix.
+This is a video render/preview engine targeting to support android, iOS, Windows and
+Linux/Unix systems (including OS X, which is actually the developing environment).
 
-For more detailed documentation, visit the doc directory
+For more detailed documentation, visit the doc directory.
 
-## Requirements
-* Boost 1.55.0
+**This is a project mostly devleoped by two: Ming(mjzshd) and DavidAQ(davidaq)**
 
-## Lovely
-Heck
+
