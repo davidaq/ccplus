@@ -1,10 +1,11 @@
 #include "gtest/gtest.h" 
 
 #include "global.hpp"
+#include "video-renderable.hpp"
 
 using namespace CCPlus;
 
-TEST(CompositionDependencyTest, DirectDependency) {
+TEST(CompositionDependencyTest, DirectDependencyTest1) {
     Context ctx("", 18);
     TMLReader reader(&ctx);
     Composition* mainComp = reader.read("test/res/test1.tml");
@@ -17,5 +18,32 @@ TEST(CompositionDependencyTest, DirectDependency) {
     }
 }
 
+TEST(CompositionDependencyTest, DirectDependencyTest2) {
+    Context* ctx = new Context("tmp", 18);
+    std::string uri = "file://test/res/test.mp4";
+    VideoRenderable* render = new VideoRenderable(ctx, uri);
+    ctx->putRenderable(uri, render);
+    Layer l(ctx, uri, 0, 10, 0, 10, 500, 500);
+    Composition* mainComp = new Composition(ctx, "main", 1, 500, 500);
+    mainComp->putLayer(l);
+    EXPECT_EQ(1, mainComp->directDependency(0, 1).size());
+}
+
 TEST(CompositionDependencyTest, FullDependency) {
+    Context* ctx = new Context("tmp", 18);
+    std::string uri = "file://test/res/test.mp4";
+    VideoRenderable* render = new VideoRenderable(ctx, uri);
+    ctx->putRenderable(uri, render);
+    Layer l(ctx, uri, 0, 10, 0, 10, 500, 500);
+    Composition* mainComp = new Composition(ctx, "main", 1, 500, 500);
+
+    mainComp->putLayer(l);
+
+    std::vector<CompositionDependency> deps;
+    ASSERT_NO_THROW(deps = mainComp->fullOrderedDependency(0, 1));
+    EXPECT_EQ(2, deps.size());
+    EXPECT_EQ(0, deps[0].from);
+    EXPECT_EQ(10, deps[0].to);
+
+    delete ctx;
 }

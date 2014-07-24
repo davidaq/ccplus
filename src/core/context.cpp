@@ -22,6 +22,7 @@ Renderable* Context::getRenderable(std::string uri) {
 }
 
 void Context::putRenderable(std::string uri, Renderable* renderable) {
+    this->retain(renderable);
     renderables[uri] = renderable;
 }
 
