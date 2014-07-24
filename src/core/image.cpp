@@ -19,20 +19,32 @@ Image::Image(const std::string& filepath) {
             throw std::ios_base::failure("File too small to be a image");
         }       
         fseek(inFile, 0, SEEK_SET);       
-        unsigned char* compressedBytes = new unsigned char[len];
-        fread(compressedBytes, sizeof(char), len, inFile);       
+        unsigned char* fileContent = new unsigned char[len];
+        fread(fileContent, sizeof(char), len, inFile);       
         fclose(inFile);
-        unsigned short width = *((unsigned short*)compressedBytes);
-        unsigned short height = *((unsigned short*)(compressedBytes + sizeof(unsigned short))); 
-        unsigned char* bgraBytes = new unsigned char[width * height * 4];       
-        unsigned long destLen = width * height * 4;
-        uncompress(bgraBytes, &destLen, compressedBytes + sizeof(unsigned short) * 2, len - sizeof(unsigned short) * 2);
-        if(destLen != width * height * 4) {
+        unsigned char* ptr = fileContent;
+#define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
+        unsigned short width = NEXT(unsigned short);
+        unsigned short height = NEXT(unsigned short); 
+        
+        unsigned long jpgLen = NEXT(unsigned long);
+        vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
+        data = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
+        to4Channels();
+        ptr += jpgLen;
+
+        unsigned alphaLen = NEXT(unsigned long);
+        unsigned long destLen = width * height;
+        unsigned char* alphaBytes = new unsigned char[destLen];       
+        uncompress(alphaBytes, &destLen, ptr, alphaLen);
+        if(destLen != width * height) {
             throw std::ios_base::failure("Unexpected uncompressed length");       
         }
-        data = cv::Mat(height, width, CV_8UC4, bgraBytes);       
-        delete[] bgraBytes;
-        delete[] compressedBytes;
+        for(int i = 3, j =0; j < destLen; i += 4, j++) {
+            data.data[i] = alphaBytes[j];
+        }
+        delete[] alphaBytes;
+        delete[] fileContent;
     } else {
         // read from file system
         data = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
@@ -90,21 +102,38 @@ void Image::to4Channels() {
     data = newdata;
 }
 
-void Image::write(const std::string& file) {
+void Image::write(const std::string& file, int quality) {
     if(stringEndsWith(file, ".zim")) {   
         FILE* outFile = fopen(file.c_str(), "wb");       
         if(!outFile)
             throw std::ios_base::failure("File path [" + file + "] unwritable");   
         unsigned short metric; 
+        // write size first
         metric = (unsigned short)getWidth();
         fwrite(&metric, sizeof(metric), 1, outFile);
         metric = (unsigned short)getHeight();
         fwrite(&metric, sizeof(metric), 1, outFile);
-        unsigned char* compressedBytes = new unsigned char[data.cols * data.rows * 4];
-        unsigned long len = data.cols * data.rows * 4;       
-        compress(compressedBytes, &len, data.data, data.cols * data.rows * 4);
+
+        // write jpeg encoded color part
+        vector<unsigned char> buff;
+        imencode(".jpg", data, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, 80});
+        unsigned long jpgLen = buff.size();
+        fwrite(&jpgLen, sizeof(long), 1, outFile);
+        fwrite(&buff[0], sizeof(char), jpgLen, outFile);
+        buff.clear();
+
+        // write zip compressed alpha channel
+        unsigned long len = data.cols * data.rows;
+        unsigned char* uncompressedBytes = new unsigned char[len];
+        unsigned char* compressedBytes = new unsigned char[len];
+        for(int i = 3, j = 0, c = len * 4; i < c; i += 4, j++) {
+            uncompressedBytes[j] = data.data[i];
+        }
+        compress(compressedBytes, &len, uncompressedBytes, len);
+        fwrite(&len, sizeof(long), 1, outFile);
         fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
         fclose(outFile);       
+        delete[] uncompressedBytes;
         delete[] compressedBytes;
     } else {
         cv::imwrite(file, data);

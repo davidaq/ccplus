@@ -36,7 +36,7 @@ void VideoRenderable::renderPart(float start, float duration) {
                 int insf = j + lastFrame;
                 if(!rendered.count(insf)) {
                     std::string fp = getFramePath(insf);
-                    lost.write(fp);
+                    lost.write(fp, 75);
                     rendered.insert(insf);
                 }
             }
@@ -44,7 +44,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         
         if (!rendered.count(f)) {
             Image ret = decoder->getDecodedImage();
-            ret.write(fp);
+            ret.write(fp, 75);
             rendered.insert(f);
             lastFrame = f;
         }

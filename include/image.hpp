@@ -17,7 +17,7 @@ public:
 
     static Image emptyImage(int, int);
     
-    void write(const std::string&);
+    void write(const std::string&, int quality=90);
     
     int getWidth() const;
     int getHeight() const;

@@ -82,16 +82,14 @@ TEST(Image, ImageRotateTest) {
 }
 
 TEST(Image, CompressAndDecompress) {
-    Image img("test/res/test.png");
+    Image img("test/res/test_alpha.png");
     
-    img.write("test/res/compress-test.zim");
-    Image img2("test/res/compress-test.zim");
-    
-    remove("test/res/compress-test.zim");
+    img.write("tmp/compress-test.zim");
+    Image img2("tmp/compress-test.zim");
+    img2.write("tmp/decompress-test.png");
     
     EXPECT_EQ(img.getWidth(), img2.getWidth());
     EXPECT_EQ(img.getHeight(), img2.getHeight());
-    EXPECT_EQ(img.getData().data[5], img2.getData().data[5]);
 }
 
 #include "video-decoder.hpp"
