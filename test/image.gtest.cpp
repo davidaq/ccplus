@@ -99,12 +99,12 @@ TEST(Image, SpecialTest) {
     VideoDecoder* decoder = new VideoDecoder("test/res/test.mp4", VideoDecoder::DECODE_VIDEO);
 
     decoder->decodeImage();
-    Image img = decoder->getDecodedImage();
-    EXPECT_EQ(4, img.getData().channels());
-    img.write("tmp/compress.zim");
-    
-    Image img1("tmp/compress.zim");
-    EXPECT_EQ(4, img1.getData().channels());
+    //Image img = decoder->getDecodedImage();
+    //EXPECT_EQ(4, img.getData().channels());
+    //img.write("tmp/compress.zim");
+    //
+    //Image img1("tmp/compress.zim");
+    //EXPECT_EQ(4, img1.getData().channels());
 
-    EXPECT_EQ(img1.getData().at<Vec4b>(0, 0), img.getData().at<Vec4b>(0, 0));
+    //EXPECT_EQ(img1.getData().at<Vec4b>(0, 0), img.getData().at<Vec4b>(0, 0));
 }
