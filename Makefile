@@ -26,4 +26,5 @@ build/test/Makefile: .dependency
 
 test: build/test/Makefile
 	-rm -rf tmp/
+	mkdir tmp/
 	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
