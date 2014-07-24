@@ -57,3 +57,5 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "layer.hpp"
 #include "image.hpp"
 #include "filter.hpp"
+
+#define PASS printf("passed line %d in %s\n", __LINE__, __FILE__);

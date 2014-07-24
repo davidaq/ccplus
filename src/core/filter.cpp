@@ -8,7 +8,8 @@ std::map<std::string, CCPLUS_FILTER_FUNC> *filterMap = 0;
 Filter::Filter(const std::string& name) {
     if(!filterMap || !filterMap->count(name))
         func = 0;
-    func = (*filterMap)[name];
+    else
+        func = (*filterMap)[name];
 }
 
 void Filter::apply(Image& image, const std::vector<float>& parameters, int width, int height) {

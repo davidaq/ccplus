@@ -98,9 +98,8 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 Image Layer::applyFiltersToFrame(float time) {
-    Image img = renderObject->getFrame(time);
-    for (auto& kv : properties) {
+    Image img = this->getRenderObject()->getFrame(time);
+    for (auto& kv : properties) 
         Filter(kv.first).apply(img, interpolate(kv.first, time), width, height);
-    }
     return img;
 }

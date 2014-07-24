@@ -109,16 +109,15 @@ CCPLUS_FILTER(transform) {
 
     for (int i = 0; i < height; i++)
         for (int j = 0; j < width; j++) {
-            Mat pos = trans * (Mat_<double>(3, 1) << j , i, 1);
+            double z = trans.at<double>(2, 0) * j + trans.at<double>(2, 1) * i + trans.at<double>(2, 2);
+            double x = trans.at<double>(0, 0) * j + trans.at<double>(0, 1) * i + trans.at<double>(0, 2) / z;
+            double y = trans.at<double>(1, 0) * j + trans.at<double>(1, 1) * i + trans.at<double>(1, 2) / z;
 
             // Nomalize
-            double x = pos.at<double>(0, 0) / pos.at<double>(2, 0);
-            double y = pos.at<double>(1, 0) / pos.at<double>(2, 0);
             if (y < (double)top_bound  || y >= (double)down_bound || 
                 x < (double)left_bound || x >= (double)right_bound)
                 continue;
             ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x - left_bound, y - top_bound);
-            //ret.at<Vec4b>(i, j) = input.at<Vec4b>(iy - top_bound, ix - left_bound);
         }
     return ret;
 }

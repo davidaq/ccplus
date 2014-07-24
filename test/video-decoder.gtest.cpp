@@ -1,6 +1,7 @@
 #include "gtest/gtest.h" 
 
 #include "video-decoder.hpp"
+#include "video-renderable.hpp"
 #include "global.hpp"
 
 using namespace CCPlus;
@@ -77,4 +78,10 @@ TEST(VideoDecoder, DecodeAudioPartial) {
     VideoDecoder decoder("test/res/test.mp4");
     decoder.seekTo(3);
     decoder.decodeAudio("tmp/p.pcm", 2);
+}
+
+TEST(VideoDecoder, VideoRenderable) {
+    Context ctx("tmp", 18);
+    VideoRenderable v(&ctx, "test/res/test.mp4");
+    v.render(0, 10);
 }
