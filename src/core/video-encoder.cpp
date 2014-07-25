@@ -10,8 +10,8 @@ extern "C" {
     #include <libswresample/swresample.h>
 }
 
-#include "video-encoder.hpp"
 #include "global.hpp"
+#include "video-encoder.hpp"
 
 using namespace CCPlus;
 
