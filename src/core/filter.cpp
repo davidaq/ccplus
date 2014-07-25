@@ -13,7 +13,7 @@ Filter::Filter(const std::string& name) {
 }
 
 void Filter::apply(Image& image, const std::vector<float>& parameters, int width, int height) {
-    if(func) {
+    if(func && !image.getData().empty()) {
         image.setData(func(image.getData(), parameters, width, height));
     }
 }
