@@ -1,10 +1,28 @@
 #pragma once
 #include <string>
+#include <opencv2/opencv.hpp>
 
 namespace CCPlus {
     class VideoEncoder;
-    class Image;
-    struct DecodeContext;
+    struct EncodeContext;
+
+    class Frame {
+    public:
+        int getWidth() const {
+            return 6;
+        }
+        int getHeight() const {
+            return 6;
+        }
+        cv::Mat getImage() {
+            return cv::Mat();
+        }
+        cv::Mat getAudio() {
+            return cv::Mat(std::vector<int16_t>());
+        }
+        
+    };
+
 }
 
 class CCPlus::VideoEncoder {
@@ -12,11 +30,8 @@ public:
     VideoEncoder(const std::string& outputPath, int fps);
     ~VideoEncoder();
 
-    // @ must be set before appending images
-    void setAudio(const char* rawAudioPath);
-
     // @ append a frame
-    void appendImage(const CCPlus::Image& frame);
+    void appendFrame(const CCPlus::Frame& frame);
 
     // @ finish the encoding, the object should not be used after this
     // will be called on destruct
@@ -28,7 +43,7 @@ private:
     AVStream* initStream(AVCodec*&, enum AVCodecID);
 #endif
 
-    DecodeContext *ctx = 0;
-    int width = 0, height = 0, fps = 0;
+    EncodeContext *ctx = 0;
     std::string outputPath;
+    int width = 0, height = 0, fps = 0;
 };
