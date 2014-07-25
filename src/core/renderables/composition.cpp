@@ -113,12 +113,11 @@ void Composition::renderPart(float start, float duration) {
             continue;
         std::string fp = getFramePath(f);
 
-        Image ret = Image::emptyImage(width, height);
+        Frame ret = Frame::emptyFrame(width, height);
         for (Layer& l : layers) {
-            Image img = l.applyFiltersToFrame(t);
+            Frame frame = l.applyFiltersToFrame(t);
             // In some cases it will be empty
-            if (!img.getData().empty())
-                ret.overlayImage(img);
+            ret.mergeFrame(frame);
         }
         // Save ret to storagePath / name_tmp
         ret.write(fp);

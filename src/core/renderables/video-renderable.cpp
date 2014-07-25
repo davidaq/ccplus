@@ -26,7 +26,7 @@ void VideoRenderable::renderPart(float start, float duration) {
     auto makeup_frames = [&](int f, int last_f, auto decoder) {
         if (last_f == -1 || f - last_f <= 1) return;
         //Image lost = decoder->getDecodedImage();
-        Image lost = Image(getFramePath(last_f));
+        Frame lost = Frame(getFramePath(last_f));
         for (int j = 1; j + last_f < f; j++) {
             int insf = j + last_f;
             if(!rendered.count(insf)) {
@@ -46,7 +46,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         makeup_frames(f, lastFrame, decoder);
         
         if (!rendered.count(f)) {
-            Image ret = decoder->getDecodedImage();
+            Frame ret = decoder->getDecodedImage();
             ret.write(fp, 75);
             rendered.insert(f);
             lastFrame = f;

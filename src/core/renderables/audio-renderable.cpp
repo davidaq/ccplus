@@ -18,9 +18,9 @@ void AudioRenderable::renderPart(float start, float duration) {
     decoder->decodeAudio(this->getPCMPath(), duration);
 }
 
-Image AudioRenderable::getFrame(float time) const {
+Frame AudioRenderable::getFrame(float time) const {
     // Audio is invisible~
-    return Image();
+    return Frame();
 }
 
 int AudioRenderable::getWidth() const {

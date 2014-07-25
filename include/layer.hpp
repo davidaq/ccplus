@@ -33,7 +33,7 @@ public:
     float getLast() const;
 
     // Assume the renderable stuff is rendered
-    Image applyFiltersToFrame(float); 
+    Frame applyFiltersToFrame(float); 
 
     void setProperties(const std::map<std::string, Property>&);
     std::map<std::string, Property> getProperties() const;

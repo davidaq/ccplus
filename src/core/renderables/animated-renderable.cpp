@@ -30,12 +30,12 @@ void AnimatedRenderable::render(float start, float duration) {
     }
 }
 
-Image AnimatedRenderable::getFrame(float time) const {
+Frame AnimatedRenderable::getFrame(float time) const {
     while(time > getDuration())
         time -= getDuration();
     int f = getFrameNumber(time);
     if(rendered.count(f)) {
-        return Image(getFramePath(f));
+        return Frame(getFramePath(f));
     }
-    return Image();
+    return Frame();
 }

@@ -13,6 +13,8 @@ CCPLUS_FILTER(transform) {
     float scale_col = parameters[5];
     float angle = parameters[6];
 
+    Mat& input = frame.getImage();
+
     // Put original image into the large layer image 
     Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     angle = angle * M_PI / 180.0;
@@ -119,5 +121,8 @@ CCPLUS_FILTER(transform) {
                 continue;
             ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x - left_bound, y - top_bound);
         }
-    return ret;
+
+
+    // Update frame
+    frame.setImage(ret);
 }

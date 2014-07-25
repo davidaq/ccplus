@@ -1,6 +1,6 @@
 #pragma once
 #include "object.hpp"
-#include "image.hpp"
+#include "frame.hpp"
 
 namespace CCPlus {
     class Renderable;
@@ -12,7 +12,7 @@ public:
     Renderable(CCPlus::Context*);
     
     virtual void render(float start, float duration) = 0;
-    virtual Image getFrame(float time) const = 0;
+    virtual Frame getFrame(float time) const = 0;
     
     virtual float getDuration() const = 0;
     virtual int getWidth() const = 0;

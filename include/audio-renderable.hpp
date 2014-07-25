@@ -14,7 +14,7 @@ public:
     ~AudioRenderable();
 
     std::string getPCMPath() const;
-    Image getFrame(float time) const;
+    Frame getFrame(float time) const;
     
     int getWidth() const;
     int getHeight() const;

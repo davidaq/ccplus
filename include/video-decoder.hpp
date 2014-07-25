@@ -1,6 +1,6 @@
 #pragma once
 
-#include "image.hpp"
+#include "frame.hpp"
 
 namespace CCPlus {
     class VideoDecoder;
@@ -31,7 +31,7 @@ public:
     float decodeImage();
     
     // @return the frame image in the previous successful decode from calling decodeImage()
-    CCPlus::Image getDecodedImage();
+    CCPlus::Frame getDecodedImage();
     
     // Decode audio stream into PCM raw data from current position
     // Can be used for both video & audio files
@@ -44,7 +44,7 @@ private:
     float cursorTime = 0;
     void* decodeContext = 0;
     bool haveDecodedImage = false;
-    Image* decodedImage = 0;
+    Frame* decodedImage = 0;
     
     void initContext();
     void releaseContext();

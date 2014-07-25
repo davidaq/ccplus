@@ -12,7 +12,7 @@ public:
     ImageRenderable(CCPlus::Context* context, const std::string& uri);
 
     void render(float start, float duration);
-    Image getFrame(float time) const;
+    Frame getFrame(float time) const;
     
     float getDuration() const;
     int getWidth() const;
@@ -21,6 +21,6 @@ public:
 protected:
     bool loaded = false;
     std::string path;
-    Image image;
+    Frame image;
 };
 
