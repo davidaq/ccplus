@@ -27,10 +27,13 @@ clean-zim:
 build/test/Makefile: .dependency
 	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
 
-test: build/test/Makefile
+testbuild: build/test/Makefile
 	-rm -rf tmp/
 	mkdir tmp/
-	BUILDTYPE=Debug make -C build/test test -j4 && ./build/test/out/Debug/test 
+	BUILDTYPE=Debug make -C build/test test -j4
+
+test: testbuild
+	./test.sh '*'
 
 todo:
 	@grep TODO `find src -type f -name *.cpp -o -name *.hpp`
