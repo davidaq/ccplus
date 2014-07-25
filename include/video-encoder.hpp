@@ -1,14 +1,15 @@
 #pragma once
+#include <string>
 
 namespace CCPlus {
     class VideoEncoder;
     class Image;
-    class DecodeContext;
+    struct DecodeContext;
 }
 
 class CCPlus::VideoEncoder {
 public:
-    VideoEncoder(const char* outputPath, int fps);
+    VideoEncoder(const std::string& outputPath, int fps);
     ~VideoEncoder();
 
     // @ must be set before appending images
@@ -23,5 +24,11 @@ public:
 private:
     void initContext();
     void releaseContext();
-    DecodeContext *decodeContext = 0;
+#ifdef __FFMPEG__
+    AVStream* initStream(AVCodec*&, enum AVCodecID);
+#endif
+
+    DecodeContext *ctx = 0;
+    int width = 0, height = 0, fps = 0;
+    std::string outputPath;
 };

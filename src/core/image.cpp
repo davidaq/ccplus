@@ -7,6 +7,9 @@
 using namespace CCPlus;
 using namespace cv;
 
+typedef uint32_t ulong;
+typedef uint16_t ushort;
+
 Image::Image(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
         FILE* inFile = fopen(filepath.c_str(), "rb");       
@@ -24,16 +27,16 @@ Image::Image(const std::string& filepath) {
         fclose(inFile);
         unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
-        unsigned short width = NEXT(unsigned short);
-        unsigned short height = NEXT(unsigned short); 
+        ushort width = NEXT(ushort);
+        ushort height = NEXT(ushort); 
         
-        unsigned long jpgLen = NEXT(unsigned long);
+        ulong jpgLen = NEXT(ulong);
         vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
         data = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
         to4Channels();
         ptr += jpgLen;
 
-        unsigned alphaLen = NEXT(unsigned long);
+        ulong alphaLen = NEXT(ulong);
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
         uncompress(alphaBytes, &destLen, ptr, alphaLen);
@@ -107,18 +110,18 @@ void Image::write(const std::string& file, int quality) {
         FILE* outFile = fopen(file.c_str(), "wb");       
         if(!outFile)
             throw std::ios_base::failure("File path [" + file + "] unwritable");   
-        unsigned short metric; 
+        ushort metric; 
         // write size first
-        metric = (unsigned short)getWidth();
+        metric = (ushort)getWidth();
         fwrite(&metric, sizeof(metric), 1, outFile);
-        metric = (unsigned short)getHeight();
+        metric = (ushort)getHeight();
         fwrite(&metric, sizeof(metric), 1, outFile);
 
         // write jpeg encoded color part
         vector<unsigned char> buff;
         imencode(".jpg", data, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, 80});
-        unsigned long jpgLen = buff.size();
-        fwrite(&jpgLen, sizeof(long), 1, outFile);
+        ulong jpgLen = buff.size();
+        fwrite(&jpgLen, sizeof(jpgLen), 1, outFile);
         fwrite(&buff[0], sizeof(char), jpgLen, outFile);
         buff.clear();
 
@@ -130,9 +133,10 @@ void Image::write(const std::string& file, int quality) {
             uncompressedBytes[j] = data.data[i];
         }
         compress(compressedBytes, &len, uncompressedBytes, len);
-        fwrite(&len, sizeof(long), 1, outFile);
+        ulong wlen = len;
+        fwrite(&wlen, sizeof(wlen), 1, outFile);
         fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
-        fclose(outFile);       
+        fclose(outFile);
         delete[] uncompressedBytes;
         delete[] compressedBytes;
     } else {
