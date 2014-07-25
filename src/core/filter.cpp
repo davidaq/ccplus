@@ -1,5 +1,6 @@
 #define CCPLUS_FILTER_SELF
 #include "filter.hpp"
+#include "frame.hpp"
 
 using namespace CCPlus;
 
@@ -12,9 +13,9 @@ Filter::Filter(const std::string& name) {
         func = (*filterMap)[name];
 }
 
-void Filter::apply(Image& image, const std::vector<float>& parameters, int width, int height) {
+void Filter::apply(Frame& frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
-        image.setData(func(image.getData(), parameters, width, height));
+        func(frame, parameters, width, height);
     }
 }
 

@@ -2,5 +2,4 @@
 
 CCPLUS_FILTER(Example) {
     printf("PASS!\n");
-    return input;
 }

@@ -120,10 +120,9 @@ float VideoDecoder::decodeImage() {
     return retTime;
 }
 
-Image VideoDecoder::getDecodedImage() {
+Frame VideoDecoder::getDecodedImage() {
     if(!haveDecodedImage) {
-        PASS
-        return Image();
+        return Frame();
     } else if(!decodedImage) {
         if(!CTX.swsContext) {
             CTX.swsContext = sws_getContext(CTX.info.width, CTX.info.height, 
@@ -150,7 +149,7 @@ Image VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        decodedImage = new Image(data);
+        decodedImage = new Frame(data);
     }
     return *decodedImage;
 }

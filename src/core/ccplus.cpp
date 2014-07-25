@@ -49,7 +49,7 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
     float inter = 1.0 / uCtx->ctx->getFPS();
     for (float i = 0.0; i < length; i += inter) {
         float t = start + i;
-        CCPlus::Image img = uCtx->mainComp->getFrame(t);
+        CCPlus::Frame img = uCtx->mainComp->getFrame(t);
         img.write(generatePath(uCtx->ctx->getStoragePath(), "test" + std::to_string(i) + ".jpg"));
         // getFrame(t) 
         // Bluh bluh

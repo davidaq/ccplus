@@ -46,13 +46,13 @@ TEST(VideoDecoder, DecodeFrameTime) {
 TEST(VideoDecoder, DecodeFrameImage) {
     VideoDecoder decoder("test/res/test.mp4");
     decoder.decodeImage();
-    Image img = decoder.getDecodedImage();
+    Frame img = decoder.getDecodedImage();
     
     EXPECT_EQ(img.getWidth(), 640);
     EXPECT_EQ(img.getHeight(), 360);
-    EXPECT_EQ(img.getData().data[0], 0xb5);
-    EXPECT_EQ(img.getData().data[1], 0xbc);
-    EXPECT_EQ(img.getData().data[2], 0xc2);
+    EXPECT_EQ(img.getImage().data[0], 0xb5);
+    EXPECT_EQ(img.getImage().data[1], 0xbc);
+    EXPECT_EQ(img.getImage().data[2], 0xc2);
 }
 
 TEST(VideoDecoder, Seek) {
@@ -64,7 +64,7 @@ TEST(VideoDecoder, Seek) {
 TEST(VideoDecoder, Rotate) {
     VideoDecoder decoder("test/res/test.mov");
     decoder.decodeImage();
-    Image img = decoder.getDecodedImage();
+    Frame img = decoder.getDecodedImage();
     EXPECT_EQ(img.getWidth(), 1080);
     EXPECT_EQ(img.getHeight(), 1920);
 }

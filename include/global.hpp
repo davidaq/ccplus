@@ -2,6 +2,8 @@
 
 // ccplus classes predifinitions
 namespace CCPlus {
+
+    const int AUDIO_SAMPLE_RATE = 24000; 
     
     class Context;
     
@@ -17,7 +19,7 @@ namespace CCPlus {
     
     class Object;
 
-    class Image;
+    class Frame;
 
     // TODO: other classes
 }
@@ -55,7 +57,7 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "tmlreader.hpp"
 #include "composition.hpp"
 #include "layer.hpp"
-#include "image.hpp"
+#include "frame.hpp"
 #include "filter.hpp"
 
 #define PASS printf("passed line %d in %s\n", __LINE__, __FILE__);

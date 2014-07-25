@@ -12,7 +12,7 @@ public:
     AnimatedRenderable(CCPlus::Context*);
 
     void render(float start, float duration);
-    Image getFrame(float time) const;
+    Frame getFrame(float time) const;
 
 protected:
     virtual void renderPart(float start, float duration) = 0;
