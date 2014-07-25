@@ -5,6 +5,8 @@ using namespace CCPlus;
 
 TEST(VideoEncoder,EncodeImageOnly) {
     VideoEncoder encoder("tmp/encodetest.mp4", 15);
-    encoder.appendFrame(Frame());
+    for(int i = 0; i < 50; i++)
+        encoder.appendFrame(Frame());
+    encoder.finish();
 }
 
