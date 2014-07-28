@@ -245,7 +245,6 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
 void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
     auto output = 
         [&destFile] (const void* buffer, size_t size, size_t count) {
-        std::cout << ftell(destFile) << std::endl;
         fwrite(buffer, size, count, destFile);    
     };
     decodeAudio(output, duration);
