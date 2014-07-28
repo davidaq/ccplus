@@ -51,6 +51,8 @@ void VideoEncoder::appendFrame(const Frame& frame) {
     }
     if(width != frame.getWidth() || height != frame.getHeight()) {
         fprintf(stderr, "Frames encoded into one video should have the same metrics\n");
+        fprintf(stderr, "\tExpected %dx%d, got %dx%d\n", width, height, frame.getWidth(), frame.getHeight());
+        fprintf(stderr, "\tFrame ignored.\n");
         return;
     }
     cv::Mat mat = frame.getImage();
