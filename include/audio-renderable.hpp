@@ -12,9 +12,6 @@ class CCPlus::AudioRenderable : public CCPlus::AnimatedRenderable {
 public:
     AudioRenderable(CCPlus::Context* ctx, const std::string& uri);
     ~AudioRenderable();
-
-    std::string getPCMPath() const;
-    Frame getFrame(float time) const;
     
     int getWidth() const;
     int getHeight() const;

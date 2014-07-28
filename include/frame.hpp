@@ -13,6 +13,7 @@ public:
     Frame(const std::string& filepath);
     Frame(const cv::Mat& _image, const cv::Mat& _audio);
     Frame(const cv::Mat&);
+    Frame(const std::vector<int16_t>&);
     Frame(int width, int height);
     Frame();
 
@@ -38,6 +39,7 @@ public:
     cv::Mat& getAudio();
     const cv::Mat& getAudio() const;
     void setAudio(const cv::Mat&);
+    void setAudio(const std::vector<int16_t>&);
     
 private:
     /**

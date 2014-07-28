@@ -14,13 +14,6 @@ AudioRenderable::~AudioRenderable() {
 }
 
 void AudioRenderable::renderPart(float start, float duration) {
-    decoder->seekTo(start);
-    decoder->decodeAudio(this->getPCMPath(), duration);
-}
-
-Frame AudioRenderable::getFrame(float time) const {
-    // Audio is invisible~
-    return Frame();
 }
 
 int AudioRenderable::getWidth() const {
@@ -29,9 +22,5 @@ int AudioRenderable::getWidth() const {
 
 int AudioRenderable::getHeight() const {
     return 0;
-}
-
-std::string AudioRenderable::getPCMPath() const {
-    return generatePath(context->getStoragePath(), uuid + ".pcm");
 }
 

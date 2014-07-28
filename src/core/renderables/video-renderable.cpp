@@ -11,7 +11,7 @@ VideoRenderable::VideoRenderable(Context* context, const std::string& uri) :
     std::string path = uri;
     if (stringStartsWith(path, "file://")) 
         path = path.substr(7);
-    decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
+    decoder = new VideoDecoder(path);
 }
 
 VideoRenderable::~VideoRenderable() {
@@ -19,13 +19,17 @@ VideoRenderable::~VideoRenderable() {
 }
 
 void VideoRenderable::renderPart(float start, float duration) {
+    // Audio
+    decoder->seekTo(start);
+    std::vector<int16_t> audios = decoder->decodeAudio();
+
+    // Video
     decoder->seekTo(start);
     float gap = -1;
     float pos = -1;
     int lastFrame = -1;
     auto makeup_frames = [&](int f, int last_f, auto decoder) {
         if (last_f == -1 || f - last_f <= 1) return;
-        //Image lost = decoder->getDecodedImage();
         Frame lost = Frame(getFramePath(last_f));
         for (int j = 1; j + last_f < f; j++) {
             int insf = j + last_f;
@@ -36,6 +40,19 @@ void VideoRenderable::renderPart(float start, float duration) {
             }
         }
     };
+
+    auto subAudio = [&start, this] (
+            const std::vector<int16_t>& apart, 
+            float tm) {
+        float t = tm - start; 
+        int nsig = CCPlus::AUDIO_SAMPLE_RATE / this->context->getFPS();
+        int sigid = CCPlus::AUDIO_SAMPLE_RATE * t;
+        std::vector<int16_t> ret;
+        for (int i = 0; i < nsig; i++)
+            ret.push_back(apart[i + sigid]);
+        return ret;
+    };
+
     while((pos = decoder->decodeImage()) + 0.001 > 0) {
         if(gap < 0.001)
             gap = (pos - start) / 3;
@@ -47,6 +64,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         
         if (!rendered.count(f)) {
             Frame ret = decoder->getDecodedImage();
+            ret.setAudio(subAudio(audios, pos));
             ret.write(fp, 75);
             rendered.insert(f);
             lastFrame = f;
@@ -60,6 +78,20 @@ void VideoRenderable::renderPart(float start, float duration) {
     // Make up some missed frame :
     // Used while rendering low fps video
     makeup_frames(getFrameNumber(start + duration), lastFrame, decoder);
+
+    if (lastFrame == -1) {
+        // Audio only
+        float inter = 1.0 / context->getFPS();
+        for (float i = start; i <= start + duration + inter; i += inter) {
+            Frame ret(subAudio(audios, pos));
+            int f = getFrameNumber(i);
+            std::string fp = getFramePath(f);
+            if (!rendered.count(f)) {
+                ret.write(fp, 75);
+                rendered.insert(f);
+            }
+        }    
+    }
 }
 
 float VideoRenderable::getDuration() const {
