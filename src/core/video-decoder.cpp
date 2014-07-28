@@ -178,7 +178,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
                 av_opt_set_sample_fmt(CTX.swrContext, "in_sample_fmt", dec->sample_fmt, 0);
 
                 av_opt_set_int(CTX.swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-                av_opt_set_int(CTX.swrContext, "out_sample_rate", 24000, 0);
+                av_opt_set_int(CTX.swrContext, "out_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
                 av_opt_set_sample_fmt(CTX.swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
                 if(swr_init(CTX.swrContext) < 0) {
@@ -187,7 +187,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
                 }
             }
             int dst_nb_samples = av_rescale_rnd(0
-                    + CTX.frame->nb_samples, 24000, dec->sample_rate, AV_ROUND_UP);
+                    + CTX.frame->nb_samples, CCPlus::AUDIO_SAMPLE_RATE, dec->sample_rate, AV_ROUND_UP);
             if(dst_nb_samples > CTX.swrDestSamples) {
                 CTX.swrDestSamples = dst_nb_samples;
                 int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);

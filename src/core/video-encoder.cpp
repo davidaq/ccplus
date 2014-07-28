@@ -65,7 +65,7 @@ void VideoEncoder::appendFrame(const Frame& frame) {
 void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     if(!flush) {
         cv::imwrite("tmp/test.jpg", image);
-        memcpy(ctx->srcPic.data, image.data, image.cols * image.rows * 4);
+        memcpy(ctx->srcPic.data[0], image.data, image.cols * image.rows * 4);
         ctx->srcPic.linesize[0] = image.cols * 4;
         sws_scale(ctx->sws, ctx->srcPic.data, ctx->srcPic.linesize,
                 0, image.rows, ctx->destPic.data, ctx->destPic.linesize);
@@ -121,7 +121,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             codecCtx->sample_fmt  = AV_SAMPLE_FMT_FLTP;
             codecCtx->bit_rate    = 64000;
 
-            codecCtx->sample_rate = 24000;
+            codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
             codecCtx->channels    = 1;
             break;
         case AVMEDIA_TYPE_VIDEO:
@@ -215,11 +215,11 @@ void VideoEncoder::initContext() {
     // init swr context
     ctx->swr = swr_alloc();
     av_opt_set_int(ctx->swr, "in_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "in_sample_rate", 24000, 0);
+    av_opt_set_int(ctx->swr, "in_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
     av_opt_set_sample_fmt(ctx->swr, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
     av_opt_set_int(ctx->swr, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "out_sample_rate", 24000, 0);
+    av_opt_set_int(ctx->swr, "out_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
     av_opt_set_sample_fmt(ctx->swr, "out_sample_fmt", AV_SAMPLE_FMT_FLTP, 0);
     if(0 < swr_init(ctx->swr)) {
         fprintf(stderr, "Unable to init swr context\n");

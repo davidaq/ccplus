@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "video-encoder.hpp"
+#include "global.hpp"
 
 using namespace CCPlus;
 
