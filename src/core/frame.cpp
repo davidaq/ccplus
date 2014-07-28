@@ -240,13 +240,13 @@ void Frame::mergeFrame(const Frame& f) {
     // Merge audio
     // TODO consider the case when input.size() != f.size() 
     // Two frames are supposed to have the same number of audio signals
-    //const Mat& input = f.getAudio();
-    //for (int i = 0; i < input.total(); i++) {
-    //    int tmp = (int)audio.data[i] + (int)input.data[i];
-    //    tmp = std::max((int)std::numeric_limits<int16_t>::min(), tmp);
-    //    tmp = std::min((int)std::numeric_limits<int16_t>::max(), tmp);
-    //    audio.data[i] = int16_t(tmp);
-    //}
+    const Mat& input = f.getAudio();
+    for (int i = 0; i < input.total() && i < audio.total(); i++) {
+        int tmp = (int)audio.at<int16_t>(i) + (int)input.at<int16_t>(i);
+        tmp = std::max((int)std::numeric_limits<int16_t>::min(), tmp);
+        tmp = std::min((int)std::numeric_limits<int16_t>::max(), tmp);
+        audio.at<int16_t>(i) = int16_t(tmp);
+    }
 }
 
 void Frame::overlayImage(const cv::Mat& input) {
