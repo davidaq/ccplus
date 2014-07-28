@@ -74,6 +74,14 @@ TEST(VideoDecoder, DecodeAudioAll) {
     decoder.decodeAudio("tmp/p.pcm");
 }
 
+TEST(VideoDecoder, DecodeAudioToVector) {
+    VideoDecoder decoder("test/res/test.mp4");
+    std::vector<int16_t> ret = decoder.decodeAudio();
+    EXPECT_EQ(ret[0], 0x0000);
+    EXPECT_EQ(ret[1], 0x002b);
+    EXPECT_EQ(ret[ret.size() - 1], 0x0000);
+}
+
 TEST(VideoDecoder, DecodeAudioPartial) {
     VideoDecoder decoder("test/res/test.mp4");
     decoder.seekTo(3);

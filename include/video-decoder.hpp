@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "frame.hpp"
 
 namespace CCPlus {
@@ -11,6 +13,10 @@ struct CCPlus::VideoInfo {
     float duration;
     int width, height;
 };
+
+#ifdef VIDEO_DECODER
+#define OuputF std::function<const void*, size_t, size_t>
+#endif
 
 class CCPlus::VideoDecoder {
 public:
@@ -37,6 +43,9 @@ public:
     // Can be used for both video & audio files
     // Output writen to file
     void decodeAudio(const std::string& outputFile, float durationLimit = -1);
+    // Output to a vec
+    void decodeAudio(std::vector<int16_t>& vec, float durationLimit = -1);
+    std::vector<int16_t> decodeAudio(float durationLimit = -1);
     
 private:
     std::string inputFile;
@@ -50,6 +59,7 @@ private:
     void releaseContext();
     bool readNextFrameIfNeeded();
 
+    void decodeAudio(std::function<void(const void*, size_t, size_t)> output, float durationLimit);
     void decodeAudio(FILE* destFile, float durationLimit);
-    int decodeAudioFrame(FILE* destFile, float durationLimit, float &start, float &gap);
+    int decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float durationLimit, float &start, float &gap);
 };

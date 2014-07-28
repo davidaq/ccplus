@@ -1,3 +1,4 @@
+#define VIDEO_DECODER
 #include "video-decoder.hpp"
 #include "global.hpp"
 #include "utils.hpp"
@@ -154,7 +155,7 @@ Frame VideoDecoder::getDecodedImage() {
     return *decodedImage;
 }
 
-int VideoDecoder::decodeAudioFrame(FILE* destFile, float duration, float &start, float &gap) {
+int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float duration, float &start, float &gap) {
     int gotFrame = 0;
     int ret = avcodec_decode_audio4(CTX.audio_dec_ctx, CTX.frame, &gotFrame, &(CTX.pkt));
     if(ret < 0)
@@ -202,7 +203,8 @@ int VideoDecoder::decodeAudioFrame(FILE* destFile, float duration, float &start,
             size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
             swr_convert(CTX.swrContext, CTX.swrDestBuffer, unpadded_linesize,
                     (const uint8_t**)(CTX.frame->extended_data), CTX.frame->nb_samples);
-            fwrite(CTX.swrDestBuffer[0], 1, unpadded_linesize, destFile);
+            //fwrite(CTX.swrDestBuffer[0], 1, unpadded_linesize, destFile);
+            output(CTX.swrDestBuffer, 1, unpadded_linesize);
             if(duration > 0 && cursorTime - start - gap > duration){
                 return -5;
             }
@@ -211,14 +213,14 @@ int VideoDecoder::decodeAudioFrame(FILE* destFile, float duration, float &start,
     return ret;
 }
 
-void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
+void VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
     float start = cursorTime;
     float gap = -1;
     bool goon = true;
     while(goon && readNextFrameIfNeeded()) {
         if (CTX.pkt.stream_index == CTX.audio_stream_idx) {
             do {
-                int ret = decodeAudioFrame(destFile, duration, start, gap);
+                int ret = decodeAudioFrame(output, duration, start, gap);
                 goon = ret > 0;
                 CTX.pkt.data += ret;
                 CTX.pkt.size -= ret;
@@ -239,6 +241,30 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
         return;
     decodeAudio(destFile, duration);
     fclose(destFile);
+}
+
+void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
+    auto output = 
+        [destFile] (const void* buffer, size_t size, size_t count) {
+        fwrite(buffer, size, count, destFile);    
+    };
+    decodeAudio(output, duration);
+}
+
+std::vector<int16_t> VideoDecoder::decodeAudio(float duration) {
+    std::vector<int16_t> ret;
+    decodeAudio(ret, duration);
+    return ret;
+}
+
+void VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
+    auto output = [&ret] (const void* buffer, size_t size, size_t count) {
+        // 2 bytes per int16_t
+        for (int i = 0; i < count / 2; i++) {
+            ret.push_back(((int16_t*) buffer)[i]);
+        }
+    };
+    decodeAudio(output, duration);
 }
 
 static int open_codec_context(int *stream_idx,
