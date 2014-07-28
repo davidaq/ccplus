@@ -22,15 +22,15 @@ struct CCPlus::EncodeContext {
     AVCodec *audio_codec, *video_codec = 0;
 
     AVFrame *frame = 0;
-    AVPicture srcPic, destPic;
+    AVPicture destPic;
     SwsContext *sws = 0;
 
     AVFrame *audioFrame = 0;
     SwrContext *swr = 0;
 };
 
-VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps) :
-    outputPath(_outputPath), fps(_fps)
+VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int _quality) :
+    outputPath(_outputPath), fps(_fps), quality(_quality)
 {
 }
 
@@ -65,9 +65,8 @@ void VideoEncoder::appendFrame(const Frame& frame) {
 void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     if(!flush) {
         cv::imwrite("tmp/test.jpg", image);
-        memcpy(ctx->srcPic.data[0], image.data, image.cols * image.rows * 4);
-        ctx->srcPic.linesize[0] = image.cols * 4;
-        sws_scale(ctx->sws, ctx->srcPic.data, ctx->srcPic.linesize,
+        int linesize = image.cols * 4;
+        sws_scale(ctx->sws, &image.data, &linesize,
                 0, image.rows, ctx->destPic.data, ctx->destPic.linesize);
     }
 
@@ -119,14 +118,15 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
     switch(codec->type) {
         case AVMEDIA_TYPE_AUDIO:
             codecCtx->sample_fmt  = AV_SAMPLE_FMT_FLTP;
-            codecCtx->bit_rate    = 64000;
+            codecCtx->bit_rate    = 800 * quality;
 
             codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
-            codecCtx->channels    = 1;
+            codecCtx->channels      = 1;
+            codecCtx->channel_layout = AV_CH_LAYOUT_MONO;
             break;
         case AVMEDIA_TYPE_VIDEO:
             codecCtx->codec_id = codec_id;
-            codecCtx->bit_rate = 400000;
+            codecCtx->bit_rate = 10000 * quality;
             codecCtx->width    = width;
             codecCtx->height   = height;
 
@@ -134,8 +134,6 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             codecCtx->time_base.num = 1;
             codecCtx->gop_size      = 12; 
             codecCtx->pix_fmt       = AV_PIX_FMT_YUV420P;
-            codecCtx->channels      = 1;
-            codecCtx->channel_layout = AV_CH_LAYOUT_MONO;
             break;
         default:
             break;
@@ -179,10 +177,6 @@ void VideoEncoder::initContext() {
     frame->height = c->height;
     ctx->frame = frame;
 
-    if(0 < avpicture_alloc(&(ctx->srcPic), AV_PIX_FMT_BGRA, width, height)) {
-        fprintf(stderr, "Could not allocate bgra picture buffer\n");
-        return;
-    }
     if(0 < avpicture_alloc(&(ctx->destPic), AV_PIX_FMT_YUV420P, width, height)) {
         fprintf(stderr, "Could not allocate yuv420p picture buffer\n");
         return;
@@ -253,7 +247,6 @@ void VideoEncoder::releaseContext() {
         return;
     if(ctx->video_st) {
         avcodec_close(ctx->video_st->codec);
-        av_free(ctx->srcPic.data[0]);
         av_free(ctx->destPic.data[0]);
         av_frame_free(&(ctx->frame));
         sws_freeContext(ctx->sws);

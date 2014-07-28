@@ -24,6 +24,6 @@ TEST(VideoEncoder, DecodeAndEncode) {
         encoder.appendFrame(decoder.getDecodedImage());
     }
     encoder.finish();
-    EXPECT_FILE_HASH_EQ(bd7c8c73c6f28464929401a03dc5e7c739c74962, tmp/decode-encodetest.mp4);
+    EXPECT_FILE_HASH_EQ(d5b035b09af07a4865534228cd56e16900cedebf, tmp/decode-encodetest.mp4);
 }
 

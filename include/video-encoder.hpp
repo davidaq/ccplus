@@ -11,7 +11,7 @@ namespace CCPlus {
 
 class CCPlus::VideoEncoder {
 public:
-    VideoEncoder(const std::string& outputPath, int fps);
+    VideoEncoder(const std::string& outputPath, int fps, int quality=80);
     ~VideoEncoder();
 
     // @ append a frame
@@ -32,6 +32,6 @@ private:
 
     EncodeContext *ctx = 0;
     std::string outputPath;
-    int width = 0, height = 0, fps = 0;
+    int width = 0, height = 0, fps = 0, quality = 100;
     int frameNum = 0;
 };
