@@ -88,7 +88,7 @@ void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
 }
 
 void VideoEncoder::writeAudioFrame(const cv::Mat& audio) {
-
+    
 }
 
 void VideoEncoder::writeFrame(AVStream* stream, AVPacket& pkt) {
@@ -120,7 +120,18 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
     switch(codec->type) {
         case AVMEDIA_TYPE_AUDIO:
             codecCtx->sample_fmt  = AV_SAMPLE_FMT_FLTP;
-            codecCtx->bit_rate    = 800 * quality;
+            if(quality >= 300)
+                codecCtx->bit_rate    = 512000;
+            else if(quality >= 200)
+                codecCtx->bit_rate    = 256000;
+            else if(quality >= 100)
+                codecCtx->bit_rate    = 128000;
+            else if(quality >= 70)
+                codecCtx->bit_rate    = 64000;
+            else if(quality >= 40)
+                codecCtx->bit_rate    = 32000;
+            else
+                codecCtx->bit_rate    = 16000;
 
             codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
             codecCtx->channels      = 1;
@@ -128,7 +139,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             break;
         case AVMEDIA_TYPE_VIDEO:
             codecCtx->codec_id = codec_id;
-            codecCtx->bit_rate = 10000 * quality;
+            codecCtx->bit_rate = 12000 * quality;
             codecCtx->width    = width;
             codecCtx->height   = height;
 
