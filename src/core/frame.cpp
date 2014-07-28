@@ -154,7 +154,8 @@ void Frame::write(const std::string& file, int quality) {
         }
         ulong jpgLen = buff.size();
         fwrite(&jpgLen, sizeof(jpgLen), 1, outFile);
-        fwrite(&buff[0], sizeof(char), jpgLen, outFile);
+        if (!image.empty())
+            fwrite(&buff[0], sizeof(char), jpgLen, outFile);
         buff.clear();
 
         // write zip compressed alpha channel
