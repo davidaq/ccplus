@@ -26,7 +26,7 @@ private:
 #ifdef __FFMPEG__
     AVStream* initStream(AVCodec*&, enum AVCodecID);
     void writeVideoFrame(const cv::Mat&, bool flush=false);
-    void writeAudioFrame(const cv::Mat&);
+    void writeAudioFrame(const cv::Mat&, bool flush=false);
     void writeFrame(AVStream* stream, AVPacket& pkt);
 #endif
 

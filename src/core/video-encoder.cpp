@@ -27,6 +27,9 @@ struct CCPlus::EncodeContext {
 
     AVFrame *audioFrame = 0;
     SwrContext *swr = 0;
+    int samples_count = 0;
+    uint8_t *audioDstBuff = 0;
+    size_t currentAudioBuffSize = 0;
 };
 
 VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int _quality) :
@@ -66,7 +69,6 @@ void VideoEncoder::appendFrame(const Frame& frame) {
 
 void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     if(!flush) {
-        cv::imwrite("tmp/test.jpg", image);
         int linesize = image.cols * 4;
         sws_scale(ctx->sws, &image.data, &linesize,
                 0, image.rows, ctx->destPic.data, ctx->destPic.linesize);
@@ -87,8 +89,37 @@ void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     }
 }
 
-void VideoEncoder::writeAudioFrame(const cv::Mat& audio) {
-    
+void VideoEncoder::writeAudioFrame(const cv::Mat& audio, bool flush) {
+    AVPacket pkt = {0};
+    av_init_packet(&pkt);
+
+    int nb_samples = audio.total();
+    if(!flush) {
+        if(ctx->currentAudioBuffSize < nb_samples) {
+            ctx->currentAudioBuffSize = nb_samples;
+            if(ctx->audioDstBuff) {
+                delete[] ctx->audioDstBuff;
+            }
+            ctx->audioDstBuff = new uint8_t[2 * nb_samples];
+        }
+        if(0 < swr_convert(ctx->swr, (uint8_t**)&(ctx->audioDstBuff), nb_samples, (const uint8_t **)&audio.data, nb_samples)) {
+            fprintf(stderr, "Error while converting\n");
+            return;
+        }
+        ctx->audioFrame->nb_samples = nb_samples;
+        ctx->audioFrame->pts = av_rescale_q(ctx->samples_count, (AVRational){1, ctx->audio_st->codec->sample_rate},
+                ctx->audio_st->codec->time_base);
+        ctx->samples_count += nb_samples;
+    }
+
+    int gotPacket;
+    if(0 < avcodec_encode_audio2(ctx->audio_st->codec, &pkt, flush ? NULL : ctx->audioFrame, &gotPacket)) {
+            fprintf(stderr, "Error encoding audio\n");
+            return;
+    }
+    if(gotPacket) {
+        writeFrame(ctx->audio_st, pkt);
+    }
 }
 
 void VideoEncoder::writeFrame(AVStream* stream, AVPacket& pkt) {
