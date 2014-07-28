@@ -105,11 +105,14 @@ TEST(Frame, CompressAndDecompressAudio) {
     frame.write("tmp/compress-test.zim");
     Frame img2("tmp/compress-test.zim");
     
-    EXPECT_EQ(img.getWidth(), img2.getWidth());
-    EXPECT_EQ(img.getHeight(), img2.getHeight());
-    EXPECT_EQ(img.getAudio().total(), 3);
+    EXPECT_EQ(frame.getWidth(), img2.getWidth());
+    EXPECT_EQ(frame.getHeight(), img2.getHeight());
+    EXPECT_EQ(img.getAudio().total(), 0);
+    EXPECT_EQ(frame.getAudio().total(), 3);
     EXPECT_EQ(img2.getAudio().total(), 3);
 
-    EXPECT_EQ(img2.getAudio().at<int16_t>(0), 0);
+    EXPECT_EQ(img2.getAudio().at<int16_t>(0), 1);
+    EXPECT_EQ(img2.getAudio().at<int16_t>(1), 2);
+    EXPECT_EQ(img2.getAudio().at<int16_t>(2), 3);
 }
 

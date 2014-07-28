@@ -52,16 +52,14 @@ Frame::Frame(const std::string& filepath) {
         ulong audioLen = NEXT(ulong);
         unsigned char* audioData = new unsigned char[2048];
         destLen = (unsigned long)0x7fffffff;
-        int ret = uncompress((unsigned char*)audioData, &destLen, ptr, audioLen);
-        if (destLen > (unsigned long)10000) {
-            printf("ret = %d, audioLen = %u\n", ret, audioLen);
-            std::cout << destLen << std::endl;
-            throw std::ios_base::failure("Unexpected uncompressed length");
-        }
+        int ret = uncompress(audioData, &destLen, ptr, audioLen);
+        if (ret != 0) 
+            throw std::ios_base::failure("Uncompress failed");
+        
+        // I don't trust memcpy
         std::vector<int16_t> tmp;
-        for (int i = 0; i < audioLen; i++) {
-            tmp.push_back(audioData[i]);
-        }
+        for (int i = 0; i < destLen / 2; i++) 
+            tmp.push_back(((int16_t*) audioData)[i]);
         audio = Mat(tmp);
         
         delete[] alphaBytes;
@@ -166,9 +164,13 @@ void Frame::write(const std::string& file, int quality) {
         unsigned long tmp = std::max(len * 2, (unsigned long)128);
         unsigned char* compressedAudio = new unsigned char[tmp];
         int ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
+        if (ret != 0)
+            throw std::ios_base::failure("Compressing audio failed");
         len = tmp;
-        fwrite(&len, sizeof(len), 1, outFile);
-        fwrite(compressedAudio, sizeof(unsigned char), tmp, outFile);
+        // ulong is NOT unsigned long
+        wlen = len;
+        fwrite(&wlen, sizeof(wlen), 1, outFile);
+        fwrite(compressedAudio, sizeof(unsigned char), len, outFile);
 
         fclose(outFile);
         delete[] uncompressedBytes;
