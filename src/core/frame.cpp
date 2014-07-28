@@ -32,9 +32,12 @@ Frame::Frame(const std::string& filepath) {
         ushort height = NEXT(ushort); 
         
         ulong jpgLen = NEXT(ulong);
-        vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
-        image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
-        to4Channels();
+        //TODO: check minimum jpg length
+        if (jpgLen >= 125) {
+            vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
+            image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
+            to4Channels();
+        }
         ptr += jpgLen;
 
         ulong alphaLen = NEXT(ulong);
@@ -50,7 +53,7 @@ Frame::Frame(const std::string& filepath) {
         ptr += alphaLen;
 
         ulong audioLen = NEXT(ulong);
-        unsigned char* audioData = new unsigned char[audioLen];
+        unsigned char* audioData = new unsigned char[audioLen * 4];
         destLen = (unsigned long)0x7fffffff;
         int ret = uncompress(audioData, &destLen, ptr, audioLen);
         if (ret != 0) 
@@ -76,7 +79,7 @@ Frame::Frame(const std::string& filepath) {
 
     if (image.channels() == 3) {
         to4Channels();
-    } else if (image.channels() < 3) {
+    } else if (image.channels() < 3 && !image.empty()) {
         throw std::invalid_argument("Can't take image with less than 3 channels");
     }
 
@@ -100,6 +103,10 @@ Frame::Frame(const cv::Mat& _data) {
     } else if (_data.type() == CV_8UC4) {
         image = _data;
     }
+}
+
+Frame::Frame(const std::vector<int16_t>& data) {
+    audio = Mat(data);
 }
 
 Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audio(_audio) {};
@@ -142,7 +149,9 @@ void Frame::write(const std::string& file, int quality) {
 
         // write jpeg encoded color part
         vector<unsigned char> buff;
-        imencode(".jpg", image, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
+        if (!image.empty()) {
+            imencode(".jpg", image, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
+        }
         ulong jpgLen = buff.size();
         fwrite(&jpgLen, sizeof(jpgLen), 1, outFile);
         fwrite(&buff[0], sizeof(char), jpgLen, outFile);
@@ -161,11 +170,13 @@ void Frame::write(const std::string& file, int quality) {
 
         // Compress audio data
         len = audio.total();
-        unsigned long tmp = std::max(len * 2, (unsigned long)128);
+        //unsigned long tmp = std::max(len * 2 + 128, (unsigned long)128);
+        unsigned long tmp = len * 2 + 128;
         unsigned char* compressedAudio = new unsigned char[tmp];
         int ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
-        if (ret != 0)
-            throw std::ios_base::failure("Compressing audio failed");
+        if (ret != 0) {
+            throw std::ios_base::failure("Compressing audio failed: returned " + std::to_string(ret));
+        }
         len = tmp;
         // ulong is NOT unsigned long
         wlen = len;
@@ -216,6 +227,10 @@ Mat& Frame::getAudio() {
 
 void Frame::setAudio(const Mat& aud) {
     this->audio = aud;
+}
+
+void Frame::setAudio(const std::vector<int16_t>& aud) {
+    this->audio = Mat(aud);
 }
 
 void Frame::mergeFrame(const Frame& f) {
