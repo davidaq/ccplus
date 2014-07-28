@@ -18,6 +18,6 @@ TEST(VideoRenderable, OnlyAudio) {
     EXPECT_EQ(0, r.getWidth());
     EXPECT_EQ(0, r.getHeight());
     EXPECT_NEAR(10, r.getDuration(), 1);
-    EXPECT_EQ(1333, r.getFrame(10).getAudio().total());
-    //EXPECT_TRUE(r.getFrame(10).getImage().empty());
+    EXPECT_EQ(1333, r.getFrame(0).getAudio().total());
+    EXPECT_TRUE(r.getFrame(10).getImage().empty());
 }

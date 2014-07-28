@@ -83,7 +83,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         // Audio only
         float inter = 1.0 / context->getFPS();
         for (float i = start; i <= start + duration + inter; i += inter) {
-            Frame ret(subAudio(audios, pos));
+            Frame ret(subAudio(audios, i));
             int f = getFrameNumber(i);
             std::string fp = getFramePath(f);
             if (!rendered.count(f)) {
