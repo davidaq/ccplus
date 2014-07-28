@@ -78,8 +78,10 @@ TEST(VideoDecoder, DecodeAudioToVector) {
     VideoDecoder decoder("test/res/test.mp4");
     std::vector<int16_t> ret = decoder.decodeAudio();
     EXPECT_EQ(ret[0], 0x0000);
-    EXPECT_EQ(ret[1], 0x002b);
-    EXPECT_EQ(ret[ret.size() - 1], 0x0000);
+    EXPECT_EQ(ret[1], 0x0000);
+    EXPECT_EQ(ret[223], (int16_t)0xffff);
+    EXPECT_EQ(ret[399], (int16_t)0x5500);
+    EXPECT_EQ(ret[398], (int16_t)0xffbe);
 }
 
 TEST(VideoDecoder, DecodeAudioPartial) {

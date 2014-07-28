@@ -203,8 +203,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
             size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
             swr_convert(CTX.swrContext, CTX.swrDestBuffer, unpadded_linesize,
                     (const uint8_t**)(CTX.frame->extended_data), CTX.frame->nb_samples);
-            //fwrite(CTX.swrDestBuffer[0], 1, unpadded_linesize, destFile);
-            output(CTX.swrDestBuffer, 1, unpadded_linesize);
+            output(CTX.swrDestBuffer[0], 1, unpadded_linesize);
             if(duration > 0 && cursorTime - start - gap > duration){
                 return -5;
             }
@@ -245,7 +244,8 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
 
 void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
     auto output = 
-        [destFile] (const void* buffer, size_t size, size_t count) {
+        [&destFile] (const void* buffer, size_t size, size_t count) {
+        std::cout << ftell(destFile) << std::endl;
         fwrite(buffer, size, count, destFile);    
     };
     decodeAudio(output, duration);
