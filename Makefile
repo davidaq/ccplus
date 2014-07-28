@@ -22,7 +22,7 @@ clean-zim:
 	-rm -rf tmp/*.zim
 
 .dependency:
-	./load-dependency/load
+	./scripts/run load.py
 
 build/test/Makefile: .dependency
 	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
