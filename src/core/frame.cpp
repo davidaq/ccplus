@@ -50,7 +50,7 @@ Frame::Frame(const std::string& filepath) {
         ptr += alphaLen;
 
         ulong audioLen = NEXT(ulong);
-        unsigned char* audioData = new unsigned char[2048];
+        unsigned char* audioData = new unsigned char[audioLen];
         destLen = (unsigned long)0x7fffffff;
         int ret = uncompress(audioData, &destLen, ptr, audioLen);
         if (ret != 0) 
