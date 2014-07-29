@@ -62,3 +62,12 @@ TEST(Filter, ScaleAndRotateTransform) {
     Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 90}, 500, 500);
     img1.write("tmp/center_and_scale.jpg");
 }
+
+TEST(Filter, MaskTest) {
+    printf("Go check the tmp dir\n");
+    
+    Frame img1("test/res/test1.jpg");
+    Filter("transform").apply(img1, {0, 0, 0, 0, 2.0, 2.0, 0}, 500, 500);
+    Filter("mask").apply(img1, {50, 300, 250, 100, 450, 300, 250, 500}, 500, 500);
+    img1.write("tmp/mask.jpg");
+}

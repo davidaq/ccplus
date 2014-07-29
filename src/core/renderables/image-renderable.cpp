@@ -26,11 +26,11 @@ float ImageRenderable::getDuration() const {
 }
 
 void ImageRenderable::render(float start, float duration) {
-    if (!loaded)
-        image = Frame(path);
-    loaded = true;
+    //if (!loaded)
+    //    image = Frame(path);
+    //loaded = true;
 }
 
 Frame ImageRenderable::getFrame(float time) const {
-    return image;
+    return Frame(path);
 }
