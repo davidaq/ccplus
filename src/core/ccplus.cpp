@@ -1,6 +1,7 @@
 #include "global.hpp"
 #include "ccplus.hpp"
 #include "utils.hpp"
+#include "video-encoder.hpp"
 
 //using namespace CCPlus;
 
@@ -45,15 +46,14 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
     if(length < 0)
         length = uCtx->mainComp->getDuration();
     // TODO: implement real video encoder
-    
     float inter = 1.0 / uCtx->ctx->getFPS();
+    VideoEncoder encoder("tmp/result.mp4", uCtx->ctx->getFPS());
     for (float i = 0.0; i < length; i += inter) {
         float t = start + i;
         CCPlus::Frame img = uCtx->mainComp->getFrame(t);
-        img.write(generatePath(uCtx->ctx->getStoragePath(), "test" + std::to_string(i) + ".jpg"));
-        // getFrame(t) 
-        // Bluh bluh
+        encoder.appendFrame(Frame(img.getImage()));
     }
+    encoder.finish();
 }
 
 void CCPlus::go(
