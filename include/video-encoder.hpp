@@ -27,6 +27,7 @@ private:
     AVStream* initStream(AVCodec*&, enum AVCodecID);
     void writeVideoFrame(const cv::Mat&, bool flush=false);
     void writeAudioFrame(const cv::Mat&, bool flush=false);
+    void writePartedAudioFrame(const uint8_t* sampleBuffer);
     void writeFrame(AVStream* stream, AVPacket& pkt);
 #endif
 

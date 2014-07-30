@@ -82,12 +82,28 @@ TEST(VideoDecoder, DecodeAudioToVector) {
     EXPECT_EQ(ret[223], (int16_t)0xffff);
     EXPECT_EQ(ret[399], (int16_t)0x0055);
     EXPECT_EQ(ret[398], (int16_t)0xffbe);
+    FILE* fp = fopen("tmp/decodevector.pcm", "w");
+    fwrite(&ret[0], 2, ret.size(), fp);
+    fclose(fp);
+}
+
+TEST(VideoDecoder, DecodeAudioFromVideoRenderable) {
+    Context ctx("tmp/", 18);
+    VideoRenderable video(&ctx, "test/res/test.mp4");
+    video.render(0, 10);
+    FILE* fp = fopen("tmp/decodevectorfromrenderable.pcm", "w");
+    for(float t = 0; t < video.getDuration(); t += 1 / 18.0) {
+        cv::Mat mat = video.getFrame(t).getAudio();
+        fwrite(mat.data, 2, mat.total(), fp);
+    }
+    fclose(fp);
 }
 
 TEST(VideoDecoder, DecodeAudioPartial) {
     VideoDecoder decoder("test/res/test.mp4");
     decoder.seekTo(3);
-    decoder.decodeAudio("tmp/p.pcm", 2);
+    decoder.decodeAudio("tmp/p.pcm", -1);
+
 }
 
 TEST(VideoDecoder, VideoRenderable) {
@@ -95,3 +111,5 @@ TEST(VideoDecoder, VideoRenderable) {
     VideoRenderable v(&ctx, "test/res/test.mp4");
     //v.render(0, 10);
 }
+
+
