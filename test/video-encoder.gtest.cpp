@@ -44,3 +44,20 @@ TEST(VideoEncoder, DecodeImageAndAudioThenEncode) {
     encoder.finish();
 }
 
+TEST(VideoEncoder, EncodeAudioOnly) {
+    VideoEncoder encoder("tmp/encode-only-audio.mp4", 18);
+    FILE* fp = fopen("test/res/test.pcm", "rb");
+    int frameSize = 1333;
+    short *buff = new short[frameSize];
+    cv::Mat img = cv::Mat(40, 40, CV_8UC4, {0,0,0,0});
+    Frame frame(img);
+    while(0 < fread(buff, frameSize * 2, 1, fp)) {
+        std::vector<short> vec(buff, buff + frameSize);
+        cv::Mat audio = cv::Mat(vec);
+        frame.setAudio(audio);
+        encoder.appendFrame(frame);
+    }
+    encoder.finish();
+    delete []buff;
+}
+
