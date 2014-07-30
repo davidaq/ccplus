@@ -25,5 +25,6 @@ The file binary structure is in the following order:
  - JPEG part data: byte array with JLEN length, should be decoded as jpg
  - Alpha part length(ALEN): one unsigned long
  - Alpha part data: byte array with ALEN length, should be used as opacity alpha mask on the final image
- - Audio part length (AULEN): one unsigned long
+ - Compressed Audio length (AULEN): one unsigned long
+ - Uncompressed Audio part length in bytes: one unsigned long
  - Audio part data: byte array with AULEN length, should be decoded as audio signal sequence
