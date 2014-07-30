@@ -9,6 +9,10 @@ TEST(VideoRenderable, NormalTest) {
     Context ctx("tmp/", 18);
     VideoRenderable r(&ctx, "test/res/test.mp4");   
     r.render(0, 10.0);
+
+    for (float i = 0; i < 9.0; i += 0.1) {
+        EXPECT_EQ(1333, r.getFrame(i).getAudio().total());
+    }
 }
 
 TEST(VideoRenderable, OnlyAudio) {

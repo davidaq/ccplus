@@ -38,6 +38,7 @@ TEST(VideoEncoder, DecodeImageAndAudioThenEncode) {
     float step = 1.0 / 18;
     do {
         encoder.appendFrame(renderable.getFrame(t));
+        EXPECT_EQ(renderable.getFrame(t).getAudio().total(), 1333);
         t += step;
     } while(t < 10);
     encoder.finish();

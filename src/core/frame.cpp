@@ -241,6 +241,10 @@ void Frame::mergeFrame(const Frame& f) {
     // TODO consider the case when input.size() != f.size() 
     // Two frames are supposed to have the same number of audio signals
     const Mat& input = f.getAudio();
+    if (audio.total() == 0) {
+        audio = input;
+        return;
+    }
     for (int i = 0; i < input.total() && i < audio.total(); i++) {
         int tmp = (int)audio.at<int16_t>(i) + (int)input.at<int16_t>(i);
         tmp = std::max((int)std::numeric_limits<int16_t>::min(), tmp);
