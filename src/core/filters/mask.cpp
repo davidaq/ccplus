@@ -5,6 +5,21 @@ using namespace cv;
 
 // Using intersection to check if point in polygon
 CCPLUS_FILTER(mask) {
+
+    // Fuck the slow OpenCV
+    struct Point2f {
+        Point2f(float _x, float _y) : x(_x), y(_y) {}; 
+        const Point2f& operator-(const Point2f& b) const {
+            return Point2f(x - b.x, y - b.y);
+        }
+        const Point2f& operator+(const Point2f& b) const {
+            return Point2f(x + b.x, y + b.y);
+        }
+        const Point2f& operator*(float b) const {
+            return Point2f(x * b, y * b);
+        }
+        float x, y;
+    };
     
     int np = parameters.size() / 2;
     std::vector<Point2f> ps;
@@ -14,7 +29,8 @@ CCPLUS_FILTER(mask) {
     Mat& image = frame.getImage();
 
     std::vector<Point2f> rays = {
-        {0, 1}, {1, 0}, {0, -1}, {-1, 0}
+        {0, 1}, {1, 0}, 
+        //{0, -1}, {-1, 0}
     };
 
     //Debug
@@ -33,6 +49,7 @@ CCPLUS_FILTER(mask) {
     //for (int i = 0; i < np; i++)
     //    MyFilledCircle(image, ps[i]);
     //return;
+    
 
     auto intersect = [] (Point2f head, Point2f end, Point2f origin, Point2f ray, std::vector<Point2f>& mp) {
         Point2f ad = end - head;
@@ -47,7 +64,7 @@ CCPLUS_FILTER(mask) {
         if (v < 0) return 0;
         if (u < 0 || u > 1.001)
             return 0;
-        Point2f ret(ad * u + head);
+        Point2f ret = ad * u + head;
         for (int i = 0; i < mp.size(); i++) 
             if (std::abs(ret.x - mp[i].x) < 1 && std::abs(ret.y - mp[i].y) < 1)
                 return 0;
