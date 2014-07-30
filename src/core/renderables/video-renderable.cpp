@@ -21,7 +21,7 @@ VideoRenderable::~VideoRenderable() {
 void VideoRenderable::renderPart(float start, float duration) {
     // Audio
     decoder->seekTo(start);
-    std::vector<int16_t> audios = decoder->decodeAudio();
+    std::vector<int16_t> audios = decoder->decodeAudio(duration);
 
     // Video
     decoder->seekTo(start);
@@ -41,15 +41,15 @@ void VideoRenderable::renderPart(float start, float duration) {
         }
     };
 
-    auto subAudio = [&start, this] (
+    int startFrameNumber = getFrameNumber(start);
+    auto subAudio = [&startFrameNumber, this] (
             const std::vector<int16_t>& apart, 
-            float tm) {
-        float t = tm - start; 
+            int f) {
+        int rela = f - startFrameNumber;
         int nsig = CCPlus::AUDIO_SAMPLE_RATE / this->context->getFPS();
-        int sigid = CCPlus::AUDIO_SAMPLE_RATE * t;
         std::vector<int16_t> ret;
-        for (int i = 0; i < nsig; i++)
-            ret.push_back(apart[i + sigid]);
+        for (int i = 0; i < nsig && i + nsig * rela < apart.size(); i++)
+            ret.push_back(apart[i + nsig * rela]);
         return ret;
     };
 
@@ -64,7 +64,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         
         if (!rendered.count(f)) {
             Frame ret = decoder->getDecodedImage();
-            ret.setAudio(subAudio(audios, pos));
+            ret.setAudio(subAudio(audios, f));
             ret.write(fp, 75);
             rendered.insert(f);
             lastFrame = f;

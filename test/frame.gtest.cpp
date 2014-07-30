@@ -95,24 +95,21 @@ TEST(Frame, CompressAndDecompress) {
 }
 
 TEST(Frame, CompressAndDecompressAudio) {
-    Frame img("test/res/test_alpha.png");
-    std::vector<short> tmp = {1, 2, 3};
-    Frame frame(img.getImage(), cv::Mat(tmp));
-    EXPECT_EQ(((short*)frame.getAudio().data)[0], 1);
-    EXPECT_EQ(((short*)frame.getAudio().data)[1], 2);
-    EXPECT_EQ(((short*)frame.getAudio().data)[2], 3);
+    Frame frame("test/res/test_alpha.png");
+    std::vector<int16_t> tmp;
+    for (int i = 0; i < 1333; i++)
+        tmp.push_back(i % 10);
+    frame.setAudio(tmp);
     
     frame.write("tmp/compress-test.zim");
     Frame img2("tmp/compress-test.zim");
     
     EXPECT_EQ(frame.getWidth(), img2.getWidth());
     EXPECT_EQ(frame.getHeight(), img2.getHeight());
-    EXPECT_EQ(img.getAudio().total(), 0);
-    EXPECT_EQ(frame.getAudio().total(), 3);
-    EXPECT_EQ(img2.getAudio().total(), 3);
+    EXPECT_EQ(frame.getAudio().total(), 1333);
+    EXPECT_EQ(img2.getAudio().total(), 1333);
 
-    EXPECT_EQ(img2.getAudio().at<int16_t>(0), 1);
-    EXPECT_EQ(img2.getAudio().at<int16_t>(1), 2);
-    EXPECT_EQ(img2.getAudio().at<int16_t>(2), 3);
+    for (int i = 0; i < 1333; i++) 
+        EXPECT_EQ(img2.getAudio().at<int16_t>(i), i % 10);
 }
 

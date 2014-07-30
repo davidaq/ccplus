@@ -53,7 +53,8 @@ Frame::Frame(const std::string& filepath) {
         ptr += alphaLen;
 
         ulong audioLen = NEXT(ulong);
-        unsigned char* audioData = new unsigned char[audioLen * 4];
+        ulong audioRealByteLen = NEXT(ulong);
+        unsigned char* audioData = new unsigned char[audioRealByteLen];
         destLen = (unsigned long)0x7fffffff;
         int ret = uncompress(audioData, &destLen, ptr, audioLen);
         if (ret != 0) 
@@ -178,11 +179,12 @@ void Frame::write(const std::string& file, int quality) {
         if (ret != 0) {
             throw std::ios_base::failure("Compressing audio failed: returned " + std::to_string(ret));
         }
-        len = tmp;
         // ulong is NOT unsigned long
-        wlen = len;
+        wlen = tmp;
         fwrite(&wlen, sizeof(wlen), 1, outFile);
-        fwrite(compressedAudio, sizeof(unsigned char), len, outFile);
+        wlen = len * 2;
+        fwrite(&wlen, sizeof(wlen), 1, outFile);
+        fwrite(compressedAudio, sizeof(unsigned char), tmp, outFile);
 
         fclose(outFile);
         delete[] uncompressedBytes;
@@ -231,7 +233,7 @@ void Frame::setAudio(const Mat& aud) {
 }
 
 void Frame::setAudio(const std::vector<int16_t>& aud) {
-    this->audio = Mat(aud);
+    this->audio = Mat(aud, true);
 }
 
 void Frame::mergeFrame(const Frame& f) {

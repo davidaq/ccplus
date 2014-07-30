@@ -90,7 +90,7 @@ TEST(VideoDecoder, DecodeAudioToVector) {
 TEST(VideoDecoder, DecodeAudioFromVideoRenderable) {
     Context ctx("tmp/", 18);
     VideoRenderable video(&ctx, "test/res/test.mp4");
-    video.render(0, 10);
+    video.render(0, 9);
     FILE* fp = fopen("tmp/decodevectorfromrenderable.pcm", "w");
     for(float t = 0; t < video.getDuration(); t += 1 / 18.0) {
         cv::Mat mat = video.getFrame(t).getAudio();
