@@ -40,7 +40,7 @@ TEST(VideoEncoder, DecodeImageAndAudioThenEncode) {
         encoder.appendFrame(renderable.getFrame(t));
         EXPECT_EQ(renderable.getFrame(t).getAudio().total(), 1333);
         t += step;
-    } while(t < 10);
+    } while(t < 9);
     encoder.finish();
 }
 

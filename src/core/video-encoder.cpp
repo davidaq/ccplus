@@ -284,20 +284,16 @@ void VideoEncoder::initContext() {
         fprintf(stderr, "Could not allocate yuv420p picture buffer\n");
         return;
     }
-    PASS
     *((AVPicture*)frame) = ctx->destPic;
 
     // init sws context
-    PASS
     ctx->sws = sws_getContext(width, height, AV_PIX_FMT_BGRA,
             width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    PASS
     if(!ctx->sws) {
         fprintf(stderr, "Could not init image resampler\n");
         return;
     }
 
-    PASS
     // init audio codec
     c = ctx->audio_st->codec;
     AVDictionary *opts = 0;
@@ -306,7 +302,6 @@ void VideoEncoder::initContext() {
         fprintf(stderr, "Could not open audio encoder\n");
         return;
     }
-    PASS
     av_dict_free(&opts);
     ctx->audioFrame = av_frame_alloc();
     if(!ctx->audioFrame) {
@@ -315,7 +310,6 @@ void VideoEncoder::initContext() {
     }
     ctx->audioFrameSize = ctx->audio_codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
         2048 : ctx->audio_st->codec->frame_size;
-    printf("BSZ: %d\n", ctx->audioFrameSize);
     ctx->audioPendingBuff = new uint8_t[ctx->audioFrameSize * ctx->bytesPerSample + 10];
 
     // init swr context
@@ -370,12 +364,16 @@ void VideoEncoder::releaseContext() {
         swr_free(&(ctx->swr));
         if(ctx->audioDstBuff) {
             av_free(ctx->audioDstBuff[0]);
+            av_free(ctx->audioDstBuff);
         }
+        av_frame_free(&(ctx->audioFrame));
     }
     if(ctx->ctx) {
         avio_close(ctx->ctx->pb);
         avformat_free_context(ctx->ctx);
     }
+    if(ctx->audioPendingBuff)
+        delete [] ctx->audioPendingBuff;
     delete ctx;
     ctx = 0;
 }

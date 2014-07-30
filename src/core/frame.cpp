@@ -64,7 +64,7 @@ Frame::Frame(const std::string& filepath) {
         std::vector<int16_t> tmp;
         for (int i = 0; i < destLen / 2; i++) 
             tmp.push_back(((int16_t*) audioData)[i]);
-        audio = Mat(tmp);
+        audio = Mat(tmp, true);
         
         delete[] alphaBytes;
         delete[] fileContent;
