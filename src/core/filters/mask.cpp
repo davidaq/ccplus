@@ -5,22 +5,6 @@ using namespace cv;
 
 // Using intersection to check if point in polygon
 CCPLUS_FILTER(mask) {
-
-    // Fuck the slow OpenCV
-    struct Point2f {
-        Point2f(float _x, float _y) : x(_x), y(_y) {}; 
-        const Point2f& operator-(const Point2f& b) const {
-            return Point2f(x - b.x, y - b.y);
-        }
-        const Point2f& operator+(const Point2f& b) const {
-            return Point2f(x + b.x, y + b.y);
-        }
-        const Point2f& operator*(float b) const {
-            return Point2f(x * b, y * b);
-        }
-        float x, y;
-    };
-    
     int np = parameters.size() / 2;
     std::vector<Point2f> ps;
     for (int i = 0; i < np; i++)
@@ -29,29 +13,12 @@ CCPLUS_FILTER(mask) {
     Mat& image = frame.getImage();
 
     std::vector<Point2f> rays = {
-        {0, 1}, {1, 0}, 
-        //{0, -1}, {-1, 0}
+        {0, 1}, {1, 0}, {1, 1} 
     };
 
-    //Debug
-    //auto MyFilledCircle = [] (Mat img, Point2f center) {
-    //    int thickness = -1;
-    //    int lineType = 8;
-
-    //    circle( img,
-    //            center,
-    //            400/32,
-    //            Scalar( 0, 0, 255, 255),
-    //            thickness,
-    //            lineType );
-    //};
-
-    //for (int i = 0; i < np; i++)
-    //    MyFilledCircle(image, ps[i]);
-    //return;
-    
-
-    auto intersect = [] (Point2f head, Point2f end, Point2f origin, Point2f ray, std::vector<Point2f>& mp) {
+    auto intersect = [] (const Point2f& head, const Point2f& end, 
+                         const Point2f& origin, const Point2f& ray, 
+                         std::vector<Point2f>& mp) {
         Point2f ad = end - head;
         Point2f bd = ray;
         float dx = origin.x - head.x;
