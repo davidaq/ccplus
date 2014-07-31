@@ -50,6 +50,12 @@ float Layer::getLast() const {
     return last;
 }
 
+void Layer::setProperties(const std::map<std::string, Property>& prop, 
+        const std::vector<std::string>& keyOrder) {
+    this->orderedKey = keyOrder;
+    properties = prop;
+}
+
 void Layer::setProperties(const std::map<std::string, Property>& prop) {
     properties = prop;
 }
@@ -104,7 +110,12 @@ Frame Layer::applyFiltersToFrame(float t) {
     // Calculate corresponding local time
     float local_t = start + last / duration * (t - time);
     Frame frame = this->getRenderObject()->getFrame(local_t);
-    for (auto& kv : properties) 
-        Filter(kv.first).apply(frame, interpolate(kv.first, t), width, height);
+    if (orderedKey.empty()) {
+        for (auto& kv : properties) 
+            Filter(kv.first).apply(frame, interpolate(kv.first, t), width, height);
+    } else {
+        for (auto& k : orderedKey)
+            Filter(k).apply(frame, interpolate(k, t), width, height);
+    }
     return frame;
 }
