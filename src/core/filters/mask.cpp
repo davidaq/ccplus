@@ -21,4 +21,3 @@ CCPLUS_FILTER(mask) {
         srcPtr[j] = ((int)srcPtr[j] * mskPtr[i]) / 255;
     }
 }
-
