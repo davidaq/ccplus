@@ -36,7 +36,6 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     for (auto& dep : deps) {
         dep.renderable->render(dep.from, dep.to);
     }
-    // TODO: export audio
 }
 
 void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
@@ -45,9 +44,8 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
     UserContext* uCtx = (UserContext*) ctxHandle;
     if(length < 0)
         length = uCtx->mainComp->getDuration();
-    // TODO: implement real video encoder
     float inter = 1.0 / uCtx->ctx->getFPS();
-    VideoEncoder encoder("tmp/result.mp4", uCtx->ctx->getFPS());
+    VideoEncoder encoder(uCtx->ctx->getStoragePath() + "/result.mp4", uCtx->ctx->getFPS());
     for (float i = 0.0; i < length; i += inter) {
         float t = start + i;
         CCPlus::Frame img = uCtx->mainComp->getFrame(t);

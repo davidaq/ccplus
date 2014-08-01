@@ -224,8 +224,8 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
                 codecCtx->bit_rate    = 16000;
 
             codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
-            codecCtx->channels      = 1;
-            codecCtx->channel_layout = AV_CH_LAYOUT_MONO;
+            codecCtx->channels        = 1;
+            codecCtx->channel_layout  = AV_CH_LAYOUT_MONO;
             break;
         case AVMEDIA_TYPE_VIDEO:
             codecCtx->codec_id = codec_id;

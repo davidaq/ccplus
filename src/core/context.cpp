@@ -5,12 +5,10 @@ using namespace CCPlus;
 Context::Context(const std::string& _storagePath, int _fps):
     storagePath(_storagePath), fps(_fps)
 {
-    // TODO make sure storagePath directory exists
 }
 
 Context::~Context() {
     // TODO clean up renderables' memory
-    // TODO delete storagePath directory
 }
 
 const std::string& Context::getStoragePath() const {

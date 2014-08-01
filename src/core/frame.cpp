@@ -32,7 +32,6 @@ Frame::Frame(const std::string& filepath) {
         ushort height = NEXT(ushort); 
         
         ulong jpgLen = NEXT(ulong);
-        //TODO: check minimum jpg length
         if (jpgLen >= 125) {
             vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
             image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
@@ -71,7 +70,7 @@ Frame::Frame(const std::string& filepath) {
         delete[] audioData;
     } else {
         // read from file system
-        // TODO: deal with audio
+        // ignore audio
         image = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
         if (!image.data) {
             throw std::ios_base::failure("File not exists");
@@ -139,8 +138,9 @@ void Frame::to4Channels() {
 void Frame::write(const std::string& file, int quality) {
     if(stringEndsWith(file, ".zim")) {   
         FILE* outFile = fopen(file.c_str(), "wb");       
-        if(!outFile)
+        if(!outFile) {
             throw std::ios_base::failure("File path [" + file + "] unwritable");   
+        }
         ushort metric; 
         // write size first
         metric = (ushort)getWidth();
@@ -191,7 +191,6 @@ void Frame::write(const std::string& file, int quality) {
         delete[] compressedBytes;
         delete[] compressedAudio;
     } else {
-        // TODO: Ignore audio?
         cv::imwrite(file, image);
     }
 }
@@ -240,7 +239,6 @@ void Frame::mergeFrame(const Frame& f) {
     if (!f.getImage().empty())
         this->overlayImage(f.getImage());
     // Merge audio
-    // TODO consider the case when input.size() != f.size() 
     // Two frames are supposed to have the same number of audio signals
     const Mat& input = f.getAudio();
     if (audio.total() == 0) {

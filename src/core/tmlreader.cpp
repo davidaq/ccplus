@@ -90,8 +90,10 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
         } else {
             // What the f
         }
-        if(renderable)
+        if(renderable) {
+            context->retain(renderable);
             context->putRenderable(uri, renderable);
+        }
     }
     Layer l = Layer(
             context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),

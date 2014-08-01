@@ -1,4 +1,5 @@
 #include "composition.hpp"
+#include "parallel-executor.hpp"
 #include "global.hpp"
 #include <list>
 
@@ -13,9 +14,6 @@ Composition::Composition(
 }
 
 Composition::~Composition() {
-    //for (int i : rendered) {
-    //    TODO remove file
-    //}
 }
 
 std::string Composition::getName() const {
@@ -105,6 +103,7 @@ void Composition::putLayer(const Layer& layer) {
 void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
+    ParallelExecutor executor(3);
     // Plus an inter to make sure no lost frame
     for (float t = start; t <= start + duration + inter; t += inter) {
         //printf("t = %f\n", t);
@@ -113,14 +112,17 @@ void Composition::renderPart(float start, float duration) {
             continue;
         std::string fp = getFramePath(f);
 
-        Frame ret = Frame::emptyFrame(width, height);
-        for (Layer& l : layers) {
-            Frame frame = l.applyFiltersToFrame(t);
-            // In some cases it will be empty
-            ret.mergeFrame(frame);
-        }
+        auto render = [fp,t,this] {
+            Frame ret = Frame::emptyFrame(width, height);
+            for (Layer& l : layers) {
+                Frame frame = l.applyFiltersToFrame(t);
+                // In some cases it will be empty
+                ret.mergeFrame(frame);
+            }
+            ret.write(fp);
+        };
+        executor.execute(render);
         // Save ret to storagePath / name_tmp
-        ret.write(fp);
         rendered.insert(f);
     }
 }

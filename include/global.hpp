@@ -21,7 +21,6 @@ namespace CCPlus {
 
     class Frame;
 
-    // TODO: other classes
 }
 
 // system dependencies
@@ -59,5 +58,6 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "layer.hpp"
 #include "frame.hpp"
 #include "filter.hpp"
+#include "time.h"
 
-#define PASS printf("passed line %d in %s\n", __LINE__, __FILE__);
+#define PASS printf("passed line %d in %s at %lums\n", __LINE__, __FILE__, clock() * 1000 / CLOCKS_PER_SEC);
