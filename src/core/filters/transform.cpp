@@ -4,6 +4,8 @@
 using namespace cv;
 
 CCPLUS_FILTER(transform) {
+    if (parameters.size() == 0)
+        return;
     int pos_row = (int)parameters[0];
     int pos_col = (int)parameters[1];
     int anchor_row = (int)parameters[2];

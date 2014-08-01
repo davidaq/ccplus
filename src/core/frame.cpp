@@ -255,11 +255,13 @@ void Frame::mergeFrame(const Frame& f) {
 
 void Frame::overlayImage(const cv::Mat& input) {
     if (this->getHeight() != input.rows || this->getWidth() != input.cols) {
-        throw std::invalid_argument("overlayFrame: images have to be with the same size");
+        return;
+        //throw std::invalid_argument("overlayFrame: images have to be with the same size");
     }
 
     if (this->getImageChannels() != 4 || input.channels() != 4) {
-        throw std::invalid_argument("overlayFrame: images have to have alpha channels");
+        return;
+        //throw std::invalid_argument("overlayFrame: images have to have alpha channels");
     }
 
     //std::cout << (float) img.at<Vec3b>(1079, 1692)[0] << std::endl;
