@@ -7,37 +7,20 @@
 // @ This class should not be inherited
 class CCPlus::Context : public CCPlus::Object {
 public:
-    Context(const std::string& _storagePath, int _fps) : 
-        storagePath(_storagePath),
-        fps(_fps) {}
-
-    ~Context() {}
+    Context(const std::string& storagePath, int _fps);
+    ~Context();
     
     // operations
     
     
     // access
-    const std::string& getStoragePath() const {
-        return storagePath;
-    }
+    const std::string& getStoragePath() const;
 
-    CCPlus::Renderable* getRenderable(const std::string& uri) {
-        return renderables.at(uri);
-    }
-
-    void putRenderable(const std::string& uri, CCPlus::Renderable* renderable); 
-
-    bool hasRenderable(const std::string& uri) const {
-        return (renderables.find(uri) != renderables.end());
-    }
-
-    int numberOfRenderable() const {
-        return renderables.size();
-    }
-
-    int getFPS() const {
-        return fps;
-    }
+    Renderable* getRenderable(const std::string& uri);
+    void putRenderable(const std::string& uri, Renderable*);
+    bool hasRenderable(const std::string&) const;
+    int numberOfRenderable() const;
+    int getFPS() const;
 
     // inquery
 
