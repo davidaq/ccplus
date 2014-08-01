@@ -4,6 +4,8 @@
 using namespace cv;
 
 CCPLUS_FILTER(opacity) {
+    if (parameters.size() == 0)
+        return;
     float opa = (float) parameters[0];
 
     if (opa > 1.00001 && opa < 0.0) {
