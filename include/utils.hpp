@@ -9,12 +9,26 @@
 #include <sys/time.h>
 #include <ctime>
 
+#include <iomanip>
+
 static inline double getSystemTime() { 
     // Might not work at multicore situation
     struct timeval now;
     gettimeofday (&now, NULL);
     long long tmp = now.tv_usec + (uint64_t)now.tv_sec * 1000000;
     return tmp / 1000000.0;
+}
+
+// Thread-safe time
+static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
+    char str[n];
+    std::tm tm_snapshot;
+    std::time_t nowtime = std::time(nullptr);
+    // localtime_r is thread safe
+    localtime_r(&nowtime, &tm_snapshot);
+    int ret = std::strftime(str, n, "%c %Z", &tm_snapshot);
+    if (ret == 0) return "";
+    return std::string(str);
 }
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
@@ -30,6 +44,17 @@ static inline std::string toLower(const std::string& s) {
     auto tol = [](char c) {
         if (c >= 'A' && c <= 'Z')
             return char(c - 'Z' + 'z');
+        return c;
+    };
+    std::transform(data.begin(), data.end(), data.begin(), tol);
+    return data;
+}
+
+static inline std::string toUpper(const std::string& s) {
+    std::string data = s;
+    auto tol = [](char c) {
+        if (c >= 'a' && c <= 'z')
+            return char(c + 'Z' - 'z');
         return c;
     };
     std::transform(data.begin(), data.end(), data.begin(), tol);

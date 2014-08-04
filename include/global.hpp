@@ -59,5 +59,6 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "frame.hpp"
 #include "filter.hpp"
 #include "time.h"
+#include "logger.hpp"
 
 #define PASS printf("passed line %d in %s at %lums\n", __LINE__, __FILE__, clock() * 1000 / CLOCKS_PER_SEC);
