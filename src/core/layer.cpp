@@ -88,8 +88,10 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
             break; // Because map are always sorted 
         }
     }
-    if (low == nullptr || high == nullptr) 
+    if (low == nullptr || high == nullptr) {
+        log(logWARN) << "Parametere are not interpolatable at time " << time;
         return ret;
+    }
 
     for (int i = 0; i < low->size(); i++) {
         float y = high->at(i);
@@ -104,7 +106,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 Frame Layer::applyFiltersToFrame(float t) {
-    if (t < this->getTime() || t > this->getDuration() + this->getTime())
+    if (t < this->getTime() || t > this->getDuration() + this->getTime()) 
         return Frame();
 
     // Calculate corresponding local time

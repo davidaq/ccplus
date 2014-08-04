@@ -42,9 +42,10 @@ Frame::Frame(const std::string& filepath) {
         ulong alphaLen = NEXT(ulong);
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
-        uncompress(alphaBytes, &destLen, ptr, alphaLen);
-        if(destLen != width * height) {
-            throw std::ios_base::failure("Unexpected uncompressed length");       
+        int ret = uncompress(alphaBytes, &destLen, ptr, alphaLen);
+        if(destLen != width * height && ret != 0) {
+            //throw std::ios_base::failure("Unexpected uncompressed length");       
+            log(logFATAL) << "Failed decompressing alpha";
         }
         for(int i = 3, j =0; j < destLen; i += 4, j++) {
             image.data[i] = alphaBytes[j];
@@ -55,9 +56,11 @@ Frame::Frame(const std::string& filepath) {
         ulong audioRealByteLen = NEXT(ulong);
         unsigned char* audioData = new unsigned char[audioRealByteLen];
         destLen = (unsigned long)0x7fffffff;
-        int ret = uncompress(audioData, &destLen, ptr, audioLen);
-        if (ret != 0) 
-            throw std::ios_base::failure("Uncompress failed");
+        ret = uncompress(audioData, &destLen, ptr, audioLen);
+        if (ret != 0) {
+            //throw std::ios_base::failure("Uncompress failed");
+            log(logFATAL) << "Failed decompressing audio";
+        }
         
         // I don't trust memcpy
         std::vector<int16_t> tmp;
@@ -73,22 +76,28 @@ Frame::Frame(const std::string& filepath) {
         // ignore audio
         image = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
         if (!image.data) {
-            throw std::ios_base::failure("File not exists");
+            log(logFATAL) << "file not exists: " << filepath;
+            //throw std::ios_base::failure("File not exists");
         }
     }
 
     if (image.channels() == 3) {
         to4Channels();
     } else if (image.channels() < 3 && !image.empty()) {
-        throw std::invalid_argument("Can't take image with less than 3 channels");
+        log(logFATAL) << "Can't take images with less than 3 channels";
+        //throw std::invalid_argument("Can't take image with less than 3 channels");
     }
 
     if (stringEndsWith(toLower(filepath), ".jpg")) {
         try {
             int degree = getImageRotation(filepath);
+            if (degree == -1) {
+                log(logWARN) << "Failed getting image rotationg angle";
+                return;
+            }
             rotateCWRightAngle(degree);
         } catch (...) {
-            std::cout << "Something wrong about rotation" << std::endl;
+            log(logWARN) << "Failed getting image rotationg angle";
         }
     }
 }
@@ -114,8 +123,10 @@ Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audi
 Frame::Frame() {}
 
 void Frame::rotateCWRightAngle(int angle) {
-    if (angle % 90 != 0)
-        throw std::invalid_argument("Only allowed right angle rotation 90, 180, 270");
+    if (angle % 90 != 0) {
+        log(logWARN) << "Unexpected rotation angle: " << angle;
+        //throw std::invalid_argument("Only allowed right angle rotation 90, 180, 270");
+    }
 
     if (angle == 180) {
         flip(image, image, -1); 
@@ -139,7 +150,8 @@ void Frame::write(const std::string& file, int quality) {
     if(stringEndsWith(file, ".zim")) {   
         FILE* outFile = fopen(file.c_str(), "wb");       
         if(!outFile) {
-            throw std::ios_base::failure("File path [" + file + "] unwritable");   
+            log(logFATAL) << "File path " << file << "] unwritable";
+            //throw std::ios_base::failure("File path [" + file + "] unwritable");   
         }
         ushort metric; 
         // write size first
@@ -162,10 +174,14 @@ void Frame::write(const std::string& file, int quality) {
         // write zip compressed alpha channel
         unsigned long len = image.cols * image.rows;
         unsigned char* uncompressedBytes = new unsigned char[len];
-        unsigned char* compressedBytes = new unsigned char[len];
+        unsigned char* compressedBytes = new unsigned char[std::max((int)len, 124)];
         for(int i = 3, j = 0, c = len * 4; i < c; i += 4, j++) 
             uncompressedBytes[j] = image.data[i];
-        compress(compressedBytes, &len, uncompressedBytes, len);
+        unsigned long ttmp = len + 124;
+        int ret = compress(compressedBytes, &ttmp, uncompressedBytes, len);
+        if (ret != 0) {
+            log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
+        }
         ulong wlen = len;
         fwrite(&wlen, sizeof(wlen), 1, outFile);
         fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
@@ -175,9 +191,9 @@ void Frame::write(const std::string& file, int quality) {
         //unsigned long tmp = std::max(len * 2 + 128, (unsigned long)128);
         unsigned long tmp = len * 2 + 128;
         unsigned char* compressedAudio = new unsigned char[tmp];
-        int ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
+        ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
         if (ret != 0) {
-            throw std::ios_base::failure("Compressing audio failed: returned " + std::to_string(ret));
+            log(logFATAL) << "Failed compressing audio " << ret;
         }
         // ulong is NOT unsigned long
         wlen = tmp;
@@ -254,20 +270,20 @@ void Frame::mergeFrame(const Frame& f) {
 }
 
 void Frame::overlayImage(const cv::Mat& input) {
+    if (input.empty()) return;
+    
     if (this->getHeight() != input.rows || this->getWidth() != input.cols) {
+        log(logWARN) << "image overlay expects two images with the same size"; 
         return;
-        //throw std::invalid_argument("overlayFrame: images have to be with the same size");
     }
 
     if (this->getImageChannels() != 4 || input.channels() != 4) {
+        log(logWARN) << "image overlay requires image to have alpha channel"; 
         return;
-        //throw std::invalid_argument("overlayFrame: images have to have alpha channels");
     }
 
-    //std::cout << (float) img.at<Vec3b>(1079, 1692)[0] << std::endl;
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
-            //std::cout << i << " " << j << std::endl;
             uchar alpha_this = image.at<Vec4b>(i, j)[3];
             uchar alpha_img = input.at<Vec4b>(i, j)[3];
             float falpha_this = alpha_this / 255.0;

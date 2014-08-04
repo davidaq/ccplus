@@ -10,8 +10,6 @@ TEST(Frame, FrameReadTest) {
     Frame img("test/res/test.png");
     EXPECT_EQ(img.getHeight(), 1080);
     EXPECT_EQ(img.getWidth(), 1920);
-
-    EXPECT_THROW(Frame("hithere"), std::ios_base::failure);
 }
 
 TEST(Frame, OverlayFrameTest1) {
@@ -19,9 +17,6 @@ TEST(Frame, OverlayFrameTest1) {
     Frame img2("test/res/test_alpha.png");
     Frame img3("test/res/test.png");
     Frame img4("test/res/test.png");
-    //EXPECT_NO_THROW(img1.mergeFrame(&img2));
-    EXPECT_THROW(img1.mergeFrame(img3), std::invalid_argument);
-    EXPECT_THROW(img3.mergeFrame(img1), std::invalid_argument);
 }
 
 TEST(Frame, OverlayFrameTest2) {

@@ -77,6 +77,7 @@ std::vector<std::string> TMLReader::readPropertiesOrder(const boost::property_tr
 
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
+    // TODO: SO UGLY
     if (!context->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "file://")) {
@@ -84,10 +85,14 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 stringEndsWith(uri, ".png")) {
                 renderable = new ImageRenderable(context, uri);
             } else if (stringEndsWith(uri, ".mov") || 
-                    stringEndsWith(uri, ".mp4")) {
+                    stringEndsWith(uri, ".mp4") ||
+                    stringEndsWith(uri, ".m4a")) {
                 renderable = new VideoRenderable(context, uri);
+            } else {
+                log(logFATAL) << "Unsupportd file type: " << uri;
             }
-        } else {
+        } else if (!stringStartsWith(uri, "composition://")) {
+            log(logFATAL) << "Ahhhhhhhhhh, shit: " << uri;
             // What the f
         }
         if(renderable) {
