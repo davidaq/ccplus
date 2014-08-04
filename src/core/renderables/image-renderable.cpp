@@ -29,8 +29,9 @@ void ImageRenderable::render(float start, float duration) {
     //if (!loaded)
     //    image = Frame(path);
     //loaded = true;
+    cache = Frame(path);
 }
 
 Frame ImageRenderable::getFrame(float time) const {
-    return Frame(path);
+    return Frame(cache.getImage().clone());
 }

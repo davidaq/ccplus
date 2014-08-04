@@ -6,7 +6,16 @@
 #include <algorithm>
 #include <string>
 
-//#include "boost/filesystem.hpp"   
+#include <sys/time.h>
+#include <ctime>
+
+static inline double getSystemTime() { 
+    // Might not work at multicore situation
+    struct timeval now;
+    gettimeofday (&now, NULL);
+    long long tmp = now.tv_usec + (uint64_t)now.tv_sec * 1000000;
+    return tmp / 1000000.0;
+}
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
     return content.rfind(suffix) == (content.length() - suffix.length());

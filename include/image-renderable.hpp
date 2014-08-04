@@ -19,6 +19,7 @@ public:
     int getHeight() const;
 
 protected:
+    Frame cache;
     bool loaded = false;
     std::string path;
     Frame image;
