@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 
+#define L() \
+    log(logDEBUG)
+
 #define log(level) \
     if (level > logLevel) ; \
     else CCPlus::Logger(level, __LINE__, __FILE__)

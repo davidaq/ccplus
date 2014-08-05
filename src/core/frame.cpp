@@ -15,12 +15,14 @@ Frame::Frame(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
         FILE* inFile = fopen(filepath.c_str(), "rb");       
         if(!inFile)
-            throw std::ios_base::failure("File not exists");
+        {
+            log(logFATAL) << "Intermidiate file not exists: " << filepath;
+        }
         fseek(inFile, 0, SEEK_END);       
         size_t len = ftell(inFile);
         if(len < 5) {
             fclose(inFile);
-            throw std::ios_base::failure("File too small to be a image");
+            log(logFATAL) << "File too small to be a zim";
         }       
         fseek(inFile, 0, SEEK_SET);       
         unsigned char* fileContent = new unsigned char[len];
@@ -43,8 +45,7 @@ Frame::Frame(const std::string& filepath) {
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
         int ret = uncompress(alphaBytes, &destLen, ptr, alphaLen);
-        if(destLen != width * height && ret != 0) {
-            //throw std::ios_base::failure("Unexpected uncompressed length");       
+        if(destLen != width * height || ret != 0) {
             log(logFATAL) << "Failed decompressing alpha";
         }
         for(int i = 3, j =0; j < destLen; i += 4, j++) {
@@ -57,8 +58,7 @@ Frame::Frame(const std::string& filepath) {
         unsigned char* audioData = new unsigned char[audioRealByteLen];
         destLen = (unsigned long)0x7fffffff;
         ret = uncompress(audioData, &destLen, ptr, audioLen);
-        if (ret != 0) {
-            //throw std::ios_base::failure("Uncompress failed");
+        if (ret != 0 || audioRealByteLen != destLen) {
             log(logFATAL) << "Failed decompressing audio";
         }
         
@@ -115,7 +115,7 @@ Frame::Frame(const cv::Mat& _data) {
 }
 
 Frame::Frame(const std::vector<int16_t>& data) {
-    audio = Mat(data);
+    audio = Mat(data, true);
 }
 
 Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audio(_audio) {};
@@ -151,7 +151,6 @@ void Frame::write(const std::string& file, int quality) {
         FILE* outFile = fopen(file.c_str(), "wb");       
         if(!outFile) {
             log(logFATAL) << "File path " << file << "] unwritable";
-            //throw std::ios_base::failure("File path [" + file + "] unwritable");   
         }
         ushort metric; 
         // write size first
@@ -177,14 +176,15 @@ void Frame::write(const std::string& file, int quality) {
         unsigned char* compressedBytes = new unsigned char[std::max((int)len, 124)];
         for(int i = 3, j = 0, c = len * 4; i < c; i += 4, j++) 
             uncompressedBytes[j] = image.data[i];
-        unsigned long ttmp = len + 124;
-        int ret = compress(compressedBytes, &ttmp, uncompressedBytes, len);
+
+        unsigned long tmplen = std::max((int) len, 128);
+        int ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
         if (ret != 0) {
             log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
         }
-        ulong wlen = len;
+        ulong wlen = tmplen;
         fwrite(&wlen, sizeof(wlen), 1, outFile);
-        fwrite(compressedBytes, sizeof(unsigned char), len, outFile);
+        fwrite(compressedBytes, sizeof(unsigned char), wlen, outFile);
 
         // Compress audio data
         len = audio.total();

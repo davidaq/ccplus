@@ -28,7 +28,8 @@ void VideoRenderable::renderPart(float start, float duration) {
     float gap = -1;
     float pos = -1;
     int lastFrame = -1;
-    auto makeup_frames = [&](int f, int last_f, auto decoder) {
+
+    auto makeup_frames = [&](int f, int last_f) {
         if (last_f == -1 || f - last_f <= 1) return;
         Frame lost = Frame(getFramePath(last_f));
         for (int j = 1; j + last_f < f; j++) {
@@ -60,7 +61,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         std::string fp = getFramePath(f);
 
         // Make up lost frames
-        makeup_frames(f, lastFrame, decoder);
+        makeup_frames(f, lastFrame);
         
         if (!rendered.count(f)) {
             Frame ret = decoder->getDecodedImage();
@@ -77,18 +78,20 @@ void VideoRenderable::renderPart(float start, float duration) {
 
     // Make up some missed frame :
     // Used while rendering low fps video
-    makeup_frames(getFrameNumber(start + duration), lastFrame, decoder);
+    makeup_frames(getFrameNumber(start + duration), lastFrame);
 
     if (lastFrame == -1) {
         // Audio only
         float inter = 1.0 / context->getFPS();
         for (float i = start; i <= start + duration + inter; i += inter) {
-            Frame ret(subAudio(audios, i));
             int f = getFrameNumber(i);
-            std::string fp = getFramePath(f);
+            makeup_frames(f, lastFrame);
             if (!rendered.count(f)) {
+                Frame ret(subAudio(audios, f));
+                std::string fp = getFramePath(f);
                 ret.write(fp, 75);
                 rendered.insert(f);
+                lastFrame = f;
             }
         }    
     }
