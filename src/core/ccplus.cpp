@@ -11,6 +11,7 @@ struct UserContext {
 };
 
 void* CCPlus::initContext(const char* tmlPath, const char* storagePath, int fps) {
+    log(logDEBUG) << "Loading tml file......";
     UserContext* ret = new UserContext;
     ret->ctx = new CCPlus::Context(storagePath, fps);
     CCPlus::TMLReader reader(ret->ctx);
@@ -29,6 +30,7 @@ void CCPlus::releaseContext(void* ctxHandle) {
 void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     if(!ctxHandle)
         return;
+    log(logDEBUG) << "Start rendering......";
     UserContext* uCtx = (UserContext*) ctxHandle;
     if(length < 0)
         length = uCtx->mainComp->getDuration();
@@ -41,6 +43,7 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
 void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
     if(!ctxHandle)
         return;
+    log(logDEBUG) << "Encoding video......";
     UserContext* uCtx = (UserContext*) ctxHandle;
     if(length < 0)
         length = uCtx->mainComp->getDuration();
@@ -52,6 +55,8 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
         encoder.appendFrame(img);
     }
     encoder.finish();
+
+    log(logDEBUG) << "---Done!---";
 }
 
 void CCPlus::go(
