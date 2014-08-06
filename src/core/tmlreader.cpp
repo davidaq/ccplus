@@ -16,6 +16,11 @@ TMLReader::TMLReader(CCPlus::Context* ctx) :
 Composition* TMLReader::read(const std::string& s) const {
 
     std::ifstream fstream(s, std::ios::in);
+    if (!fstream.is_open()) {
+        log(logFATAL) << "Couldn't open file: " << s;
+    }
+
+    context->setInputDir(dirName(s));
 
     using boost::property_tree::ptree;
     ptree pt;

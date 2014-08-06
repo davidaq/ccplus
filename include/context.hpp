@@ -22,6 +22,9 @@ public:
     int numberOfRenderable() const;
     int getFPS() const;
 
+    void setInputDir(const std::string& dir);
+    const std::string& getInputDir() const;
+
     // inquery
 
 private:
@@ -32,6 +35,8 @@ private:
     std::map<std::string, Renderable*> renderables;
 
     int fps;
+
+    std::string inputDir = "";
 
     // operations
 };

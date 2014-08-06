@@ -1,7 +1,9 @@
-#include "image-renderable.hpp"
 #include <limits>
-#include "utils.hpp"
 #include <iostream>
+
+#include "image-renderable.hpp"
+#include "utils.hpp"
+#include "context.hpp"
 
 using namespace CCPlus;
 
@@ -11,6 +13,7 @@ ImageRenderable::ImageRenderable(Context* context, const std::string& uri) :
     path = uri;
     if (stringStartsWith(path, "file://")) 
         path = uri.substr(7);
+    path = generatePath(context->getInputDir(), path);
 }
 
 int ImageRenderable::getWidth() const {

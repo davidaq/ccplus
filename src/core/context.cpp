@@ -35,3 +35,12 @@ int Context::numberOfRenderable() const {
 int Context::getFPS() const {
     return fps;
 }
+
+void Context::setInputDir(const std::string& dir) {
+    this->inputDir = dir;
+}
+
+const std::string& Context::getInputDir() const {
+    return inputDir;
+}
+

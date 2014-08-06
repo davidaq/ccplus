@@ -69,6 +69,14 @@ static inline char getSeperator() {
 #endif
 }
 
+static inline std::string dirName(const std::string& path) {
+    return path.substr(
+            0,
+            std::find(path.rbegin(), 
+                path.rend(), 
+                getSeperator()).base() - path.begin());
+}
+
 static inline std::string generatePath(const std::string& dir, const std::string& fn) {
     if (dir == "") return fn;
     //if (!boost::filesystem::exists(dir))

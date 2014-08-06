@@ -11,6 +11,7 @@ VideoRenderable::VideoRenderable(Context* context, const std::string& uri) :
     std::string path = uri;
     if (stringStartsWith(path, "file://")) 
         path = path.substr(7);
+    path = generatePath(context->getInputDir(), path);
     decoder = new VideoDecoder(path);
 }
 
