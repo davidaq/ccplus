@@ -45,11 +45,11 @@ ParallelExecutor::~ParallelExecutor() {
 void ParallelExecutor::execute(std::function<void()> job) {
     bool runNow = false;
     pthread_mutex_lock(&jobListLock);
-    if(jobList.size() < extraThreadsCount * 2) 
+    if(jobList.size() < extraThreadsCount * 2) {
         jobList.push_back(job);
-    else
+        sem_post(&listSemaphore);
+    } else
         runNow = true;
-    sem_post(&listSemaphore);
     pthread_mutex_unlock(&jobListLock);
     if(runNow)
         job();

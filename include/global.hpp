@@ -1,10 +1,10 @@
 #pragma once
 
+#include "config.hpp"
+
 // ccplus classes predifinitions
 namespace CCPlus {
 
-    const int AUDIO_SAMPLE_RATE = 24000; 
-    
     class Context;
     
     class Renderable;

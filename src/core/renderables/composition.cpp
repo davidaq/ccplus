@@ -103,7 +103,7 @@ void Composition::putLayer(const Layer& layer) {
 void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
-    ParallelExecutor executor(3);
+    ParallelExecutor executor(CCPlus::CONCURRENT_THREAD);
     // Plus an inter to make sure no lost frame
     for (float t = start; t <= start + duration + inter; t += inter) {
         //printf("t = %f\n", t);

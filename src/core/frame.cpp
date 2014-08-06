@@ -30,9 +30,14 @@ Frame::Frame(const std::string& filepath) {
         fclose(inFile);
         unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
+
+        // Image size 
         ushort width = NEXT(ushort);
         ushort height = NEXT(ushort); 
-        
+
+        /* 
+         * Read jpg part
+         */
         ulong jpgLen = NEXT(ulong);
         if (jpgLen >= 125) {
             vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
@@ -41,6 +46,9 @@ Frame::Frame(const std::string& filepath) {
         }
         ptr += jpgLen;
 
+        /*
+         * Read alpha channel
+         */
         ulong alphaLen = NEXT(ulong);
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
@@ -53,24 +61,30 @@ Frame::Frame(const std::string& filepath) {
         }
         ptr += alphaLen;
 
+        /*
+         * Read audio channel
+         */
         ulong audioLen = NEXT(ulong);
         ulong audioRealByteLen = NEXT(ulong);
-        unsigned char* audioData = new unsigned char[audioRealByteLen];
-        destLen = (unsigned long)0x7fffffff;
-        ret = uncompress(audioData, &destLen, ptr, audioLen);
-        if (ret != 0 || audioRealByteLen != destLen) {
-            log(logFATAL) << "Failed decompressing audio";
-        }
-        
-        // I don't trust memcpy
-        std::vector<int16_t> tmp;
-        for (int i = 0; i < destLen / 2; i++) 
-            tmp.push_back(((int16_t*) audioData)[i]);
-        audio = Mat(tmp, true);
-        
+        if (CCPlus::COMPRESS_AUDIO) {  
+            unsigned char* audioData = new unsigned char[audioRealByteLen];
+            destLen = (unsigned long)0x7fffffff;
+            ret = uncompress(audioData, &destLen, ptr, audioLen);
+            if (ret != 0 || audioRealByteLen != destLen) {
+                log(logFATAL) << "Failed decompressing audio";
+            }
+            // I don't trust memcpy
+            std::vector<int16_t> tmp;
+            for (int i = 0; i < destLen / 2; i++) 
+                tmp.push_back(((int16_t*) audioData)[i]);
+            audio = Mat(tmp, true);
+            delete[] audioData;
+        } else {
+            vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);   
+            audio = Mat(tmp, true);
+        }        
         delete[] alphaBytes;
         delete[] fileContent;
-        delete[] audioData;
     } else {
         // read from file system
         // ignore audio
@@ -85,7 +99,6 @@ Frame::Frame(const std::string& filepath) {
         to4Channels();
     } else if (image.channels() < 3 && !image.empty()) {
         log(logFATAL) << "Can't take images with less than 3 channels";
-        //throw std::invalid_argument("Can't take image with less than 3 channels");
     }
 
     if (stringEndsWith(toLower(filepath), ".jpg")) {
@@ -125,7 +138,6 @@ Frame::Frame() {}
 void Frame::rotateCWRightAngle(int angle) {
     if (angle % 90 != 0) {
         log(logWARN) << "Unexpected rotation angle: " << angle;
-        //throw std::invalid_argument("Only allowed right angle rotation 90, 180, 270");
     }
 
     if (angle == 180) {
@@ -159,7 +171,9 @@ void Frame::write(const std::string& file, int quality) {
         metric = (ushort)getHeight();
         fwrite(&metric, sizeof(metric), 1, outFile);
 
-        // write jpeg encoded color part
+        /* 
+         * write jpeg encoded color part
+         */
         vector<unsigned char> buff;
         if (!image.empty()) {
             imencode(".jpg", image, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
@@ -170,7 +184,9 @@ void Frame::write(const std::string& file, int quality) {
             fwrite(&buff[0], sizeof(char), jpgLen, outFile);
         buff.clear();
 
-        // write zip compressed alpha channel
+        /* 
+         * write zip compressed alpha channel
+         */
         unsigned long len = image.cols * image.rows;
         unsigned char* uncompressedBytes = new unsigned char[len];
         unsigned char* compressedBytes = new unsigned char[std::max((int)len, 124)];
@@ -180,32 +196,43 @@ void Frame::write(const std::string& file, int quality) {
         unsigned long tmplen = std::max((int) len, 128);
         int ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
         if (ret != 0) {
+            fclose(outFile);
             log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
         }
         ulong wlen = tmplen;
         fwrite(&wlen, sizeof(wlen), 1, outFile);
         fwrite(compressedBytes, sizeof(unsigned char), wlen, outFile);
 
-        // Compress audio data
+        /*
+         * Compress audio data
+         */
         len = audio.total();
-        //unsigned long tmp = std::max(len * 2 + 128, (unsigned long)128);
-        unsigned long tmp = len * 2 + 128;
-        unsigned char* compressedAudio = new unsigned char[tmp];
-        ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
-        if (ret != 0) {
-            log(logFATAL) << "Failed compressing audio " << ret;
+        if (CCPlus::COMPRESS_AUDIO) {
+            unsigned long tmp = len * 2 + 128;
+            unsigned char* compressedAudio = new unsigned char[tmp];
+            ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
+            if (ret != 0) {
+                fclose(outFile);
+                log(logFATAL) << "Failed compressing audio " << ret;
+            }
+            // ulong is NOT unsigned long
+            wlen = tmp;
+            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            wlen = len * 2;
+            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            fwrite(compressedAudio, sizeof(unsigned char), tmp, outFile);
+            delete[] compressedAudio;
+        } else {
+            wlen = 0;
+            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            wlen = len * 2;
+            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            fwrite((int16_t*)audio.data, sizeof(int16_t), len, outFile);
         }
-        // ulong is NOT unsigned long
-        wlen = tmp;
-        fwrite(&wlen, sizeof(wlen), 1, outFile);
-        wlen = len * 2;
-        fwrite(&wlen, sizeof(wlen), 1, outFile);
-        fwrite(compressedAudio, sizeof(unsigned char), tmp, outFile);
 
         fclose(outFile);
         delete[] uncompressedBytes;
         delete[] compressedBytes;
-        delete[] compressedAudio;
     } else {
         cv::imwrite(file, image);
     }
