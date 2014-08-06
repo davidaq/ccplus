@@ -7,12 +7,14 @@
 namespace CCPlus {
     class VideoDecoder;
     struct VideoInfo;
+    struct DecodeContext;
 }
 
 struct CCPlus::VideoInfo {
     float duration;
     int width, height;
 };
+
 
 #ifdef VIDEO_DECODER
 #define OuputF std::function<const void*, size_t, size_t>
@@ -51,7 +53,7 @@ private:
     std::string inputFile;
     int decoderFlag;
     float cursorTime = 0;
-    void* decodeContext = 0;
+    CCPlus::DecodeContext* decodeContext = 0;
     bool haveDecodedImage = false;
     Frame* decodedImage = 0;
     

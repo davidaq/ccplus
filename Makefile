@@ -24,13 +24,16 @@ clean-zim:
 .dependency:
 	./scripts/run load.py
 
-build/test/Makefile: .dependency
-	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build/test -Icommon.gypi
+build/Makefile: .dependency
+	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
 
-testbuild: build/test/Makefile
+testbuild: build/Makefile
 	-rm -rf tmp/
 	mkdir tmp/
-	BUILDTYPE=Debug make -C build/test test -j4
+	BUILDTYPE=Debug make -C ./build/ test -j4
+
+ios:
+	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -Dios
 
 test: testbuild
 	./test.sh '*'

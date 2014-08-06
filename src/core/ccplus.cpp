@@ -65,3 +65,19 @@ void CCPlus::go(
     renderPart(ctx, start, length);
     encodeVideo(ctx, start, length);
 }
+
+extern "C" {
+#include "ccplus.h"
+    void* CCPlusInitContext(const char* tmlPath, const char* storagePath, int fps) {
+        return CCPlus::initContext(tmlPath, storagePath, fps);
+    }
+    void CCPlusReleaseContext(void* ctxHandle) {
+       CCPlus::releaseContext(ctxHandle);
+    }
+    void CCPlusRenderPart(void* ctxHandle, float start, float length) {
+        CCPlus::renderPart(ctxHandle, start, length);
+    }
+    void CCPlusEncodeVideo(void* ctxHandle, float start, float length) {
+        CCPlus::encodeVideo(ctxHandle, start, length);
+    }
+}
