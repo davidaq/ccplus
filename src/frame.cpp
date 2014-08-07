@@ -6,6 +6,8 @@
 #include <ios>
 #include <stdexcept>
 #include <algorithm>
+#include "file.hpp"
+#include "file-manager.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -15,21 +17,24 @@ typedef uint16_t ushort;
 
 Frame::Frame(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
-        FILE* inFile = fopen(filepath.c_str(), "rb");       
+        //FILE* inFile = fopen(filepath.c_str(), "rb");       
+        File* inFile = FileManager::getInstance()->open(filepath, "rb");
         if(!inFile)
         {
             log(logFATAL) << "Intermidiate file not exists: " << filepath;
         }
-        fseek(inFile, 0, SEEK_END);       
-        size_t len = ftell(inFile);
-        if(len < 5) {
-            fclose(inFile);
-            log(logFATAL) << "File too small to be a zim";
-        }       
-        fseek(inFile, 0, SEEK_SET);       
-        unsigned char* fileContent = new unsigned char[len];
-        fread(fileContent, sizeof(char), len, inFile);       
-        fclose(inFile);
+        //fseek(inFile, 0, SEEK_END);       
+        //size_t len = ftell(inFile);
+        //if(len < 5) {
+        //    fclose(inFile);
+        //    log(logFATAL) << "File too small to be a zim";
+        //}       
+        //fseek(inFile, 0, SEEK_SET);       
+        //unsigned char* fileContent = new unsigned char[len];
+        //fread(fileContent, sizeof(char), len, inFile);       
+        //fclose(inFile);
+        unsigned char* fileContent = inFile->readAll();
+        //inFile->close();
         unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
 
@@ -86,7 +91,8 @@ Frame::Frame(const std::string& filepath) {
             audio = Mat(tmp, true);
         }        
         delete[] alphaBytes;
-        delete[] fileContent;
+        //delete[] fileContent;
+        inFile->close();
     } else {
         // read from file system
         // ignore audio
@@ -162,7 +168,10 @@ void Frame::to4Channels() {
 
 void Frame::write(const std::string& file, int quality, bool inMemory) {
     if(stringEndsWith(file, ".zim")) {   
-        FileManager* fm  ; // TODO set fm
+        if(!inMemory) {
+            PASS
+        }
+        FileManager* fm = FileManager::getInstance();
         File& outFile = *fm->open(file, "wb", inMemory);
         ushort metric; 
         // write size first
@@ -232,6 +241,9 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
         outFile.close();
         delete[] uncompressedBytes;
         delete[] compressedBytes;
+        if(!inMemory) {
+            PASS
+        }
     } else {
         cv::imwrite(file, image);
     }

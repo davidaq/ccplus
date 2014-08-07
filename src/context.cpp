@@ -6,7 +6,7 @@ using namespace CCPlus;
 Context::Context(const std::string& _storagePath, int _fps):
     storagePath(_storagePath), fps(_fps)
 {
-    fileManager = new FileManager();
+    FileManager::getInstance();
 }
 
 Context::~Context() {
@@ -44,8 +44,4 @@ void Context::setInputDir(const std::string& dir) {
 
 const std::string& Context::getInputDir() const {
     return inputDir;
-}
-
-FileManager* Context::getFileManager() {
-    return fileManager;
 }

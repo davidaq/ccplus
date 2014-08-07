@@ -5,7 +5,7 @@
 using namespace CCPlus;
 
 TEST(FileUtil, InMemoryReadWrite) {
-    FileManager fileManager;
+    FileManager fileManager = *FileManager::getInstance();
     
     File* f = fileManager.open("tmp/yo", "w", true);
     
@@ -20,7 +20,7 @@ TEST(FileUtil, InMemoryReadWrite) {
 }
 
 TEST(FileUtil, ReadWrite) {
-    FileManager fileManager;
+    FileManager fileManager = *FileManager::getInstance();
     
     File* f = fileManager.open("tmp/yo", "w");
     

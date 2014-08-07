@@ -23,7 +23,7 @@ File::~File() {
         delete vec;
 
     if (fileContent)
-        delete fileContent;
+        delete[] fileContent;
     vec = nullptr;
     file = nullptr;
 }
@@ -33,14 +33,14 @@ void File::close() {
         fclose(file);
         file = nullptr;
         if (fileContent) {
-            delete fileContent;
+            delete[] fileContent;
             fileContent = nullptr;
         }
         delete this;
     }
 }
 
-const unsigned char* File::readAll() {
+unsigned char* File::readAll() {
     if (inMemory) {
         unsigned char* tmp = new unsigned char[vec->size()];
         memcpy(tmp, &vec->front(), vec->size());
