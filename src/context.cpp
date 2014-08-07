@@ -1,10 +1,12 @@
 #include "context.hpp"
+#include "file-manager.hpp"
 
 using namespace CCPlus;
 
 Context::Context(const std::string& _storagePath, int _fps):
     storagePath(_storagePath), fps(_fps)
 {
+    fileManager = new FileManager();
 }
 
 Context::~Context() {
@@ -44,6 +46,6 @@ const std::string& Context::getInputDir() const {
     return inputDir;
 }
 
-FileManager& Context::getFileManager() {
+FileManager* Context::getFileManager() {
     return fileManager;
 }

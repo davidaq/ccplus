@@ -3,6 +3,10 @@
 
 #include <map>
 
+namespace CCPlus {
+    class FileManager;
+};
+
 // @ Context objects contains data that should be shared between process stages.
 // @ This class should not be inherited
 class CCPlus::Context : public CCPlus::Object {
@@ -25,7 +29,7 @@ public:
     void setInputDir(const std::string& dir);
     const std::string& getInputDir() const;
 
-    FileManager& getFileManager();
+    CCPlus::FileManager* getFileManager();
 
     // inquery
 
@@ -40,7 +44,7 @@ private:
 
     std::string inputDir = "";
 
-    FileManager fileManager;
+    CCPlus::FileManager* fileManager;
 
     // operations
 };

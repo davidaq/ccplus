@@ -4,7 +4,6 @@
 #include <cstring>
 #include <map>
 #include <algorithm>
-#include <string>
 
 #include <sys/time.h>
 #include <ctime>
@@ -86,13 +85,13 @@ static inline std::string generatePath(const std::string& dir, const std::string
     return dir + fn;
 }
 
-template<class T> static inline 
-T parseString(const std::string& str) {
-    T value;
-    std::istringstream iss(str);
-    iss >> value;
-    return value;
-}
+//template<class T> static inline 
+//T parseString(const std::string& str) {
+//    T value;
+//    std::istringstream iss(str);
+//    iss >> value;
+//    return value;
+//}
 
 /*
 template<bool> static inline 

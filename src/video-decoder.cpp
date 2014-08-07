@@ -333,7 +333,7 @@ void VideoDecoder::initContext() {
         AVDictionaryEntry *tag = NULL;
         tag = av_dict_get(decodeContext->video_stream->metadata, "rotate", tag, AV_DICT_MATCH_CASE);
         if(tag) {
-            decodeContext->rotate = parseString<int>(tag->value);
+            decodeContext->rotate = atoi(tag->value);
         }
     }
     if (decoderFlag & DECODE_AUDIO &&
