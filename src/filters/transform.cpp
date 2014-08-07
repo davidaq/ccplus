@@ -1,6 +1,10 @@
 #include "filter.hpp"
 #include <cmath>
 
+#ifndef __ANDROID__
+#define round(X) std::round(X)
+#endif
+
 using namespace cv;
 
 CCPLUS_FILTER(transform) {
@@ -66,14 +70,14 @@ CCPLUS_FILTER(transform) {
         float x2 = std::ceil(x);
         float y2 = std::ceil(y);
         if (x1 == x2 && y1 == y2) 
-            return mat.at<Vec4b>(std::round(y), std::round(x));
+            return mat.at<Vec4b>(round(y), round(x));
         else if (x1 == x2) {
             // y direction interpolation
             Vec4b r1 = mat.at<Vec4b>(y1, x1);
             Vec4b r2 = mat.at<Vec4b>(y2, x1);
             Vec4b ans; 
             for (int i = 0; i < 4; i++) {
-                ans[i] = std::round(r1[i] * (y2 - y) / (y2 - y1) + r2[i] * (y - y1) / (y2 - y1));
+                ans[i] = round(r1[i] * (y2 - y) / (y2 - y1) + r2[i] * (y - y1) / (y2 - y1));
             }
             return ans;
         } else if (y1 == y2) {
@@ -81,7 +85,7 @@ CCPLUS_FILTER(transform) {
             Vec4b r2 = mat.at<Vec4b>(y1, x2);
             Vec4b ans; 
             for (int i = 0; i < 4; i++) {
-                ans[i] = std::round(r1[i] * (x2 - x) / (x2 - x1) + r2[i] * (x - x1) / (x2 - x1));
+                ans[i] = round(r1[i] * (x2 - x) / (x2 - x1) + r2[i] * (x - x1) / (x2 - x1));
             }
             return ans;
         }
@@ -99,7 +103,7 @@ CCPLUS_FILTER(transform) {
                  p21[i] * (x - x1) * (y2 - y) + 
                  p12[i] * (x2 - x) * (y - y1) +
                  p22[i] * (x - x1) * (y - y1));
-            ans[i] = std::round(t);
+            ans[i] = round(t);
         } 
         return ans;
     };

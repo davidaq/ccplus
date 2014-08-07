@@ -94,6 +94,7 @@ T parseString(const std::string& str) {
     return value;
 }
 
+/*
 template<bool> static inline 
 bool parseString(const std::string& str) {
     bool value;
@@ -126,6 +127,7 @@ static inline std::string rtrim(std::string str) {
 static inline std::string trim(std::string str) {
     return rtrim(ltrim(str));
 }
+*/
 
 static inline int getImageRotation(const std::string& jpgpath) {
     FILE* f = fopen(jpgpath.c_str(), "rb");   

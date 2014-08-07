@@ -7,6 +7,10 @@
 
 #include <cmath>
 
+#ifndef __ANDROID__
+#define round(X) std::round(X)
+#endif
+
 using namespace CCPlus;
 
 Renderable::Renderable(Context* _ctx) 
@@ -18,5 +22,5 @@ Renderable::Renderable(Context* _ctx)
 
 int Renderable::getFrameNumber(float time) const {
     float inter = 1.0 / context->getFPS(); 
-    return std::round(time / inter);
+    return round(time / inter);
 }

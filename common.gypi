@@ -7,7 +7,6 @@
         },
       },
     },
-
     'target_defaults': {
         'default_configuration': 'Debug',
         'cflags_cc': [ '-std=c++1y', '-fvisibility=hidden', '-fexceptions' ],
@@ -30,6 +29,8 @@
                 'xcode_settings' : {
                     'SDKROOT': 'macosx10.9',
                 },
+            }],
+            ['OS=="android"', {
             }],
         ],
         'configurations': {

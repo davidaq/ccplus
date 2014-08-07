@@ -63,7 +63,7 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
         for (auto& pc : pt.get_child(std::string("properties.") + name)) {
             float t = std::atof(pc.first.data());
             for (auto& v : pc.second) {
-                float val = std::stof(v.second.data());
+                float val = std::atof(v.second.data().c_str());
                 ret[name][t].push_back(val);
             }
         }

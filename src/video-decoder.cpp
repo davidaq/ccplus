@@ -5,6 +5,7 @@
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define __STDC_FORMAT_MACROS
+#define __STDC_CONSTANT_MACROS
 extern "C" {
     #include <libavutil/imgutils.h>
     #include <libavutil/samplefmt.h>

@@ -1,7 +1,6 @@
-#include "logger.hpp"
 #include "utils.hpp"
-
 #include <ctime>
+#include "logger.hpp"
 
 using namespace CCPlus;
 
