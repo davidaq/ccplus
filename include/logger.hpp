@@ -9,8 +9,7 @@
 #define L() \
     log(logDEBUG)
 
-#define log(level) \
-    if (level > logLevel) ; \
+#define log(level) if (level > logLevel) ; \
     else CCPlus::Logger(level, __LINE__, __FILE__)
 
 namespace CCPlus {
@@ -19,7 +18,6 @@ namespace CCPlus {
         logFATAL, logERROR, logWARN, logINFO, logDEBUG, logDEBUG1
     };
 }
-
 
 class CCPlus::Logger {
 
