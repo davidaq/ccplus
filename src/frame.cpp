@@ -168,9 +168,6 @@ void Frame::to4Channels() {
 
 void Frame::write(const std::string& file, int quality, bool inMemory) {
     if(stringEndsWith(file, ".zim")) {   
-        if(!inMemory) {
-            PASS
-        }
         FileManager* fm = FileManager::getInstance();
         File& outFile = *fm->open(file, "wb", inMemory);
         ushort metric; 
@@ -241,9 +238,6 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
         outFile.close();
         delete[] uncompressedBytes;
         delete[] compressedBytes;
-        if(!inMemory) {
-            PASS
-        }
     } else {
         cv::imwrite(file, image);
     }

@@ -22,8 +22,12 @@ FileManager* FileManager::getInstance() {
 
 File* FileManager::open(const std::string& fn, const std::string& mode, bool inMemory) {
     File* ret = nullptr;
-    if (!inMemory) 
-        return new File(fn, mode, inMemory);
+    if (!inMemory) {
+        ret = new File(fn, mode, inMemory);
+        if (ret->getFile() == NULL)
+            return this->open(fn, mode, !inMemory);
+        return ret;
+    }
     if (storage.count(fn) == 1) {
         pthread_mutex_lock(&storageLock);
         // TODO: try to avoid exception. Potential dead-lock here
@@ -34,6 +38,7 @@ File* FileManager::open(const std::string& fn, const std::string& mode, bool inM
             log(logFATAL) << "Couldn't find file: " << fn;      
         } 
         pthread_mutex_unlock(&storageLock);
+        if (mode[0] == 'w') ret->clear();
     } else {
         // TODO find a better way to handle error
         if (mode[0] != 'a' && mode[0] != 'w') {

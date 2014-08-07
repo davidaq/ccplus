@@ -104,7 +104,8 @@ TEST(Frame, CompressAndDecompressAudio) {
     EXPECT_EQ(frame.getAudio().total(), 1333);
     EXPECT_EQ(img2.getAudio().total(), 1333);
 
-    for (int i = 0; i < 1333; i++) 
-        EXPECT_EQ(img2.getAudio().at<int16_t>(i), i % 10);
+    if (img2.getAudio().total() == 1333)
+        for (int i = 0; i < 1333; i++) 
+            EXPECT_EQ(img2.getAudio().at<int16_t>(i), i % 10);
 }
 

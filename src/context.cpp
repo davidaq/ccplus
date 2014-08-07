@@ -6,6 +6,7 @@ using namespace CCPlus;
 Context::Context(const std::string& _storagePath, int _fps):
     storagePath(_storagePath), fps(_fps)
 {
+    // TODO clean it some where
     FileManager::getInstance();
 }
 

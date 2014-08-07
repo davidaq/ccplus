@@ -64,3 +64,11 @@ void File::write(const void* buffer, std::size_t size, std::size_t count) {
         fwrite(buffer, size, count, file);
     }
 }
+
+FILE* File::getFile() {
+    return file;
+}
+
+void File::clear() {
+    vec->clear();
+}
