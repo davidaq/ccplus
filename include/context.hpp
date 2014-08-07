@@ -25,6 +25,8 @@ public:
     void setInputDir(const std::string& dir);
     const std::string& getInputDir() const;
 
+    FileManager& getFileManager();
+
     // inquery
 
 private:
@@ -37,6 +39,8 @@ private:
     int fps;
 
     std::string inputDir = "";
+
+    FileManager fileManager;
 
     // operations
 };

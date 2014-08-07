@@ -44,3 +44,6 @@ const std::string& Context::getInputDir() const {
     return inputDir;
 }
 
+FileManager& Context::getFileManager() {
+    return fileManager;
+}
