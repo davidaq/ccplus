@@ -14,13 +14,14 @@ namespace CCPlus {
  */
 class CCPlus::FileManager {
 public:
-    FileManager();
     ~FileManager();
+    static FileManager* getInstance();
     CCPlus::File* open(const std::string& filename, 
             const std::string& mode, 
             bool inMemory = false);
 
 protected:
+    FileManager();
     std::map<std::string, File*> storage;
     pthread_mutex_t storageLock;
 };

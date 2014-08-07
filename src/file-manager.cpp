@@ -15,6 +15,11 @@ FileManager::~FileManager() {
     pthread_mutex_unlock(&storageLock);
 }
 
+FileManager* FileManager::getInstance() {
+    static FileManager fm;       
+    return &fm;
+}
+
 File* FileManager::open(const std::string& fn, const std::string& mode, bool inMemory) {
     File* ret = nullptr;
     if (!inMemory) 
@@ -31,8 +36,9 @@ File* FileManager::open(const std::string& fn, const std::string& mode, bool inM
         pthread_mutex_unlock(&storageLock);
     } else {
         // TODO find a better way to handle error
-        if (mode[0] != 'a' && mode[0] != 'w')
+        if (mode[0] != 'a' && mode[0] != 'w') {
             log(logFATAL) << "Couldn't find file: " << fn;
+        }
         ret = new File(fn, mode, inMemory);
         pthread_mutex_lock(&storageLock);
         //storage.insert(std::make_pair(fn, tmp));

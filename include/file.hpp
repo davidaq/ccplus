@@ -18,7 +18,7 @@ public:
     ~File();
     
     void close();
-    const unsigned char* readAll();
+    unsigned char* readAll();
     void write(const void* buffer, std::size_t size, std::size_t count);
 protected:
     std::vector<unsigned char>* vec = nullptr;
