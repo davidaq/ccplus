@@ -100,6 +100,10 @@ void Composition::putLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
+void Composition::setForceRenderToFile(bool renderToFile) {
+    this->renderToFile = renderToFile;
+}
+
 void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
@@ -119,7 +123,10 @@ void Composition::renderPart(float start, float duration) {
                 // In some cases it will be empty
                 ret.mergeFrame(frame);
             }
-            ret.write(fp);
+            if(renderToFile)
+                ret.write(fp, 80, false);
+            else 
+                ret.write(fp);
         };
         executor.execute(render);
         // Save ret to storagePath / name_tmp

@@ -19,7 +19,7 @@ public:
     
     void close();
     const unsigned char* readAll();
-    void write(const void* buffer, std::size_t size, std::size_t count);
+    void write(const void* buffer, std::size_t size, std::size_t count=1);
 protected:
     std::vector<unsigned char>* vec = nullptr;
     unsigned char* fileContent = nullptr;

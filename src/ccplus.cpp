@@ -34,6 +34,7 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     UserContext* uCtx = (UserContext*) ctxHandle;
     if(length < 0)
         length = uCtx->mainComp->getDuration();
+    uCtx->mainComp->setForceRenderToFile(true);
     std::vector<CCPlus::CompositionDependency> deps = uCtx->mainComp->fullOrderedDependency(start, length);
     for (auto& dep : deps) {
         dep.renderable->render(dep.from, dep.to);

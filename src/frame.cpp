@@ -1,5 +1,7 @@
 #include "global.hpp"
 #include "utils.hpp"
+#include "file-manager.hpp"
+#include "file.hpp"
 #include "zip.hpp"
 #include <ios>
 #include <stdexcept>
@@ -158,18 +160,16 @@ void Frame::to4Channels() {
     image = newdata;
 }
 
-void Frame::write(const std::string& file, int quality) {
+void Frame::write(const std::string& file, int quality, bool inMemory) {
     if(stringEndsWith(file, ".zim")) {   
-        FILE* outFile = fopen(file.c_str(), "wb");       
-        if(!outFile) {
-            log(logFATAL) << "File path " << file << "] unwritable";
-        }
+        FileManager* fm  ; // TODO set fm
+        File& outFile = *fm->open(file, "wb", inMemory);
         ushort metric; 
         // write size first
         metric = (ushort)getWidth();
-        fwrite(&metric, sizeof(metric), 1, outFile);
+        outFile.write(&metric, sizeof(metric));
         metric = (ushort)getHeight();
-        fwrite(&metric, sizeof(metric), 1, outFile);
+        outFile.write(&metric, sizeof(metric));
 
         /* 
          * write jpeg encoded color part
@@ -179,9 +179,9 @@ void Frame::write(const std::string& file, int quality) {
             imencode(".jpg", image, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
         }
         ulong jpgLen = buff.size();
-        fwrite(&jpgLen, sizeof(jpgLen), 1, outFile);
+        outFile.write(&jpgLen, sizeof(jpgLen));
         if (!image.empty())
-            fwrite(&buff[0], sizeof(char), jpgLen, outFile);
+            outFile.write(&buff[0], sizeof(char), jpgLen);
         buff.clear();
 
         /* 
@@ -196,12 +196,12 @@ void Frame::write(const std::string& file, int quality) {
         unsigned long tmplen = std::max((int) len, 128);
         int ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
         if (ret != 0) {
-            fclose(outFile);
+            outFile.close();
             log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
         }
         ulong wlen = tmplen;
-        fwrite(&wlen, sizeof(wlen), 1, outFile);
-        fwrite(compressedBytes, sizeof(unsigned char), wlen, outFile);
+        outFile.write(&wlen, sizeof(wlen));
+        outFile.write(compressedBytes, sizeof(char), wlen);
 
         /*
          * Compress audio data
@@ -212,25 +212,24 @@ void Frame::write(const std::string& file, int quality) {
             unsigned char* compressedAudio = new unsigned char[tmp];
             ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
             if (ret != 0) {
-                fclose(outFile);
+                outFile.close();
                 log(logFATAL) << "Failed compressing audio " << ret;
             }
             // ulong is NOT unsigned long
             wlen = tmp;
-            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            outFile.write(&wlen, sizeof(wlen));
             wlen = len * 2;
-            fwrite(&wlen, sizeof(wlen), 1, outFile);
-            fwrite(compressedAudio, sizeof(unsigned char), tmp, outFile);
+            outFile.write(&wlen, sizeof(wlen));
+            outFile.write(compressedAudio, sizeof(char), tmp);
             delete[] compressedAudio;
         } else {
             wlen = 0;
-            fwrite(&wlen, sizeof(wlen), 1, outFile);
+            outFile.write(&wlen, sizeof(wlen));
             wlen = len * 2;
-            fwrite(&wlen, sizeof(wlen), 1, outFile);
-            fwrite((int16_t*)audio.data, sizeof(int16_t), len, outFile);
+            outFile.write(&wlen, sizeof(wlen));
+            outFile.write(audio.data, sizeof(int16_t), len);
         }
-
-        fclose(outFile);
+        outFile.close();
         delete[] uncompressedBytes;
         delete[] compressedBytes;
     } else {

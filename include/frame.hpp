@@ -2,6 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "config.hpp"
 #include "object.hpp"
 
 namespace CCPlus {
@@ -19,7 +20,7 @@ public:
 
     static Frame emptyFrame(int, int);
     
-    void write(const std::string&, int quality=90);
+    void write(const std::string&, int quality=90, bool inMemory=CCPlus::MEMORY_FS);
     
     int getWidth() const;
     int getHeight() const;

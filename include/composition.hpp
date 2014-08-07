@@ -22,6 +22,7 @@ public:
 
     void renderPart(float start, float duration);
     
+    void setForceRenderToFile(bool renderToFile);
     // access
     std::string getName() const; 
 
@@ -43,4 +44,5 @@ private:
 
     int width, height;
     float duration;
+    bool renderToFile = false;
 };
