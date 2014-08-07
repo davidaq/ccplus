@@ -32,7 +32,7 @@ Frame::Frame(const std::string& filepath) {
         //fread(fileContent, sizeof(char), len, inFile);       
         //fclose(inFile);
         unsigned char* fileContent = inFile->readAll();
-        inFile->close();
+        //inFile->close();
         unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
 
@@ -90,6 +90,7 @@ Frame::Frame(const std::string& filepath) {
         }        
         delete[] alphaBytes;
         //delete[] fileContent;
+        inFile->close();
     } else {
         // read from file system
         // ignore audio
