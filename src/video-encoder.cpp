@@ -158,10 +158,6 @@ void VideoEncoder::writePartedAudioFrame(const uint8_t* sampleBuffer) {
     size_t linesize = nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_FLTP);
     swr_convert(ctx->swr, ctx->audioDstBuff, linesize, &sampleBuffer, nb_samples);
 
-    FILE* fp = fopen("tmp/t.pcm", "a");
-    fwrite(ctx->audioDstBuff[0], 1, linesize, fp);
-    fclose(fp);
-
     ctx->audioFrame->nb_samples = nb_samples;
     ctx->audioFrame->pts = av_rescale_q(ctx->samples_count, (AVRational){1, c->sample_rate}, c->time_base);
     ctx->samples_count += nb_samples;
