@@ -15,6 +15,7 @@ std::string AnimatedRenderable::getFramePath(int f) const {
 }
 
 void AnimatedRenderable::render(float start, float duration) {
+    log(logINFO) << "\t Rendering " << this->getName();
     if(duration + 0.001 > getDuration()) {
         renderPart(0, getDuration());
     } else {
@@ -30,6 +31,7 @@ void AnimatedRenderable::render(float start, float duration) {
             renderPart(start, getDuration() - start);
         }
     }
+    log(logINFO) << "\t Done";;
 }
 
 Frame AnimatedRenderable::getFrame(float time) const {

@@ -21,9 +21,6 @@ File::~File() {
 
     if (vec)
         delete vec;
-
-    if (fileContent)
-        delete[] fileContent;
     vec = nullptr;
     file = nullptr;
 }
@@ -32,27 +29,32 @@ void File::close() {
     if (file) {
         fclose(file);
         file = nullptr;
-        if (fileContent) {
-            delete[] fileContent;
-            fileContent = nullptr;
-        }
         delete this;
     }
 }
 
-unsigned char* File::readAll() {
+void File::readAll(void* ret) {
+    this->read(ret, this->getSize());
+}
+
+void File::read(void* ret, int len) {
     if (inMemory) {
-        unsigned char* tmp = new unsigned char[vec->size()];
-        memcpy(tmp, &vec->front(), vec->size());
-        return tmp;
+        memcpy(ret, &vec->front(), len);
     } else {
-        fseek(file, 0, SEEK_END);       
-        size_t len = ftell(file);
-        fseek(file, 0, SEEK_SET);       
-        fileContent = new unsigned char[len];
-        fread(fileContent, sizeof(unsigned char), len, file);       
-        return this->fileContent;
+        fread(ret, sizeof(unsigned char), len, file);       
     }
+}
+
+int File::getSize() const {
+    int len = 0;
+    if (inMemory) {
+        len = vec->size();
+    } else {
+        fseek(file, 0, SEEK_END);
+        len = ftell(file);
+        fseek(file, 0, SEEK_SET);
+    }
+    return len;
 }
 
 void File::write(const void* buffer, std::size_t size, std::size_t count) {

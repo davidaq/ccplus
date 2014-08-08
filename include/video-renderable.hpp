@@ -16,7 +16,10 @@ public:
     float getDuration() const;
     int getWidth() const;
     int getHeight() const;
+    const std::string& getName() const;
 private:
+
+    std::string uri;
     
     VideoDecoder* decoder;
 

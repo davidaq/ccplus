@@ -24,7 +24,7 @@ public:
     
     void setForceRenderToFile(bool renderToFile);
     // access
-    std::string getName() const; 
+    const std::string& getName() const; 
 
     void putLayer(const Layer&);
     std::vector<Layer> getLayers() const;

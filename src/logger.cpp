@@ -8,6 +8,7 @@ CCPlus::LogLevel logLevel = CCPlus::logDEBUG;
 
 Logger::Logger(LogLevel _level, int _ln, const std::string& _file) 
 : level(_level), lineNumber(_ln), file(_file) {
+    pthread_mutex_init(&printLock, 0);
     if (level < logWARN)
         out = &std::cerr;
     _buffer << cols[level];
@@ -20,7 +21,9 @@ Logger::Logger(LogLevel _level, int _ln, const std::string& _file)
 
 Logger::~Logger() {
     _buffer << "\x1b[0m" << std::endl;
+    pthread_mutex_lock(&printLock);
     (*out) << _buffer.str();
+    pthread_mutex_unlock(&printLock);
 
     if (level == logFATAL)
         exit(-1);

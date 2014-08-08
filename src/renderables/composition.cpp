@@ -16,7 +16,7 @@ Composition::Composition(
 Composition::~Composition() {
 }
 
-std::string Composition::getName() const {
+const std::string& Composition::getName() const {
     return name;
 }
 
@@ -119,9 +119,11 @@ void Composition::renderPart(float start, float duration) {
         auto render = [fp,t,this] {
             Frame ret = Frame::emptyFrame(width, height);
             for (Layer& l : layers) {
-                Frame frame = l.applyFiltersToFrame(t);
-                // In some cases it will be empty
-                ret.mergeFrame(frame);
+                profile(ApplyFilterAndMerge) {
+                    Frame frame = l.applyFiltersToFrame(t);
+                    // In some cases it will be empty
+                    ret.mergeFrame(frame);
+                }
             }
             if(renderToFile)
                 ret.write(fp, 80, false);

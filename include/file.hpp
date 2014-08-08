@@ -18,15 +18,19 @@ public:
     ~File();
     
     void close();
-    unsigned char* readAll();
+    // Might be unsafe
+    void readAll(void* ret);
+
+    void read(void* ret, int len);
     void write(const void* buffer, std::size_t size, std::size_t count=1);
 
     FILE* getFile();
     void clear();
 
+    int getSize() const;
+
 protected:
     std::vector<unsigned char>* vec = nullptr;
-    unsigned char* fileContent = nullptr;
     FILE* file = nullptr;
     bool inMemory;
 };

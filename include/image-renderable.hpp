@@ -18,10 +18,14 @@ public:
     int getWidth() const;
     int getHeight() const;
 
+    const std::string& getName() const;
+
 protected:
     Frame cache;
     bool loaded = false;
     std::string path;
     Frame image;
+
+    std::string uri;
 };
 

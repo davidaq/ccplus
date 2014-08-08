@@ -34,10 +34,9 @@ Profiler::~Profiler() {
 void Profiler::flush() {
     pinit();
     pthread_mutex_lock(&pmaplock);
-    double total = getSystemTime() - startTime;
     std::map<std::string, double>::iterator it = pmap->begin();
     char tbuff[20];
-    log(logINFO) << "PROFILE:";
+    log(logINFO) << "PROFILE: ";
     for(; it != pmap->end(); it++) {
         sprintf(tbuff, "%fs", it->second);
         log(logINFO) << "   " << it->first << ": " << tbuff;

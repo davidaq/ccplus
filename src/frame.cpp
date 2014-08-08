@@ -17,24 +17,14 @@ typedef uint16_t ushort;
 
 Frame::Frame(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
-        //FILE* inFile = fopen(filepath.c_str(), "rb");       
         File* inFile = FileManager::getInstance()->open(filepath, "rb");
         if(!inFile)
         {
             log(logFATAL) << "Intermidiate file not exists: " << filepath;
         }
-        //fseek(inFile, 0, SEEK_END);       
-        //size_t len = ftell(inFile);
-        //if(len < 5) {
-        //    fclose(inFile);
-        //    log(logFATAL) << "File too small to be a zim";
-        //}       
-        //fseek(inFile, 0, SEEK_SET);       
-        //unsigned char* fileContent = new unsigned char[len];
-        //fread(fileContent, sizeof(char), len, inFile);       
-        //fclose(inFile);
-        unsigned char* fileContent = inFile->readAll();
-        //inFile->close();
+        unsigned char* fileContent = new unsigned char[inFile->getSize()];
+        inFile->readAll(fileContent);
+        inFile->close();
         unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
 
@@ -48,7 +38,9 @@ Frame::Frame(const std::string& filepath) {
         ulong jpgLen = NEXT(ulong);
         if (jpgLen >= 125) {
             vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
-            image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
+            profile(DecodeImage) {
+                image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
+            }
             to4Channels();
         }
         ptr += jpgLen;
@@ -59,7 +51,10 @@ Frame::Frame(const std::string& filepath) {
         ulong alphaLen = NEXT(ulong);
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
-        int ret = uncompress(alphaBytes, &destLen, ptr, alphaLen);
+        int ret = 0;
+        profile(ZipUncompress) {
+            ret = uncompress(alphaBytes, &destLen, ptr, alphaLen);
+        }
         if(destLen != width * height || ret != 0) {
             log(logFATAL) << "Failed decompressing alpha";
         }
@@ -76,7 +71,9 @@ Frame::Frame(const std::string& filepath) {
         if (CCPlus::COMPRESS_AUDIO) {  
             unsigned char* audioData = new unsigned char[audioRealByteLen];
             destLen = (unsigned long)0x7fffffff;
-            ret = uncompress(audioData, &destLen, ptr, audioLen);
+            profile(ZipUncompress) {
+                ret = uncompress(audioData, &destLen, ptr, audioLen);
+            }
             if (ret != 0 || audioRealByteLen != destLen) {
                 log(logFATAL) << "Failed decompressing audio";
             }
@@ -91,8 +88,7 @@ Frame::Frame(const std::string& filepath) {
             audio = Mat(tmp, true);
         }        
         delete[] alphaBytes;
-        //delete[] fileContent;
-        inFile->close();
+        delete[] fileContent;
     } else {
         // read from file system
         // ignore audio
@@ -182,7 +178,10 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
          */
         vector<unsigned char> buff;
         if (!image.empty()) {
-            imencode(".jpg", image, buff, vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
+            profile(EncodeImage) {
+                imencode(".jpg", image, buff, 
+                        vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
+            }
         }
         ulong jpgLen = buff.size();
         outFile.write(&jpgLen, sizeof(jpgLen));
@@ -200,7 +199,10 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
             uncompressedBytes[j] = image.data[i];
 
         unsigned long tmplen = std::max((int) len, 128);
-        int ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
+        int ret = 0;
+        profile(ZipCompress) {
+            ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
+        }
         if (ret != 0) {
             outFile.close();
             log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
@@ -216,7 +218,9 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
         if (CCPlus::COMPRESS_AUDIO) {
             unsigned long tmp = len * 2 + 128;
             unsigned char* compressedAudio = new unsigned char[tmp];
-            ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
+            profile(ZipCompress) {
+                ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
+            }
             if (ret != 0) {
                 outFile.close();
                 log(logFATAL) << "Failed compressing audio " << ret;

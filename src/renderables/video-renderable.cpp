@@ -5,8 +5,9 @@
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(Context* context, const std::string& uri) :
-    AnimatedRenderable(context)
+VideoRenderable::VideoRenderable(Context* context, const std::string& _uri) :
+    AnimatedRenderable(context),
+    uri(_uri)
 {
     std::string path = uri;
     if (stringStartsWith(path, "file://")) 
@@ -17,6 +18,10 @@ VideoRenderable::VideoRenderable(Context* context, const std::string& uri) :
 
 VideoRenderable::~VideoRenderable() {
     delete decoder;
+}
+
+const std::string& VideoRenderable::getName() const {
+    return uri;
 }
 
 void VideoRenderable::renderPart(float start, float duration) {

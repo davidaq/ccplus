@@ -14,9 +14,11 @@ TEST(FileUtil, InMemoryReadWrite) {
     f->close();
 
     f = fileManager.open("tmp/yo", "r", true);
-    int* ret = (int*)f->readAll();
+    int* ret = new int[4];
+    f->readAll(ret);
     for (int i = 0; i < 4; i++)
         EXPECT_EQ(i + 1, ret[i]);
+    delete [] ret;
 }
 
 TEST(FileUtil, ReadWrite) {
@@ -29,8 +31,10 @@ TEST(FileUtil, ReadWrite) {
     f->close();
 
     f = fileManager.open("tmp/yo", "r");
-    int* ret = (int*)f->readAll();
+    int* ret = new int[4];
+    f->readAll(ret);
     for (int i = 0; i < 4; i++)
         EXPECT_EQ(i + 1, ret[i]);
+    delete[] ret;
     f->close();
 }
