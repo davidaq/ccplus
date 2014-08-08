@@ -23,5 +23,8 @@ TEST(Log, Profile) {
     profile(sleep) {
         sleep(2);
     }
+    profile(sleep) {
+        sleep(1);
+    }
     profileFlush;
 }
