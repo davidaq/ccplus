@@ -49,10 +49,6 @@ build/android/_:
 	mkdir -p build/android/
 	-touch $@
 
-android_compile:
-	echo ${SRC}
-	${NDK_CXX} ${SRC} -c -o build/android/${SRC}.o
-
 android:build/android/_
 	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
 	chmod a+x .tmp.sh
@@ -64,7 +60,8 @@ android:build/android/_
 	@echo "\033[1;32mDone!!\n\033[0m"
 
 ios:
-	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -Dios
+	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
+	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release -target libccplus
 
 test: testbuild
 	./test.sh '*'

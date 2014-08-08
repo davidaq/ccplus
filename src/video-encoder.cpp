@@ -69,9 +69,6 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         writeVideoFrame(mat);
     mat = frame.getAudio();
     if(mat.total() > 0) {
-        FILE* fp = fopen("tmp/o.pcm", "a");
-        fwrite(mat.data, 2, mat.total(), fp);
-        fclose(fp);
         writeAudioFrame(mat);
     }
     frameNum++;
