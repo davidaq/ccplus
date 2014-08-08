@@ -320,10 +320,13 @@ void Frame::overlayImage(const cv::Mat& input) {
 
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
-            uchar alpha_this = image.at<Vec4b>(i, j)[3];
-            uchar alpha_img = input.at<Vec4b>(i, j)[3];
-            float falpha_this = alpha_this / 255.0;
-            float falpha_img = alpha_img / 255.0;
+            if (image.at<Vec4b>(i, j)[3] == 255) continue;
+            if (image.at<Vec4b>(i, j)[3] == 0) {
+                image.at<Vec4b>(i, j) = input.at<Vec4b>(i, j);
+                continue;
+            }
+            float falpha_this = image.at<Vec4b>(i, j)[3] / 255.0;
+            float falpha_img = input.at<Vec4b>(i, j)[3] / 255.0;
             float fnew_alpha = falpha_this + (1.0 - falpha_this) * falpha_img;
             for (int k = 0; k < 3; k++) {
                 float x = (float) image.at<Vec4b>(i, j)[k];

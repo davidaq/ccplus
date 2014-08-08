@@ -4,7 +4,7 @@ namespace CCPlus {
 
     const int AUDIO_SAMPLE_RATE = 24000;
 
-    const int CONCURRENT_THREAD = 1;
+    const int CONCURRENT_THREAD = 4;
     
     const bool COMPRESS_AUDIO = false;
 

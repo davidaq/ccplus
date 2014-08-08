@@ -110,21 +110,30 @@ void Composition::renderPart(float start, float duration) {
     ParallelExecutor executor(CCPlus::CONCURRENT_THREAD);
     // Plus an inter to make sure no lost frame
     for (float t = start; t <= start + duration + inter; t += inter) {
-        //printf("t = %f\n", t);
         int f = getFrameNumber(t);
         if(rendered.count(f))
             continue;
         std::string fp = getFramePath(f);
 
         auto render = [fp,t,this] {
-            Frame ret = Frame::emptyFrame(width, height);
+            //Frame ret = Frame::emptyFrame(width, height);
+            Frame ret;
+            bool first = true;
             for (Layer& l : layers) {
                 profile(ApplyFilterAndMerge) {
                     Frame frame = l.applyFiltersToFrame(t);
                     // In some cases it will be empty
-                    ret.mergeFrame(frame);
+                    profile(Merge) {
+                        if (first) {
+                            first = false;
+                            ret = frame;
+                        } else 
+                            ret.mergeFrame(frame);
+                    }
                 }
             }
+            if (ret.getImage().cols != width && ret.getImage().rows != height)
+                ret = Frame::emptyFrame(width, height);
             if(renderToFile)
                 ret.write(fp, 80, false);
             else 
