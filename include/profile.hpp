@@ -6,7 +6,7 @@
 #define profile(name) for(CCPlus::Profiler PROFILER_ ## name(#name);!PROFILER_ ## name .passed;PROFILER_ ## name .passed = true)
 #define profileFlush CCPlus::Profiler::flush()
 #else
-#define profile(X)
+#define profile(X) if(true)
 #define profileFlush
 #endif
 

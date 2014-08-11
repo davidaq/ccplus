@@ -22,8 +22,10 @@
             ['OS=="ios"', {
                 'xcode_settings' : {
                     'SDKROOT': 'iphoneos',
-                    'SUPPORTED_PLATFORMS': 'iphonesimulator iphoneos',
+                    'SUPPORTED_PLATFORMS': 'iOS',
+                    'OTHER_CFLAGS' : ['-DRELEASE'],
                 },
+                'cflags': ['-DRELEASE'],
             }],
             ['OS=="mac"', {
                 'xcode_settings' : {
