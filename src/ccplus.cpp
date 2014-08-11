@@ -87,10 +87,31 @@ void CCPlus::go(
     profile(rendering) {
         renderPart(ctx, start, length);
     }
+    log(logINFO) << "Finish rendering...";
+    log(logINFO) << "\tZIM path prefix: " << getZIMPath(ctx);
+    log(logINFO) << "\tZIM number: " << numberOfZIM(ctx);
     profile(encoding) {
         encodeVideo(ctx, start, length);
     }
     profileFlush;
+}
+
+const std::string CCPlus::getZIMPath(void* ctx) {
+    UserContext* uCtx = (UserContext*) ctx;
+    if (uCtx->mainComp)
+        return uCtx->mainComp->getPrefix();
+    log(logERROR) << 
+        "Accessed Main Composition before its initialization";
+    return "";
+}
+
+int CCPlus::numberOfZIM(void* ctx) {
+    UserContext* uCtx = (UserContext*) ctx;
+    if (uCtx->mainComp)
+        return uCtx->mainComp->getTotalNumberOfFrame();
+    log(logERROR) << 
+        "Accessed Main Composition before its initialization";
+    return 0;
 }
 
 extern "C" {
@@ -108,3 +129,4 @@ extern "C" {
         CCPlus::encodeVideo(ctxHandle, start, length);
     }
 }
+
