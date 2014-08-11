@@ -36,6 +36,9 @@ public:
     int getHeight() const;
     float getDuration() const;
 
+    int getTotalNumberOfFrame() const;
+    const std::string getPrefix() const;
+
 private:
     // data
     std::string name = "";
