@@ -112,17 +112,13 @@ Frame Layer::applyFiltersToFrame(float t) {
     float local_t = start + last / duration * (t - time);
     Frame frame = this->getRenderObject()->getFrame(local_t);
     if (orderedKey.empty()) {
-        for (auto& kv : properties) 
-        {
-            const std::vector<float>& tmp = interpolate(kv.first, t);
-            Filter(kv.first).apply(frame, 
-                    tmp, width, height);
+        for (auto& kv : properties) {
+            Filter(kv.first).apply(
+                    frame, interpolate(kv.first, t), width, height);
         }
     } else {
-        for (auto& k : orderedKey)
-        {
-            const std::vector<float>& tmp = interpolate(k, t);
-            Filter(k).apply(frame, tmp, width, height);
+        for (auto& k : orderedKey) {
+            Filter(k).apply(frame, interpolate(k, t), width, height);
         }
     }
     return frame;
