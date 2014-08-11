@@ -67,7 +67,6 @@ std::map<std::string, Property> Layer::getProperties() const {
 std::vector<float> Layer::interpolate(const std::string& name, float time) const {
     std::vector<float> ret;
     if (properties.find(name) == properties.end()) {
-        //std::cout << "Fatal error: this layer doesn't contains this property: " << name << std::endl;
         return ret;
     }
     const Property& prop = properties.at(name);
@@ -114,10 +113,17 @@ Frame Layer::applyFiltersToFrame(float t) {
     Frame frame = this->getRenderObject()->getFrame(local_t);
     if (orderedKey.empty()) {
         for (auto& kv : properties) 
-            Filter(kv.first).apply(frame, interpolate(kv.first, t), width, height);
+        {
+            const std::vector<float>& tmp = interpolate(kv.first, t);
+            Filter(kv.first).apply(frame, 
+                    tmp, width, height);
+        }
     } else {
         for (auto& k : orderedKey)
-            Filter(k).apply(frame, interpolate(k, t), width, height);
+        {
+            const std::vector<float>& tmp = interpolate(k, t);
+            Filter(k).apply(frame, tmp, width, height);
+        }
     }
     return frame;
 }

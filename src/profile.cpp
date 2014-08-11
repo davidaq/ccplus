@@ -22,6 +22,12 @@ Profiler::Profiler(const char* _name):
     startTime = getSystemTime();
 }
 
+Profiler::Profiler(const std::string& _name):
+    name(_name)
+{
+    startTime = getSystemTime();
+}
+
 Profiler::~Profiler() {
     pinit();
     double total = getSystemTime() - startTime;

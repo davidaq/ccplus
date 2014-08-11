@@ -2,6 +2,7 @@
 #include "parallel-executor.hpp"
 #include "global.hpp"
 #include <list>
+#include "utils.hpp"
 
 using namespace CCPlus;
 
@@ -120,16 +121,16 @@ void Composition::renderPart(float start, float duration) {
             Frame ret;
             bool first = true;
             for (Layer& l : layers) {
-                profile(ApplyFilterAndMerge) {
-                    Frame frame = l.applyFiltersToFrame(t);
-                    // In some cases it will be empty
-                    profile(Merge) {
-                        if (first) {
-                            first = false;
-                            ret = frame;
-                        } else 
-                            ret.mergeFrame(frame);
-                    }
+                profileBegin(Filters);
+                Frame frame = l.applyFiltersToFrame(t);
+                profileEnd(Filters);
+                // In some cases it will be empty
+                profile(Merge) {
+                    if (first) {
+                        first = false;
+                        ret = frame;
+                    } else 
+                        ret.mergeFrame(frame);
                 }
             }
             if (ret.getImage().cols != width && ret.getImage().rows != height)
@@ -155,4 +156,12 @@ int Composition::getHeight() const {
 
 float Composition::getDuration() const {
     return duration;
+}
+
+int Composition::getTotalNumberOfFrame() const {
+    return duration * this->context->getFPS() - 1;
+}
+
+const std::string Composition::getPrefix() const {
+    return generatePath(this->context->getStoragePath(), this->uuid + "_");
 }

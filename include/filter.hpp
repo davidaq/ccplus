@@ -9,6 +9,7 @@ namespace CCPlus {
     class FilterLoader;
     class Filter;
     class Frame;
+    class Profiler;
 }
 
 typedef void (*CCPLUS_FILTER_FUNC) (CCPlus::Frame& input, const std::vector<float>& parameters, int width, int height);
@@ -16,11 +17,14 @@ typedef void (*CCPLUS_FILTER_FUNC) (CCPlus::Frame& input, const std::vector<floa
 class CCPlus::Filter : public CCPlus::Object {
 public:
     Filter(const std::string& name);
+    ~Filter();
     
     virtual void apply(CCPlus::Frame& image, const std::vector<float>& parameters, int width, int height);
     
 private:
     CCPLUS_FILTER_FUNC func;
+
+    CCPlus::Profiler* profiler;
 };
 
 class CCPlus::FilterLoader {
