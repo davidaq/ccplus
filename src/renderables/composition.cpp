@@ -117,21 +117,12 @@ void Composition::renderPart(float start, float duration) {
         std::string fp = getFramePath(f);
 
         auto render = [fp,t,this] {
-            //Frame ret = Frame::emptyFrame(width, height);
-            Frame ret;
-            bool first = true;
+            Frame ret = Frame::emptyFrame(width, height);
             for (Layer& l : layers) {
                 profileBegin(Filters);
                 Frame frame = l.applyFiltersToFrame(t);
                 profileEnd(Filters);
-                // In some cases it will be empty
-                profile(Merge) {
-                    if (first) {
-                        first = false;
-                        ret = frame;
-                    } else 
-                        ret.mergeFrame(frame);
-                }
+                ret.mergeFrame(frame);
             }
             if (ret.getImage().cols != width && ret.getImage().rows != height)
                 ret = Frame::emptyFrame(width, height);
