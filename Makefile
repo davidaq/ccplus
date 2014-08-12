@@ -61,7 +61,8 @@ android:build/android/_
 
 ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
-	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release -target libccplus
+	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
+	mv ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
 
 test: testbuild
 	./test.sh '*'

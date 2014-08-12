@@ -36,6 +36,8 @@ struct CCPlus::EncodeContext {
     uint8_t *audioPendingBuff = 0;
     int audioPendingBuffLen = 0;
     int bytesPerSample = 2;
+
+    cv::Mat background;
 };
 
 VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int _quality) :
@@ -64,9 +66,10 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         fprintf(stderr, "\tFrame ignored.\n");
         return;
     }
-    cv::Mat mat = frame.getImage();
-    if(mat.cols > 0 &&  mat.rows > 0)
-        writeVideoFrame(mat);
+    if(frame.getWidth() > 0 && frame.getHeight() > 0) {
+        frame.overlayImage(ctx->background);
+        writeVideoFrame(frame.getImage());
+    }
     mat = frame.getAudio();
     if(mat.total() > 0) {
         writeAudioFrame(mat);
@@ -263,6 +266,8 @@ void VideoEncoder::initContext() {
         fprintf(stderr, "Could not open video encoder\n");
         return;
     }
+
+    ctx->background = cv::Mat(height, width, CV_CU84, cv::Scalar(0, 0, 0, 255));
 
     AVFrame* frame = av_frame_alloc();
     if (!frame) {

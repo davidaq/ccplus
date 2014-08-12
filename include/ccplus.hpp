@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <string>
+
 namespace CCPlus {
     void* initContext(const char* tmlPath, const char* storagePath, int fps);
     void releaseContext(void* ctxHandle);
