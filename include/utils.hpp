@@ -2,13 +2,18 @@
 #include <string>
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 #include <map>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 #include <sys/time.h>
 #include <ctime>
 
 #include <iomanip>
+
+#include "logger.hpp"
 
 static inline double getSystemTime() { 
     // Might not work at multicore situation
@@ -68,6 +73,13 @@ static inline char getSeperator() {
 #endif
 }
 
+template <typename T>
+static inline std::string toString(T number) {
+    std::ostringstream ss;
+    ss << number;
+    return ss.str();
+}
+
 static inline std::string dirName(const std::string& path) {
     return path.substr(
             0,
@@ -85,48 +97,27 @@ static inline std::string generatePath(const std::string& dir, const std::string
     return dir + fn;
 }
 
-//template<class T> static inline 
-//T parseString(const std::string& str) {
-//    T value;
-//    std::istringstream iss(str);
-//    iss >> value;
-//    return value;
-//}
-
-/*
-template<bool> static inline 
-bool parseString(const std::string& str) {
-    bool value;
-    std::istringstream iss(str);
-    iss >> std::boolalpha >> value;
-    return value;
+static inline std::string slurp(const std::string& file) {
+    std::ifstream fstream(file, std::ios::in);
+    if (!fstream.is_open()) {
+        log(CCPlus::logFATAL) << "Couldn't slurp file: " << file;
+    }
+    std::stringstream buffer;
+    buffer << fstream.rdbuf();
+    std::string ret = buffer.str();
+    fstream.close();
+    return ret;
 }
 
-template<class T> static inline 
-std::string toString(const T& value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
+static inline void spit(const std::string& file, const std::string& content) {
+    std::ofstream fstream;
+    fstream.open(file);
+    if (!fstream.is_open()) {
+        log(CCPlus::logFATAL) << "Couldn't open write file " << file;
+    }
+    fstream << content;
+    fstream.close();
 }
-
-static inline std::string toString(const bool& value) {
-    std::ostringstream oss;
-    oss << std::boolalpha << value;
-    return oss.str();
-}
-
-static inline std::string ltrim(std::string str) {
-    return str.erase(0, str.find_first_not_of(" /t/n/r"));
-}
-
-static inline std::string rtrim(std::string str) {
-    return str.erase(str.find_last_not_of(" /t/n/r") + 1);
-}
-
-static inline std::string trim(std::string str) {
-    return rtrim(ltrim(str));
-}
-*/
 
 static inline int getImageRotation(const std::string& jpgpath) {
     FILE* f = fopen(jpgpath.c_str(), "rb");   
