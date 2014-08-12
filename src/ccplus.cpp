@@ -114,20 +114,3 @@ int CCPlus::numberOfZIM(void* ctx) {
         "Accessed Main Composition before its initialization";
     return 0;
 }
-
-extern "C" {
-#include "ccplus.h"
-    void* CCPlusInitContext(const char* tmlPath, const char* storagePath, int fps) {
-        return CCPlus::initContext(tmlPath, storagePath, fps);
-    }
-    void CCPlusReleaseContext(void* ctxHandle) {
-       CCPlus::releaseContext(ctxHandle);
-    }
-    void CCPlusRenderPart(void* ctxHandle, float start, float length) {
-        CCPlus::renderPart(ctxHandle, start, length);
-    }
-    void CCPlusEncodeVideo(void* ctxHandle, float start, float length) {
-        CCPlus::encodeVideo(ctxHandle, start, length);
-    }
-}
-
