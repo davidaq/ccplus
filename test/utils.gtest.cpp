@@ -12,3 +12,9 @@ TEST(Utils, dirNameTest) {
     EXPECT_EQ(dirName("/res/test.tml"), "/res/");
     EXPECT_EQ(dirName("test.tml"), "");
 }
+
+TEST(Utils, SlurpAndSpit) {
+    spit("tmp/slurp", "shit");
+    std::string ret = slurp("tmp/slurp");
+    EXPECT_EQ("shit", ret);
+}
