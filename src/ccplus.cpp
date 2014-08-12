@@ -69,6 +69,7 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
     for (float i = 0.0; i < length; i += inter) {
         float t = start + i;
         CCPlus::Frame img = uCtx->mainComp->getFrame(t);
+        img.setBlackBackground();
         encoder.appendFrame(img);
     }
     encoder.finish();

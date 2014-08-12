@@ -31,7 +31,7 @@ public:
      */
     void mergeFrame(const Frame& f); 
 
-    void setWhiteBackground();
+    void setBlackBackground();
     
     cv::Mat& getImage();
     const cv::Mat& getImage() const;

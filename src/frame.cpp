@@ -344,14 +344,14 @@ Frame Frame::emptyFrame(int width, int height) {
 }
 
 /**
- * Eliminate alpha, set transparent parts to white
+ * Eliminate alpha, set transparent parts to black
  */
-void Frame::setWhiteBackground() {
+void Frame::setBlackBackground() {
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
             int alpha = image.at<Vec4b>(i, j)[3];
             for(int k = 0; k < 3; k++) {
-                image.at<Vec4b>(i, j)[k] = alpha * image.at<Vec4b>(i, j)[k] / 0xff + (0xff - alpha);
+                image.at<Vec4b>(i, j)[k] = alpha * image.at<Vec4b>(i, j)[k] / 0xff;
             }
         }
     }
