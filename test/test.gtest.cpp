@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "frame.hpp"
 #include "logger.hpp"
 
 #include <vector>
@@ -43,4 +44,9 @@ TEST(Experiment, VectorExperiment) {
     L() << &vec.front();
     vec.push_back(9);
     L() << &vec.front();
+}
+
+TEST(Experiment, TEST) {
+    //Frame f("test/res/6cd76271-8f09-42d8-a507-72409d3c4ac6_0.zim");
+    //L() << (int)f.getAudio().total();
 }

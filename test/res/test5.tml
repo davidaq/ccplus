@@ -1,0 +1,47 @@
+{
+    "version" : 0.01,
+    "main" : "MAIN",
+    "compositions" : {
+        "MAIN" : {
+            "resolution" : {
+                "width" : 500,
+                "height" : 500
+            },
+            "duration" : 10,
+            "layers" : [
+                {
+                    "uri" : "composition://__0",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [0, 0, 0, 0, 1, 1, 0],
+                            "10" : [0, 0, 0, 0, 0.1, 0.1, 0]
+                        }
+                    },
+                    "time": 0,
+                    "duration" : 10,
+                    "start" : 0,
+                    "last" : 10
+                }
+            ]
+        },
+        "__0" : {
+            "resolution" : {
+            },
+            "duration" : 10000,
+            "layers" : [
+                {
+                    "uri" : "",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [0, 0, 0, 0, 1, 1, 0]
+                        }
+                    },
+                    "time": 0,
+                    "duration" : 10000,
+                    "start" : 0,
+                    "last" : 10000
+                }
+            ]
+        }
+    }
+}
