@@ -67,6 +67,9 @@ ios:
 test: testbuild
 	./test.sh '*'
 
+xcode:
+	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
+
 todo:
 	@grep TODO `find src -type f -name *.cpp -o -name *.hpp`
 
