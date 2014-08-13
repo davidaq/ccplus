@@ -109,6 +109,7 @@ void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
     ParallelExecutor executor(CCPlus::CONCURRENT_THREAD);
+    // Cut time to slices
     // Plus an inter to make sure no lost frame
     for (float t = start; t <= start + duration + inter; t += inter) {
         int f = getFrameNumber(t);
