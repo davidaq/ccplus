@@ -19,7 +19,7 @@ var PropertyMapping = {
     opacity:{ 
         map:'Opacity',
         set:function(opac) {
-            return [opac];
+            return [opac / 100];
         },
         error:[0.01]
     },
