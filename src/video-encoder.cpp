@@ -229,7 +229,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             break;
         case AVMEDIA_TYPE_VIDEO:
             codecCtx->codec_id = codec_id;
-            codecCtx->bit_rate = 12000 * quality;
+            codecCtx->bit_rate = width * height / 50 * quality;
             codecCtx->width    = width;
             codecCtx->height   = height;
 
