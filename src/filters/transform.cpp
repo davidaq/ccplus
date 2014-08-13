@@ -69,8 +69,16 @@ CCPLUS_FILTER(transform) {
         float y1 = std::floor(y);
         float x2 = std::ceil(x);
         float y2 = std::ceil(y);
+        if(x1 < 0)
+            x1 = 0;
+        if(y1 < 0)
+            y1 = 0;
+        if(x2 >= mat.cols)
+            x2 = mat.cols - 1;
+        if(y2 >= mat.rows)
+            y2 = mat.rows - 1;
         if (x1 == x2 && y1 == y2) 
-            return mat.at<Vec4b>(round(y), round(x));
+            return mat.at<Vec4b>(y1, x1);
         else if (x1 == x2) {
             // y direction interpolation
             Vec4b r1 = mat.at<Vec4b>(y1, x1);

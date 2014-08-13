@@ -181,6 +181,8 @@ void VideoEncoder::writeFrame(AVStream* stream, AVPacket& pkt) {
     pkt.dts = av_rescale_q_rnd(pkt.dts, stream->codec->time_base, stream->time_base,
             (enum AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
     pkt.duration = av_rescale_q(pkt.duration, stream->codec->time_base, stream->time_base);
+    if(stream->pts.den == 0)
+        stream->pts.den = 1;
     if(0 > av_interleaved_write_frame(ctx->ctx, &pkt)) {
         printf("Bad frame!\n");
     }
