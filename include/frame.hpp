@@ -25,6 +25,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getImageChannels() const;
+    bool empty() const;
 
     /**
      * Overlay image then merge audio

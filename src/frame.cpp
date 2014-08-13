@@ -343,6 +343,10 @@ Frame Frame::emptyFrame(int width, int height) {
     return Frame(width, height);
 }
 
+bool Frame::empty() const {
+    return image.empty() && audio.empty();   
+}
+
 /**
  * Eliminate alpha, set transparent parts to black
  */

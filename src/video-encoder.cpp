@@ -59,14 +59,17 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         initContext();
         frameNum = 0;
     }
+    cv::Mat img;
     if(width != frame.getWidth() || height != frame.getHeight()) {
-        fprintf(stderr, "Frames encoded into one video should have the same metrics\n");
-        fprintf(stderr, "\tExpected %dx%d, got %dx%d\n", width, height, frame.getWidth(), frame.getHeight());
-        fprintf(stderr, "\tFrame ignored.\n");
-        return;
-    }
-    if(frame.getWidth() > 0 && frame.getHeight() > 0) {
-        writeVideoFrame(frame.getImage());
+        //fprintf(stderr, "Frames encoded into one video should have the same metrics\n");
+        //fprintf(stderr, "\tExpected %dx%d, got %dx%d\n", width, height, frame.getWidth(), frame.getHeight());
+        //fprintf(stderr, "\tFrame ignored.\n");
+        //return;
+        img = cv::Mat::zeros(height, width, CV_8UC4);
+    } else
+        img = frame.getImage();
+    if(img.cols > 0 && img.rows > 0) {
+        writeVideoFrame(img);
     }
     cv::Mat mat = frame.getAudio();
     if(mat.total() > 0) {
