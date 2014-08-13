@@ -16,9 +16,7 @@ TEST(Log, TestAll) {
 
 TEST(Log, Profile) {
     profile(three_loops) {
-        for(int k = 0; k < 99999999; k++)
-            for(int j = 0; j < 99999999; j++)
-                for(int i = 0; i < 99999999; i++);
+        
     }
     profile(sleep) {
         sleep(2);

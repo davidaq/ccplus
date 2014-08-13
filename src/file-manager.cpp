@@ -24,8 +24,10 @@ File* FileManager::open(const std::string& fn, const std::string& mode, bool inM
     File* ret = nullptr;
     if (!inMemory) {
         ret = new File(fn, mode, inMemory);
-        if (ret->getFile() == NULL)
+        if (ret->getFile() == NULL) {
+            ret->close();
             return this->open(fn, mode, !inMemory);
+        }
         return ret;
     }
     if (storage.count(fn) == 1) {
