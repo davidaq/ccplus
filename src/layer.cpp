@@ -70,6 +70,12 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         return ret;
     }
     const Property& prop = properties.at(name);
+    /*
+     * If prop only has one set of parameters at time 0
+     * Return it
+     */
+    if (prop.size() == 1 && prop.count(0) != 0)
+        return prop.at(0);
     float low_time, high_time;
     const std::vector<float>* low = nullptr;
     const std::vector<float>* high = nullptr;
