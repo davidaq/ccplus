@@ -43,6 +43,11 @@ var PropertyMapping = {
         },
         error:[0.01]
     },
+    gaussian:{
+        map:['Effects/Gaussian Blur/Blurriness'],
+        set:function(blurriness,dimensions) {
+        }
+    },
 };
 /*
  * Export logic
