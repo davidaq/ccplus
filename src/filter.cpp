@@ -23,7 +23,9 @@ Filter::~Filter() {
 
 void Filter::apply(Frame& frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
+        profileBegin(Filters);
         func(frame, parameters, width, height);
+        profileEnd(Filters);
     }
 }
 
