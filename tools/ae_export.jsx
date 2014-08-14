@@ -16,12 +16,12 @@ var PropertyMapping = {
         },
         error:[0.5, 0.5, 0.5, 0.5, 0.01, 0.01, 0.01]
     },
-    opacity:{ 
+    opacity:{
         map:'Opacity',
         set:function(opac) {
             return [opac / 100];
         },
-        error:[0.01]
+        error:[0.08]
     },
     volume:{
         map:'Audio Levels',
@@ -41,12 +41,16 @@ var PropertyMapping = {
             }
             return [(lvl + 48) / 48];
         },
-        error:[0.01]
+        error:[0.1]
     },
     gaussian:{
-        map:['Effects/Gaussian Blur/Blurriness'],
+        map:['Effects/Gaussian Blur/Blurriness','Effects/Gaussian Blur/Blur Dimensions'],
         set:function(blurriness,dimensions) {
-        }
+            return [
+                blurriness, dimensions
+            ];
+        },
+        error:[0.1, 0.001]
     },
 };
 /*
@@ -67,6 +71,7 @@ var Export = function() {
 Export.prototype.exportTo = function(filePath) {
     this.tmlFile = new File(filePath);
     this.tmlFile.open('w');
+    this.files = {}
     try {
         if(!this.comp.MAIN) {
             throw "Main composition doesn't exist";
@@ -77,10 +82,12 @@ Export.prototype.exportTo = function(filePath) {
             var compName = this.exportList.pop();
             tml.compositions[compName] = this.exportComp(this.comp[compName]);
         }
+        tml.usedfiles = this.files;
         this.tmlFile.write(obj2str(tml));
     } finally {
         this.tmlFile.close();
     }
+    alert('Export Done!');
 };
 Export.prototype.exportComp = function(comp) {
     var ret = {};
@@ -103,11 +110,16 @@ Export.prototype.exportLayer = function(layer) {
         this.exportList.push(source.name);
         ret.uri = 'composition://' + source.name;
     } else if('[object FootageItem]' == type) {
-        ret.uri = 'file://' + relPath(source.file.fullName);
+        var path = relPath(source.file.fullName);
+        ret.uri = 'file://' + path;
+        this.files[path] = {
+            width: source.width,
+            height: source.height
+        };
     }
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
-    ret.start = layer.outPoint - layer.startTime;
+    ret.start = layer.inPoint - layer.startTime;
     ret.last = ret.duration;
     ret.properties = {};
     var defaultFilter = function () {
@@ -117,7 +129,14 @@ Export.prototype.exportLayer = function(layer) {
         return ret;
     }
     for(var pmk in PropertyMapping) {
-        for(var t = ret.time; t < layer.outPoint; t += 0.1) {
+        var proced = false;
+        for(var t = ret.time; ; t += 0.1) {
+            if(t > layer.outPoint) {
+                if(proced)
+                    break;
+                t = layer.outPoint;
+                proced = true;
+            }
             var args = [];
             var take = PropertyMapping[pmk].map;
             if(typeof(take) == 'string') {
@@ -127,14 +146,16 @@ Export.prototype.exportLayer = function(layer) {
             for(var pnk in take) {
                 var val;
                 try {
-                    val = layer.property(take[pnk]).valueAtTime(t, false);
+                    var kpath = take[pnk].split('/');
+                    val = layer;
+                    for(var pk in kpath) {
+                        val = val.property(kpath[pk]);
+                    }
+                    val = val.valueAtTime(t, false);
+                    notNull = true;
                 } catch(e) {
                     val = NULL;
                 }
-                if(val != undefined && val != NULL)
-                    notNull = true;
-                else
-                    throw pmk;
                 args.push(val);
             }
             if(!notNull) {
@@ -205,7 +226,7 @@ Export.prototype.interpolate = function(startTime, startValue, endTime, endValue
 
 function __main__() {
     try {
-        new Export().exportTo(projDir + '/test.tml');
+        new Export().exportTo(app.project.file.fullName + '.tml');
     } catch (e) {
         alert(e);
     }
@@ -236,7 +257,6 @@ function obj2str(obj) {
             return 'null';
         else if(obj === false)
             return 'false';
-
         else if(obj === true)
             return 'true';
         var type = typeof(obj);
@@ -282,3 +302,6 @@ function obj2str(obj) {
 }
 var NULL;
 __main__();
+
+
+
