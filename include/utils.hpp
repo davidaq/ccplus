@@ -238,3 +238,7 @@ static inline int getImageRotation(const std::string& jpgpath) {
     // CW
     return retTable[ret];
 }
+
+static inline void stringToLower(std::string& str) {
+    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+}
