@@ -15,9 +15,8 @@ TEST(FillTML, FillTML) {
     string retpath = "tmp/test5.result.tml";
     CCPlus::fillTML("test/res/testfilltml.json", "test/res/test5.tml", retpath);
     using boost::property_tree::ptree;
-    ptree t1, t2;
+    ptree t1;
     read_json("tmp/test5.result.tml", t1);
-    read_json("test/res/test5.result.tml", t2);
 
     EXPECT_EQ(10.0, t1.get<float>("compositions.MAIN.duration"));
     auto& l = (*t1.get_child("compositions.__0.layers").begin()).second;

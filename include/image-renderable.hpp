@@ -20,6 +20,8 @@ public:
 
     const std::string& getName() const;
 
+    bool still(float t1, float t2);
+
 protected:
     Frame cache;
     bool loaded = false;

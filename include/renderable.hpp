@@ -20,6 +20,13 @@ public:
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
 
+    /**
+     * Chech if this renderable *LOOKS* the same at
+     * time @t1 and @t2
+     * Note: they might have different audio
+     */
+    virtual bool still(float t1, float t2) = 0;
+
     int getFrameNumber(float time) const;
 
 protected:

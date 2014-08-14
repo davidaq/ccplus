@@ -17,6 +17,9 @@ public:
     int getWidth() const;
     int getHeight() const;
     const std::string& getName() const;
+
+    bool still(float t1, float t2);
+
 private:
 
     std::string uri;

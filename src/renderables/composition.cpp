@@ -1,8 +1,12 @@
 #include "composition.hpp"
 #include "parallel-executor.hpp"
 #include "global.hpp"
-#include <list>
 #include "utils.hpp"
+#include "image-renderable.hpp"
+
+#include <list>
+#include <pthread.h>
+#include <algorithm>
 
 using namespace CCPlus;
 
@@ -12,6 +16,7 @@ Composition::Composition(
     AnimatedRenderable(ctx), 
     name(_name), width(_width), height(_height), duration(_dur)
 {
+    pthread_mutex_init(&renderedLock, 0);
 }
 
 Composition::~Composition() {
@@ -109,37 +114,68 @@ void Composition::renderPart(float start, float duration) {
     float inter = 1.0 / context->getFPS();
 
     ParallelExecutor executor(CCPlus::CONCURRENT_THREAD);
-    // Cut time to slices
-    // Plus an inter to make sure no lost frame
-    for (float t = start; t <= start + duration + inter; t += inter) {
-        int f = getFrameNumber(t);
-        if(rendered.count(f))
-            continue;
-        std::string fp = getFramePath(f);
 
-        auto render = [fp,t,this] {
-            Frame ret;
-            bool first = true; 
-            for (Layer& l : layers) {
-                Frame frame = l.applyFiltersToFrame(t);
-                if (frame.empty()) continue;
-                if (first) {
-                    ret = frame;
-                    first = false;
-                } else {
-                    profileBegin(MergeFrame);
-                    ret.mergeFrame(frame);
-                    profileEnd(MergeFrame);
+    float time_slice = std::max(2.0, 
+            duration / CCPlus::CONCURRENT_THREAD * 1.0);
+
+    float end = start + duration + inter;
+    for (float t = start; t < end; t += time_slice) {
+        float _start = t;
+        float _end = std::min(t + time_slice, end);
+
+        // Cut time to slices
+        auto render = [this, inter, _start, _end] () {
+            float last_t = -1;
+            for (float t = _start; t <= _end + inter; t += inter) {
+                int f = this->getFrameNumber(t);
+
+                // Check whether rendered
+                pthread_mutex_lock(&renderedLock);
+                if(rendered.count(f)) {
+                    pthread_mutex_unlock(&renderedLock);
+                    continue;
                 }
+                pthread_mutex_unlock(&renderedLock);
+
+                std::string fp = getFramePath(f);
+
+                Frame ret;
+
+                if (last_t != -1 && 
+                        layers.size() > 1 && 
+                        this->still(last_t, t)) {
+
+                    //L() << last_t << " and " << t;
+                    ret = this->getFrame(last_t);
+                } else {
+                    bool first = true; 
+                    for (Layer& l : layers) {
+                        Frame frame = l.applyFiltersToFrame(t);
+                        if (frame.empty()) continue;
+                        if (first) {
+                            ret = frame;
+                            first = false;
+                        } else {
+                            profileBegin(MergeFrame);
+                            ret.mergeFrame(frame);
+                            profileEnd(MergeFrame);
+                        }
+                    }
+                }
+                if(renderToFile)
+                    ret.write(fp, 80, false);
+                else 
+                    ret.write(fp);
+
+                // Save ret to storagePath / name_tmp
+                pthread_mutex_lock(&renderedLock);
+                rendered.insert(f);
+                pthread_mutex_unlock(&renderedLock);
+
+                last_t = t;
             }
-            if(renderToFile)
-                ret.write(fp, 80, false);
-            else 
-                ret.write(fp);
         };
         executor.execute(render);
-        // Save ret to storagePath / name_tmp
-        rendered.insert(f);
     }
 }
 
@@ -161,4 +197,22 @@ int Composition::getTotalNumberOfFrame() const {
 
 const std::string Composition::getPrefix() const {
     return generatePath(this->context->getStoragePath(), this->uuid + "_");
+}
+
+bool Composition::still(float t1, float t2) {
+    for (auto& l : layers) {
+        if (l.visible(t1) != l.visible(t2))
+            return false;
+        if (!l.visible(t1)) continue;
+        if (!l.getRenderObject()->still(t1, t2))
+            return false;
+        const PropertyMap& mp = l.getProperties();
+        for (auto& kv : mp) {
+            std::string name = kv.first;
+            if (name == "volume") continue;
+            if (l.interpolate(name, t1) != l.interpolate(name, t2))
+                return false;
+        }
+    }
+    return true;
 }

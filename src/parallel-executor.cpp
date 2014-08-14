@@ -37,6 +37,7 @@ ParallelExecutor::ParallelExecutor(int threadCount) {
 }
 
 ParallelExecutor::~ParallelExecutor() {
+
     waitForAll();
     if(extraThreads)
         delete [] extraThreads;
@@ -59,8 +60,12 @@ void ParallelExecutor::waitForAll() {
     if(ended)
         return;
     ended = true;
+    // Activate other sleeping thread
     for(int i = 0; i < extraThreadsCount; i++)
         sem_post(&listSemaphore);
+    // Main thread start running
+    sem_post(&listSemaphore);
+    executeFunc(this);
     for(int i = 0; i < extraThreadsCount; i++)
         pthread_join(extraThreads[i], 0);
 }

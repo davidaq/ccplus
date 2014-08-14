@@ -12,6 +12,7 @@ FileManager::~FileManager() {
     pthread_mutex_lock(&storageLock);
     for (auto& kv : storage) 
         delete kv.second;
+    storage.clear();
     pthread_mutex_unlock(&storageLock);
 }
 

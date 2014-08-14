@@ -43,3 +43,7 @@ Frame ImageRenderable::getFrame(float time) const {
 const std::string& ImageRenderable::getName() const {
     return uri;
 }
+
+bool ImageRenderable::still(float t1, float t2) {
+    return true;
+}

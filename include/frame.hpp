@@ -31,6 +31,7 @@ public:
      * Overlay image then merge audio
      */
     void mergeFrame(const Frame& f); 
+    void mergeAudio(const Frame& f);
 
     void setBlackBackground();
     

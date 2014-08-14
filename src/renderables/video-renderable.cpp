@@ -115,3 +115,7 @@ int VideoRenderable::getHeight() const {
     return decoder->getVideoInfo().height;
 }
 
+bool VideoRenderable::still(float t1, float t2) {
+    // Assume video are always changing
+    return false;
+}

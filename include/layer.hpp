@@ -32,13 +32,20 @@ public:
     float getStart() const;
     float getLast() const;
 
+    /*
+     * Check whether this layer is visible 
+     * at the timestep @t
+     * Note: the time @t are relative to upper layer
+     */
+    bool visible(float t) const;
+
     // Assume the renderable stuff is rendered
     Frame applyFiltersToFrame(float); 
 
     void setProperties(const std::map<std::string, Property>&);
     void setProperties(const std::map<std::string, Property>&,
             const std::vector<std::string>& keyOrder);
-    std::map<std::string, Property> getProperties() const;
+    const std::map<std::string, Property>& getProperties() const;
 
     std::vector<float> interpolate(const std::string&, float) const;
 private:

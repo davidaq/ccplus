@@ -1,6 +1,7 @@
 #pragma once
 #include "animated-renderable.hpp"
 #include "layer.hpp"
+#include "pthread.h"
 
 namespace CCPlus {
     class CompositionDependency;
@@ -40,6 +41,12 @@ public:
     const std::string getPrefix() const;
 
 private:
+    /**
+     * Compare layer set at two different time step.
+     * It's IMPORTANT for rendering still image
+     */
+    bool still(float t1, float t2);
+
     // data
     std::string name = "";
 
@@ -48,4 +55,6 @@ private:
     int width, height;
     float duration;
     bool renderToFile = false;
+
+    pthread_mutex_t renderedLock;
 };

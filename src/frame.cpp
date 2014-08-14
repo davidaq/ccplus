@@ -290,6 +290,11 @@ void Frame::setAudio(const std::vector<int16_t>& aud) {
 void Frame::mergeFrame(const Frame& f) {
     if (!f.getImage().empty())
         this->overlayImage(f.getImage());
+
+    mergeAudio(f);
+}
+
+void Frame::mergeAudio(const Frame& f) {
     // Merge audio
     // Two frames are supposed to have the same number of audio signals
     const Mat& input = f.getAudio();

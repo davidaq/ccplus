@@ -50,6 +50,12 @@ float Layer::getLast() const {
     return last;
 }
 
+bool Layer::visible(float t) const {
+    if (t < this->getTime() || t > this->getDuration() + this->getTime()) 
+        return false;
+    return true;
+}
+
 void Layer::setProperties(const std::map<std::string, Property>& prop, 
         const std::vector<std::string>& keyOrder) {
     this->orderedKey = keyOrder;
@@ -60,7 +66,7 @@ void Layer::setProperties(const std::map<std::string, Property>& prop) {
     properties = prop;
 }
 
-std::map<std::string, Property> Layer::getProperties() const {
+const std::map<std::string, Property>& Layer::getProperties() const {
     return properties;
 }
 
@@ -111,7 +117,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 Frame Layer::applyFiltersToFrame(float t) {
-    if (t < this->getTime() || t > this->getDuration() + this->getTime()) 
+    if (!visible(t)) 
         return Frame();
 
     // Calculate corresponding local time
