@@ -71,6 +71,10 @@ CCPLUS_FILTER(transform) {
         float y2 = std::ceil(y);
         float xr = round(x);
         float yr = round(y);
+        if(x1 >= mat.cols)
+            x1 = mat.cols - 1;
+        if(y1 >= mat.rows)
+            y1 = mat.rows - 1;
         if(x2 >= mat.cols)
             x2 = mat.cols - 1;
         if(y2 >= mat.rows)
