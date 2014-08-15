@@ -61,6 +61,7 @@ class Resizer():
                     for i in range(0, 4):
                         trans[i] *= self.scale
         del self.tml['usedfiles']
+        del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
         fp = open(self.dirname + '(resized)' + os.path.sep + 'result.tml', 'w')
         fp.write(json)
@@ -91,9 +92,27 @@ class Resizer():
         self.resizefiles()
         self.resizetml()
 
+    def mkcolors(self):
+        if 'usedcolors' not in self.tml:
+            return
+        rmdir(self.dirname + '(colors)' + os.path.sep)
+        os.mkdir(self.dirname + '(colors)' + os.path.sep)
+        for path in self.tml['usedcolors']:
+            color = self.tml['usedcolors'][path]
+            rawpath = self.dirname + path + '.raw'
+            cfile = open(rawpath, 'w')
+            content = bytearray()
+            for i in range(0, 3):
+                c = int(float(color['color'][i]) * 255)
+                content.append(c)
+            cfile.write(content)
+            cfile.close()
+            os.system('ffmpeg -s 1x1 -f rawvideo -pix_fmt rgb24 -i "' + rawpath + '" -s ' + str(color['width']) + 'x' + str(color['height']) + ' -n "' + self.dirname + path + '"')
+
 def main():
-    fname = '/Users/apple/Desktop/AE Template/ZY/postcards/render.aep.tml'
+    fname = '/Users/apple/Desktop/MyWildJ/render copy (CS6).aep.tml'
     resizer = Resizer(fname)
+    resizer.mkcolors()
     resizer.downsize(320, 180)
 
 '''Utility functions'''
@@ -103,13 +122,16 @@ def filedir(filename):
         return filename[0:p + 1]
     return filename
 def rmdir(dirname):
-    for item in os.listdir(dirname):
-        item = dirname + item
-        if os.path.isfile(item):
-            os.remove(item)
-        else:
-            rmdir(item + os.path.sep)
-    os.rmdir(dirname)
+    try:
+        for item in os.listdir(dirname):
+            item = dirname + item
+            if os.path.isfile(item):
+                os.remove(item)
+            else:
+                rmdir(item + os.path.sep)
+        os.rmdir(dirname)
+    except:
+        pass
 def cleandir(dirname):
     ret = True
     for item in os.listdir(dirname):

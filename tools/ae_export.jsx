@@ -69,9 +69,11 @@ var Export = function() {
     }
 };
 Export.prototype.exportTo = function(filePath) {
+    log('Export to: ' + filePath);
     this.tmlFile = new File(filePath);
     this.tmlFile.open('w');
-    this.files = {}
+    this.files = {};
+    this.colors = {};
     try {
         if(!this.comp.MAIN) {
             throw "Main composition doesn't exist";
@@ -83,6 +85,7 @@ Export.prototype.exportTo = function(filePath) {
             tml.compositions[compName] = this.exportComp(this.comp[compName]);
         }
         tml.usedfiles = this.files;
+        tml.usedcolors = this.colors;
         this.tmlFile.write(obj2str(tml));
     } finally {
         this.tmlFile.close();
@@ -90,6 +93,7 @@ Export.prototype.exportTo = function(filePath) {
     alert('Export Done!');
 };
 Export.prototype.exportComp = function(comp) {
+    log('Export Comp: ' + comp.name);
     var ret = {};
     ret.resolution = {
         width: comp.width,
@@ -98,24 +102,48 @@ Export.prototype.exportComp = function(comp) {
     ret.duration = comp.duration;
     ret.layers = [];
     for(var i = 1; i <= comp.layers.length; i++) {
-        ret.layers.push(this.exportLayer(comp.layers[i]));
+        log('  Export Layer: ' + i);
+        var exportedLayer = this.exportLayer(comp.layers[i]);
+        if(NULL != exportedLayer)
+            ret.layers.push(exportedLayer);
     }
     return ret;
 };
 Export.prototype.exportLayer = function(layer) {
     var ret = {};
     var source = layer.source;
+    if(!source)
+        return NULL;
     var type = source.toString();
+    log('    Layer type: ' + type)
     if('[object CompItem]' == type) {
         this.exportList.push(source.name);
         ret.uri = 'composition://' + source.name;
     } else if('[object FootageItem]' == type) {
-        var path = relPath(source.file.fullName);
+        var path;
+        if(!source.file) {
+            // color source
+            var color = source.mainSource.color;
+            path = source.width + 'x' + source.height + '#' 
+                + color[0] + '_' + color[1] + '_' + color[2];
+            path = '(colors)/' + path + '.png';
+            this.colors[path] = {
+                color: color,
+                width: source.width,
+                height: source.height
+            };
+        } else {
+            path = relPath(source.file.fullName);
+        }
         ret.uri = 'file://' + path;
         this.files[path] = {
             width: source.width,
             height: source.height
         };
+        log('    Export Footage: ' + path);
+    } else {
+        log('    Unexpected layer type');
+        return NULL;
     }
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
@@ -129,6 +157,7 @@ Export.prototype.exportLayer = function(layer) {
         return ret;
     }
     for(var pmk in PropertyMapping) {
+        log('    Export property: ' + pmk);
         var proced = false;
         for(var t = ret.time; ; t += 0.1) {
             if(t > layer.outPoint) {
@@ -226,6 +255,7 @@ Export.prototype.interpolate = function(startTime, startValue, endTime, endValue
 
 function __main__() {
     try {
+        log('starting....');
         new Export().exportTo(app.project.file.fullName + '.tml');
     } catch (e) {
         alert(e);
@@ -300,8 +330,14 @@ function obj2str(obj) {
     }
     return ret;
 }
+var logFile = new File(projDir + 'log');
+logFile.open('w');
+function log(str) {
+    logFile.writeln(str);
+    logFile.close();
+    logFile.open('a');
+}
 var NULL;
 __main__();
-
-
+logFile.close();
 

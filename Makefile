@@ -35,7 +35,7 @@ clean-zim:
 	-rm -rf tmp/*.zim
 
 .dependency:
-	./scripts/run load.py
+	-./scripts/run load.py
 
 build/Makefile: .dependency
 	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
