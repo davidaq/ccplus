@@ -122,8 +122,7 @@ void Composition::renderPart(float start, float duration) {
     int totalFrame = endFrame - startFrame + 1;
     int step = std::max((int)2.0 * context->getFPS(), 
             totalFrame / CCPlus::CONCURRENT_THREAD);
-    step = std::min((int) 5.0 * context->getFPS(), 
-            totalFrame / CCPlus::CONCURRENT_THREAD);
+    step = std::min((int) 5.0 * context->getFPS(), step);
     int i = startFrame;
     while (i <= endFrame) {
         float _startFrame = i;
