@@ -76,4 +76,13 @@ TEST(Filter, HSLTest) {
     Frame img1("test/res/test2.jpg");
     Filter("hsl").apply(img1, {135, 1.1, 0.9}, 500, 500);
     img1.write("tmp/hsl.png");
+
+TEST(Filter, GrayScaleTest) {
+    Frame img1(Mat(5, 5, CV_8UC4, {0, 255, 127, 127}));
+    Filter("grayscale").apply(img1, {40, 60, 40, 60, 20, 80, 0, 0}, 30, 30);
+    Mat mat = img1.getImage();
+    for (int i = 0; i < mat.cols; i++)
+        for (int j = 0; j < mat.rows; j++)
+            EXPECT_EQ(mat.at<Vec4b>(i, j), Vec4b(127, 127, 127, 127));
+    img1.write("tmp/mask.png");
 }

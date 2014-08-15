@@ -365,3 +365,13 @@ void Frame::setBlackBackground() {
         }
     }
 }
+
+void Frame::addAlpha(const std::vector<unsigned char>& input) {
+    if (this->image.empty()) return;
+    if (this->image.channels() == 3)
+        to4Channels();
+    for (int i = 0, j = 3; i < input.size() && j < image.total() * 4; 
+            i++, j += 4) {
+        image.data[j] = input[i];
+    }
+}
