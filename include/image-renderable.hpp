@@ -23,6 +23,8 @@ public:
 
     bool still(float t1, float t2);
 
+    void clear();
+
 protected:
     std::string getFramePath(int f) const;
     Frame cache;

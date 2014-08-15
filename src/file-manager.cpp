@@ -10,16 +10,23 @@ FileManager::FileManager() {
 }
 
 FileManager::~FileManager() {
-    pthread_mutex_lock(&storageLock);
-    for (auto& kv : storage) 
-        delete kv.second;
-    storage.clear();
-    pthread_mutex_unlock(&storageLock);
+    clear();
 }
 
 FileManager* FileManager::getInstance() {
     static FileManager fm;       
     return &fm;
+}
+
+void FileManager::clear() {
+    pthread_mutex_lock(&storageLock);
+    for (auto& kv : storage) 
+        delete kv.second;
+    storage.clear();
+    pthread_mutex_unlock(&storageLock);
+    pthread_mutex_lock(&linksLock);
+    links.clear();
+    pthread_mutex_unlock(&linksLock);
 }
 
 void FileManager::addLink(const std::string& src, const std::string& linkTo) {
