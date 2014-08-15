@@ -6,6 +6,7 @@ using namespace CCPlus;
 
 FileManager::FileManager() {
     pthread_mutex_init(&storageLock, 0);
+    pthread_mutex_init(&linksLock, 0);
 }
 
 FileManager::~FileManager() {
@@ -21,7 +22,21 @@ FileManager* FileManager::getInstance() {
     return &fm;
 }
 
+void FileManager::addLink(const std::string& src, const std::string& linkTo) {
+    pthread_mutex_lock(&storageLock);
+    if (links.count(src)) {
+        log(logFATAL) << "Link already existed for: " << src;
+    }
+    if (links.count(linkTo))
+        links[src] = links[linkTo];
+    else
+        links[src] = linkTo;
+    pthread_mutex_unlock(&storageLock);
+}
+
 File* FileManager::open(const std::string& fn, const std::string& mode, bool inMemory) {
+    if (links.count(fn))
+        return this->open(links[fn], mode, inMemory);
     File* ret = nullptr;
     if (!inMemory) {
         ret = new File(fn, mode, inMemory);

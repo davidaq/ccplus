@@ -38,8 +38,12 @@ Frame AnimatedRenderable::getFrame(float time) const {
     while(time > getDuration())
         time -= getDuration();
     int f = getFrameNumber(time);
-    if(rendered.count(f)) {
-        return Frame(getFramePath(f));
+    return getFrameByNumber(f);
+}
+
+Frame AnimatedRenderable::getFrameByNumber(int frame) const {
+    if(rendered.count(frame)) {
+        return Frame(getFramePath(frame));
     }
     return Frame();
 }

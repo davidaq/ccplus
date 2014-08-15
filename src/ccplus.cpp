@@ -49,7 +49,9 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     }
     float done_time = 0;
     for (auto& dep : deps) {
+        Profiler* p = new Profiler(dep.renderable->getName());
         dep.renderable->render(dep.from, dep.to);
+        delete p;
         if (!dynamic_cast<ImageRenderable*>(dep.renderable)) {
             done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
             log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";

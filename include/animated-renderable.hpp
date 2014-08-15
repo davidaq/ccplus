@@ -13,6 +13,7 @@ public:
 
     void render(float start, float duration);
     Frame getFrame(float time) const;
+    Frame getFrameByNumber(int frame) const;
 
 protected:
     virtual void renderPart(float start, float duration) = 0;

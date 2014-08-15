@@ -13,6 +13,7 @@ public:
     
     virtual void render(float start, float duration) = 0;
     virtual Frame getFrame(float time) const = 0;
+    virtual Frame getFrameByNumber(int frame) const = 0;
 
     virtual const std::string& getName() const = 0;
     
@@ -29,7 +30,12 @@ public:
 
     int getFrameNumber(float time) const;
 
+    float getFrameTime(int frame) const;
+
+
 protected:
+
+    virtual std::string getFramePath(int f) const = 0;
 
     std::string uuid;
 

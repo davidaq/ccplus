@@ -4,6 +4,8 @@
 using namespace cv;
 
 CCPLUS_FILTER(gaussian) {
+    if (parameters.size() == 0)
+        return;
     int kwidth = (int) parameters[0];   
     int kheight = (int) parameters[1];   
     float sigma = parameters[2];

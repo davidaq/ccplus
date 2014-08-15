@@ -3,6 +3,7 @@
 #include "global.hpp"
 #include "utils.hpp"
 #include "image-renderable.hpp"
+#include "file-manager.hpp"
 
 #include <list>
 #include <pthread.h>
@@ -111,23 +112,28 @@ void Composition::setForceRenderToFile(bool renderToFile) {
 }
 
 void Composition::renderPart(float start, float duration) {
+    //log(logDEBUG) << "\t" << start << " " << duration;
     float inter = 1.0 / context->getFPS();
 
     ParallelExecutor executor(CCPlus::CONCURRENT_THREAD);
 
-    float time_slice = std::max(2.0, 
-            duration / CCPlus::CONCURRENT_THREAD * 1.0);
+    int startFrame  = this->getFrameNumber(start);
+    int endFrame = this->getFrameNumber(start + duration);
+    int totalFrame = endFrame - startFrame + 1;
+    int step = std::max((int)2.0 * context->getFPS(), 
+            totalFrame / CCPlus::CONCURRENT_THREAD);
+    step = std::min((int) 5.0 * context->getFPS(), 
+            totalFrame / CCPlus::CONCURRENT_THREAD);
+    int i = startFrame;
+    while (i <= endFrame) {
+        float _startFrame = i;
+        float _endFrame = std::min(i + step, endFrame);
+        i = _endFrame + 1;
 
-    float end = start + duration + inter;
-    for (float t = start; t < end; t += time_slice) {
-        float _start = t;
-        float _end = std::min(t + time_slice, end);
-
-        // Cut time to slices
-        auto render = [this, inter, _start, _end] () {
-            float last_t = -1;
-            for (float t = _start; t <= _end + inter; t += inter) {
-                int f = this->getFrameNumber(t);
+        // Cut frames to pieces
+        auto render = [this, inter, _startFrame, _endFrame] () {
+            int lastFrame = -1;
+            for (int f = _startFrame; f <= _endFrame; f++) {
 
                 // Check whether rendered
                 pthread_mutex_lock(&renderedLock);
@@ -141,16 +147,20 @@ void Composition::renderPart(float start, float duration) {
 
                 Frame ret;
 
-                if (last_t != -1 && 
-                        layers.size() > 1 && 
-                        this->still(last_t, t)) {
+                float last_t = this->getFrameTime(lastFrame);
+                float now_t = this->getFrameTime(f);
 
-                    //L() << last_t << " and " << t;
-                    ret = this->getFrame(last_t);
+                bool flag = false;
+                if (lastFrame != -1 && this->still(last_t, now_t)) {
+                    //L() << this->getName() << last_t << " and " << now_t;
+                    FileManager::getInstance()->addLink(
+                            this->getFramePath(f), 
+                            this->getFramePath(lastFrame));
+                    flag = true;
                 } else {
                     bool first = true; 
                     for (Layer& l : layers) {
-                        Frame frame = l.applyFiltersToFrame(t);
+                        Frame frame = l.applyFiltersToFrame(now_t);
                         if (frame.empty()) continue;
                         if (first) {
                             ret = frame;
@@ -162,17 +172,20 @@ void Composition::renderPart(float start, float duration) {
                         }
                     }
                 }
-                if(renderToFile)
-                    ret.write(fp, 80, false);
-                else 
-                    ret.write(fp);
+
+                if (!flag) {
+                    if(renderToFile)
+                        ret.write(fp, 80, false);
+                    else 
+                        ret.write(fp);
+                }
 
                 // Save ret to storagePath / name_tmp
                 pthread_mutex_lock(&renderedLock);
                 rendered.insert(f);
                 pthread_mutex_unlock(&renderedLock);
 
-                last_t = t;
+                lastFrame = f;
             }
         };
         executor.execute(render);
@@ -209,7 +222,7 @@ bool Composition::still(float t1, float t2) {
         const PropertyMap& mp = l.getProperties();
         for (auto& kv : mp) {
             std::string name = kv.first;
-            if (name == "volume") continue;
+            //if (name == "volume") continue;
             if (l.interpolate(name, t1) != l.interpolate(name, t2))
                 return false;
         }

@@ -24,3 +24,8 @@ int Renderable::getFrameNumber(float time) const {
     float inter = 1.0 / context->getFPS(); 
     return round(time / inter);
 }
+
+float Renderable::getFrameTime(int frame) const {
+    float inter = 1.0 / context->getFPS();
+    return frame * inter;
+}

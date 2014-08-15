@@ -40,10 +40,18 @@ Frame ImageRenderable::getFrame(float time) const {
     return Frame(cache.getImage().clone());
 }
 
+Frame ImageRenderable::getFrameByNumber(int frame) const {
+    return Frame(cache.getImage().clone());
+}
+
 const std::string& ImageRenderable::getName() const {
     return uri;
 }
 
 bool ImageRenderable::still(float t1, float t2) {
     return true;
+}
+
+std::string ImageRenderable::getFramePath(int f) const {
+    return path;
 }
