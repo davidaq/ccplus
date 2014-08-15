@@ -120,9 +120,9 @@ void Composition::renderPart(float start, float duration) {
     int startFrame  = this->getFrameNumber(start);
     int endFrame = this->getFrameNumber(start + duration);
     int totalFrame = endFrame - startFrame + 1;
-    int step = std::max((int)2.0 * context->getFPS(), 
+    int step = std::max((int)1.0 * context->getFPS(), 
             totalFrame / CCPlus::CONCURRENT_THREAD);
-    step = std::min((int) 5.0 * context->getFPS(), step);
+    step = std::min((int) 2.0 * context->getFPS(), step);
     int i = startFrame;
     while (i <= endFrame) {
         float _startFrame = i;
@@ -131,7 +131,7 @@ void Composition::renderPart(float start, float duration) {
 
         // Cut frames to pieces
         auto render = [this, inter, _startFrame, _endFrame] () {
-            int lastFrame = -1;
+            int lastFrame = _startFrame - 1;
             for (int f = _startFrame; f <= _endFrame; f++) {
 
                 // Check whether rendered
@@ -150,7 +150,7 @@ void Composition::renderPart(float start, float duration) {
                 float now_t = this->getFrameTime(f);
 
                 bool flag = false;
-                if (lastFrame != -1 && this->still(last_t, now_t)) {
+                if (rendered.count(lastFrame) && this->still(last_t, now_t)) {
                     //L() << this->getName() << last_t << " and " << now_t;
                     FileManager::getInstance()->addLink(
                             this->getFramePath(f), 

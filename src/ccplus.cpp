@@ -49,7 +49,7 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     }
     float done_time = 0;
     for (auto& dep : deps) {
-        Profiler* p = new Profiler(dep.renderable->getName());
+        Profiler* p = new Profiler("Renderable__" + dep.renderable->getName());
         dep.renderable->render(dep.from, dep.to);
         delete p;
         if (!dynamic_cast<ImageRenderable*>(dep.renderable)) {
