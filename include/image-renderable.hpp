@@ -13,6 +13,7 @@ public:
 
     void render(float start, float duration);
     Frame getFrame(float time) const;
+    Frame getFrameByNumber(int frame) const;
     
     float getDuration() const;
     int getWidth() const;
@@ -23,6 +24,7 @@ public:
     bool still(float t1, float t2);
 
 protected:
+    std::string getFramePath(int f) const;
     Frame cache;
     bool loaded = false;
     std::string path;
