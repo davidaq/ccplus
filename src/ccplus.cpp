@@ -41,6 +41,9 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
         length = uCtx->mainComp->getDuration();
     uCtx->mainComp->setForceRenderToFile(true);
     std::vector<CCPlus::CompositionDependency> deps = uCtx->mainComp->fullOrderedDependency(start, length);
+    // Clear previous used memory
+    uCtx->ctx->releaseMemory();
+
     float total_time = 0;
     for (auto& dep : deps) {
         if (dynamic_cast<ImageRenderable*>(dep.renderable))

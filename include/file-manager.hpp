@@ -22,6 +22,8 @@ public:
     void addLink(const std::string& src, 
             const std::string& linkTo);
 
+    void clear();
+
 protected:
     FileManager();
     std::map<std::string, File*> storage;

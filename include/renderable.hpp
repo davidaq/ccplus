@@ -21,6 +21,8 @@ public:
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
 
+    virtual void clear() = 0;
+
     /**
      * Chech if this renderable *LOOKS* the same at
      * time @t1 and @t2

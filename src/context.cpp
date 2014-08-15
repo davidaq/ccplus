@@ -14,6 +14,13 @@ Context::~Context() {
     // TODO clean up renderables' memory
 }
 
+void Context::releaseMemory() {
+    FileManager::getInstance()->clear();
+    for (auto& r : renderables) {
+        r.second->clear();
+    }
+}
+
 const std::string& Context::getStoragePath() const {
     return storagePath;
 }

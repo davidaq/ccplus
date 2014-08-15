@@ -9,10 +9,9 @@ class CCPlus::Context : public CCPlus::Object {
 public:
     Context(const std::string& storagePath, int _fps);
     ~Context();
-    
-    // operations
-    
-    
+
+    void releaseMemory();
+
     // access
     const std::string& getStoragePath() const;
 

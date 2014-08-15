@@ -47,3 +47,7 @@ Frame AnimatedRenderable::getFrameByNumber(int frame) const {
     }
     return Frame();
 }
+
+void AnimatedRenderable::clear() {
+    rendered.clear();
+}

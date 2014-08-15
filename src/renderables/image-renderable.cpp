@@ -29,6 +29,9 @@ float ImageRenderable::getDuration() const {
     return std::numeric_limits<int>::max();
 }
 
+void ImageRenderable::clear() {
+}
+
 void ImageRenderable::render(float start, float duration) {
     //if (!loaded)
     //    image = Frame(path);

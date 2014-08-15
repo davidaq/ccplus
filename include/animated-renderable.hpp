@@ -15,6 +15,8 @@ public:
     Frame getFrame(float time) const;
     Frame getFrameByNumber(int frame) const;
 
+    void clear();
+
 protected:
     virtual void renderPart(float start, float duration) = 0;
     std::set<int> rendered;
