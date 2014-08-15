@@ -71,3 +71,9 @@ TEST(Filter, MaskTest) {
     Filter("mask").apply(img1, {50, 300, 250, 100, 450, 300, 250, 500}, 500, 500);
     img1.write("tmp/mask.png");
 }
+
+TEST(Filter, HSLTest) {
+    Frame img1("test/res/test2.jpg");
+    Filter("hsl").apply(img1, {135, 1.1, 0.9}, 500, 500);
+    img1.write("tmp/hsl.png");
+}
