@@ -43,6 +43,8 @@ public:
     const cv::Mat& getAudio() const;
     void setAudio(const cv::Mat&);
     void setAudio(const std::vector<int16_t>&);
+
+    void addAlpha(const std::vector<unsigned char>&);
     
 private:
     /**
