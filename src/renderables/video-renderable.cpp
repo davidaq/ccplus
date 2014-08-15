@@ -108,11 +108,11 @@ float VideoRenderable::getDuration() const {
 }
 
 int VideoRenderable::getWidth() const {
-    return decoder->getVideoInfo().width;
+    return decoder->getVideoInfo().rwidth;
 }
 
 int VideoRenderable::getHeight() const {
-    return decoder->getVideoInfo().height;
+    return decoder->getVideoInfo().rheight;
 }
 
 bool VideoRenderable::still(float t1, float t2) {

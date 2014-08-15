@@ -7,6 +7,7 @@ namespace CCPlus {
     class VideoEncoder;
     struct EncodeContext;
     class Frame;
+    class ParallelExecutor;
 }
 
 class CCPlus::VideoEncoder {
@@ -35,4 +36,5 @@ private:
     std::string outputPath;
     int width = 0, height = 0, fps = 0, quality = 100;
     int frameNum = 0;
+
 };

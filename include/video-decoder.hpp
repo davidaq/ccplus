@@ -13,6 +13,7 @@ namespace CCPlus {
 struct CCPlus::VideoInfo {
     float duration;
     int width, height;
+    int rwidth, rheight;
 };
 
 

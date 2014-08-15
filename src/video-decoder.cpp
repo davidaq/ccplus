@@ -319,7 +319,9 @@ void VideoDecoder::initContext() {
     decodeContext->info = VideoInfo {
         .duration = static_cast<float>(decodeContext->fmt_ctx->duration * 1.0 / AV_TIME_BASE),
         .width = 0,
-        .height = 0
+        .height = 0,
+        .rwidth = 0,
+        .rheight = 0
     };
     if (decoderFlag & DECODE_VIDEO && 
             open_codec_context(&(decodeContext->video_stream_idx), decodeContext->fmt_ctx, AVMEDIA_TYPE_VIDEO) >= 0) {
@@ -327,13 +329,19 @@ void VideoDecoder::initContext() {
         decodeContext->video_dec_ctx = decodeContext->video_stream->codec;
 
         decodeContext->info.width = decodeContext->video_dec_ctx->width;
+        decodeContext->info.rwidth = decodeContext->video_dec_ctx->width;
         decodeContext->info.height = decodeContext->video_dec_ctx->height;
+        decodeContext->info.rheight = decodeContext->video_dec_ctx->height;
         
         
         AVDictionaryEntry *tag = NULL;
         tag = av_dict_get(decodeContext->video_stream->metadata, "rotate", tag, AV_DICT_MATCH_CASE);
         if(tag) {
             decodeContext->rotate = atoi(tag->value);
+            if(decodeContext->rotate != 0 && decodeContext->rotate != 180) {
+                decodeContext->info.rwidth = decodeContext->info.height;
+                decodeContext->info.rheight = decodeContext->info.width;
+            }
         }
     }
     if (decoderFlag & DECODE_AUDIO &&
