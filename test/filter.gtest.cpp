@@ -1,6 +1,7 @@
 #include "gtest/gtest.h" 
 
 #include "filter.hpp"
+#include "utils.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -73,9 +74,12 @@ TEST(Filter, MaskTest) {
 }
 
 TEST(Filter, HSLTest) {
-    Frame img1("test/res/test2.jpg");
-    Filter("hsl").apply(img1, {135, 1.1, 0.9}, 500, 500);
-    img1.write("tmp/hsl.png");
+    for (int i = 0 ; i <= 10; i++) {
+        Frame img1("test/res/test2.jpg");
+        Filter("hsl").apply(img1, {135, 1.1, 1.0f + i / 10.0f}, 500, 500);
+        img1.write("tmp/hsl" + toString(i) + ".png");
+    }
+}
 
 TEST(Filter, GrayScaleTest) {
     Frame img1(Mat(5, 5, CV_8UC4, {0, 255, 127, 127}));
