@@ -5,9 +5,11 @@ using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(hsl) {
-    float hue = parameters[0];
-    float sat = parameters[1];
-    float lit = parameters[2];
+    if (parameters.size() < 3) return;
+
+    float hue = parameters[0]; // 0 ~ 180
+    float sat = parameters[1]; // 0 ~ 2.0
+    float lit = parameters[2]; // 0 ~ 2.0
     
     Mat &img = frame.getImage();
     Mat buf;
@@ -23,8 +25,18 @@ CCPLUS_FILTER(hsl) {
             while(p < 0)
                 p += 180;
             pixel[0] = p;
-            pixel[1] = std::min<int>(255, (int)pixel[1] * lit);
-            pixel[2] = std::min<int>(255, (int)pixel[2] * sat);
+
+            // L
+            float now_lit = pixel[1];
+            float diff = (lit - 1.0) * (lit > 1.0 ? (255 - now_lit) : now_lit);
+            pixel[1] = std::min<int>(255, 
+                    (int)now_lit + diff);
+
+            // S
+            float now_sat = pixel[2];
+            diff = (sat - 1.0) * (sat > 1.0 ? (255 - now_sat) : now_sat);
+            pixel[2] = std::min<int>(255, 
+                    (int)now_sat + diff);
         }
     }
     cvtColor(buf, buf, CV_HLS2BGR);
