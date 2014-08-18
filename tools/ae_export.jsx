@@ -2,6 +2,37 @@
  * Property maping
  */
 var PropertyMapping = {
+    mask:{
+        map:['Masks/1/maskShape'],
+        set:function(maskShape) {
+            var ret = [];
+            for(var k = 0; k < maskShape.vertices.length; k++) {
+                var pnt = maskShape.vertices[k];
+                ret.push(pnt[1]);
+                ret.push(pnt[0]);
+                var nk = (k + 1) % maskShape.vertices.length;
+                var p0 = maskShape.vertices[k];
+                var p1 = maskShape.outTangents[k];
+                var p2 = maskShape.inTangents[nk];
+                var p3 = maskShape.vertices[nk];
+                p1[0] += p0[0];
+                p1[1] += p0[1];
+                p2[0] += p3[0];
+                p2[1] += p3[1];
+                var cuts = 7;
+                var step = 1.0 / cuts;
+                for(var i = 1; i < cuts; i++) {
+                    var t = step * i;
+                    var rt = 1 - t;
+                    var px = rt * rt * rt * p0[0] + 3 * t * rt * rt * p1[0] + 3 * t * t * rt * p2[0] + t * t * t* p3[0];
+                    var py = rt * rt * rt * p0[1] + 3 * t * rt * rt * p1[1] + 3 * t * t * rt * p2[1] + t * t * t* p3[1];
+                    ret.push(py);
+                    ret.push(px);
+                }
+            }
+            return ret;
+        },
+    },
     transform:{
         map:['Position','Anchor Point','Scale','Rotation'],
         set:function(pos, anchor, scale, rotate) {
@@ -21,7 +52,6 @@ var PropertyMapping = {
         set:function(opac) {
             return [opac / 100];
         },
-        error:[0.08]
     },
     volume:{
         map:'Audio Levels',
@@ -41,7 +71,6 @@ var PropertyMapping = {
             }
             return [(lvl + 48) / 48];
         },
-        error:[0.1]
     },
     gaussian:{
         map:['Effects/Gaussian Blur/Blurriness','Effects/Gaussian Blur/Blur Dimensions'],
@@ -52,6 +81,14 @@ var PropertyMapping = {
         },
         error:[0.1, 0.001]
     },
+    hsl:{
+        map:['Effects/Color Balance (HLS)/Hue','Effects/Color Balance (HLS)/Saturation','Effects/Color Balance (HLS)/Lightness'],
+        set:function(h,s,l) {
+            return [
+                h, s, l
+            ];
+        }
+    }
 };
 /*
  * Export logic
@@ -178,7 +215,10 @@ Export.prototype.exportLayer = function(layer) {
                     var kpath = take[pnk].split('/');
                     val = layer;
                     for(var pk in kpath) {
-                        val = val.property(kpath[pk]);
+                        var pname = kpath[pk];
+                        if(isFinite(pname))
+                            pname = pname * 1;
+                        val = val.property(pname);
                     }
                     val = val.valueAtTime(t, false);
                     notNull = true;
@@ -267,7 +307,8 @@ function __main__() {
 function near(arr1, arr2, error) {
     for(k in arr1) {
         var v = arr1[k] - arr2[k];
-        if(v > error[k] || v < -error[k]) {
+        var e = (error && error[k]) ? error[k] : 0.1;
+        if(v > e || v < -e) {
             return false;
         }
     }
