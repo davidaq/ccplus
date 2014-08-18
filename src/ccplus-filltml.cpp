@@ -37,7 +37,7 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& tmlPath, co
 
         auto& comp = child.second;
 
-        int idx = std::stoi(name.substr(2));
+        int idx = std::atoi(name.substr(2).c_str());
         if (idx >= medias.size()) {
             log(logFATAL) << "Couldn't find footage for " << name;
         }
