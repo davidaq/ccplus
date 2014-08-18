@@ -81,12 +81,47 @@ var PropertyMapping = {
         },
         error:[0.1, 0.001]
     },
-    hsl:{
+    hsl1:{
+        name:'hsl',
+        map:[
+            ['Effects','Hue/Saturation','Master Hue'],
+            ['Effects','Hue/Saturation','Master Saturation'],
+            ['Effects','Hue/Saturation','Master Lightness'],
+        ],
+        set:function(h,s,l) {
+            return [
+                h / 2, 1 + s / 100, 1 + l / 100
+            ];
+        }
+    },
+    hsl2:{
+        name:'hsl',
         map:['Effects/Color Balance (HLS)/Hue','Effects/Color Balance (HLS)/Saturation','Effects/Color Balance (HLS)/Lightness'],
         set:function(h,s,l) {
             return [
-                h, s, l
+                h / 2, 1 + s / 100, 1 + l / 100
             ];
+        }
+    },
+    grayscale:{
+        map:[
+            'Effects/Black & White/Reds',
+            'Effects/Black & White/Yellows',
+            'Effects/Black & White/Greens',
+            'Effects/Black & White/Cyans',
+            'Effects/Black & White/Blues',
+            'Effects/Black & White/Magentas',
+            'Effects/Black & White/Tint:',
+            'Effects/Black & White/Tint Color',
+        ],
+        set:function(r,y,g,c,b,m,haveTint,tintColor) {
+            var ret = [r,y,g,c,b,m,0,0];
+            if(haveTint > 0) {
+                var hs = getHueSat(tintColor);
+                ret[6] = hs[0];
+                ret[7] = hs[1];
+            }
+            return ret;
         }
     }
 };
@@ -194,6 +229,9 @@ Export.prototype.exportLayer = function(layer) {
         return ret;
     }
     for(var pmk in PropertyMapping) {
+        var propName = pmk;
+        if(PropertyMapping[pmk].name)
+            propName = PropertyMapping[pmk].name;
         log('    Export property: ' + pmk);
         var proced = false;
         for(var t = ret.time; ; t += 0.1) {
@@ -212,7 +250,9 @@ Export.prototype.exportLayer = function(layer) {
             for(var pnk in take) {
                 var val;
                 try {
-                    var kpath = take[pnk].split('/');
+                    var kpath = take[pnk];
+                    if(typeof(kpath) == 'string')
+                        kpath = kpath.split('/');
                     val = layer;
                     for(var pk in kpath) {
                         var pname = kpath[pk];
@@ -238,13 +278,13 @@ Export.prototype.exportLayer = function(layer) {
             if(!result)
                 result = defaultFilter;
             result = result.apply([], args);
-            if(!ret.properties[pmk]) {
-                ret.properties[pmk] = {};
+            if(!ret.properties[propName]) {
+                ret.properties[propName] = {};
             }
-            ret.properties[pmk]['' + t] = result;
+            ret.properties[propName]['' + t] = result;
         }
-        if(ret.properties[pmk])
-            ret.properties[pmk] = this.simplifyProperties(ret.properties[pmk], PropertyMapping[pmk].error);
+        if(ret.properties[propName])
+            ret.properties[propName] = this.simplifyProperties(ret.properties[propName], PropertyMapping[pmk].error);
     }
     return ret;
 };
@@ -370,6 +410,29 @@ function obj2str(obj) {
         }
     }
     return ret;
+}
+function getHueSat(r, g, b) {
+    var min = Math.min(r, g, b);
+    var max = Math.max(r, g, b);
+    var delta = max - min;
+    if(delta <= 0)
+        return [0, 0];
+    var hue = 0;
+    var sat = 0;
+    var sum = max + min;
+    if(sum < 1) {
+        sat = delta / sum;
+    } else {
+        sat = delta / (2 - sum);
+    }
+    if(r == max) {
+        hue = (g - b) / delta;
+    } else if(g == max) {
+        hue = 2 + (b - r) / delta;
+    } else {
+        hue = 4 + (r - g) / delta; 
+    }
+    return [hue, sat];
 }
 var logFile = new File(projDir + 'log');
 logFile.open('w');

@@ -30,7 +30,6 @@ class Resizer():
         return files
 
     def resizefiles(self):
-        return
         self.preparedir()
         files = self.usedfiles()
         sizes = self.tml['usedfiles']
@@ -39,9 +38,10 @@ class Resizer():
             fsz = self.favoredsize(sz)
             src_file = self.dirname + f
             out_file = self.dirname + '(resized)' + os.path.sep + f
-            os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' "' + out_file + '"')
+            os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
     def preparedir(self):
+        return
         rmdir(self.dirname + '(resized)' + os.path.sep)
         dirs = []
         os.path.walk(self.dirname, scandir , dirs)
@@ -120,7 +120,7 @@ def main():
     fname = '/Users/apple/Desktop/MusicTravel/renderCS6.aep.tml'
     resizer = Resizer(fname)
     resizer.mkcolors()
-    resizer.downsize(320, 180)
+    resizer.downsize(640, 360)
 
 '''Utility functions'''
 def filedir(filename):
