@@ -27,7 +27,7 @@ CCPLUS_FILTER(mask) {
      * feather effect
      */
     if (kwidth != 0 && kheight != 0) {
-        GaussianBlur(maskImg, maskImg, {kwidth * 2 + 1, kheight * 2 + 1}, 2 * std::max(kwidth, kheight));
+        GaussianBlur(maskImg, maskImg, {kwidth * 2 + 1, kheight * 2 + 1}, std::max(kwidth, kheight));
         //cv::fillPoly(maskImg, contours, &pointNum, 1, cv::Scalar(255), 8, 3);
     }
 
