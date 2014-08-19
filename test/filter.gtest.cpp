@@ -88,3 +88,13 @@ TEST(Filter, GrayScaleTest) {
             EXPECT_EQ(mat.at<Vec4b>(i, j), Vec4b(127, 127, 127, 127));
     img1.write("tmp/mask.png");
 }
+
+TEST(Filter, RampTest) {
+    Frame img("test/res/test2.jpg");
+    Filter("ramp").apply(img, {1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 640, 852);
+    img.write("tmp/ramp_radial.jpg");
+
+    Frame img2("test/res/test2.jpg");
+    Filter("ramp").apply(img2, {-1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 640, 852);
+    img2.write("tmp/ramp_linear.jpg");
+}
