@@ -12,86 +12,92 @@ using namespace CCPlus;
 CCPLUS_FILTER(transform) {
     if (parameters.size() == 0)
         return;
-    int pos_x = (int)parameters[0];
-    int pos_y = (int)parameters[1];
-    int pos_z = (int)parameters[2];
-    int anchor_x = (int)parameters[3];
-    int anchor_y = (int)parameters[4];
-    int anchor_z = (int)parameters[5];
-    if (anchor_z != 0) {
-        log(CCPlus::logWARN) << "Corrently anchor z is not supported";
-    }
-    float scale_x = parameters[6];
-    float scale_y = parameters[7];
-    float scale_z = parameters[8];
-    float angle_x = parameters[9];
-    float angle_y = parameters[10];
-    float angle_z = parameters[11];
-
-    Mat& input = frame.getImage();
-
-    // Put original image into the large layer image 
-    Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    angle_x = angle_x * M_PI / 180.0;
-    double cx = cos(angle_x);
-    double sx = sin(angle_x);
-    angle_y = angle_y * M_PI / 180.0;
-    double cy = cos(angle_y);
-    double sy = sin(angle_y);
-    angle_z = angle_z * M_PI / 180.0;
-    double cz = cos(angle_z);
-    double sz = sin(angle_z);
-
-    Mat trans = (Mat_<double>(4, 4) << 
-            1, 0, 0, -pos_x, 
-            0, 1, 0, -pos_y, 
-            0, 0, 1, -pos_z,
-            0, 0, 0, 1);
-
-    //std::cout << "====================================" << std::endl;
-    //std::cout << "Init : " << std::endl << trans << std::endl;
-
-    Mat scale = (Mat_<double>(4, 4) << 
-            scale_x, 0, 0, 0,
-            0, scale_y, 0, 0,
-            0, 0, scale_z, 0,
-            0, 0, 0, 1);
-    trans = scale * trans;
-
-    //std::cout << "After scale: " << std::endl << trans << std::endl;
-
-    Mat rotate = (Mat_<double>(4, 4) << 
-            cy * cz,                -cy * sz,               sy,         0,
-            cz * sx * sy + cx * sz, cx * cz - sx * sy * sz, -cy * sx,   0,
-            -cx * cz * sy + sx * sz, cz * sx + sx * sy * sz, cx * cy,   0,
-            0,                      0,                      0,          1);
-    Mat tmp = (Mat_<double>(4, 4) << 
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 1,
-            0, 0, 0, 1);
-    //trans = -tmp * rotate * tmp * trans;
-    trans = rotate * trans;
-
-    //std::cout << "Rotation mat" << std::endl << rotate << std::endl;
-    //std::cout << "After rotate: " << std::endl << trans << std::endl;
-
-    Mat translate_back = (Mat_<double>(4, 4) << 
-            1, 0, 0, pos_x,
-            0, 1, 0, pos_y, 
-            0, 0, 1, pos_z,
-            0, 0, 0, 1);
-    trans = translate_back * trans;
-
-    //std::cout << "After translate back: " << std::endl << trans << std::endl;
-
-    if (std::abs(determinant(trans) - 0.0) < 0.0001) {
-        // Not invertable
-        log(CCPlus::logWARN) << "Arguments results in an uninvertable matrix";
-        frame.setImage(ret);
+    if (parameters.size() < 12 || parameters.size() % 12 != 0) {
+        log(CCPlus::logERROR) << "Not enough parameters for transform";
         return;
     }
-    //invert(trans, trans);
+    Mat& input = frame.getImage();
+    Mat finalTrans = Mat::eye(4, 4, CV_64F);
+    for (int set = 0; set < parameters.size(); set += 12) {
+        int pos_x = (int)parameters[0 + set];
+        int pos_y = (int)parameters[1 + set];
+        int pos_z = (int)parameters[2 + set];
+        int anchor_x = (int)parameters[3 + set];
+        int anchor_y = (int)parameters[4 + set];
+        int anchor_z = (int)parameters[5 + set];
+        if (anchor_z != 0) {
+            log(CCPlus::logWARN) << "Corrently anchor z is not supported";
+        }
+        float scale_x = parameters[6 + set];
+        float scale_y = parameters[7 + set];
+        float scale_z = parameters[8 + set];
+        float angle_x = parameters[9 + set];
+        float angle_y = parameters[10 + set];
+        float angle_z = parameters[11 + set];
+
+        // Put original image into the large layer image 
+        angle_x = angle_x * M_PI / 180.0;
+        double cx = cos(angle_x);
+        double sx = sin(angle_x);
+        angle_y = angle_y * M_PI / 180.0;
+        double cy = cos(angle_y);
+        double sy = sin(angle_y);
+        angle_z = angle_z * M_PI / 180.0;
+        double cz = cos(angle_z);
+        double sz = sin(angle_z);
+
+        Mat trans = (Mat_<double>(4, 4) << 
+                1, 0, 0, -anchor_x, 
+                0, 1, 0, -anchor_y, 
+                0, 0, 1, -anchor_z,
+                0, 0, 0, 1);
+
+        //std::cout << "====================================" << std::endl;
+        //std::cout << "Init : " << std::endl << trans << std::endl;
+
+        Mat scale = (Mat_<double>(4, 4) << 
+                scale_x, 0, 0, 0,
+                0, scale_y, 0, 0,
+                0, 0, scale_z, 0,
+                0, 0, 0, 1);
+        trans = scale * trans;
+
+        //std::cout << "After scale: " << std::endl << trans << std::endl;
+
+        Mat rotate = (Mat_<double>(4, 4) << 
+                cy * cz,                -cy * sz,               sy,         0,
+                cz * sx * sy + cx * sz, cx * cz - sx * sy * sz, -cy * sx,   0,
+                -cx * cz * sy + sx * sz, cz * sx + sx * sy * sz, cx * cy,   0,
+                0,                      0,                      0,          1);
+        Mat tmp = (Mat_<double>(4, 4) << 
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 1,
+                0, 0, 0, 1);
+        //trans = -tmp * rotate * tmp * trans;
+        trans = rotate * trans;
+
+        //std::cout << "Rotation mat" << std::endl << rotate << std::endl;
+        //std::cout << "After rotate: " << std::endl << trans << std::endl;
+
+        Mat translate_back = (Mat_<double>(4, 4) << 
+                1, 0, 0, pos_x,
+                0, 1, 0, pos_y, 
+                0, 0, 1, pos_z,
+                0, 0, 0, 1);
+        trans = translate_back * trans;
+
+        //std::cout << "After translate back: " << std::endl << trans << std::endl;
+
+        //if (std::abs(determinant(trans) - 0.0) < 0.0001) {
+        //    // Not invertable
+        //    log(CCPlus::logWARN) << "Arguments results in an uninvertable matrix";
+        //    frame.setImage(ret);
+        //    return;
+        //}
+        //invert(trans, trans);
+        finalTrans = trans * finalTrans;
+    }
 
     auto bilinear_interpolate = [] (Mat mat, float x, float y) {
         float x1 = std::floor(x);
@@ -168,11 +174,12 @@ CCPLUS_FILTER(transform) {
         for (int j = 0; j <= 1; j++) {
             int x1 = i * (frame.getImage().cols - 1);
             int y1 = j * (frame.getImage().rows - 1);
-            Vec3f tmp = apply(trans, x1, y1, 0);
+            Vec3f tmp = apply(finalTrans, x1, y1, 0);
             // Black magic
             double ratio = (tmp[2] + 1777) / 1777;
             float x2 = tmp[0] / ratio;
             float y2 = tmp[1] / ratio;
+            //L() << x1 << " " << y1 << " " << x2 << " " << y2;
 
             A.at<double>(idx * 2, 0) = -x2;
             A.at<double>(idx * 2, 1) = -y2;
@@ -196,12 +203,12 @@ CCPLUS_FILTER(transform) {
     H = H.reshape(0, 3);
     
     // Boundary of src image
-    int top_bound = pos_y - anchor_y;
-    int left_bound = pos_x - anchor_x;
-    int right_bound = left_bound + input.cols;
-    int down_bound = top_bound + input.rows;
+    int top_bound = 0;
+    int left_bound = 0;
+    int right_bound = input.cols;
+    int down_bound = input.rows;
 
-    // NOTE: camera is located at (0, 0, -1777)
+    Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
     for (int i = 0; i < height; i++)
         for (int j = 0; j < width; j++) {
             float x = H.at<double>(0, 0) * j + H.at<double>(0, 1) * i + H.at<double>(0, 2);
