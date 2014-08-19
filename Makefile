@@ -49,7 +49,7 @@ build/android/_:
 	mkdir -p build/android/
 	-touch $@
 
-android:build/android/_
+android_a:build/android/_
 	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
 	chmod a+x .tmp.sh
 	find src -type d -exec mkdir -p build/android/{} \;
@@ -57,12 +57,19 @@ android:build/android/_
 	rm -f .tmp.sh
 	@echo "\033[1;32mMake static lib\n\033[0m"
 	${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
+
+android_so:
+	@echo "\033[1;32mCompile shared library\n\033[0m"
+	-mv -f build/android/libccplus.a port/android/jni/armeabi/libccplus.a
+	ndk-build -C port/android
+
+android:android_a android_so
 	@echo "\033[1;32mDone!!\n\033[0m"
 
 ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
-	mv ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
+	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
 
 test: testbuild
 	./test.sh '*'
