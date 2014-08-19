@@ -337,7 +337,8 @@ void Frame::overlayImage(const cv::Mat& input) {
                 float x = (float) image.at<Vec4b>(i, j)[k];
                 float y = (float) input.at<Vec4b>(i, j)[k];
                 float ret = falpha_this * x + (1 - falpha_this) * falpha_img * y;
-                image.at<Vec4b>(i, j)[k] = (uchar) ret;
+                ret = ret / fnew_alpha;
+                image.at<Vec4b>(i, j)[k] = (uchar) std::min(255.0f, ret);
             }
             image.at<Vec4b>(i, j)[3] = (uchar) (255 * fnew_alpha);
         }
