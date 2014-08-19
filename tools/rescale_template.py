@@ -59,8 +59,10 @@ class Resizer():
                 transform = layer['properties']['transform']
                 for time in transform:
                     trans = transform[time]
-                    for i in range(0, 4):
-                        trans[i] *= self.scale
+                    for j in range(0, len(trans) / 12):
+                        for i in range(0, 6):
+                            ji = i + j * 12
+                            trans[ji] *= self.scale
                 if 'mask' in layer['properties']:
                     mask = layer['properties']['mask']
                     for time in mask:

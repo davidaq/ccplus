@@ -3,9 +3,11 @@
  */
 var PropertyMapping = {
     mask:{
-        map:['Masks/1/maskShape'],
-        set:function(maskShape) {
+        map:['Masks/1/Mask Feather','Masks/1/maskShape'],
+        set:function(feather, maskShape) {
             var ret = [];
+            ret.push(feather[0]);
+            ret.push(feather[1]);
             for(var k = 0; k < maskShape.vertices.length; k++) {
                 var pnt = maskShape.vertices[k];
                 ret.push(pnt[1]);
@@ -34,18 +36,22 @@ var PropertyMapping = {
         },
     },
     transform:{
-        map:['Position','Anchor Point','Scale','Rotation'],
-        set:function(pos, anchor, scale, rotate) {
-            if(!rotate)
-                rotate = 0;
+        map:['Position','Anchor Point','Scale','X Rotation','Y Rotation','Z Rotation'],
+        set:function(pos, anchor, scale, rotateX, rotateY, rotateZ) {
+            if(!rotateX)
+                rotateX = 0;
+            if(!rotateY)
+                rotateY = 0;
+            if(!rotateZ)
+                rotateZ = 0;
             return [
-                pos[1], pos[0],
-                anchor[1], anchor[0],
-                scale[1] * 0.01, scale[0] * 0.01,
-                rotate
+                pos[0], pos[1], pos[2],
+                anchor[0], anchor[1], anchor[2],
+                scale[0] * 0.01, scale[1] * 0.01, scale[2] * 0.01,
+                rotateX, rotateY, rotateZ
             ];
         },
-        error:[0.5, 0.5, 0.5, 0.5, 0.01, 0.01, 0.01]
+        error:[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
     },
     opacity:{
         map:'Opacity',
@@ -241,43 +247,64 @@ Export.prototype.exportLayer = function(layer) {
                 t = layer.outPoint;
                 proced = true;
             }
-            var args = [];
-            var take = PropertyMapping[pmk].map;
-            if(typeof(take) == 'string') {
-                take = [take];
-            }
-            var notNull = false;
-            for(var pnk in take) {
-                var val;
-                try {
-                    var kpath = take[pnk];
-                    if(typeof(kpath) == 'string')
-                        kpath = kpath.split('/');
-                    val = layer;
-                    for(var pk in kpath) {
-                        var pname = kpath[pk];
-                        if(isFinite(pname))
-                            pname = pname * 1;
-                        val = val.property(pname);
-                    }
-                    val = val.valueAtTime(t, false);
-                    notNull = true;
-                } catch(e) {
-                    val = NULL;
+            
+            if(!getArgs) function getArgs(clayer, t, pmk) {
+                var args = [];
+                var take = PropertyMapping[pmk].map;
+                if(typeof(take) == 'string') {
+                    take = [take];
                 }
-                args.push(val);
+                var notNull = false;
+                for(var pnk in take) {
+                    var val;
+                    try {
+                        var kpath = take[pnk];
+                        if(typeof(kpath) == 'string')
+                            kpath = kpath.split('/');
+                        val = clayer;
+                        for(var pk in kpath) {
+                            var pname = kpath[pk];
+                            if(isFinite(pname))
+                                pname = pname * 1;
+                            val = val.property(pname);
+                        }
+                        val = val.valueAtTime(t, false);
+                        notNull = true;
+                    } catch(e) {
+                        val = NULL;
+                    }
+                    args.push(val);
+                }
+                if(!notNull) {
+                    throw 'all null';
+                }
+                for(var k in args) {
+                    if(undefined == args[k] || NULL == args[k])
+                        args[k] = 0;
+                }
+                var result = PropertyMapping[pmk].set;
+                if(!result)
+                    result = defaultFilter;
+                result = result.apply([], args);
+                return result;
             }
-            if(!notNull) {
-                continue;
+            var result = [];
+            try {
+                result = getArgs(layer, t, pmk);
+                if(pmk == 'transform') {
+                    var pl = layer.parent;
+                    while(pl) {
+                        result = result.concat(getArgs(pl, t, pmk));
+                        pl = pl.parent;
+                    }
+                }
+            } catch(e) {
+                if(e == 'all null')
+                    continue;
+                throw e;
             }
-            for(k in args) {
-                if(undefined == args[k] || NULL == args[k])
-                    args[k] = 0;
-            }
-            var result = PropertyMapping[pmk].set;
-            if(!result)
-                result = defaultFilter;
-            result = result.apply([], args);
+
+
             if(!ret.properties[propName]) {
                 ret.properties[propName] = {};
             }
