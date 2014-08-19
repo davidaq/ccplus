@@ -74,7 +74,6 @@ CCPLUS_FILTER(transform) {
                 0, 1, 0, 0,
                 0, 0, 1, 1,
                 0, 0, 0, 1);
-        //trans = -tmp * rotate * tmp * trans;
         trans = rotate * trans;
 
         //std::cout << "Rotation mat" << std::endl << rotate << std::endl;
@@ -89,12 +88,6 @@ CCPLUS_FILTER(transform) {
 
         //std::cout << "After translate back: " << std::endl << trans << std::endl;
 
-        //if (std::abs(determinant(trans) - 0.0) < 0.0001) {
-        //    // Not invertable
-        //    log(CCPlus::logWARN) << "Arguments results in an uninvertable matrix";
-        //    frame.setImage(ret);
-        //    return;
-        //}
         //invert(trans, trans);
         finalTrans = trans * finalTrans;
     }

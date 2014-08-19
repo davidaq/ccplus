@@ -67,7 +67,7 @@ TEST(Filter, MaskTest) {
     
     Frame img1("test/res/test1.jpg");
     Filter("transform").apply(img1, {0, 0, 0, 0, 0, 0, 2.0, 2.0, 1.0, 0, 0, 0}, 500, 500);
-    Filter("mask").apply(img1, {50, 300, 250, 100, 450, 300, 250, 500}, 500, 500);
+    Filter("mask").apply(img1, {50, 50, 50, 300, 250, 100, 450, 300, 250, 500}, 500, 500);
     img1.write("tmp/mask.png");
 }
 
