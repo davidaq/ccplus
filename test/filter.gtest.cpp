@@ -24,7 +24,7 @@ TEST(Filter, BasicTransform) {
     int height = img1.getHeight();
     
     // Test position
-    Filter("transform").apply(img1, {100, 50, 0, 0, 1.0, 1.0, 0}, 500, 500);
+    Filter("transform").apply(img1, {50, 100, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0}, 500, 500);
     EXPECT_TRUE(std::equal(
                 original.begin<uchar>(), 
                 original.end<uchar>(), 
@@ -33,42 +33,50 @@ TEST(Filter, BasicTransform) {
                     Range(50, 50 + width)).begin<uchar>()));
 
     // Test anchor + position
-    Filter("transform").apply(img2, {0, 0, 10, 50, 1.0, 1.0, 0}, 500, 500);
+    Filter("transform").apply(img2, {0, 0, 0, 50, 10, 0, 1.0, 1.0, 1.0, 0, 0, 0}, 500, 500);
     img2.write("tmp/wtf2.jpg");
     Mat sample = original(Range(10, original.rows - 10), Range(50, original.cols - 50));
     Mat result = img2.getImage()(Range(10, original.rows - 10), Range(50, original.cols - 50));
-    // There is interpolation, so no longer works
-    //EXPECT_TRUE(std::equal(original.begin<uchar>(), 
-    //            original.end<uchar>(),
-    //            result.begin<uchar>()));
 }
 
 TEST(Filter, ScaleAndRotateTransform) {
     printf("Go check the tmp dir\n");
     
     Frame img1("test/res/test1.jpg");
-    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 45}, 500, 500);
+    Filter("transform").apply(img1, {0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 45}, 500, 500);
     img1.write("tmp/rotateCW45.jpg");
 
     img1 = Frame("test/res/test1.jpg");
-    Filter("transform").apply(img1, {0, 0, 0, 0, 1.0, 1.0, 90}, 500, 500);
+    Filter("transform").apply(img1, {0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 90}, 500, 500);
     img1.write("tmp/rotateCW90_1.jpg");
 
     img1 = Frame("test/res/test1.jpg");
-    Filter("transform").apply(img1, {0, 243, 0, 0, 1.0, 1.0, 90}, 500, 500);
+    Filter("transform").apply(img1, {243, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 90}, 500, 500);
     img1.write("tmp/rotateCW90_2.jpg");
 
     img1 = Frame("test/res/test1.jpg");
-    //Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 0}, 500, 500);
-    Filter("transform").apply(img1, {250, 250, 122, 140, 1.5, 1.5, 90}, 500, 500);
+    Filter("transform").apply(img1, {250, 250, 0, 140, 122, 0, 1.5, 1.5, 1.0, 0, 0, 90}, 500, 500);
     img1.write("tmp/center_and_scale.jpg");
+}
+
+TEST(Filter, 3DTransform) {
+    for (int i = 0; i <= 180; i += 10) {
+        Frame img1("test/res/test1.jpg");
+        Filter("transform").apply(img1, {250, 250, 0, 140, 122, 0, 1.5, 1.5, 1.0, 0, (float)i, 90}, 500, 500);
+        img1.write("tmp/3dRot_y" + toString(i) + ".jpg");
+    }
+    for (int i = 0; i <= 180; i += 10) {
+        Frame img1("test/res/test1.jpg");
+        Filter("transform").apply(img1, {250, 250, 0, 140, 122, 0, 1.5, 1.5, 1.0, (float)i, 0, 0}, 500, 500);
+        img1.write("tmp/3dRot_x" + toString(i) + ".jpg");
+    }
 }
 
 TEST(Filter, MaskTest) {
     printf("Go check the tmp dir\n");
     
     Frame img1("test/res/test1.jpg");
-    Filter("transform").apply(img1, {0, 0, 0, 0, 2.0, 2.0, 0}, 500, 500);
+    Filter("transform").apply(img1, {0, 0, 0, 0, 0, 0, 2.0, 2.0, 1.0, 0, 0, 0}, 500, 500);
     Filter("mask").apply(img1, {50, 300, 250, 100, 450, 300, 250, 500}, 500, 500);
     img1.write("tmp/mask.png");
 }
