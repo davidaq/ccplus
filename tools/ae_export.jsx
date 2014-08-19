@@ -2,6 +2,37 @@
  * Property maping
  */
 var PropertyMapping = {
+    mask:{
+        map:['Masks/1/maskShape'],
+        set:function(maskShape) {
+            var ret = [];
+            for(var k = 0; k < maskShape.vertices.length; k++) {
+                var pnt = maskShape.vertices[k];
+                ret.push(pnt[1]);
+                ret.push(pnt[0]);
+                var nk = (k + 1) % maskShape.vertices.length;
+                var p0 = maskShape.vertices[k];
+                var p1 = maskShape.outTangents[k];
+                var p2 = maskShape.inTangents[nk];
+                var p3 = maskShape.vertices[nk];
+                p1[0] += p0[0];
+                p1[1] += p0[1];
+                p2[0] += p3[0];
+                p2[1] += p3[1];
+                var cuts = 7;
+                var step = 1.0 / cuts;
+                for(var i = 1; i < cuts; i++) {
+                    var t = step * i;
+                    var rt = 1 - t;
+                    var px = rt * rt * rt * p0[0] + 3 * t * rt * rt * p1[0] + 3 * t * t * rt * p2[0] + t * t * t* p3[0];
+                    var py = rt * rt * rt * p0[1] + 3 * t * rt * rt * p1[1] + 3 * t * t * rt * p2[1] + t * t * t* p3[1];
+                    ret.push(py);
+                    ret.push(px);
+                }
+            }
+            return ret;
+        },
+    },
     transform:{
         map:['Position','Anchor Point','Scale','Rotation'],
         set:function(pos, anchor, scale, rotate) {
@@ -21,7 +52,6 @@ var PropertyMapping = {
         set:function(opac) {
             return [opac / 100];
         },
-        error:[0.08]
     },
     volume:{
         map:'Audio Levels',
@@ -41,7 +71,6 @@ var PropertyMapping = {
             }
             return [(lvl + 48) / 48];
         },
-        error:[0.1]
     },
     gaussian:{
         map:['Effects/Gaussian Blur/Blurriness','Effects/Gaussian Blur/Blur Dimensions'],
@@ -52,6 +81,49 @@ var PropertyMapping = {
         },
         error:[0.1, 0.001]
     },
+    hsl1:{
+        name:'hsl',
+        map:[
+            ['Effects','Hue/Saturation','Master Hue'],
+            ['Effects','Hue/Saturation','Master Saturation'],
+            ['Effects','Hue/Saturation','Master Lightness'],
+        ],
+        set:function(h,s,l) {
+            return [
+                h / 2, 1 + s / 100, 1 + l / 100
+            ];
+        }
+    },
+    hsl2:{
+        name:'hsl',
+        map:['Effects/Color Balance (HLS)/Hue','Effects/Color Balance (HLS)/Saturation','Effects/Color Balance (HLS)/Lightness'],
+        set:function(h,s,l) {
+            return [
+                h / 2, 1 + s / 100, 1 + l / 100
+            ];
+        }
+    },
+    grayscale:{
+        map:[
+            'Effects/Black & White/Reds',
+            'Effects/Black & White/Yellows',
+            'Effects/Black & White/Greens',
+            'Effects/Black & White/Cyans',
+            'Effects/Black & White/Blues',
+            'Effects/Black & White/Magentas',
+            'Effects/Black & White/Tint:',
+            'Effects/Black & White/Tint Color',
+        ],
+        set:function(r,y,g,c,b,m,haveTint,tintColor) {
+            var ret = [r,y,g,c,b,m,0,0];
+            if(haveTint > 0) {
+                var hs = getHueSat(tintColor);
+                ret[6] = hs[0];
+                ret[7] = hs[1];
+            }
+            return ret;
+        }
+    }
 };
 /*
  * Export logic
@@ -157,6 +229,9 @@ Export.prototype.exportLayer = function(layer) {
         return ret;
     }
     for(var pmk in PropertyMapping) {
+        var propName = pmk;
+        if(PropertyMapping[pmk].name)
+            propName = PropertyMapping[pmk].name;
         log('    Export property: ' + pmk);
         var proced = false;
         for(var t = ret.time; ; t += 0.1) {
@@ -175,10 +250,15 @@ Export.prototype.exportLayer = function(layer) {
             for(var pnk in take) {
                 var val;
                 try {
-                    var kpath = take[pnk].split('/');
+                    var kpath = take[pnk];
+                    if(typeof(kpath) == 'string')
+                        kpath = kpath.split('/');
                     val = layer;
                     for(var pk in kpath) {
-                        val = val.property(kpath[pk]);
+                        var pname = kpath[pk];
+                        if(isFinite(pname))
+                            pname = pname * 1;
+                        val = val.property(pname);
                     }
                     val = val.valueAtTime(t, false);
                     notNull = true;
@@ -198,13 +278,13 @@ Export.prototype.exportLayer = function(layer) {
             if(!result)
                 result = defaultFilter;
             result = result.apply([], args);
-            if(!ret.properties[pmk]) {
-                ret.properties[pmk] = {};
+            if(!ret.properties[propName]) {
+                ret.properties[propName] = {};
             }
-            ret.properties[pmk]['' + t] = result;
+            ret.properties[propName]['' + t] = result;
         }
-        if(ret.properties[pmk])
-            ret.properties[pmk] = this.simplifyProperties(ret.properties[pmk], PropertyMapping[pmk].error);
+        if(ret.properties[propName])
+            ret.properties[propName] = this.simplifyProperties(ret.properties[propName], PropertyMapping[pmk].error);
     }
     return ret;
 };
@@ -267,7 +347,8 @@ function __main__() {
 function near(arr1, arr2, error) {
     for(k in arr1) {
         var v = arr1[k] - arr2[k];
-        if(v > error[k] || v < -error[k]) {
+        var e = (error && error[k]) ? error[k] : 0.1;
+        if(v > e || v < -e) {
             return false;
         }
     }
@@ -329,6 +410,29 @@ function obj2str(obj) {
         }
     }
     return ret;
+}
+function getHueSat(r, g, b) {
+    var min = Math.min(r, g, b);
+    var max = Math.max(r, g, b);
+    var delta = max - min;
+    if(delta <= 0)
+        return [0, 0];
+    var hue = 0;
+    var sat = 0;
+    var sum = max + min;
+    if(sum < 1) {
+        sat = delta / sum;
+    } else {
+        sat = delta / (2 - sum);
+    }
+    if(r == max) {
+        hue = (g - b) / delta;
+    } else if(g == max) {
+        hue = 2 + (b - r) / delta;
+    } else {
+        hue = 4 + (r - g) / delta; 
+    }
+    return [hue, sat];
 }
 var logFile = new File(projDir + 'log');
 logFile.open('w');

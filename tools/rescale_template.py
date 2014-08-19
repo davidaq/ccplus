@@ -38,9 +38,10 @@ class Resizer():
             fsz = self.favoredsize(sz)
             src_file = self.dirname + f
             out_file = self.dirname + '(resized)' + os.path.sep + f
-            os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' "' + out_file + '"')
+            os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
     def preparedir(self):
+        return
         rmdir(self.dirname + '(resized)' + os.path.sep)
         dirs = []
         os.path.walk(self.dirname, scandir , dirs)
@@ -60,6 +61,12 @@ class Resizer():
                     trans = transform[time]
                     for i in range(0, 4):
                         trans[i] *= self.scale
+                if 'mask' in layer['properties']:
+                    mask = layer['properties']['mask']
+                    for time in mask:
+                        shape = mask[time]
+                        for i in range(0, len(shape)):
+                            shape[i] *= self.scale
         del self.tml['usedfiles']
         del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
@@ -110,10 +117,10 @@ class Resizer():
             os.system('ffmpeg -s 1x1 -f rawvideo -pix_fmt rgb24 -i "' + rawpath + '" -s ' + str(color['width']) + 'x' + str(color['height']) + ' -n "' + self.dirname + path + '"')
 
 def main():
-    fname = '/Users/apple/Desktop/MyWildJ/render copy (CS6).aep.tml'
+    fname = '/Users/apple/Desktop/MusicTravel/renderCS6.aep.tml'
     resizer = Resizer(fname)
     resizer.mkcolors()
-    resizer.downsize(320, 180)
+    resizer.downsize(640, 360)
 
 '''Utility functions'''
 def filedir(filename):
