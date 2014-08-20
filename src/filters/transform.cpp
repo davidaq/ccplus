@@ -1,5 +1,6 @@
 #include "filter.hpp"
 #include "logger.hpp"
+#include "mat-cache.hpp"
 #include <cmath>
 
 #ifndef __ANDROID__
@@ -92,58 +93,6 @@ CCPLUS_FILTER(transform) {
         finalTrans = trans * finalTrans;
     }
 
-    auto bilinear_interpolate = [] (Mat mat, float x, float y) {
-        float x1 = std::floor(x);
-        float y1 = std::floor(y);
-        float x2 = std::ceil(x);
-        float y2 = std::ceil(y);
-        float xr = round(x);
-        float yr = round(y);
-        if(x1 >= mat.cols) x1 = mat.cols - 1;
-        if(y1 >= mat.rows) y1 = mat.rows - 1;
-        if(x2 >= mat.cols) x2 = mat.cols - 1;
-        if(y2 >= mat.rows) y2 = mat.rows - 1;
-        if(xr >= mat.cols) xr = mat.cols - 1;
-        if(yr >= mat.rows) yr = mat.rows - 1;
-        if (x1 == x2 && y1 == y2) 
-            return mat.at<Vec4b>(yr, xr);
-        else if (x1 == x2) {
-            // y direction interpolation
-            Vec4b r1 = mat.at<Vec4b>(y1, x1);
-            Vec4b r2 = mat.at<Vec4b>(y2, x1);
-            Vec4b ans; 
-            for (int i = 0; i < 4; i++) {
-                ans[i] = round(r1[i] * (y2 - y) / (y2 - y1) + r2[i] * (y - y1) / (y2 - y1));
-            }
-            return ans;
-        } else if (y1 == y2) {
-            Vec4b r1 = mat.at<Vec4b>(y1, x1);
-            Vec4b r2 = mat.at<Vec4b>(y1, x2);
-            Vec4b ans; 
-            for (int i = 0; i < 4; i++) {
-                ans[i] = round(r1[i] * (x2 - x) / (x2 - x1) + r2[i] * (x - x1) / (x2 - x1));
-            }
-            return ans;
-        }
-        
-        Vec4b p11 = mat.at<Vec4b>(y1, x1);
-        Vec4b p21 = mat.at<Vec4b>(y1, x2);
-        Vec4b p12 = mat.at<Vec4b>(y2, x1);
-        Vec4b p22 = mat.at<Vec4b>(y2, x2);
-
-        float tmp1 = 1 / ((x2 - x1) * (y2 - y1));
-        Vec4b ans(0, 0, 0, 0); 
-        for (int i = 0; i < 4; i++) {
-            float t = tmp1 * 
-                (p11[i] * (x2 - x) * (y2 - y) + 
-                 p21[i] * (x - x1) * (y2 - y) + 
-                 p12[i] * (x2 - x) * (y - y1) +
-                 p22[i] * (x - x1) * (y - y1));
-            ans[i] = round(t);
-        } 
-        return ans;
-    };
-
     auto apply = [](Mat trans, float x, float y, float z) {
         double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
             trans.at<double>(3, 2) * z + trans.at<double>(3, 3);
@@ -160,6 +109,8 @@ CCPLUS_FILTER(transform) {
         return Vec3f(nx, ny, nz);
     };
 
+    float xMax = 0, xMin = width - 1, yMax = 0, yMin = height - 1;
+
     Mat A = Mat::zeros(8, 8, CV_64F);
     Mat C = Mat::zeros(8, 1, CV_64F);
     int idx = 0;
@@ -173,6 +124,10 @@ CCPLUS_FILTER(transform) {
             float x2 = tmp[0] / ratio;
             float y2 = tmp[1] / ratio;
             //L() << x1 << " " << y1 << " " << x2 << " " << y2;
+            xMax = max(xMax, x2);
+            xMin = min(xMin, x2);
+            yMax = max(yMax, y2);
+            yMin = min(yMin, y2);
 
             A.at<double>(idx * 2, 0) = -x2;
             A.at<double>(idx * 2, 1) = -y2;
@@ -194,16 +149,72 @@ CCPLUS_FILTER(transform) {
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
-    
+
     // Boundary of src image
     int top_bound = 0;
     int left_bound = 0;
     int right_bound = input.cols;
     int down_bound = input.rows;
 
+    auto bilinear_interpolate = [] (Mat mat, float x, float y) {
+        float x1 = std::floor(x);
+        float y1 = std::floor(y);
+        float x2 = std::ceil(x);
+        float y2 = std::ceil(y);
+        
+        auto pixel = [&mat] (int y, int x) {
+            Vec4b ret;
+            if(y >= mat.rows || y < 0 || x >= mat.cols || x < 0)
+                ret = Vec4b(0, 0, 0, 0);
+            else
+                ret = mat.at<Vec4b>(y, x);
+            return ret;
+        };
+        if (x1 == x2 && y1 == y2) 
+            return pixel(round(y1), round(x1));
+        else if (x1 == x2) {
+            // y direction interpolation
+            Vec4b r1 = pixel(y1, x1);
+            Vec4b r2 = pixel(y2, x1);
+            Vec4b ans; 
+            for (int i = 0; i < 4; i++) {
+                ans[i] = round(r1[i] * (y2 - y) / (y2 - y1) + r2[i] * (y - y1) / (y2 - y1));
+            }
+            return ans;
+        } else if (y1 == y2) {
+            Vec4b r1 = pixel(y1, x1);
+            Vec4b r2 = pixel(y1, x2);
+            Vec4b ans; 
+            for (int i = 0; i < 4; i++) {
+                ans[i] = round(r1[i] * (x2 - x) / (x2 - x1) + r2[i] * (x - x1) / (x2 - x1));
+            }
+            return ans;
+        }
+        
+        Vec4b p11 = pixel(y1, x1);
+        Vec4b p21 = pixel(y1, x2);
+        Vec4b p12 = pixel(y2, x1);
+        Vec4b p22 = pixel(y2, x2);
+
+        float tmp1 = 1 / ((x2 - x1) * (y2 - y1));
+        Vec4b ans(0, 0, 0, 0); 
+        for (int i = 0; i < 4; i++) {
+            float t = tmp1 * 
+                (p11[i] * (x2 - x) * (y2 - y) + 
+                 p21[i] * (x - x1) * (y2 - y) + 
+                 p12[i] * (x2 - x) * (y - y1) +
+                 p22[i] * (x - x1) * (y - y1));
+            ans[i] = round(t);
+        } 
+        return ans;
+    };
     Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    for (int i = 0; i < height; i++)
-        for (int j = 0; j < width; j++) {
+    yMin = max(yMin, .0f);
+    yMax = min(yMax + 1, (float)height);
+    xMin = max(xMin, .0f);
+    xMax = min(xMax + 1, (float)width);
+    for (int i = yMin; i < yMax; i++)
+        for (int j = xMin; j < xMax; j++) {
             float x = H.at<double>(0, 0) * j + H.at<double>(0, 1) * i + H.at<double>(0, 2);
             float y = H.at<double>(1, 0) * j + H.at<double>(1, 1) * i + H.at<double>(1, 2);
             float z = H.at<double>(2, 0) * j + H.at<double>(2, 1) * i + H.at<double>(2, 2);
@@ -211,10 +222,10 @@ CCPLUS_FILTER(transform) {
             y /= z;
 
             // Nomalize
-            if (y < (double)top_bound  || y >= (double)down_bound || 
-                x < (double)left_bound || x >= (double)right_bound)
+            if (y < top_bound  || y >= down_bound || 
+                x < left_bound || x >= right_bound)
                 continue;
-            ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x - left_bound, y - top_bound);
+            ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x, y);
         }
 
 

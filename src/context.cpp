@@ -1,5 +1,6 @@
 #include "context.hpp"
 #include "file-manager.hpp"
+#include "mat-cache.hpp"
 
 using namespace CCPlus;
 
@@ -19,6 +20,7 @@ void Context::releaseMemory() {
     for (auto& r : renderables) {
         r.second->clear();
     }
+    MatCache::clear();
 }
 
 const std::string& Context::getStoragePath() const {
