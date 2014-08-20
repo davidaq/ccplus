@@ -35,3 +35,44 @@ cv::Mat MatCache::get(const std::string& hashname, std::function<cv::Mat()> logi
     pthread_mutex_unlock(&cacheLock);
     return ret;
 }
+
+void HashFactory::appendHashSum() {
+    if(hashSumCounter) {
+        static const char* numMap = "0123456789qwerytuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM-+";
+        while(hashSum) {
+            hashStr += numMap[63 & hashSum];
+            hashSum >>= 6;
+        }
+        hashStr += hashSum;
+    }
+    hashSum = hashSumCounter = 0;
+}
+
+HashFactory& HashFactory::operator << (std::string str) {
+    appendHashSum();
+    hashStr += str + "._.";
+    return *this;
+}
+
+HashFactory& HashFactory::operator << (int num) {
+    if(hashSumCounter > 4)
+        appendHashSum();
+    unsigned int head = (hashSum & 0xff000000) >> 24;
+    hashSum = (hashSum << 8) + num + head;
+    hashSumCounter++;
+    return *this;
+}
+
+HashFactory& HashFactory::operator << (float num) {
+    int i = 0;
+    for(i = 0; i < 10 && num < 10000; i++)
+        num *= 10;
+    this->operator << ((int)num);
+    this->operator << (i);
+    return *this;
+}
+
+const std::string& HashFactory::str() {
+    appendHashSum();
+    return hashStr;
+}

@@ -5,6 +5,7 @@ from json import JSONDecoder
 from json import JSONEncoder
 import string
 import os
+import sys
 
 class Resizer():
     def __init__(self, tmlfile):
@@ -41,15 +42,17 @@ class Resizer():
             os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
     def preparedir(self):
-        return
-        rmdir(self.dirname + '(resized)' + os.path.sep)
+        #rmdir(self.dirname + '(resized)' + os.path.sep)
         dirs = []
         os.path.walk(self.dirname, scandir , dirs)
         preflen = len(self.dirname)
         for dir in dirs:
             dir = self.dirname + '(resized)' + os.path.sep + dir[preflen:]
-            os.mkdir(dir)
-        
+            try:
+                os.mkdir(dir)
+            except:
+                print dir, ' exists'
+
     def resizetml(self):
         comps = self.tml['compositions']
         for comp in comps:
@@ -69,6 +72,11 @@ class Resizer():
                         shape = mask[time]
                         for i in range(0, len(shape)):
                             shape[i] *= self.scale
+                if 'ramp' in layer['properties']:
+                    ramp = layer['properties']['ramp']
+                    for time in ramp:
+                        ramp[time][1] *= self.scale
+                        ramp[time][2] *= self.scale
         del self.tml['usedfiles']
         del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
@@ -90,14 +98,20 @@ class Resizer():
     def downsize(self, maxwidth, maxheight):
         topsize = self.tml['compositions'][self.tml['main']]['resolution']
         w, h = topsize['width'], topsize['height']
-        r = 2
-        while w / r > maxwidth:
-            r += 1
-        while h / r > maxheight:
-            r += 1
-        w /= r
-        h /= r
-        self.scale = 1.0 / r
+        if (maxwidth & 1) > 0:
+            maxwidth += 1
+        if (maxheight & 1) > 0:
+            maxheight += 1
+        if w > maxwidth:
+            scale = maxwidth * 1.0/ w
+            w = maxwidth
+            h *= scale
+        if h > maxheight:
+            scale = maxheight * 1.0 / h
+            h = maxheight
+            w *= scale
+        self.scale = scale
+        print 'resize ratio: ', self.scale
         self.resizefiles()
         self.resizetml()
 
@@ -119,10 +133,18 @@ class Resizer():
             os.system('ffmpeg -s 1x1 -f rawvideo -pix_fmt rgb24 -i "' + rawpath + '" -s ' + str(color['width']) + 'x' + str(color['height']) + ' -n "' + self.dirname + path + '"')
 
 def main():
-    fname = '/Users/apple/Desktop/MusicTravel/renderCS6.aep.tml'
+    if len(sys.argv) <= 1:
+        print 'Please specify input tml file'
+        return
+    fname = sys.argv[1];
     resizer = Resizer(fname)
     resizer.mkcolors()
-    resizer.downsize(640, 360)
+    if len(sys.argv) > 2:
+        scale = sys.argv[2]
+    else:
+        scale = '640x360'
+    scale = scale.split('x')
+    resizer.downsize(int(scale[0]), int(scale[1]))
 
 '''Utility functions'''
 def filedir(filename):

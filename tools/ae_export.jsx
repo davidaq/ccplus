@@ -41,7 +41,7 @@ var PropertyMapping = {
                 p1[1] += p0[1];
                 p2[0] += p3[0];
                 p2[1] += p3[1];
-                var cuts = 7;
+                var cuts = 10;
                 var step = 1.0 / cuts;
                 for(var i = 1; i < cuts; i++) {
                     var t = step * i;
@@ -394,7 +394,11 @@ function __main__() {
 function near(arr1, arr2, error) {
     for(k in arr1) {
         var v = arr1[k] - arr2[k];
-        var e = (error && error[k]) ? error[k] : 0.1;
+        var e = 0.1;
+        if(error && error[0] && error.length) {
+            k %= error.length;
+            e = error[k];
+        }
         if(v > e || v < -e) {
             return false;
         }

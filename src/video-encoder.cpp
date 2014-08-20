@@ -52,25 +52,21 @@ void VideoEncoder::appendFrame(const Frame& frame) {
     if(!ctx) {
         width = frame.getWidth();
         height = frame.getHeight();
-        if(width & 1 || height & 1) {
-            fprintf(stderr, "The frames must have widths and heights divisible by 2\n");
+        if(width == 0 || height == 0)
             return;
-        }
+        if(width & 1)
+            width += 1;
+        if(height & 1)
+            height += 1;
         initContext();
         frameNum = 0;
     }
     cv::Mat img;
-    if(width != frame.getWidth() || height != frame.getHeight()) {
-        //fprintf(stderr, "Frames encoded into one video should have the same metrics\n");
-        //fprintf(stderr, "\tExpected %dx%d, got %dx%d\n", width, height, frame.getWidth(), frame.getHeight());
-        //fprintf(stderr, "\tFrame ignored.\n");
-        //return;
+    if(frame.getWidth() == 0 || frame.getHeight() == 0) {
         img = cv::Mat::zeros(height, width, CV_8UC4);
     } else
         img = frame.getImage();
-    if(img.cols > 0 && img.rows > 0) {
-        writeVideoFrame(img);
-    }
+    writeVideoFrame(img);
     cv::Mat mat = frame.getAudio();
     if(mat.total() > 0) {
         writeAudioFrame(mat);
@@ -80,9 +76,13 @@ void VideoEncoder::appendFrame(const Frame& frame) {
 
 void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     if(!flush) {
-        int linesize = image.cols * 4;
-        sws_scale(ctx->sws, &image.data, &linesize,
-                0, image.rows, ctx->destPic.data, ctx->destPic.linesize);
+        cv::Mat frame = image;
+        if(image.cols != width || image.rows != height) {
+            cv::resize(image, frame, cv::Size(width, height));
+        }
+        int linesize = frame.cols * 4;
+        sws_scale(ctx->sws, &frame.data, &linesize,
+                0, frame.rows, ctx->destPic.data, ctx->destPic.linesize);
     }
 
     AVPacket pkt = {0};

@@ -14,26 +14,22 @@ CCPLUS_FILTER(mask) {
     int kwidth = parameters[0];
     int kheight = parameters[1];
 
-    std::string maskHash = "MASK.";
-    maskHash += kwidth;
-    maskHash += ".";
-    maskHash += kheight;
-    maskHash += ".";
+    HashFactory hash;
+    hash << "MASK" << kwidth << kheight;
 
     int pointNum = parameters.size() / 2 - 1;
     std::vector<cv::Point> points(pointNum);
     cv::Point* ptr = &points[pointNum - 1];
-    int hashSum = 0;
     for(int i = 1; i <= pointNum; i++) {
         int x = parameters[(i << 1) + 1] * 8;
         int y = parameters[(i << 1)] * 8;
         *(ptr--) = cv::Point(x, y);
-        hashSum = (hashSum << 2) + (x << 1) + y;
+        hash << x << y;
     }
-    maskHash += hashSum;
+    hash << frame.getWidth() << frame.getHeight();
     
     const cv::Point *contours[1] = {&points[0]};
-    cv::Mat maskImg = MatCache::get(maskHash, [&frame, &contours, &pointNum, &kwidth, &kheight]{
+    cv::Mat maskImg = MatCache::get(hash.str(), [&frame, &contours, &pointNum, &kwidth, &kheight] {
         cv::Mat maskImg(frame.getHeight(), frame.getWidth(), CV_8UC1, cv::Scalar(0));
         cv::fillPoly(maskImg, contours, &pointNum, 1, cv::Scalar(255), 8, 3);
         /*

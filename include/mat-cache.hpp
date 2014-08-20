@@ -7,6 +7,7 @@
 
 namespace CCPlus {
     class MatCache;
+    class HashFactory;
 };
 
 class CCPlus::MatCache {
@@ -17,4 +18,17 @@ private:
     static void init();
     static std::map<std::string, cv::Mat> cachePool;
     static pthread_mutex_t cacheLock;
+};
+
+class CCPlus::HashFactory {
+public:
+    HashFactory& operator << (std::string str);
+    HashFactory& operator << (int num);
+    HashFactory& operator << (float num);
+    const std::string& str();
+private:
+    void appendHashSum();
+    std::string hashStr;
+    unsigned int hashSum = 0;
+    int hashSumCounter = 0;
 };
