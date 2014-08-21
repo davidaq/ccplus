@@ -9,16 +9,18 @@ using namespace CCPlus;
 std::map<std::string, CCPLUS_FILTER_FUNC> *filterMap = 0;
 
 Filter::Filter(const std::string& name) {
-    if(!filterMap || !filterMap->count(name))
+    if(!filterMap || !filterMap->count(name)) {
+        this->profiler = 0;
         func = 0;
-    else {
+    } else {
         this->profiler = new Profiler("Filter_" + name);       
         func = (*filterMap)[name];
     }
 }
 
 Filter::~Filter() {
-    delete this->profiler;
+    if(profiler)
+        delete profiler;
 }
 
 void Filter::apply(Frame& frame, const std::vector<float>& parameters, int width, int height) {

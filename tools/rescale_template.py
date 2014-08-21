@@ -73,10 +73,15 @@ class Resizer():
                         for i in range(0, len(shape)):
                             shape[i] *= self.scale
                 if 'ramp' in layer['properties']:
-                    ramp = layer['properties']['ramp']
-                    for time in ramp:
-                        ramp[time][1] *= self.scale
-                        ramp[time][2] *= self.scale
+                    prop = layer['properties']['ramp']
+                    for time in prop:
+                        for index in (1, 2):
+                            prop[time][index] *= self.scale
+                if '4color' in layer['properties']:
+                    prop = layer['properties']['4color']
+                    for time in prop:
+                        for index in (0, 1, 5, 6, 10, 11):
+                            prop[time][index] *= self.scale
         del self.tml['usedfiles']
         del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
