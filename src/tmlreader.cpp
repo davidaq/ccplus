@@ -110,6 +110,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 extMap["webm"]      = avExt;
                 extMap["mkv"]       = avExt;
                 extMap["wmv"]       = avExt;
+                extMap["aac"]       = avExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";

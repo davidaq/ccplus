@@ -55,8 +55,8 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
         ptree layer;
 
         layer.put<std::string>("uri", "file://" + media.get<std::string>("filename"));
-        int compWidth = comp.get<int>("resolution.width");
-        int compHeight = comp.get<int>("resolution.height");
+        float compWidth = comp.get<float>("resolution.width");
+        float compHeight = comp.get<float>("resolution.height");
         float clipX = media.get<float>("x");
         float clipY = media.get<float>("y");
         float clipWidth = media.get<float>("w");
@@ -79,7 +79,13 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
         ptree_array_append(transform, 0);
         ptree_array_append(transform, 0);
         ptree_array_append(transform, 0);
-        
+
+        float duration = comp.get<float>("duration", 1.f);
+        layer.put("start", 0.f);
+        layer.put("time", 0.f);
+        layer.put("duration", duration);
+        layer.put("last", duration);
+
         layer.put_child("properties.transform.0", transform);
 
         float volume = media.get<float>("videoVolume", 1.f);
