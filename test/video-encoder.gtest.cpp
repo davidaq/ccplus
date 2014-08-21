@@ -14,7 +14,7 @@ TEST(VideoEncoder, EncodeStaticImage) {
     for(int i = 0; i < 50; i++)
         encoder.appendFrame(frame);
     encoder.finish();
-    EXPECT_FILE_HASH_EQ(408cf845fecf1e2f81fa0d062572c9b559fd3a42, tmp/encodetest.mp4);
+    EXPECT_FILE_HASH_EQ(60b80644ca4ff42b5ccceb13d22029232a6d2606, tmp/encodetest.mp4);
 }
 
 TEST(VideoEncoder, DecodeImageAndEncode) {
@@ -25,7 +25,7 @@ TEST(VideoEncoder, DecodeImageAndEncode) {
         encoder.appendFrame(decoder.getDecodedImage());
     }
     encoder.finish();
-    EXPECT_FILE_HASH_EQ(edd5d2c3743cf5bc5dc46d25c329988ba5467373, tmp/decode-encodetest.mp4);
+    EXPECT_FILE_HASH_EQ(5908f77667812c104d66255e4e28336ec8bc8a8f, tmp/decode-encodetest.mp4);
 }
 
 TEST(VideoEncoder, DecodeImageAndAudioThenEncode) {
