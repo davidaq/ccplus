@@ -1,9 +1,11 @@
 #include "mat-cache.hpp"
+#include "logger.hpp"
 
 using namespace CCPlus;
 
 pthread_mutex_t MatCache::cacheLock;
 std::map<std::string, cv::Mat> MatCache::cachePool;
+std::list<std::string> MatCache::cacheQueue;
 
 void MatCache::init() {
     static bool inited = false;
@@ -17,6 +19,7 @@ void MatCache::clear() {
     init();
     pthread_mutex_lock(&cacheLock);
     cachePool.clear();
+    cacheQueue.clear();
     pthread_mutex_unlock(&cacheLock);
 }
 
@@ -26,11 +29,19 @@ cv::Mat MatCache::get(const std::string& hashname, std::function<cv::Mat()> logi
     cv::Mat ret;
     if(cachePool.count(hashname)) {
         ret = cachePool[hashname];
+        cacheQueue.remove(hashname);
+        cacheQueue.push_back(hashname);
     } else {
         pthread_mutex_unlock(&cacheLock);
         ret = logic();
         pthread_mutex_lock(&cacheLock);
         cachePool[hashname] = ret;
+        cacheQueue.push_back(hashname);
+        while(cacheQueue.size() > 20) {
+            cachePool.erase(cacheQueue.front());
+            cacheQueue.pop_front();
+            L() << "Erase cache";
+        }
     }
     pthread_mutex_unlock(&cacheLock);
     return ret;

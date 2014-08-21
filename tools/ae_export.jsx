@@ -22,6 +22,41 @@ var PropertyMapping = {
             ];
         }
     },
+    '4color':{
+        map:[
+            'Effects/4-Color Gradient/Point 1',
+            'Effects/4-Color Gradient/Color 1',
+            'Effects/4-Color Gradient/Point 2',
+            'Effects/4-Color Gradient/Color 2',
+            'Effects/4-Color Gradient/Point 3',
+            'Effects/4-Color Gradient/Color 3',
+            'Effects/4-Color Gradient/Point 4',
+            'Effects/4-Color Gradient/Color 4',
+            'Effects/4-Color Gradient/Blend',
+            'Effects/4-Color Gradient/Opacity',
+            'Effects/4-Color Gradient/Blending Mode',
+        ],
+        set:function(pos1, color1, pos2, color2, pos3, color3, pos4, color4, blend, opac, mode) {
+            try {
+                mode = [0, -1, 0, 1, 2, 3][mode];
+            } catch(E) {
+                mode = 0;
+            }
+            return [
+                pos1[0], pos1[1],
+                color1[2] * 255, color1[1] * 255, color1[0] * 255,
+                pos2[0], pos2[1],
+                color2[2] * 255, color2[1] * 255, color2[0] * 255,
+                pos3[0], pos3[1],
+                color3[2] * 255, color3[1] * 255, color3[0] * 255,
+                pos4[0], pos4[1],
+                color4[2] * 255, color4[1] * 255, color4[0] * 255,
+                blend,
+                opac / 100,
+                mode
+            ];
+        }
+    },
     mask:{
         map:['Masks/1/Mask Feather','Masks/1/maskShape'],
         set:function(feather, maskShape) {
@@ -39,9 +74,10 @@ var PropertyMapping = {
                 var p3 = maskShape.vertices[nk];
                 p1[0] += p0[0];
                 p1[1] += p0[1];
+
                 p2[0] += p3[0];
                 p2[1] += p3[1];
-                var cuts = 10;
+                var cuts = 7;
                 var step = 1.0 / cuts;
                 for(var i = 1; i < cuts; i++) {
                     var t = step * i;
@@ -394,7 +430,7 @@ function __main__() {
 function near(arr1, arr2, error) {
     for(k in arr1) {
         var v = arr1[k] - arr2[k];
-        var e = 0.1;
+        var e = 0.03;
         if(error && error[0] && error.length) {
             k %= error.length;
             e = error[k];
