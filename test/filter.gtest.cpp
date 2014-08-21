@@ -3,6 +3,8 @@
 #include "filter.hpp"
 #include "utils.hpp"
 
+#include <vector>
+
 using namespace CCPlus;
 using namespace cv;
 
@@ -97,4 +99,17 @@ TEST(Filter, RampTest) {
     Frame img2("test/res/test2.jpg");
     Filter("ramp").apply(img2, {-1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 640, 852);
     img2.write("tmp/ramp_linear.jpg");
+}
+
+TEST(Filter, 4ColorTest) {
+    Frame img("test/res/test2.jpg");
+    std::vector<float> parameters = {
+        0, 0, 255, 0, 0, // Blue
+        639, 0, 0, 255, 0, // Green
+        0, 851, 0, 0, 255, // Red
+        639, 851, 255, 255, 255, // White
+        5, 0.5, 0
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color.jpg");
 }

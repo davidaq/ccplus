@@ -2,6 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <functional>
+
 #include "config.hpp"
 #include "object.hpp"
 
@@ -30,7 +32,7 @@ public:
     /**
      * Overlay image then merge audio
      */
-    void mergeFrame(const Frame& f); 
+    void mergeFrame(const Frame& f, int mode = -1); 
     void mergeAudio(const Frame& f);
 
     void setBlackBackground();
@@ -51,7 +53,8 @@ private:
      * Put @input *UNDER* this image
      * REQUIRE: img must be a RGBA image
      */
-    void overlayImage(const cv::Mat& input);
+    void overlayImage(const cv::Mat& input,
+            const std::function<cv::Vec4b(cv::Vec4b, cv::Vec4b)>& blend);
     void rotateCWRightAngle(int angle);
     void to4Channels();
 

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "file.hpp"
 #include "file-manager.hpp"
+#include "blend-utils.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -287,9 +288,9 @@ void Frame::setAudio(const std::vector<int16_t>& aud) {
     this->audio = Mat(aud, true);
 }
 
-void Frame::mergeFrame(const Frame& f) {
+void Frame::mergeFrame(const Frame& f, int mode) {
     if (!f.getImage().empty())
-        this->overlayImage(f.getImage());
+        this->overlayImage(f.getImage(), getBlender(mode));
 
     mergeAudio(f);
 }
@@ -310,7 +311,8 @@ void Frame::mergeAudio(const Frame& f) {
     }
 }
 
-void Frame::overlayImage(const cv::Mat& input) {
+void Frame::overlayImage(const cv::Mat& input, 
+        const std::function<Vec4b(Vec4b, Vec4b)>& blend) {
     if (input.empty()) return;
     
     if (this->getHeight() != input.rows || this->getWidth() != input.cols) {
@@ -325,22 +327,7 @@ void Frame::overlayImage(const cv::Mat& input) {
 
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
-            if (image.at<Vec4b>(i, j)[3] == 255) continue;
-            if (image.at<Vec4b>(i, j)[3] == 0) {
-                image.at<Vec4b>(i, j) = input.at<Vec4b>(i, j);
-                continue;
-            }
-            float falpha_this = image.at<Vec4b>(i, j)[3] / 255.0;
-            float falpha_img = input.at<Vec4b>(i, j)[3] / 255.0;
-            float fnew_alpha = falpha_this + (1.0 - falpha_this) * falpha_img;
-            for (int k = 0; k < 3; k++) {
-                float x = (float) image.at<Vec4b>(i, j)[k];
-                float y = (float) input.at<Vec4b>(i, j)[k];
-                float ret = falpha_this * x + (1 - falpha_this) * falpha_img * y;
-                ret = ret / fnew_alpha;
-                image.at<Vec4b>(i, j)[k] = (uchar) std::min(255.0f, ret);
-            }
-            image.at<Vec4b>(i, j)[3] = (uchar) (255 * fnew_alpha);
+            image.at<Vec4b>(i, j) = blend(image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
         }
     }
 }
