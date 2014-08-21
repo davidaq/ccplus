@@ -10,17 +10,22 @@
 #include "ccplus.hpp"
 
 using namespace CCPlus;
+using boost::property_tree::ptree;
 
-void CCPlus::fillTML(const std::string& jsonPath, const std::string& tmlPath, const std::string& outputPath) {
-    using boost::property_tree::ptree;
+#define ptree_array_append(ptree, X) tmpP.put("", X);ptree.push_back(std::make_pair("", tmpP))
+ptree tmpP;
 
+void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath) {
     ptree jsont;
     try {
         read_json(jsonPath, jsont);
-    } catch (... /* I dont care */) { 
+    } catch (...) { 
         log(logFATAL) << "Couldn't parse or load file: " << jsonPath;
     }
-
+    std::string tmlPath = jsont.get<std::string>("templateURL");
+    // relative path to json file
+    if(tmlPath[0] != '/')
+        tmlPath = dirName(jsonPath) + "/" + tmlPath;
     ptree tmlt;
     try {
         read_json(tmlPath, tmlt);
@@ -29,59 +34,85 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& tmlPath, co
     }
 
     auto medias = jsont.get_child("medias");
-
+    // insert user inputs into template slot compositions
+    // slot compositions are named as @1 @2 @3 .....
     for (auto& child : tmlt.get_child("compositions")) {
         std::string name = child.first.data();
-        if (!stringStartsWith(name, "__")) 
+        if (!stringStartsWith(name, "@")) 
             continue;
 
         auto& comp = child.second;
 
-        int idx = std::atoi(name.substr(2).c_str());
+
+        int idx = std::atoi(name.substr(1).c_str()) - 1;
         if (idx >= medias.size()) {
-            log(logFATAL) << "Couldn't find footage for " << name;
+            continue;
         }
         auto ite = jsont.get_child("medias").begin();
         std::advance(ite, idx);
         auto& media = (*ite).second;
         
-        auto& layer = comp.get_child("layers").front().second;
-        layer.put<std::string>(
-                "uri", "file://" + media.get<std::string>("filename"));
-        comp.put<int>(
-                "resolution.width", media.get<int>("w"));
-        comp.put<int>(
-                "resolution.height", media.get<int>("h"));
+        ptree layer;
 
-        auto& pt0 = layer.get_child("properties.transform.0");
-        ite = pt0.begin();
-        std::advance(ite, 2);
-        (*ite).second.put("", media.get<int>("y"));
-        std::advance(ite, 1);
-        (*ite).second.put("", media.get<int>("x"));
+        layer.put<std::string>("uri", "file://" + media.get<std::string>("filename"));
+        int compWidth = comp.get<int>("resolution.width");
+        int compHeight = comp.get<int>("resolution.height");
+        float clipX = media.get<float>("x");
+        float clipY = media.get<float>("y");
+        float clipWidth = media.get<float>("w");
+        float clipHeight = media.get<float>("h");
+
+        ptree transform;
+        // place anchor in center
+        ptree_array_append(transform, compWidth / 2);
+        ptree_array_append(transform, compHeight / 2);
+        ptree_array_append(transform, 0);
+        // put anchor to designated position
+        ptree_array_append(transform, clipX + clipWidth / 2);
+        ptree_array_append(transform, clipY + clipHeight / 2);
+        ptree_array_append(transform, 0);
+        // make right scale
+        ptree_array_append(transform, compWidth / clipWidth);
+        ptree_array_append(transform, compHeight / clipHeight);
+        ptree_array_append(transform, 1);
+        // no rotation
+        ptree_array_append(transform, 0);
+        ptree_array_append(transform, 0);
+        ptree_array_append(transform, 0);
+        
+        layer.put_child("properties.transform.0", transform);
+
+        float volume = media.get<float>("videoVolume", 1.f);
+        ptree volumes;
+        ptree_array_append(volumes, volume);
+        layer.put_child("properties.volume.0", volumes);
+
+        // replace composition with the single layer
+        ptree layers;
+        layers.push_back(std::make_pair("", layer));
+        comp.put_child("layers", layers);
     }
 
+    // Append background musc
     try {
-        std::string mname = jsont.get<std::string>("musicURL");
-        std::string maincomp = tmlt.get<std::string>("main");
-        float duration = 
-            tmlt.get<float>("compositions." + maincomp + ".duration");
-        auto& mainCompLayers = tmlt.get_child("compositions." + maincomp + ".layers");
-
-        // Append background musc
+        std::string musicPath = jsont.get<std::string>("musicURL");
+        std::string mainCompName = tmlt.get<std::string>("main");
+        ptree& mainComp = tmlt.get_child("compositions." + mainCompName);
+        float duration = mainComp.get<float>("duration");
         ptree bmusic;
-        bmusic.put("uri", "file://" + mname);
-        bmusic.put<float>("start", 0.0);
-        bmusic.put<float>("duration", duration);
-        bmusic.put<float>("time", 0.0);
-        bmusic.put<float>("last", duration);
+        bmusic.put("uri", "file://" + musicPath);
+        bmusic.put("start", 0.f);
+        bmusic.put("duration", duration);
+        bmusic.put("time", 0.f);
+        bmusic.put("last", duration);
         bmusic.put_child("properties", ptree());
-        mainCompLayers.push_back(std::make_pair("", bmusic));
+        mainComp.get_child("layers").push_back(std::make_pair("", bmusic));
     } catch (...) {
-        ;
     } 
 
-    std::ostringstream ss;
-    write_json(ss, tmlt, true);
-    spit(outputPath, ss.str());
+    std::ofstream fileStream;
+    fileStream.open(outputPath);
+    write_json(fileStream, tmlt, true);
 }
+
+

@@ -10,7 +10,7 @@
             "duration" : 10,
             "layers" : [
                 {
-                    "uri" : "composition://__0",
+                    "uri" : "composition://@1",
                     "properties" : {
                         "transform" : {
                             "0" : [0, 0, 0, 0, 1, 1, 0],
@@ -24,23 +24,13 @@
                 }
             ]
         },
-        "__0" : {
+        "@1" : {
             "resolution" : {
+                "width" : 500,
+                "height" : 500
             },
             "duration" : 10000,
             "layers" : [
-                {
-                    "uri" : "",
-                    "properties" : {
-                        "transform" : {
-                            "0" : [0, 0, 0, 0, 1, 1, 0]
-                        }
-                    },
-                    "time": 0,
-                    "duration" : 10000,
-                    "start" : 0,
-                    "last" : 10000
-                }
             ]
         }
     }
