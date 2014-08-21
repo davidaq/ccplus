@@ -102,8 +102,20 @@ TEST(Filter, RampTest) {
 }
 
 TEST(Filter, 4ColorTest) {
+    // None
     Frame img("test/res/test2.jpg");
     std::vector<float> parameters = {
+        100, 100,               255, 0, 0, // Blue
+        639 - 50, 0 + 70,       0, 255, 0, // Green
+        0 + 110, 851 - 200,     0, 0, 255, // Red
+        639 - 60, 851 - 150,    0, 255, 255, // yellow
+        5, 0.5, -1 // none
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color_none.jpg");
+
+    img = Frame("test/res/test2.jpg");
+    parameters = {
         0, 0, 255, 0, 0, // Blue
         639, 0, 0, 255, 0, // Green
         0, 851, 0, 0, 255, // Red
@@ -137,25 +149,13 @@ TEST(Filter, 4ColorTest) {
     Filter("4color").apply(img, parameters, 640, 852);
     img.write("tmp/4color_multiply.jpg");
 
-    // None
+    // Screen
     img = Frame("test/res/test2.jpg");
     parameters = {
         0, 0, 255, 0, 0, // Blue
         639, 0, 0, 255, 0, // Green
         0, 851, 0, 0, 255, // Red
-        639, 851, 255, 255, 255, // White
-        5, 0.5, -1 // none
-    };
-    Filter("4color").apply(img, parameters, 640, 852);
-    img.write("tmp/4color_none.jpg");
-
-    // None
-    img = Frame("test/res/test2.jpg");
-    parameters = {
-        0, 0, 255, 0, 0, // Blue
-        639, 0, 0, 255, 0, // Green
-        0, 851, 0, 0, 255, // Red
-        639, 851, 255, 255, 255, // White
+        639, 851, 0, 255, 255, // White
         5, 0.5, 3 // none
     };
     Filter("4color").apply(img, parameters, 640, 852);

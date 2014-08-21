@@ -27,9 +27,9 @@ CCPLUS_FILTER(4color) {
     for (int i = 0; i < 20; i+=5) {
         xs.push_back(parameters[i + 0]);
         ys.push_back(parameters[i + 1]);
-        rgbs.push_back(parameters[i + 2]);
-        rgbs.push_back(parameters[i + 3]);
-        rgbs.push_back(parameters[i + 4]);
+        rgbs.push_back(parameters[i + 2] / 255.0);
+        rgbs.push_back(parameters[i + 3] / 255.0);
+        rgbs.push_back(parameters[i + 4] / 255.0);
     }
     float blend = parameters[20];
     float opacity = parameters[21];
@@ -68,23 +68,28 @@ CCPLUS_FILTER(4color) {
         for (int i = 0; i < 4; i++)
             B.at<double>(i + 6, 0) = C.at<double>(i, 0);
 
+        if (std::abs(determinant(H)) < 0.001) {
+            log(CCPlus::logWARN) << "Can't generate bilinear from this 4 points.";
+        }
+
         invert(H, H);
         Mat ret = H * B;
 
-        auto p = [&ret](int i) {
-            return ret.at<double>(i);
+        auto calcColor = [&ret](int x, int y) {
+            auto p = [&ret](int i) {
+                return ret.at<double>(i, 0);
+            };
+            float tmp = p(0) * x * x + p(1) * x * y + 
+                p(2) * y * y + p(3) * x +
+                p(4) * y + p(5);
+            tmp = std::max<float>(0.0, tmp);
+            tmp = std::min<float>(1.0, tmp);
+            return tmp * 255.0f;
         };
 
         for (int i = 0; i < frame.getWidth(); i++) 
             for (int j = 0; j < frame.getHeight(); j++) {
-                float tmp = 
-                    p(0) * i * i + p(1) * j * i + 
-                    p(2) * j * j + p(3) * i + 
-                    p(4) * j + 1;
-
-                //frame.getImage().at<Vec4b>(j, i)[ch] = std::min(255, 
-                //        (int) frame.getImage().at<Vec4b>(j, i)[ch]);
-                mask.at<Vec4b>(j, i)[ch] = std::min(255, (int) tmp);
+                mask.at<Vec4b>(j, i)[ch] = calcColor(i, j);
             }
     }
     int tmp = blend;
