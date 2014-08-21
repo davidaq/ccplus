@@ -16,5 +16,5 @@ namespace CCPlus {
     const std::string getZIMPath(void*);
     bool finishedFrame(void*, int frame);
 
-    void fillTML(const std::string& jsonPath, const std::string& tmlPath, const std::string& outputPath = "");
+    void fillTML(const std::string& jsonPath, const std::string& outputPath = "");
 }
