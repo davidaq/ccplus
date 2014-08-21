@@ -40,6 +40,10 @@ public:
     int getTotalNumberOfFrame() const;
     const std::string getPrefix() const;
 
+    bool finished(int f) const {
+        return rendered.count(f) != 0;
+    }
+
 private:
     /**
      * Compare layer set at two different time step.

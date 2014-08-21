@@ -31,9 +31,9 @@ TEST(Frame, OverlayFrameTest2) {
 
     img2.mergeFrame(img1);
     
-    EXPECT_EQ(img2.getImage().at<Vec4b>(0, 0)[0], 127);
-    EXPECT_LE(std::abs(img2.getImage().at<Vec4b>(1, 0)[0]) - 147, 1);
-    EXPECT_LE(std::abs(img2.getImage().at<Vec4b>(1, 0)[1]) - 152, 1);
+    EXPECT_EQ(img2.getImage().at<Vec4b>(0, 0)[0], 255);
+    EXPECT_LE(std::abs(img2.getImage().at<Vec4b>(1, 0)[0]) - 255, 1);
+    EXPECT_LE(std::abs(img2.getImage().at<Vec4b>(1, 0)[1]) - 255, 1);
 }
 
 TEST(Frame, EmtpyFrameTest) {

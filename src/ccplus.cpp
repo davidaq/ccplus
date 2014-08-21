@@ -119,3 +119,12 @@ int CCPlus::numberOfZIM(void* ctx) {
         "Accessed Main Composition before its initialization";
     return 0;
 }
+
+bool CCPlus::finishedFrame(void* ctx, int frame) {
+    UserContext* uCtx = (UserContext*) ctx;
+    if (uCtx->mainComp)
+        return uCtx->mainComp->finished(frame);
+    log(logERROR) << 
+        "Accessed Main Composition before its initialization";
+    return false;
+}
