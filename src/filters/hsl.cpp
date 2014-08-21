@@ -1,4 +1,5 @@
 #include "filter.hpp"
+#include "utils.hpp"
 #include "logger.hpp"
 
 using namespace cv;
@@ -29,14 +30,14 @@ CCPLUS_FILTER(hsl) {
             // L
             float now_lit = pixel[1];
             float diff = (lit - 1.0) * (lit > 1.0 ? (255 - now_lit) : now_lit);
-            pixel[1] = std::min<int>(255, 
-                    (int)now_lit + diff);
+            float ret = between<float>(now_lit + diff, 0.0, 255.0);
+            pixel[1] = (unsigned char) ret;
 
             // S
             float now_sat = pixel[2];
             diff = (sat - 1.0) * (sat > 1.0 ? (255 - now_sat) : now_sat);
-            pixel[2] = std::min<int>(255, 
-                    (int)now_sat + diff);
+            ret = between<float>(now_sat + diff, 0.0, 255.0);
+            pixel[2] = (unsigned char) ret;
         }
     }
     cvtColor(buf, buf, CV_HLS2BGR);
