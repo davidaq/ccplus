@@ -27,9 +27,9 @@ CCPLUS_FILTER(4color) {
     for (int i = 0; i < 20; i+=5) {
         xs.push_back(parameters[i + 0]);
         ys.push_back(parameters[i + 1]);
-        rgbs.push_back(parameters[i + 2] / 255.0);
-        rgbs.push_back(parameters[i + 3] / 255.0);
-        rgbs.push_back(parameters[i + 4] / 255.0);
+        rgbs.push_back(parameters[i + 2]);
+        rgbs.push_back(parameters[i + 3]);
+        rgbs.push_back(parameters[i + 4]);
     }
     float blend = parameters[20];
     float opacity = parameters[21];
@@ -82,9 +82,9 @@ CCPLUS_FILTER(4color) {
             float tmp = p(0) * x * x + p(1) * x * y + 
                 p(2) * y * y + p(3) * x +
                 p(4) * y + p(5);
-            tmp = std::max<float>(0.0, tmp);
-            tmp = std::min<float>(1.0, tmp);
-            return tmp * 255.0f;
+            tmp = std::max<float>(0.0f, tmp);
+            tmp = std::min<float>(255.0f, tmp);
+            return tmp;
         };
 
         for (int i = 0; i < frame.getWidth(); i++) 

@@ -78,6 +78,11 @@ static inline std::string toString(T number) {
     return ss.str();
 }
 
+template <typename T>
+static inline T between(T t, T mn, T mx) {
+    return std::max(mn, std::min(mx, t));
+}
+
 static inline std::string dirName(const std::string& path) {
     return path.substr(
             0,
