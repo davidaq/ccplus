@@ -111,5 +111,53 @@ TEST(Filter, 4ColorTest) {
         5, 0.5, 0
     };
     Filter("4color").apply(img, parameters, 640, 852);
-    img.write("tmp/4color.jpg");
+    img.write("tmp/4color_normal.jpg");
+
+    // Add Blend
+    img = Frame("test/res/test2.jpg");
+    parameters = {
+        0, 0, 255, 0, 0, // Blue
+        639, 0, 0, 255, 0, // Green
+        0, 851, 0, 0, 255, // Red
+        639, 851, 255, 255, 255, // White
+        5, 0.5, 1 // Add
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color_add.jpg");
+
+    // Multiply Blend
+    img = Frame("test/res/test2.jpg");
+    parameters = {
+        0, 0, 255, 0, 0, // Blue
+        639, 0, 0, 255, 0, // Green
+        0, 851, 0, 0, 255, // Red
+        639, 851, 255, 255, 255, // White
+        5, 0.5, 2 // multiply
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color_multiply.jpg");
+
+    // None
+    img = Frame("test/res/test2.jpg");
+    parameters = {
+        0, 0, 255, 0, 0, // Blue
+        639, 0, 0, 255, 0, // Green
+        0, 851, 0, 0, 255, // Red
+        639, 851, 255, 255, 255, // White
+        5, 0.5, -1 // none
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color_none.jpg");
+
+    // None
+    img = Frame("test/res/test2.jpg");
+    parameters = {
+        0, 0, 255, 0, 0, // Blue
+        639, 0, 0, 255, 0, // Green
+        0, 851, 0, 0, 255, // Red
+        639, 851, 255, 255, 255, // White
+        5, 0.5, 3 // none
+    };
+    Filter("4color").apply(img, parameters, 640, 852);
+    img.write("tmp/4color_screen.jpg");
 }

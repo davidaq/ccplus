@@ -91,6 +91,6 @@ CCPLUS_FILTER(4color) {
     tmp = tmp % 2 == 0 ? tmp + 1 : tmp;
     GaussianBlur(mask, mask, {tmp, tmp}, 0, 0);
     Frame maskFrame(mask);
-    maskFrame.mergeFrame(frame);
+    maskFrame.mergeFrame(frame, mode);
     frame = maskFrame;
 }

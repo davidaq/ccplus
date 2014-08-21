@@ -90,6 +90,7 @@ CCPLUS_FILTER(ramp) {
             }
         return ret;
     });
+    // TODO: It will affected original images' alpha. Should be avoided
     for (int i = 0; i < width; i++)
         for (int j = 0; j < height; j++) {
             frame.getImage().at<Vec4b>(j, i)[3] = (unsigned char) 255 * alpha;
