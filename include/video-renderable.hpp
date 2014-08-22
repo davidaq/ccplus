@@ -24,7 +24,7 @@ private:
 
     std::string uri;
     
-    VideoDecoder* decoder;
+    VideoDecoder *decoder, *alpha_decoder;
 
     void renderPart(float start, float duration);
 };
