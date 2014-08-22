@@ -72,6 +72,7 @@ const std::map<std::string, Property>& Layer::getProperties() const {
     return properties;
 }
 
+// TODO: binary search needed here
 std::vector<float> Layer::interpolate(const std::string& name, float time) const {
     std::vector<float> ret;
     if (properties.find(name) == properties.end()) {
