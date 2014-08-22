@@ -21,7 +21,11 @@ std::map<int, BLENDER_CORE> blendMap = {
     {ADD, addBlend},
     {MULTIPLY, multiplyBlend},
     {SCREEN, screenBlend},
-    {DISOLVE, disolveBlend}
+    {DISOLVE, disolveBlend},
+    {DARKEN, darkenBlend},
+    {LIGHTEN, lightenBlend},
+    {OVERLAY, overlayBlend},
+    {DIFFERENCE, differenceBlend}
 };
 
 BLENDER getBlender(int mode) {
@@ -77,4 +81,26 @@ float disolveBlend(float ca, float cb, float qa, float qb) {
     int v = std::rand() % 100;
     if (v < range) return ca;
     return cb;
+}
+
+float darkenBlend(float ca, float cb, float qa, float qb) {
+    return std::min<float>((1 - qa) * cb + ca,
+            (1 - qb) * ca + cb);
+}
+
+float lightenBlend(float ca, float cb, float qa, float qb) {
+    return std::max<float>((1 - qa) * cb + ca,
+            (1 - qb) * ca + cb);
+}
+
+// TODO: Somebody comes to verify it please. 
+// It's slightly different from the formula in Wikipedia
+float overlayBlend(float ca, float cb, float qa, float qb) {
+    if (qa < 0.5)
+        return multiplyBlend(ca, cb, qa, qb) * 2.0; 
+    return screenBlend(ca, cb, qa, qb);
+}
+
+float differenceBlend(float ca, float cb, float qa, float qb) {
+    return std::abs<float>(ca - cb);
 }

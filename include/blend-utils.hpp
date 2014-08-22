@@ -7,10 +7,15 @@ using namespace cv;
 /*
  * Follow the SVG specification
  * http://www.w3.org/TR/SVG/filters.html#feBlendElement
+ *
+ * Some of them are using formulas in 
+ * http://www.pegtop.net/delphi/articles/blendmodes/lighten.htm
  */
 
 enum BlendMode {
-    NONE = -1, DEFAUT=0, ADD, MULTIPLY, SCREEN, DISOLVE
+    NONE = -1, DEFAUT=0, ADD, MULTIPLY, SCREEN, 
+    DISOLVE = 4, DARKEN, LIGHTEN, OVERLAY,
+    DIFFERENCE 
 };
 
 /*
@@ -34,3 +39,7 @@ float addBlend(float ca, float cb, float qa, float qb);
 float multiplyBlend(float ca, float cb, float qa, float qb);
 float screenBlend(float ca, float cb, float qa, float qb);
 float disolveBlend(float ca, float cb, float qa, float qb);
+float darkenBlend(float ca, float cb, float qa, float qb);
+float lightenBlend(float ca, float cb, float qa, float qb);
+float overlayBlend(float ca, float cb, float qa, float qb);
+float differenceBlend(float ca, float cb, float qa, float qb);
