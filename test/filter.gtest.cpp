@@ -161,3 +161,10 @@ TEST(Filter, 4ColorTest) {
     Filter("4color").apply(img, parameters, 640, 852);
     img.write("tmp/4color_screen.jpg");
 }
+
+TEST(Filter, CurveTest) {
+    Frame img = Frame("test/res/test1.jpg");
+    std::vector<float> parameters = {0, 255, 0, 0, 0, 255, 0, 255, 127, 127};
+    Filter("curve").apply(img, parameters, 640, 852);
+    img.write("tmp/curve_1.jpg");
+}
