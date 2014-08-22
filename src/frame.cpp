@@ -314,6 +314,11 @@ void Frame::mergeAudio(const Frame& f) {
 void Frame::overlayImage(const cv::Mat& input, 
         const std::function<Vec4b(Vec4b, Vec4b)>& blend) {
     if (input.empty()) return;
+    // When pure audio frame merges visible frame  
+    if (image.empty()) {
+        image = input;
+        return;
+    }
     
     if (this->getHeight() != input.rows || this->getWidth() != input.cols) {
         log(logWARN) << "image overlay expects two images with the same size"; 

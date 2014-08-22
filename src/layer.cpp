@@ -14,7 +14,8 @@ Layer::Layer(
     float _start, 
     float _last,
     int _width,
-    int _height
+    int _height,
+    int _blendMode
 ) :
     context(ctx),
     renderableUri(_renderableUri),
@@ -24,7 +25,8 @@ Layer::Layer(
     start(_start),
     last(_last),
     width(_width),
-    height(_height)
+    height(_height), 
+    blendMode(_blendMode)
 {
 }
 
@@ -134,4 +136,8 @@ Frame Layer::applyFiltersToFrame(float t) {
         }
     }
     return frame;
+}
+
+int Layer::getBlendMode() const {
+    return blendMode;
 }

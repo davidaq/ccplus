@@ -13,7 +13,8 @@ public:
         float start, 
         float last,
         int width,
-        int height
+        int height,
+        int blendMode = 0
     );
 
     // access
@@ -31,6 +32,8 @@ public:
      */
     float getStart() const;
     float getLast() const;
+
+    int getBlendMode() const;
 
     /*
      * Check whether this layer is visible 
@@ -57,6 +60,7 @@ private:
     float time = 0, duration = 0, start = 0, last = 0;
     int width = 0;
     int height = 0;
+    int blendMode = 0;
     std::map<std::string, Property> properties;
     std::vector<std::string> orderedKey;
 };

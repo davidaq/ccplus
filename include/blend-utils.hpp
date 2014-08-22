@@ -5,7 +5,7 @@
 using namespace cv;
 
 enum BlendMode {
-    NONE = -1, DEFAUT=0, ADD, MULTIPLY, SCREEN
+    NONE = -1, DEFAUT=0, ADD, MULTIPLY, SCREEN, DISOLVE
 };
 
 #define BLENDER std::function<cv::Vec4b(cv::Vec4b, cv::Vec4b)>
@@ -17,3 +17,4 @@ Vec4b noneBlend(Vec4b top, Vec4b down);
 Vec4b addBlend(Vec4b top, Vec4b down);
 Vec4b multiplyBlend(Vec4b top, Vec4b down);
 Vec4b screenBlend(Vec4b top, Vec4b down);
+Vec4b disolveBlend(Vec4b top, Vec4b down);

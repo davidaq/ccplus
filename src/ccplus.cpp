@@ -1,4 +1,5 @@
 #include <limits>
+#include <ctime>
 
 #include "global.hpp"
 #include "ccplus.hpp"
@@ -21,6 +22,10 @@ void* CCPlus::initContext(const char* tmlPath, const char* storagePath, int fps)
     ret->ctx = new CCPlus::Context(storagePath, fps);
     CCPlus::TMLReader reader(ret->ctx);
     ret->mainComp = reader.read(tmlPath);
+
+    // Init rand seed
+    srand(std::time(0));
+
     return (void*) ret;
 }
 

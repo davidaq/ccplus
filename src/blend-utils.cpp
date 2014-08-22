@@ -1,10 +1,13 @@
 #include "blend-utils.hpp"
+#include "utils.hpp"
 
 #include "logger.hpp"
 
 #include <map>
 #include <functional>
 #include <algorithm>
+
+using namespace CCPlus;
 
 #define uchar unsigned char
 
@@ -13,7 +16,8 @@ std::map<int, BLENDER> blendMap = {
     {NONE, noneBlend},
     {ADD, addBlend},
     {MULTIPLY, multiplyBlend},
-    {SCREEN, screenBlend}
+    {SCREEN, screenBlend},
+    {DISOLVE, disolveBlend}
 };
 
 const BLENDER& getBlender(int mode) {
@@ -58,12 +62,15 @@ Vec4b addBlend(Vec4b top, Vec4b down) {
 Vec4b multiplyBlend(Vec4b top, Vec4b down) {
     for (int i = 0; i < 3; i++) {
         // It seems better
-        float alpha = top[3] / 255.0;
-        // Don't panic. It's Black Magic ! 
-        float c = top[i] / 255.0;
-        c = (1.0 - c) * (1 - alpha) + c;
+        float topAlpha = top[3] / 255.0;
+        float downAlpha = top[3] / 255.0;
+        // Don't panic. It's a Black Magic that is invented by Ming
+        float c1 = top[i] / 255.0;
+        c1 = (1.0 - c1) * (1 - topAlpha) + c1;
+        float c2 = down[i] / 255.0;
+        c2 = (1.0 - c2) * (1 - downAlpha) + c2;
         top[i] = (uchar)std::min<int>(255, 
-                (int) 255.0 * (c * down[i] / 255.0));
+                (255.0 * (c1 * c2)));
     }
     top[3] = down[3];
     return top;
@@ -75,8 +82,20 @@ Vec4b screenBlend(Vec4b top, Vec4b down) {
         float x = top[i] / 255.0f * alpha;
         float y = down[i] / 255.0f;
         float ret = 1.0f - (1.0f - x) * (1.0f - y);
-        top[i] = (uchar) std::min<int>(255, ret * 255.0f);
+        top[i] = (uchar) between<int>(ret * 255.0f, 0, 255);
     }
     top[3] = down[3];
     return top;
+}
+
+Vec4b disolveBlend(Vec4b top, Vec4b down) {
+    if (top[3] == 255) return top;
+    if (top[3] == 0) return down;
+
+    float alpha = top[3] / 255.0f;
+    int range = 100.0 * alpha;
+    int v = std::rand() % 100;
+
+    if (v < range) return top;
+    return down;
 }
