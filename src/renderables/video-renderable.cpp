@@ -13,7 +13,16 @@ VideoRenderable::VideoRenderable(Context* context, const std::string& _uri) :
     if (stringStartsWith(path, "file://")) 
         path = path.substr(7);
     path = generatePath(context->getInputDir(), path);
-    decoder = new VideoDecoder(path);
+    std::string alpha_file = path + ".opacity.mp4";
+    FILE* testFp = fopen(alpha_file.c_str(), "r");
+    if(testFp) {
+        fclose(testFp);
+        alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
+        decoder = new VideoDecoder(path + ".mp4");
+    } else {
+        alpha_decoder = 0;
+        decoder = new VideoDecoder(path);
+    }
 }
 
 VideoRenderable::~VideoRenderable() {
@@ -31,6 +40,8 @@ void VideoRenderable::renderPart(float start, float duration) {
 
     // Video
     decoder->seekTo(start);
+    if(alpha_decoder)
+        alpha_decoder->seekTo(start);
     float gap = -1;
     float pos = -1;
     int lastFrame = -1;
@@ -60,6 +71,7 @@ void VideoRenderable::renderPart(float start, float duration) {
         return ret;
     };
 
+    cv::Mat alpha;
     while((pos = decoder->decodeImage()) + 0.001 > 0) {
         if(gap < 0.001)
             gap = (pos - start) / 3;
@@ -69,8 +81,21 @@ void VideoRenderable::renderPart(float start, float duration) {
         // Make up lost frames
         makeup_frames(f, lastFrame);
         
+        // Assume alpha channel video is synchronized with color channel video
+        if(alpha_decoder)
+            alpha_decoder->decodeImage();
         if (!rendered.count(f)) {
             Frame ret = decoder->getDecodedImage();
+            if(alpha_decoder) {
+                Frame opac = alpha_decoder->getDecodedImage();
+                unsigned char* opacData = opac.getImage().data;
+                unsigned char* frameData = ret.getImage().data;
+                if(opac.getWidth() == ret.getWidth() && opac.getHeight() == ret.getHeight()) {
+                    for(int i = 3, c = opac.getImage().total() * 4; i < c; i += 4) {
+                        frameData[i] = opacData[i - 1];
+                    }
+                }
+            }
             ret.setAudio(subAudio(audios, f));
             ret.write(fp, 75);
             rendered.insert(f);
