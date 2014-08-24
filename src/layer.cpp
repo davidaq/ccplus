@@ -14,7 +14,8 @@ Layer::Layer(
     float _start, 
     float _last,
     int _width,
-    int _height
+    int _height,
+    int _blendMode
 ) :
     context(ctx),
     renderableUri(_renderableUri),
@@ -24,7 +25,8 @@ Layer::Layer(
     start(_start),
     last(_last),
     width(_width),
-    height(_height)
+    height(_height), 
+    blendMode(_blendMode)
 {
 }
 
@@ -70,6 +72,7 @@ const std::map<std::string, Property>& Layer::getProperties() const {
     return properties;
 }
 
+// TODO: binary search needed here
 std::vector<float> Layer::interpolate(const std::string& name, float time) const {
     std::vector<float> ret;
     if (properties.find(name) == properties.end()) {
@@ -134,4 +137,8 @@ Frame Layer::applyFiltersToFrame(float t) {
         }
     }
     return frame;
+}
+
+int Layer::getBlendMode() const {
+    return blendMode;
 }

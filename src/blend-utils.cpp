@@ -1,4 +1,5 @@
 #include "blend-utils.hpp"
+#include "utils.hpp"
 
 #include "logger.hpp"
 
@@ -6,77 +7,100 @@
 #include <functional>
 #include <algorithm>
 
+using namespace CCPlus;
+
 #define uchar unsigned char
 
-std::map<int, BLENDER> blendMap = {
+float alphaComposing(float a, float b) {
+    return a + b - a * b;
+}
+
+std::map<int, BLENDER_CORE> blendMap = {
     {DEFAUT, defaultBlend},
     {NONE, noneBlend},
     {ADD, addBlend},
     {MULTIPLY, multiplyBlend},
-    {SCREEN, screenBlend}
+    {SCREEN, screenBlend},
+    {DISOLVE, disolveBlend},
+    {DARKEN, darkenBlend},
+    {LIGHTEN, lightenBlend},
+    {OVERLAY, overlayBlend},
+    {DIFFERENCE, differenceBlend}
 };
 
-const BLENDER& getBlender(int mode) {
+BLENDER getBlender(int mode) {
     if (!blendMap.count(mode)) {
         log(CCPlus::logFATAL) << "Mode " << mode << " is not suppported";
-        return blendMap[DEFAUT];
     }
-    return blendMap.at(mode);
+    BLENDER_CORE core = blendMap.at(mode); 
+    return [&core, mode] (Vec4b top, Vec4b down) {
+        // Some black magic constant time optimizer
+        // TODO: more and a better way
+        if (mode != DISOLVE && top[3] == 0) return down;
+        if (mode != DISOLVE && down[3] == 0) return top;
+        if ((mode == DEFAUT || mode == DISOLVE) && top[3] == 255) 
+            return top; 
+        if (mode == NONE) return top;
+
+        Vec4b ret = {0, 0, 0, 0};
+        float topAlpha = top[3] / 255.0;
+        float downAlpha = down[3] / 255.0;
+        float retAlpha = alphaComposing(topAlpha, downAlpha);
+        for (int i = 0; i < 3; i++) {
+            float ca = top[i] / 255.0 * topAlpha;
+            float cb = down[i] / 255.0 * downAlpha;
+            ret[i] = between<int>(core(ca, cb, topAlpha, downAlpha) / retAlpha * 255.0, 0, 255);
+        }
+        ret[3] = retAlpha * 255.0;
+        return ret;
+    };
 }
 
-Vec4b defaultBlend(Vec4b top, Vec4b down) {
-    if (top[3] == 255) return top;
-    if (top[3] == 0) return down;
-    float falpha_this = top[3] / 255.0;
-    float falpha_img = down[3] / 255.0;
-    float fnew_alpha = falpha_this + (1.0 - falpha_this) * falpha_img;
-    Vec4b retColor = {0, 0, 0, 0};
-    for (int k = 0; k < 3; k++) {
-        float x = (float) top[k];
-        float y = (float) down[k];
-        float ret = falpha_this * x + (1 - falpha_this) * falpha_img * y;
-        ret = ret / fnew_alpha;
-        retColor[k] = (uchar) std::min(255.0f, ret);
-    }
-    retColor[3] = (uchar) (255 * fnew_alpha);
-    return retColor;
+float defaultBlend(float ca, float cb, float qa, float qb) {
+    return (1 - qa) * cb + ca;
 }
 
-Vec4b noneBlend(Vec4b top, Vec4b down) {
-    return top;
+float noneBlend(float ca, float cb, float qa, float qb) {
+    return ca;
 }
 
-Vec4b addBlend(Vec4b top, Vec4b down) {
-    for (int i = 0; i < 3; i++) {
-        float alpha = top[3] / 255.0;
-        top[i] = (uchar)std::min<int>(255, (int) top[i] * alpha + down[i]);
-    }
-    top[3] = down[3];
-    return top;
+float addBlend(float ca, float cb, float qa, float qb) {
+    return ca + cb;
 }
 
-Vec4b multiplyBlend(Vec4b top, Vec4b down) {
-    for (int i = 0; i < 3; i++) {
-        // It seems better
-        float alpha = top[3] / 255.0;
-        // Don't panic. It's Black Magic ! 
-        float c = top[i] / 255.0;
-        c = (1.0 - c) * (1 - alpha) + c;
-        top[i] = (uchar)std::min<int>(255, 
-                (int) 255.0 * (c * down[i] / 255.0));
-    }
-    top[3] = down[3];
-    return top;
+float multiplyBlend(float ca, float cb, float qa, float qb) {
+    return (1 - qa) * cb + (1 - qb) * ca + ca * cb;
 }
 
-Vec4b screenBlend(Vec4b top, Vec4b down) {
-    for (int i = 0; i < 3; i++) {
-        float alpha = top[3] / 255.0f;
-        float x = top[i] / 255.0f * alpha;
-        float y = down[i] / 255.0f;
-        float ret = 1.0f - (1.0f - x) * (1.0f - y);
-        top[i] = (uchar) std::min<int>(255, ret * 255.0f);
-    }
-    top[3] = down[3];
-    return top;
+float screenBlend(float ca, float cb, float qa, float qb) {
+    return cb + ca - ca * cb;
+}
+
+float disolveBlend(float ca, float cb, float qa, float qb) {
+    int range = 100.0 * qa;
+    int v = std::rand() % 100;
+    if (v < range) return ca;
+    return cb;
+}
+
+float darkenBlend(float ca, float cb, float qa, float qb) {
+    return std::min<float>((1 - qa) * cb + ca,
+            (1 - qb) * ca + cb);
+}
+
+float lightenBlend(float ca, float cb, float qa, float qb) {
+    return std::max<float>((1 - qa) * cb + ca,
+            (1 - qb) * ca + cb);
+}
+
+// TODO: Somebody comes to verify it please. 
+// It's slightly different from the formula in Wikipedia
+float overlayBlend(float ca, float cb, float qa, float qb) {
+    if (qa < 0.5)
+        return multiplyBlend(ca, cb, qa, qb) * 2.0; 
+    return screenBlend(ca, cb, qa, qb);
+}
+
+float differenceBlend(float ca, float cb, float qa, float qb) {
+    return std::abs<float>(ca - cb);
 }
