@@ -10,6 +10,10 @@
 using namespace cv;
 using namespace CCPlus;
 
+/*
+ * Another atempt to implement transform filter using more opencv
+ */
+
 CCPLUS_FILTER(transform) {
     if (parameters.size() == 0)
         return;
@@ -27,7 +31,7 @@ CCPLUS_FILTER(transform) {
         int anchor_y = (int)parameters[4 + set];
         int anchor_z = (int)parameters[5 + set];
         if (anchor_z != 0) {
-            log(CCPlus::logWARN) << "Corrently anchor z is not supported";
+            log(CCPlus::logWARN) << "Anchor z is not supported";
         }
         float scale_x = parameters[6 + set];
         float scale_y = parameters[7 + set];
@@ -150,85 +154,34 @@ CCPLUS_FILTER(transform) {
     H.push_back(1.0);
     H = H.reshape(0, 3);
 
-    // Boundary of src image
-    int top_bound = 0;
-    int left_bound = 0;
-    int right_bound = input.cols;
-    int down_bound = input.rows;
-
-    auto bilinear_interpolate = [] (Mat mat, float x, float y) {
-        float x1 = std::floor(x);
-        float y1 = std::floor(y);
-        float x2 = std::ceil(x);
-        float y2 = std::ceil(y);
-        
-        auto pixel = [&mat] (int y, int x) {
-            Vec4b ret;
-            if(y >= mat.rows || y < 0 || x >= mat.cols || x < 0)
-                ret = Vec4b(0, 0, 0, 0);
-            else
-                ret = mat.at<Vec4b>(y, x);
-            return ret;
-        };
-        if (x1 == x2 && y1 == y2) 
-            return pixel(round(y1), round(x1));
-        else if (x1 == x2) {
-            // y direction interpolation
-            Vec4b r1 = pixel(y1, x1);
-            Vec4b r2 = pixel(y2, x1);
-            Vec4b ans; 
-            for (int i = 0; i < 4; i++) {
-                ans[i] = round(r1[i] * (y2 - y) / (y2 - y1) + r2[i] * (y - y1) / (y2 - y1));
-            }
-            return ans;
-        } else if (y1 == y2) {
-            Vec4b r1 = pixel(y1, x1);
-            Vec4b r2 = pixel(y1, x2);
-            Vec4b ans; 
-            for (int i = 0; i < 4; i++) {
-                ans[i] = round(r1[i] * (x2 - x) / (x2 - x1) + r2[i] * (x - x1) / (x2 - x1));
-            }
-            return ans;
-        }
-        
-        Vec4b p11 = pixel(y1, x1);
-        Vec4b p21 = pixel(y1, x2);
-        Vec4b p12 = pixel(y2, x1);
-        Vec4b p22 = pixel(y2, x2);
-
-        float tmp1 = 1 / ((x2 - x1) * (y2 - y1));
-        Vec4b ans(0, 0, 0, 0); 
-        for (int i = 0; i < 4; i++) {
-            float t = tmp1 * 
-                (p11[i] * (x2 - x) * (y2 - y) + 
-                 p21[i] * (x - x1) * (y2 - y) + 
-                 p12[i] * (x2 - x) * (y - y1) +
-                 p22[i] * (x - x1) * (y - y1));
-            ans[i] = round(t);
-        } 
-        return ans;
-    };
     Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    yMin = max(yMin, .0f);
-    yMax = min(yMax + 1, (float)height);
-    xMin = max(xMin, .0f);
-    xMax = min(xMax + 1, (float)width);
-    for (int i = yMin; i < yMax; i++)
-        for (int j = xMin; j < xMax; j++) {
-            float x = H.at<double>(0, 0) * j + H.at<double>(0, 1) * i + H.at<double>(0, 2);
-            float y = H.at<double>(1, 0) * j + H.at<double>(1, 1) * i + H.at<double>(1, 2);
-            float z = H.at<double>(2, 0) * j + H.at<double>(2, 1) * i + H.at<double>(2, 2);
-            x /= z;
-            y /= z;
+    cv::Mat pixelMappingX(ret.size(), CV_32FC1, cv::Scalar(-1.f));
+    cv::Mat pixelMappingY(ret.size(), CV_32FC1, cv::Scalar(-1.f));
 
-            // Nomalize
-            if (y < top_bound  || y >= down_bound || 
-                x < left_bound || x >= right_bound)
-                continue;
-            ret.at<Vec4b>(i, j) = bilinear_interpolate(input, x, y);
+    float tmatrix[3][3];
+    for(int i = 0; i < 3; i++)
+        for(int j = 0; j < 3; j++) {
+            tmatrix[i][j] = H.at<double>(i, j);
         }
+    xMin = std::max(xMin, 0.f);
+    xMax = std::min(xMax, (float)width);
+    yMin = std::max(yMin, 0.f);
+    yMax = std::min(yMax, (float)height);
+    profile(Filter_transform_map_func) {
+        for (int i = yMin; i < yMax; i++)
+            for (int j = xMin; j < xMax; j++) {
+                float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
+                float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
+                float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
 
-
-    // Update frame
+                x /= z;
+                y /= z;
+                pixelMappingX.at<float>(i, j) = x;
+                pixelMappingY.at<float>(i, j) = y;
+            }
+    }
+    profile(Filter_transform_remap) {
+        cv::remap(input, ret, pixelMappingX, pixelMappingY, CV_INTER_LINEAR, BORDER_TRANSPARENT);
+    }
     frame.setImage(ret);
 }

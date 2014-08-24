@@ -15,8 +15,8 @@ def main():
 def export(videofile):
     extract_video(videofile)
     filter_alpha(videofile)
-    merge_alpha(videofile)
-    extract_rgb(videofile)
+    fps = merge_alpha(videofile)
+    extract_rgb(videofile, fps)
     clean(videofile)
 
 
@@ -49,7 +49,7 @@ def merge_alpha(videofile):
             height = stream['height']
             fps = stream['r_frame_rate']
     scale = str(width) + 'x' + str(height)
-    os.system('ffmpeg -s ' + scale + ' -f image2 -c:v rawvideo -pix_fmt gray -i "' + tmpdir + '%09d.argb" -r ' + fps + ' -c:v libx264 -pix_fmt yuv420p "' + videofile + '.opacity.mp4"')
+    os.system('ffmpeg -r ' + fps + ' -s ' + scale + ' -f image2 -c:v rawvideo -pix_fmt gray -i "' + tmpdir + '%09d.argb" -r ' + fps + ' -c:v libx264 -pix_fmt yuv420p "' + videofile + '.opacity.mp4"')
     return fps
 
 def extract_rgb(videofile, fps):

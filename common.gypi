@@ -23,9 +23,9 @@
                 'xcode_settings' : {
                     'SDKROOT': 'iphoneos',
                     'SUPPORTED_PLATFORMS': 'iOS',
-                    'OTHER_CFLAGS' : ['-DRELEASE'],
+                    'OTHER_CFLAGS' : ['-D_RELEASE'],
                 },
-                'cflags': ['-DRELEASE'],
+                'cflags': ['-D_RELEASE'],
             }],
             ['OS=="mac"', {
                 'xcode_settings' : {

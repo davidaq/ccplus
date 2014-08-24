@@ -6,7 +6,7 @@ namespace CCPlus {
 
     const int CONCURRENT_THREAD = 4;
     
-    const bool COMPRESS_AUDIO = false;
+    const bool COMPRESS_AUDIO = true;
 
     const bool MEMORY_FS = true;
 }

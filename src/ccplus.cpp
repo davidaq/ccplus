@@ -35,14 +35,14 @@ void CCPlus::releaseContext(void* ctxHandle) {
 void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     if(!ctxHandle)
         return;
-    log(logINFO) << "Start rendering......";
     UserContext* uCtx = (UserContext*) ctxHandle;
     if(length < 0)
         length = uCtx->mainComp->getDuration();
+    log(logINFO) << "Start rendering...... start:" << start << " length:" << length;
     uCtx->mainComp->setForceRenderToFile(true);
     std::vector<CCPlus::CompositionDependency> deps = uCtx->mainComp->fullOrderedDependency(start, length);
     // Clear previous used memory
-    uCtx->ctx->releaseMemory();
+    //uCtx->ctx->releaseMemory();
 
     float total_time = 0;
     for (auto& dep : deps) {
@@ -60,6 +60,7 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
             log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
         }
     }
+    profileFlush;
 }
 
 void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {

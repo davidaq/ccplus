@@ -32,6 +32,8 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     } catch (...) {
         log(logFATAL) << "Couldn't parse or load file: " << tmlPath;
     }
+    log(logINFO) << "Proj Path: " << jsonPath;
+    log(logINFO) << "Tpl tml Path: " << tmlPath;
 
     auto medias = jsont.get_child("medias");
     // insert user inputs into template slot compositions
@@ -115,6 +117,8 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
         mainComp.get_child("layers").push_back(std::make_pair("", bmusic));
     } catch (...) {
     } 
+
+    log(logINFO) << "Output tml Path: " << outputPath;
 
     std::ofstream fileStream;
     fileStream.open(outputPath);

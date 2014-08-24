@@ -96,32 +96,33 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 auto avExt = [](Context* context, const std::string& uri) {
                     return new VideoRenderable(context, uri);
                 };
-                extMap["mov"]       = avExt;
-                extMap["mp4"]       = avExt;
-                extMap["gif"]       = avExt;
-                extMap["flv"]       = avExt;
-                extMap["f4v"]       = avExt;
-                extMap["mp3"]       = avExt;
-                extMap["flac"]      = avExt;
-                extMap["m4a"]       = avExt;
-                extMap["wav"]       = avExt;
-                extMap["ogv"]       = avExt;
-                extMap["ogg"]       = avExt;
-                extMap["webm"]      = avExt;
-                extMap["mkv"]       = avExt;
-                extMap["wmv"]       = avExt;
-                extMap["aac"]       = avExt;
+                // Just treat everything else as Audio/Video
+                extMap["default"]   = avExt;
+                //extMap["mov"]       = avExt;
+                //extMap["mp4"]       = avExt;
+                //extMap["gif"]       = avExt;
+                //extMap["flv"]       = avExt;
+                //extMap["f4v"]       = avExt;
+                //extMap["mp3"]       = avExt;
+                //extMap["flac"]      = avExt;
+                //extMap["m4a"]       = avExt;
+                //extMap["wav"]       = avExt;
+                //extMap["ogv"]       = avExt;
+                //extMap["ogg"]       = avExt;
+                //extMap["webm"]      = avExt;
+                //extMap["mkv"]       = avExt;
+                //extMap["wmv"]       = avExt;
+                //extMap["aac"]       = avExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
             stringToLower(ext);
             
             log(logDEBUG) << "Got file extention: " << ext;
-            if(extMap.count(ext)) {
-                renderable = extMap[ext](context, uri);
-            } else {
-                log(logFATAL) << "Unsupportd file type: " << uri;
+            if(!extMap.count(ext)) {
+                ext = "default";
             }
+            renderable = extMap[ext](context, uri);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logFATAL) << "Ahhhhhhhhhh, shit: " << uri;
             // What the f
