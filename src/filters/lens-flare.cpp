@@ -48,7 +48,7 @@ CCPLUS_FILTER(lens_flare) {
 
     int flareSize = std::max(frame.getHeight(), frame.getWidth()) / 4;
 
-    for (int i = 0; i < distance.size() - 2; i++) {
+    for (int i = 0; i < distance.size(); i++) {
         int fsize = flareSize * scale[i];
         Point2f p = center + v * length * distance[i];
         p -= Point2f(fsize / 2, fsize / 2);
@@ -83,6 +83,7 @@ CCPLUS_FILTER(lens_flare) {
     }
     imwrite("tmp/mask.png", mask);
     Frame ret(mask);
-    ret.mergeFrame(frame, 7);
+    //ret.mergeFrame(frame, 7);
+    ret.mergeFrame(frame, 1);
     frame = ret;
 }
