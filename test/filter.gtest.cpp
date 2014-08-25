@@ -168,3 +168,10 @@ TEST(Filter, CurveTest) {
     Filter("curve").apply(img, parameters, 640, 852);
     img.write("tmp/curve_1.jpg");
 }
+
+TEST(Filter, LensFlareTest) {
+    Frame img = Frame("test/res/test2.jpg");
+    std::vector<float> parameters = {160, 150, 1, 0};
+    Filter("lens_flare").apply(img, parameters, 500, 500);
+    img.write("tmp/flare.jpg");
+}
