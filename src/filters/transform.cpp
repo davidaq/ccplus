@@ -22,6 +22,9 @@ CCPLUS_FILTER(transform) {
         return;
     }
     Mat& input = frame.getImage();
+    if (input.empty()) {
+        return;
+    }
     Mat finalTrans = Mat::eye(4, 4, CV_64F);
     for (int set = 0; set < parameters.size(); set += 12) {
         int pos_x = (int)parameters[0 + set];
