@@ -19,6 +19,10 @@ public:
     Frame(const std::vector<int16_t>&);
     Frame(int width, int height);
     Frame();
+    ~Frame() {
+        image.release();
+        audio.release();
+    }
 
     static Frame emptyFrame(int, int);
     

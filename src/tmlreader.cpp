@@ -125,7 +125,6 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             renderable = extMap[ext](context, uri);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logFATAL) << "Ahhhhhhhhhh, shit: " << uri;
-            // What the f
         }
         if(renderable) {
             context->retain(renderable);

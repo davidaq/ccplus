@@ -12,7 +12,6 @@ Context::Context(const std::string& _storagePath, int _fps):
 }
 
 Context::~Context() {
-    // TODO clean up renderables' memory
 }
 
 void Context::releaseMemory() {

@@ -27,6 +27,7 @@ VideoRenderable::VideoRenderable(Context* context, const std::string& _uri) :
 
 VideoRenderable::~VideoRenderable() {
     delete decoder;
+    delete alpha_decoder;
 }
 
 const std::string& VideoRenderable::getName() const {

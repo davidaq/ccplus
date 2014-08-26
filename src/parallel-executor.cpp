@@ -1,4 +1,5 @@
 #include "parallel-executor.hpp"
+#include "logger.hpp"
 
 using namespace CCPlus;
 
@@ -31,13 +32,15 @@ ParallelExecutor::ParallelExecutor(int threadCount) {
     if(extraThreadsCount > 0) {
         extraThreads = new pthread_t[extraThreadsCount];
         for(int i = 0; i < extraThreadsCount; i++) {
-            pthread_create(extraThreads + i, 0, ParallelExecutor::executeFunc, this);
+            if (pthread_create(extraThreads + i, 0, 
+                        ParallelExecutor::executeFunc, this)) {
+                log(logFATAL) << "Failed to create new thread";
+            }
         }
     }
 }
 
 ParallelExecutor::~ParallelExecutor() {
-
     waitForAll();
     if(extraThreads)
         delete [] extraThreads;
@@ -66,7 +69,7 @@ void ParallelExecutor::waitForAll() {
     // Main thread start running
     sem_post(&listSemaphore);
     executeFunc(this);
-    for(int i = 0; i < extraThreadsCount; i++)
+    for(int i = 0; i < extraThreadsCount; i++) 
         pthread_join(extraThreads[i], 0);
 }
 
