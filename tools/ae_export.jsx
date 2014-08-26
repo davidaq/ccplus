@@ -188,6 +188,20 @@ var PropertyMapping = {
     }
 };
 /*
+ * Blend Mode map
+ */
+var blendingModes = {
+    4412: 0,
+    4420: 1,
+    4416: 2,
+    4422: 3,
+    4413: 4,
+    4415: 5,
+    4421: 6,
+    4426: 7,
+    4433: 8
+};
+/*
  * Export logic
  */
 var Export = function() {
@@ -279,6 +293,8 @@ Export.prototype.exportLayer = function(layer) {
         log('    Unexpected layer type');
         return NULL;
     }
+
+    ret.blend = blendingModes[layer.blendingMode];
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
     ret.start = layer.inPoint - layer.startTime;
@@ -291,6 +307,12 @@ Export.prototype.exportLayer = function(layer) {
         return ret;
     }
     for(var pmk in PropertyMapping) {
+        if(pmk == 'volume' && !layer.audioEnabled) {
+            ret.properties['volume'] = {};
+            ret.properties['volume'][ret.time] = [0];
+            ret.properties['volume'][layer.outPoint] = [0];
+            continue;
+        }
         var propName = pmk;
         if(PropertyMapping[pmk].name)
             propName = PropertyMapping[pmk].name;
@@ -359,7 +381,6 @@ Export.prototype.exportLayer = function(layer) {
                     continue;
                 throw e;
             }
-
 
             if(!ret.properties[propName]) {
                 ret.properties[propName] = {};

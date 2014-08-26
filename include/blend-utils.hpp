@@ -13,9 +13,9 @@ using namespace cv;
  */
 
 enum BlendMode {
-    NONE = -1, DEFAUT=0, ADD, MULTIPLY, SCREEN, 
-    DISOLVE = 4, DARKEN, LIGHTEN, OVERLAY,
-    DIFFERENCE 
+    NONE = -1, DEFAUT = 0,
+    ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,
+    LIGHTEN, OVERLAY, DIFFERENCE 
 };
 
 /*
