@@ -69,14 +69,13 @@ CCPLUS_FILTER(lens_flare) {
                 //Vec4b& m = mask.at<Vec4b>(y + p.y, x + p.x);
                 Vec4b& m = frame.getImage().at<Vec4b>(y + p.y, x + p.x);
                 float oalpha = m[3] / 255.0;
-                //float nalpha = col[3] / 255.0 + m[3] / 255.0 - col[3] * m[3] / 255.0 / 255.0;
+                float nalpha = oalpha + opacity - oalpha * opacity;
                 for (int k = 0; k < 3; k++) {
-                    float tmp = m[k] + col[k] * opacity;
-                    m[k] = between<int>(tmp, 0, 255);
+                    float tmp = m[k] * oalpha + col[k] * opacity;
+                    m[k] = between<int>(tmp / nalpha, 0, 255);
                 }
                 //if (m[0] != 0 && m[1] != 0 && m[2] != 0)
-                m[3] = oalpha + opacity - oalpha * opacity;
-                m[3] *= 255.0;
+                m[3] = nalpha * 255.0;
             }
         }
     }

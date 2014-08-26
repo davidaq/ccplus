@@ -100,6 +100,28 @@ CCPLUS_FILTER(transform) {
         finalTrans = trans * finalTrans;
     }
 
+    auto at = [&finalTrans] (int i, int j) {
+        return finalTrans.at<double>(i, j);
+    };
+    auto nonZero = [&at] (int i, int j) {
+        return std::abs(at(i, j)) > 0.00001;
+    };
+    bool affine = true;
+    if (nonZero(0, 2) || nonZero(1, 2) || nonZero(2, 0) ||
+        nonZero(2, 1) || nonZero(2, 3)) 
+        affine = false;
+    if (affine) {
+        Mat affineMat = (Mat_<double>(2, 3) << 
+                at(0, 0), at(0, 1), at(0, 3),
+                at(1, 0), at(1, 1), at(1, 3));
+        Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        profile(Filter_transform_affine) {
+            warpAffine(input, ret, affineMat, {width, height});
+        }
+        frame.setImage(ret);
+        return;
+    }
+
     auto apply = [](Mat trans, float x, float y, float z) {
         double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
             trans.at<double>(3, 2) * z + trans.at<double>(3, 3);
