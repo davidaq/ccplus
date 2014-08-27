@@ -42,12 +42,12 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     if(!ctxHandle)
         return;
     UserContext* uCtx = (UserContext*) ctxHandle;
-    if(length < 0)
-        length = uCtx->mainComp->getDuration();
     while (start > uCtx->mainComp->getDuration())
         start -= uCtx->mainComp->getDuration();
     while (start < 0)
         start += uCtx->mainComp->getDuration();
+    if(length < 0)
+        length = uCtx->mainComp->getDuration() - start;
     log(logINFO) << "Start rendering...... start:" << start << " length:" << length;
     uCtx->mainComp->setForceRenderToFile(true);
     std::vector<CCPlus::CompositionDependency> deps = uCtx->mainComp->fullOrderedDependency(start, start + length);
@@ -78,8 +78,13 @@ void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
         return;
     log(logINFO) << "Encoding video......";
     UserContext* uCtx = (UserContext*) ctxHandle;
+    // TODO: duplicate code with renderPart
+    while (start > uCtx->mainComp->getDuration())
+        start -= uCtx->mainComp->getDuration();
+    while (start < 0)
+        start += uCtx->mainComp->getDuration();
     if(length < 0)
-        length = uCtx->mainComp->getDuration();
+        length = uCtx->mainComp->getDuration() - start;
     float inter = 1.0 / uCtx->ctx->getFPS();
     VideoEncoder encoder(uCtx->ctx->getStoragePath() + "/result.mp4", uCtx->ctx->getFPS());
     for (float i = 0.0; i < length; i += inter) {
