@@ -8,6 +8,7 @@
 #include <list>
 #include <pthread.h>
 #include <algorithm>
+#include <utility>
 
 using namespace CCPlus;
 
@@ -29,13 +30,39 @@ const std::string& Composition::getName() const {
 
 std::vector<CompositionDependency> Composition::directDependency(float from, float to) const {
     std::vector<CompositionDependency> dps;
+    std::vector<std::pair<float, float>> fromto;
+    if (to == from) return dps;
+    if (to - from >= this->duration) {
+        fromto.push_back(std::make_pair(0, this->duration));
+    } else if (to - from < this->duration && to > from) {
+        fromto.push_back(std::make_pair(from, to));
+    } else {
+        fromto.push_back(std::make_pair(0, to));
+        fromto.push_back(std::make_pair(from, this->duration));
+    }
     for(Layer layer : getLayers()) {
-        if(layer.getTime() < to && layer.getTime() + layer.getDuration() > from) {
-            CompositionDependency dp;
-            dp.renderable = layer.getRenderObject();
-            dp.from = layer.getStart();
-            dp.to = layer.getStart() + layer.getLast();
-            dps.push_back(dp);
+        for (auto& ft : fromto) {
+            float from = ft.first;
+            float to = ft.second;
+            if(layer.getTime() < to && 
+               layer.getTime() + layer.getDuration() > from) {
+                // Respect to the composition timeline
+                float layerFrom = std::max(from, layer.getTime());
+                float layerTo = std::min(to, 
+                        layer.getTime() + layer.getDuration());
+                CompositionDependency dp;
+                dp.renderable = layer.getRenderObject();
+                //dp.from = layer.getStart(); 
+                //dp.to = layer.getStart() + layer.getLast();
+                // Partial dependency
+                dp.from = layer.getStart() + 
+                    (layerFrom - layer.getTime()) / 
+                    layer.getDuration() * layer.getLast();
+                dp.to = layer.getStart() + 
+                    (layerTo - layer.getTime()) / 
+                    layer.getDuration() * layer.getLast();
+                dps.push_back(dp);
+            }
         }
     }
     return dps;
