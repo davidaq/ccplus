@@ -1,5 +1,6 @@
 #include "file.hpp"
 #include <string>
+#include <cstring>
 #include "logger.hpp"
 
 using namespace CCPlus;
