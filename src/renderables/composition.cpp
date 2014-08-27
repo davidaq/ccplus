@@ -69,7 +69,7 @@ std::vector<CompositionDependency> Composition::directDependency(float from, flo
 }
 
 bool compositionDependencyCompare(CompositionDependency c1, CompositionDependency c2) {
-    return c1.from < c2.from;
+    return c1.from < c2.from || (c1.from == c2.from && c1.to < c2.to);
 }
 
 std::vector<CompositionDependency> Composition::fullOrderedDependency(float from, float to) const {
@@ -106,8 +106,9 @@ std::vector<CompositionDependency> Composition::fullOrderedDependency(float from
         std::sort(map[r].begin(), map[r].end(), compositionDependencyCompare);
         CompositionDependency candidate;
         candidate.renderable = r;
-        candidate.from = 0;
-        candidate.to = -1;
+        //candidate.from = 0;
+        candidate.from = map[r][0].from;
+        candidate.to = -1000000000;
         for(CompositionDependency dep : map[r]) {
             if(dep.from > candidate.to) {
                 if(candidate.to > candidate.from) {
