@@ -69,6 +69,7 @@ float addBlend(float ca, float cb, float qa, float qb) {
 }
 
 float multiplyBlend(float ca, float cb, float qa, float qb) {
+    return ca * cb;
     return (1 - qa) * cb + (1 - qb) * ca + ca * cb;
 }
 

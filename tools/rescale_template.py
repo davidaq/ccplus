@@ -6,6 +6,7 @@ from json import JSONEncoder
 import string
 import os
 import sys
+import rgb_video
 
 class Resizer():
     def __init__(self, tmlfile):
@@ -39,7 +40,14 @@ class Resizer():
             fsz = self.favoredsize(sz)
             src_file = self.dirname + f
             out_file = self.dirname + '(resized)' + os.path.sep + f
-            os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
+            if out_file[-4:].lower() in ['.mp3','.aac','.wma','.rm','.wav','.flac','.ogg']:
+                os.system('ffmpeg -i "' + src_file + '" -c:v copy -c:a copy -n "' + out_file + '"')
+            elif out_file[-4:].lower() == '.mov':
+                os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
+                rgb_video.export(out_file)
+                os.remove(out_file)
+            else:
+                os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
     def preparedir(self):
         #rmdir(self.dirname + '(resized)' + os.path.sep)
@@ -51,7 +59,7 @@ class Resizer():
             try:
                 os.mkdir(dir)
             except:
-                print dir, ' exists'
+                print(dir + ' exists');
 
     def resizetml(self):
         comps = self.tml['compositions']
@@ -116,7 +124,6 @@ class Resizer():
             h = maxheight
             w *= scale
         self.scale = scale
-        print 'resize ratio: ', self.scale
         self.resizefiles()
         self.resizetml()
 
@@ -139,7 +146,7 @@ class Resizer():
 
 def main():
     if len(sys.argv) <= 1:
-        print 'Please specify input tml file'
+        print('Please specify input tml file')
         return
     fname = sys.argv[1];
     resizer = Resizer(fname)
@@ -149,7 +156,11 @@ def main():
     else:
         scale = '640x360'
     scale = scale.split('x')
-    resizer.downsize(int(scale[0]), int(scale[1]))
+    w = int(scale[0])
+    h = w
+    if len(scale) > 1:
+        h = int(scale[1])
+    resizer.downsize(w, h)
 
 '''Utility functions'''
 def filedir(filename):
