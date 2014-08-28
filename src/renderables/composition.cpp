@@ -186,37 +186,25 @@ void Composition::renderPart(float start, float duration) {
                     flag = true;
                 } else {
                     bool first = true; 
-                    //for (Layer& l : layers) {
-                    //    Frame frame = l.applyFiltersToFrame(now_t);
-                    //    if (frame.empty()) continue;
-                    //    if (first) {
-                    //        ret = frame;
-                    //        first = false;
-                    //    } else {
-                    //        profileBegin(MergeFrame);
-                    //        ret.mergeFrame(frame, l.getBlendMode());
-                    //        profileEnd(MergeFrame);
-                    //    }
-                    //}
-                    for (int i = layers.size() - 1; i >= 0; i--) {
-                        Layer l = layers[i];
-                        Frame frame = l.applyFiltersToFrame(now_t);
-                        if (frame.empty()) continue;
-                        if (first) {
-                            ret = frame;
-                            if (l.getBlendMode() != 0) {
-                                ret.mergeFrame(
-                                        Frame::emptyFrame(
-                                            ret.getWidth(), 
-                                            ret.getHeight()), 
-                                        l.getBlendMode());
+                    profile(MergeFrame) {
+                        for (int i = layers.size() - 1; i >= 0; i--) {
+                            Layer l = layers[i];
+                            Frame frame = l.applyFiltersToFrame(now_t);
+                            if (frame.empty()) continue;
+                            if (first) {
+                                ret = frame;
+                                if (l.getBlendMode() != 0) {
+                                    ret.mergeFrame(
+                                            Frame::emptyFrame(
+                                                ret.getWidth(), 
+                                                ret.getHeight()), 
+                                            l.getBlendMode());
+                                }
+                                first = false;
+                            } else {
+                                frame.mergeFrame(ret, l.getBlendMode());
+                                ret = frame;
                             }
-                            first = false;
-                        } else {
-                            profileBegin(MergeFrame);
-                            frame.mergeFrame(ret, l.getBlendMode());
-                            profileEnd(MergeFrame);
-                            ret = frame;
                         }
                     }
                 }

@@ -309,8 +309,7 @@ void Frame::mergeAudio(const Frame& f) {
     }
 }
 
-void Frame::overlayImage(const cv::Mat& input, 
-        const std::function<Vec4b(Vec4b, Vec4b)>& blend) {
+void Frame::overlayImage(const cv::Mat& input, BLENDER_CORE blend) {
     if (input.empty()) return;
     // When pure audio frame merges visible frame  
     if (image.empty()) {
@@ -330,7 +329,7 @@ void Frame::overlayImage(const cv::Mat& input,
 
     for (int i = 0; i < this->getHeight(); i++) { 
         for (int j = 0; j < this->getWidth(); j++) {
-            image.at<Vec4b>(i, j) = blend(image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
+            image.at<Vec4b>(i, j) = blendWithBlender(blend, image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
         }
     }
 }

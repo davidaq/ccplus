@@ -11,6 +11,8 @@ namespace CCPlus {
     class Frame;
 }
 
+typedef uint (*BLENDER_CORE)(uint, uint, uint, uint);
+
 class CCPlus::Frame : public CCPlus::Object {
 public:
     Frame(const std::string& filepath);
@@ -57,8 +59,7 @@ private:
      * Put @input *UNDER* this image
      * REQUIRE: img must be a RGBA image
      */
-    void overlayImage(const cv::Mat& input,
-            const std::function<cv::Vec4b(cv::Vec4b, cv::Vec4b)>& blend);
+    void overlayImage(const cv::Mat& input, BLENDER_CORE blend);
     void rotateCWRightAngle(int angle);
     void to4Channels();
 

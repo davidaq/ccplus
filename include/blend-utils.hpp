@@ -28,18 +28,47 @@ enum BlendMode {
  * Return
  * @ Premultiplied color 0 ~ 255
  */
-#define BLENDER_CORE std::function<float(float, float, float, float)>
+// Just maybe, function pointers maybe smaller and faster than std::function
+//#define BLENDER_CORE std::function<uint(uint, uint, uint, uint)>
+typedef uint (*BLENDER_CORE)(uint, uint, uint, uint);
 #define BLENDER std::function<cv::Vec4b(cv::Vec4b, cv::Vec4b)>
+#define uint unsigned int
 
-BLENDER getBlender(int mode);
+BLENDER_CORE getBlender(int mode);
 
-float defaultBlend(float ca, float cb, float qa, float qb);
-float noneBlend(float ca, float cb, float qa, float qb);
-float addBlend(float ca, float cb, float qa, float qb);
-float multiplyBlend(float ca, float cb, float qa, float qb);
-float screenBlend(float ca, float cb, float qa, float qb);
-float disolveBlend(float ca, float cb, float qa, float qb);
-float darkenBlend(float ca, float cb, float qa, float qb);
-float lightenBlend(float ca, float cb, float qa, float qb);
-float overlayBlend(float ca, float cb, float qa, float qb);
-float differenceBlend(float ca, float cb, float qa, float qb);
+uint defaultBlend(uint ca, uint cb, uint qa, uint qb);
+uint noneBlend(uint ca, uint cb, uint qa, uint qb);
+uint addBlend(uint ca, uint cb, uint qa, uint qb);
+uint multiplyBlend(uint ca, uint cb, uint qa, uint qb);
+uint screenBlend(uint ca, uint cb, uint qa, uint qb);
+uint disolveBlend(uint ca, uint cb, uint qa, uint qb);
+uint darkenBlend(uint ca, uint cb, uint qa, uint qb);
+uint lightenBlend(uint ca, uint cb, uint qa, uint qb);
+uint overlayBlend(uint ca, uint cb, uint qa, uint qb);
+uint differenceBlend(uint ca, uint cb, uint qa, uint qb);
+
+static inline uint alphaComposing(uint a, uint b) {
+    return a + b - ((a * b) >> 8);
+}
+static inline Vec4b blendWithBlender(BLENDER_CORE blender, Vec4b top, Vec4b down) {
+    // Some black magic constant time optimizer
+    // TODO: more and a better way
+    if (blender != disolveBlend && top[3] == 0) return down;
+    if (blender != disolveBlend && down[3] == 0) return top;
+    if ((blender == defaultBlend || blender == disolveBlend) && top[3] == 255) 
+        return top; 
+    if (blender == noneBlend) return top;
+
+    Vec4b ret = {0, 0, 0, 0};
+
+    uint topAlpha = (top[3] << 8) / 255;
+    uint downAlpha = (down[3] << 8) / 255.0;
+    uint retAlpha = alphaComposing(topAlpha, downAlpha);
+    for (int i = 0; i < 3; i++) {
+        uint ca = ((top[i] << 8) / 255 * topAlpha) >> 8;
+        uint cb = ((down[i] << 8) / 255 * downAlpha) >> 8;
+        ret[i] = min<uint>((blender(ca, cb, topAlpha, downAlpha) * 255) >> 8, 255);
+    }
+    ret[3] = (retAlpha * 255) >> 8;
+    return ret;
+}
