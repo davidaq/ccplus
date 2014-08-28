@@ -33,7 +33,7 @@ BLENDER getBlender(int mode) {
         log(CCPlus::logFATAL) << "Mode " << mode << " is not suppported";
     }
     BLENDER_CORE core = blendMap.at(mode); 
-    return [&core, mode] (Vec4b top, Vec4b down) {
+    return [core, mode] (Vec4b top, Vec4b down) {
         // Some black magic constant time optimizer
         // TODO: more and a better way
         if (mode != DISOLVE && top[3] == 0) return down;
