@@ -13,7 +13,6 @@
 using namespace CCPlus;
 using namespace cv;
 
-typedef uint32_t ulong;
 typedef uint16_t ushort;
 
 Frame::Frame(const std::string& filepath) {
@@ -36,7 +35,7 @@ Frame::Frame(const std::string& filepath) {
         /* 
          * Read jpg part
          */
-        ulong jpgLen = NEXT(ulong);
+        uint32_t jpgLen = NEXT(uint32_t);
         if (jpgLen >= 125) {
             vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
             profile(DecodeImage) {
@@ -49,7 +48,7 @@ Frame::Frame(const std::string& filepath) {
         /*
          * Read alpha channel
          */
-        ulong alphaLen = NEXT(ulong);
+        uint32_t alphaLen = NEXT(uint32_t);
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
         int ret = 0;
@@ -67,8 +66,8 @@ Frame::Frame(const std::string& filepath) {
         /*
          * Read audio channel
          */
-        ulong audioLen = NEXT(ulong);
-        ulong audioRealByteLen = NEXT(ulong);
+        uint32_t audioLen = NEXT(uint32_t);
+        uint32_t audioRealByteLen = NEXT(uint32_t);
         if (CCPlus::COMPRESS_AUDIO) {  
             unsigned char* audioData = new unsigned char[audioRealByteLen];
             destLen = (unsigned long)0x7fffffff;
@@ -184,7 +183,7 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
                         vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
             }
         }
-        ulong jpgLen = buff.size();
+        uint32_t jpgLen = buff.size();
         outFile.write(&jpgLen, sizeof(jpgLen));
         if (!image.empty())
             outFile.write(&buff[0], sizeof(char), jpgLen);
@@ -208,7 +207,7 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
             outFile.close();
             log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
         }
-        ulong wlen = tmplen;
+        uint32_t wlen = tmplen;
         outFile.write(&wlen, sizeof(wlen));
         outFile.write(compressedBytes, sizeof(char), wlen);
 
@@ -226,7 +225,6 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
                 outFile.close();
                 log(logFATAL) << "Failed compressing audio " << ret;
             }
-            // ulong is NOT unsigned long
             wlen = tmp;
             outFile.write(&wlen, sizeof(wlen));
             wlen = len * 2;
