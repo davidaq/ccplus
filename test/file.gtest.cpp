@@ -40,4 +40,5 @@ TEST(FileUtil, ReadWrite) {
     }
     delete[] ret;
     f->close();
+    fileManager.clear();
 }
