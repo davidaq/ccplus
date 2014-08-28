@@ -47,6 +47,12 @@ BLENDER getBlender(int mode) {
         float downAlpha = down[3] / 255.0;
         float retAlpha = alphaComposing(topAlpha, downAlpha);
         for (int i = 0; i < 3; i++) {
+            //if (mode == MULTIPLY) {
+            //    float ca = top[i] / 255.0;
+            //    float cb = down[i] / 255.0;
+            //    ret[i] = between<int>(ca * cb * 255.0, 0, 255);
+            //    continue;
+            //}
             float ca = top[i] / 255.0 * topAlpha;
             float cb = down[i] / 255.0 * downAlpha;
             ret[i] = between<int>(core(ca, cb, topAlpha, downAlpha) / retAlpha * 255.0, 0, 255);
@@ -69,7 +75,6 @@ float addBlend(float ca, float cb, float qa, float qb) {
 }
 
 float multiplyBlend(float ca, float cb, float qa, float qb) {
-    return ca * cb;
     return (1 - qa) * cb + (1 - qb) * ca + ca * cb;
 }
 
@@ -97,9 +102,9 @@ float lightenBlend(float ca, float cb, float qa, float qb) {
 // TODO: Somebody comes to verify it please. 
 // It's slightly different from the formula in Wikipedia
 float overlayBlend(float ca, float cb, float qa, float qb) {
-    if (qa < 0.5)
+    if (ca < 0.5)
         return multiplyBlend(ca, cb, qa, qb) * 2.0; 
-    return screenBlend(ca, cb, qa, qb);
+    return 1 - 2 * (1 - ca) * (1 - cb);
 }
 
 float differenceBlend(float ca, float cb, float qa, float qb) {
