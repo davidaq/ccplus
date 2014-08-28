@@ -21,10 +21,14 @@ FileManager* FileManager::getInstance() {
 void FileManager::clear() {
     pthread_mutex_lock(&storageLock);
     for (auto& kv : storage) 
+    {
+        //L() << kv.first;
         delete kv.second;
+    }
     storage.clear();
     pthread_mutex_unlock(&storageLock);
     pthread_mutex_lock(&linksLock);
+    //L();
     links.clear();
     pthread_mutex_unlock(&linksLock);
 }

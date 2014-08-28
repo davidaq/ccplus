@@ -34,6 +34,15 @@
             }],
             ['OS=="android"', {
             }],
+            ['OS=="linux"', {
+                'cflags': ['-pthread'],
+                'cxxflags': ['-pthread'],
+                'link_settings':{
+                    "libraries":[
+                        "-pthread"
+                    ]
+                }
+            }],
         ],
         'configurations': {
             'Debug': {

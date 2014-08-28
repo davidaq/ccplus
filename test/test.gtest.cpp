@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "ccplus.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
 
@@ -47,6 +48,6 @@ TEST(Experiment, VectorExperiment) {
 }
 
 TEST(Experiment, TEST) {
-    //Frame f("test/res/6cd76271-8f09-42d8-a507-72409d3c4ac6_0.zim");
-    //L() << (int)f.getAudio().total();
+    CCPlus::fillTML("../result/data/proj.js", "../result/data/ret.tml");
+    CCPlus::go("../result/data/ret.tml", "tmp/", 0, -1);
 }

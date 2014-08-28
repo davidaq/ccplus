@@ -43,7 +43,7 @@ build/Makefile: .dependency
 testbuild: build/Makefile
 	-rm -rf tmp/
 	mkdir tmp/
-	BUILDTYPE=Debug make -C ./build/ test -j4
+	CC=gcc CXX=g++ BUILDTYPE=Debug make -C ./build/ test -j4
 
 build/android/_:
 	mkdir -p build/android/

@@ -123,6 +123,7 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     std::ofstream fileStream;
     fileStream.open(outputPath);
     write_json(fileStream, tmlt, true);
+    log(logINFO) << "---Successfully fill tml file! ---";
 }
 
 
