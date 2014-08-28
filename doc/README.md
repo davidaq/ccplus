@@ -32,7 +32,7 @@ with a working component (executables or libraries) providing an
 interface to access the features of CCPlus.
 
  - **Windows/Linux/OS X** - a command line executable tool
- - **Android** - a *.so dynamic library 
+ - **Android** - a *.so dynamic library along with a Java interface class
  - **iOS** - a framework package
 
 Differences with Adobe After Effects Render Engine
