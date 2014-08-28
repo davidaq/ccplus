@@ -11,6 +11,9 @@ var PropertyMapping = {
             'Effects/Ramp/Ramp Shape',
             'Effects/Ramp/Blend With Original'
         ],
+        alias:{
+            'Ramp':'Gradient Ramp'
+        },
         set:function(startPos, startColor, endPos, endColor, shape, blend) {
             return [
                 shape == 1 ? -1 : 1,
@@ -22,7 +25,8 @@ var PropertyMapping = {
             ];
         }
     },
-    '4color':{
+    grad4color:{
+        name:'4color',
         map:[
             'Effects/4-Color Gradient/Point 1',
             'Effects/4-Color Gradient/Color 1',
@@ -143,22 +147,18 @@ var PropertyMapping = {
         },
         error:[0.1, 0.001]
     },
-    hsl1:{
-        name:'hsl',
+    hsl:{
         map:[
             ['Effects','Hue/Saturation','Master Hue'],
             ['Effects','Hue/Saturation','Master Saturation'],
             ['Effects','Hue/Saturation','Master Lightness'],
         ],
-        set:function(h,s,l) {
-            return [
-                h / 2, 1 + s / 100, 1 + l / 100
-            ];
-        }
-    },
-    hsl2:{
-        name:'hsl',
-        map:['Effects/Color Balance (HLS)/Hue','Effects/Color Balance (HLS)/Saturation','Effects/Color Balance (HLS)/Lightness'],
+        alias:{
+            'Hue/Saturation':'Color Balance (HLS)',
+            'Master Hue':'Hue',
+            'Master Saturation':'Saturation',
+            'Master Lightness':'Lightness'
+        },
         set:function(h,s,l) {
             return [
                 h / 2, 1 + s / 100, 1 + l / 100
@@ -190,16 +190,27 @@ var PropertyMapping = {
 /*
  * Blend Mode map
  */
+//var blendingModes = {
+//    4412: 0,
+//    4420: 1,
+//    4416: 2,
+//    4422: 3,
+//    4413: 4,
+//    4415: 5,
+//    4421: 6,
+//    4426: 7,
+//    4433: 8
+//};
 var blendingModes = {
-    4412: 0,
-    4420: 1,
-    4416: 2,
-    4422: 3,
-    4413: 4,
-    4415: 5,
-    4421: 6,
-    4426: 7,
-    4433: 8
+    4612: 0,
+    4620: 1,
+    4616: 2,
+    4622: 3,
+    4613: 4,
+    4615: 5,
+    4621: 6,
+    4626: 7,
+    4633: 8
 };
 /*
  * Export logic
@@ -318,6 +329,9 @@ Export.prototype.exportLayer = function(layer) {
             propName = PropertyMapping[pmk].name;
         log('    Export property: ' + pmk);
         var proced = false;
+        var alias = PropertyMapping[pmk].alias;
+        if(!alias)
+            alias = {};
         for(var t = ret.time; ; t += 0.1) {
             if(t > layer.outPoint) {
                 if(proced)
@@ -344,6 +358,9 @@ Export.prototype.exportLayer = function(layer) {
                             var pname = kpath[pk];
                             if(isFinite(pname))
                                 pname = pname * 1;
+                            if(!val.property(pname) && alias[pname]) {
+                                pname = alias[pname];
+                            }
                             val = val.property(pname);
                         }
                         val = val.valueAtTime(t, false);

@@ -29,13 +29,13 @@ def extract_video(videofile):
 def filter_alpha(videofile):
     tmpdir = videofile + '__frames/'
     for frame in os.listdir(tmpdir):
-        fp = open(tmpdir + frame)
+        fp = open(tmpdir + frame, 'rb')
         data = fp.read()
         fp.close()
         alpha = bytearray()
         for i in range(0, len(data) / 4):
             alpha.append(data[i * 4])
-        fp = open(tmpdir + frame, 'w')
+        fp = open(tmpdir + frame, 'wb')
         fp.write(alpha)
         fp.close()
 
