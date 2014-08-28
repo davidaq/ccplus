@@ -40,7 +40,6 @@ cv::Mat MatCache::get(const std::string& hashname, std::function<cv::Mat()> logi
         while(cacheQueue.size() > 20) {
             cachePool.erase(cacheQueue.front());
             cacheQueue.pop_front();
-            L() << "Erase cache";
         }
     }
     pthread_mutex_unlock(&cacheLock);
