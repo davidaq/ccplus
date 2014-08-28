@@ -135,7 +135,7 @@ class Resizer():
         for path in self.tml['usedcolors']:
             color = self.tml['usedcolors'][path]
             rawpath = self.dirname + path + '.raw'
-            cfile = open(rawpath, 'w')
+            cfile = open(rawpath, 'wb')
             content = bytearray()
             for i in range(0, 3):
                 c = int(float(color['color'][i]) * 255)
