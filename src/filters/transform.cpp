@@ -116,7 +116,7 @@ CCPLUS_FILTER(transform) {
                 at(1, 0), at(1, 1), at(1, 3));
         Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height});
+            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
         }
         frame.setImage(ret);
         return;
