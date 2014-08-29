@@ -129,7 +129,7 @@ Frame VideoDecoder::getDecodedImage() {
             decodeContext->swsContext = sws_getContext(decodeContext->info.width, decodeContext->info.height, 
                                             decodeContext->video_dec_ctx->pix_fmt,
                                             decodeContext->info.width, decodeContext->info.height,
-                                            PIX_FMT_BGRA, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                                            PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
             decodeContext->imagebuff.linesize[0] = decodeContext->info.width * 4;
             decodeContext->imagebuff.data[0] = (uint8_t*)malloc(decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
         }
