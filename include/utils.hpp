@@ -21,6 +21,14 @@ static inline double getSystemTime() {
     return tmp / 1000000.0;
 }
 
+inline bool file_exists(const std::string& s) {
+    if (FILE* file = fopen(s.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } 
+    return false;
+}
+
 // Thread-safe time
 static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
     char str[n];
