@@ -57,8 +57,12 @@ CCPLUS_FILTER(lens_flare) {
         auto access = [&flare, fsize] (Point2f t) {
             float tmp_x = t.x * 1.0 / fsize * 360.0;
             float tmp_y = t.y * 1.0 / fsize * 360.0;
-            return flare.at<Vec3b>(std::round(tmp_y), std::round(tmp_x));
+            int cols = flare.cols;
+            int i = std::round(tmp_y), j = std::round(tmp_x);
+            return flare.ptr<Vec3b>(0)[i * cols + j];
+            //return flare.at<Vec3b>(std::round(tmp_y), std::round(tmp_x));
         };
+        Vec4b* ptr = frame.getImage().ptr<Vec4b>(0);
         for (int x = 0; x < fsize; x++) {
             for (int y = 0; y < fsize; y++) {
                 Vec3b col = access(Point2f(x, y));
@@ -66,15 +70,15 @@ CCPLUS_FILTER(lens_flare) {
                     y + p.y >= frame.getHeight() || 
                     x + p.x >= frame.getWidth())
                     continue;
-                //Vec4b& m = mask.at<Vec4b>(y + p.y, x + p.x);
-                Vec4b& m = frame.getImage().at<Vec4b>(y + p.y, x + p.x);
+                //Vec4b& m = frame.getImage().at<Vec4b>(y + p.y, x + p.x);
+                int cols = frame.getImage().cols;
+                Vec4b& m = ptr[(y + (int)p.y) * cols + x + (int)p.x];
                 float oalpha = m[3] / 255.0;
                 float nalpha = oalpha + opacity - oalpha * opacity;
                 for (int k = 0; k < 3; k++) {
                     float tmp = m[k] * oalpha + col[k] * opacity;
                     m[k] = between<int>(tmp / nalpha, 0, 255);
                 }
-                //if (m[0] != 0 && m[1] != 0 && m[2] != 0)
                 m[3] = nalpha * 255.0;
             }
         }
