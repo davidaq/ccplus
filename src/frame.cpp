@@ -328,8 +328,11 @@ void Frame::overlayImage(const cv::Mat& input, BLENDER_CORE blend) {
     }
 
     for (int i = 0; i < this->getHeight(); i++) { 
+        cv::Vec4b* imagePixel = image.ptr<cv::Vec4b>(i);
+        const cv::Vec4b* inputPixel = input.ptr<cv::Vec4b>(i);
         for (int j = 0; j < this->getWidth(); j++) {
-            image.at<Vec4b>(i, j) = blendWithBlender(blend, image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
+            imagePixel[j] = blendWithBlender(blend, imagePixel[j], inputPixel[j]);
+            //image.at<Vec4b>(i, j) = blendWithBlender(blend, image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
         }
     }
 }
