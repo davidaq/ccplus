@@ -208,7 +208,8 @@ CCPLUS_FILTER(transform) {
             pPtr[j][0] = x;
             pPtr[j][1] = y;
 
-            // Magical numbers tested from OpenCV convertMaps
+            // Keep only one digit after decimal point
+            // using magical numbers tested from OpenCV convertMaps
             const static int dxMapping[] = {0, 3, 6, 10, 13, 16, 19, 22, 26, 29};
             const static int dyMapping[] = {0, 96, 192, 320, 416, 512, 608, 704, 832, 928};
             int dx = (x - (int)x) * 10;

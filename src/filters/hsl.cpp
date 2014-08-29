@@ -17,34 +17,31 @@ CCPLUS_FILTER(hsl) {
     
     Mat &img = frame.getImage();
 
-    for(int y = 0; y < img.rows; y++) {
-        Vec4b* ptr = img.ptr<Vec4b>(y);
-        for(int x = 0; x < img.cols; x++) {
-            //Vec4b &pixel = img.at<Vec4b>(y, x);
-            Vec4b& pixel = ptr[x];
-            bgr2hsl(pixel);
-            int p = pixel[0];
-            p += hue;
-            while(p >= 180)
-                p -= 180;
-            while(p < 0)
-                p += 180;
-            pixel[0] = p;
-            
-            // L
-            float now_lit = pixel[1];
-            float diff = (lit - 1.0) * (lit > 1.0 ? (255 - now_lit) : now_lit);
-            float ret = between<float>(now_lit + diff, 0.0, 255.0);
-            pixel[1] = (unsigned char) ret;
+    Vec4b* ptr = img.ptr<Vec4b>(0);
+    for(int i = 0, c = img.total(); i < c; i++) {
+        Vec4b& pixel = *(ptr++);
+        bgr2hsl(pixel);
+        int p = pixel[0];
+        p += hue;
+        while(p >= 180)
+            p -= 180;
+        while(p < 0)
+            p += 180;
+        pixel[0] = p;
+        
+        // L
+        float now_lit = pixel[1];
+        float diff = (lit - 1.0) * (lit > 1.0 ? (255 - now_lit) : now_lit);
+        float ret = between<float>(now_lit + diff, 0.0, 255.0);
+        pixel[1] = (unsigned char) ret;
 
-            // S
-            float now_sat = pixel[2];
-            diff = (sat - 1.0) * (sat > 1.0 ? (255 - now_sat) : now_sat);
-            ret = between<float>(now_sat + diff, 0.0, 255.0);
-            pixel[2] = (unsigned char) ret;
+        // S
+        float now_sat = pixel[2];
+        diff = (sat - 1.0) * (sat > 1.0 ? (255 - now_sat) : now_sat);
+        ret = between<float>(now_sat + diff, 0.0, 255.0);
+        pixel[2] = (unsigned char) ret;
 
-            hsl2bgr(pixel);
-        }
+        hsl2bgr(pixel);
     }
 }
 
@@ -64,13 +61,13 @@ void bgr2hsl(Vec4b& pixel) {
         h = 0;
     } else if(max == r) {
         if(g >= b)
-            h = (30 * (g - b)) / (max - min);
+            h = (g - b) * 30 / (max - min);
         else
-            h = (30 + (g - b)) / (max - min) + 180;
+            h = (g - b) * 30 / (max - min) + 180;
     } else if(max == g) {
-        h = (30 * (b - r) / (max - min)) + 60;
+        h = ((b - r) * 30 / (max - min)) + 60;
     } else {
-        h = (30 * (r - g) / (max - min)) + 120;
+        h = ((r - g) * 30 / (max - min)) + 120;
     }
     l = (max + min) / 2;
     if(l == 0 || max == min)
