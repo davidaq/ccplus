@@ -50,7 +50,7 @@ uint differenceBlend(uint ca, uint cb, uint qa, uint qb);
 static inline uint alphaComposing(uint a, uint b) {
     return a + b - ((a * b) >> 8);
 }
-static inline Vec4b blendWithBlender(BLENDER_CORE blender, Vec4b top, Vec4b down) {
+static inline Vec4b blendWithBlender(BLENDER_CORE blender, const Vec4b& top, const Vec4b& down) {
     // Some black magic constant time optimizer
     // TODO: more and a better way
     if (blender != disolveBlend && top[3] == 0) return down;

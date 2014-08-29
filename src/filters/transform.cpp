@@ -192,20 +192,23 @@ CCPLUS_FILTER(transform) {
     xMax = std::min(xMax, (float)width);
     yMin = std::max(yMin, 0.f);
     yMax = std::min(yMax, (float)height);
-    profile(Filter_transform_map_func) {
-        for (int i = yMin; i < yMax; i++)
-            for (int j = xMin; j < xMax; j++) {
-                float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
-                float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
-                float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
 
-                x /= z;
-                y /= z;
-                pixelMappingX.at<float>(i, j) = x;
-                pixelMappingY.at<float>(i, j) = y;
-            }
+    profileBegin(Filter_transform_map_func);
+
+    for (int i = yMin; i < yMax; i++) {
+        for (int j = xMin; j < xMax; j++) {
+            float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
+            float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
+            float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
+
+            x /= z;
+            y /= z;
+            pixelMappingX.at<float>(i, j) = x;
+            pixelMappingY.at<float>(i, j) = y;
+        }
     }
-    //cv::convertMaps(pixelMappingX, pixelMappingY, pixelMappingX, pixelMappingY, CV_16SC2, false);
+    profileEnd(Filter_transform_map_func);
+
     profile(Filter_transform_remap) {
         cv::remap(input, ret, pixelMappingX, pixelMappingY, CV_INTER_LINEAR, BORDER_TRANSPARENT);
     }
