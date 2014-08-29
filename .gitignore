@@ -54,3 +54,6 @@ dependency/
 # tmp
 tmp/
 port/
+
+# Test
+test/test.gtest.cpp

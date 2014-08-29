@@ -103,18 +103,20 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
 
     // Append background musc
     try {
-        std::string musicPath = jsont.get<std::string>("musicURL");
         std::string mainCompName = tmlt.get<std::string>("main");
         ptree& mainComp = tmlt.get_child("compositions." + mainCompName);
         float duration = mainComp.get<float>("duration");
-        ptree bmusic;
-        bmusic.put("uri", "file://" + musicPath);
-        bmusic.put("start", 0.f);
-        bmusic.put("duration", duration);
-        bmusic.put("time", 0.f);
-        bmusic.put("last", duration);
-        bmusic.put_child("properties", ptree());
-        mainComp.get_child("layers").push_back(std::make_pair("", bmusic));
+        std::string musicPath = jsont.get<std::string>("musicURL", "");
+        if (musicPath != "") {
+            ptree bmusic;
+            bmusic.put("uri", "file://" + musicPath);
+            bmusic.put("start", 0.f);
+            bmusic.put("duration", duration);
+            bmusic.put("time", 0.f);
+            bmusic.put("last", duration);
+            bmusic.put_child("properties", ptree());
+            mainComp.get_child("layers").push_back(std::make_pair("", bmusic));
+        }
     } catch (...) {
     } 
 

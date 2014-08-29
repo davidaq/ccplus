@@ -179,11 +179,14 @@ void Composition::renderPart(float start, float duration) {
 
                 bool flag = false;
                 if (rendered.count(lastFrame) && this->still(last_t, now_t)) {
-                    //L() << this->getName() << last_t << " and " << now_t;
-                    FileManager::getInstance()->addLink(
-                            this->getFramePath(f), 
-                            this->getFramePath(lastFrame));
-                    flag = true;
+                    if(renderToFile) {
+                        ret = this->getFrameByNumber(lastFrame);
+                    } else {
+                        FileManager::getInstance()->addLink(
+                                this->getFramePath(f), 
+                                this->getFramePath(lastFrame));
+                        flag = true;
+                    }
                 } else {
                     bool first = true; 
                     profile(MergeFrame) {

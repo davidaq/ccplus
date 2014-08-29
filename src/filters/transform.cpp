@@ -116,7 +116,7 @@ CCPLUS_FILTER(transform) {
                 at(1, 0), at(1, 1), at(1, 3));
         Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height});
+            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
         }
         frame.setImage(ret);
         return;
@@ -180,8 +180,8 @@ CCPLUS_FILTER(transform) {
     H = H.reshape(0, 3);
 
     Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::Mat pixelMappingX(ret.size(), CV_32FC1, cv::Scalar(-1.f));
-    cv::Mat pixelMappingY(ret.size(), CV_32FC1, cv::Scalar(-1.f));
+    cv::Mat pixelMapping(ret.size(), CV_16SC2, cv::Scalar(-1, -1));
+    cv::Mat interpoDist(ret.size(), CV_16UC1, cv::Scalar(0));
 
     float tmatrix[3][3];
     for(int i = 0; i < 3; i++)
@@ -192,21 +192,35 @@ CCPLUS_FILTER(transform) {
     xMax = std::min(xMax, (float)width);
     yMin = std::max(yMin, 0.f);
     yMax = std::min(yMax, (float)height);
-    profile(Filter_transform_map_func) {
-        for (int i = yMin; i < yMax; i++)
-            for (int j = xMin; j < xMax; j++) {
-                float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
-                float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
-                float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
 
-                x /= z;
-                y /= z;
-                pixelMappingX.at<float>(i, j) = x;
-                pixelMappingY.at<float>(i, j) = y;
-            }
+    profileBegin(Filter_transform_map_func);
+
+    for (int i = yMin; i < yMax; i++) {
+        Vec2s* pPtr = pixelMapping.ptr<Vec2s>(i);
+        int16_t* iPtr = interpoDist.ptr<int16_t>(i);
+        for (int j = xMin; j < xMax; j++) {
+            float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
+            float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
+            float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
+            x /= z;
+            y /= z;
+
+            pPtr[j][0] = x;
+            pPtr[j][1] = y;
+
+            // Keep only one digit after decimal point
+            // using magical numbers tested from OpenCV convertMaps
+            const static int dxMapping[] = {0, 3, 6, 10, 13, 16, 19, 22, 26, 29};
+            const static int dyMapping[] = {0, 96, 192, 320, 416, 512, 608, 704, 832, 928};
+            int dx = (x - (int)x) * 10;
+            int dy = (y - (int)y) * 10;
+            iPtr[j] = dxMapping[dx] + dyMapping[dy];
+        }
     }
+    profileEnd(Filter_transform_map_func);
+
     profile(Filter_transform_remap) {
-        cv::remap(input, ret, pixelMappingX, pixelMappingY, CV_INTER_LINEAR, BORDER_TRANSPARENT);
+        cv::remap(input, ret, pixelMapping, interpoDist, CV_INTER_LINEAR, BORDER_TRANSPARENT);
     }
     frame.setImage(ret);
 }

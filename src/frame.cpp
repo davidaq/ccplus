@@ -327,10 +327,12 @@ void Frame::overlayImage(const cv::Mat& input, BLENDER_CORE blend) {
         return;
     }
 
-    for (int i = 0; i < this->getHeight(); i++) { 
-        for (int j = 0; j < this->getWidth(); j++) {
-            image.at<Vec4b>(i, j) = blendWithBlender(blend, image.at<Vec4b>(i, j), input.at<Vec4b>(i, j));
-        }
+    cv::Vec4b* imagePixel = image.ptr<cv::Vec4b>(0);
+    const cv::Vec4b* inputPixel = input.ptr<cv::Vec4b>(0);
+    for (int i = 0, c = this->getWidth() * this->getHeight(); i < c; i++) { 
+        *imagePixel = blendWithBlender(blend, *imagePixel, *inputPixel);
+        imagePixel++;
+        inputPixel++;
     }
 }
 
@@ -347,10 +349,14 @@ bool Frame::empty() const {
  */
 void Frame::setBlackBackground() {
     for (int i = 0; i < this->getHeight(); i++) { 
+        Vec4b* ptr = image.ptr<Vec4b>(i);
         for (int j = 0; j < this->getWidth(); j++) {
-            int alpha = image.at<Vec4b>(i, j)[3];
+            Vec4b& col = ptr[j];
+            //int alpha = image.at<Vec4b>(i, j)[3];
+            int alpha = col[3];
             for(int k = 0; k < 3; k++) {
-                image.at<Vec4b>(i, j)[k] = alpha * image.at<Vec4b>(i, j)[k] / 0xff;
+                //image.at<Vec4b>(i, j)[k] = alpha * image.at<Vec4b>(i, j)[k] / 0xff;
+                col[k] = alpha * col[k] / 0xff;
             }
         }
     }
