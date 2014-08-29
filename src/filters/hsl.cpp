@@ -18,8 +18,10 @@ CCPLUS_FILTER(hsl) {
     Mat &img = frame.getImage();
 
     for(int y = 0; y < img.rows; y++) {
+        Vec4b* ptr = img.ptr<Vec4b>(y);
         for(int x = 0; x < img.cols; x++) {
-            Vec4b &pixel = img.at<Vec4b>(y, x);
+            //Vec4b &pixel = img.at<Vec4b>(y, x);
+            Vec4b& pixel = ptr[x];
             bgr2hsl(pixel);
             int p = pixel[0];
             p += hue;

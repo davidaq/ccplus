@@ -14,8 +14,12 @@ CCPLUS_FILTER(opacity) {
     }
 
     Mat& img = frame.getImage();
-    for (int i = 0; i < img.rows; i++)
-        for (int j = 0; j < img.cols; j++)
-            img.at<Vec4b>(i, j)[3] = (unsigned char)(opa * img.at<Vec4b>(i, j)[3]);
+    for (int i = 0; i < img.rows; i++) {
+        Vec4b* ptr = img.ptr<Vec4b>(i);
+        for (int j = 0; j < img.cols; j++) {
+            //img.at<Vec4b>(i, j)[3] = (unsigned char)(opa * img.at<Vec4b>(i, j)[3]);
+            ptr[j][3] = (unsigned char)(opa * ptr[j][3]);
+        }
+    }
 }
 
