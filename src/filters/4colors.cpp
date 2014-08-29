@@ -87,10 +87,14 @@ CCPLUS_FILTER(4color) {
             return tmp;
         };
 
-        for (int i = 0; i < frame.getWidth(); i++) 
-            for (int j = 0; j < frame.getHeight(); j++) {
-                mask.at<Vec4b>(j, i)[ch] = calcColor(i, j);
+        cv::Vec4b* pixelMask = mask.ptr<Vec4b>(0);
+        int rows = frame.getHeight();
+        int cols = frame.getWidth();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                pixelMask[i * cols + j][ch] = calcColor(j, i);
             }
+        }
     }
     int tmp = blend;
     tmp = tmp % 2 == 0 ? tmp + 1 : tmp;
