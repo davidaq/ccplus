@@ -73,27 +73,26 @@ CCPLUS_FILTER(ramp) {
             }
         };
 #define uchar unsigned char
-        for (int i = 0; i < width; i++)
+        Vec4b* ptr = ret.ptr<Vec4b>(0);
+        for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 float intensity = getIntensity(i, j);
                 float diff_r = er - sr;
                 float diff_g = eg - sg;
                 float diff_b = eb - sb;
-                ret.at<Vec4b>(j, i)[0] = (uchar) std::min(255.0f,
-                                                          std::max(0.0f, diff_r * intensity + sr));
-                ret.at<Vec4b>(j, i)[1] = (uchar) std::min(255.0f,
-                                                          std::max(0.0f, diff_g * intensity + sg));
-                ret.at<Vec4b>(j, i)[2] = (uchar) std::min(255.0f,
-                                                          std::max(0.0f, diff_b * intensity + sb));
-                
-                ret.at<Vec4b>(j, i)[3] = 255;
+                Vec4b& tmp = ptr[j * width + i];
+                tmp[0] = (uchar) std::min(255.0f,
+                        std::max(0.0f, diff_r * intensity + sr));
+                tmp[1] = (uchar) std::min(255.0f,
+                        std::max(0.0f, diff_g * intensity + sg));
+                tmp[2] = (uchar) std::min(255.0f,
+                        std::max(0.0f, diff_b * intensity + sb));
+                tmp[3] = 255 * (1 - alpha);
             }
+        }
         return ret;
     });
-    // TODO: It will affected original images' alpha. Should be avoided
-    for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++) {
-            frame.getImage().at<Vec4b>(j, i)[3] = (unsigned char) 255 * alpha;
-        }
-    frame.mergeFrame(Frame(ret));
+    Frame retFrame = Frame(ret);
+    retFrame.mergeFrame(frame);
+    frame = retFrame;
 }
