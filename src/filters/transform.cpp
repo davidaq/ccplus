@@ -116,7 +116,7 @@ CCPLUS_FILTER(transform) {
                 at(1, 0), at(1, 1), at(1, 3));
         Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height});
+            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
         }
         frame.setImage(ret);
         return;
@@ -205,6 +205,7 @@ CCPLUS_FILTER(transform) {
                 pixelMappingY.at<float>(i, j) = y;
             }
     }
+    //cv::convertMaps(pixelMappingX, pixelMappingY, pixelMappingX, pixelMappingY, CV_16SC2, false);
     profile(Filter_transform_remap) {
         cv::remap(input, ret, pixelMappingX, pixelMappingY, CV_INTER_LINEAR, BORDER_TRANSPARENT);
     }
