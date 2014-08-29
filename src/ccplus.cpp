@@ -5,9 +5,11 @@
 #include "ccplus.hpp"
 #include "utils.hpp"
 #include "video-encoder.hpp"
+#include "parallel-executor.hpp"
 
 // Tweak
 #include "image-renderable.hpp"
+#include "composition.hpp"
 
 //using namespace CCPlus;
 
@@ -61,14 +63,37 @@ void CCPlus::renderPart(void* ctxHandle, float start, float length) {
         total_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
     }
     float done_time = 0;
+    /*
+     * Render non-composition renderable parallelly
+     */
+    ParallelExecutor* exec = new ParallelExecutor(CCPlus::CONCURRENT_THREAD);
     for (auto& dep : deps) {
+        if (dynamic_cast<Composition*>(dep.renderable))
+            continue;
+        auto task = [&dep, &done_time, &total_time] () {
+            Profiler* p = new Profiler("Renderable__" + dep.renderable->getName());
+            dep.renderable->render(dep.from, dep.to - dep.from);
+            delete p;
+            if (!dynamic_cast<ImageRenderable*>(dep.renderable)) {
+                done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
+                log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
+            }
+        };
+        exec->execute(task);
+    }
+    delete exec;
+
+    /*
+     * Only render Composition
+     */
+    for (auto& dep : deps) {
+        if (!dynamic_cast<Composition*>(dep.renderable))
+            continue;
         Profiler* p = new Profiler("Renderable__" + dep.renderable->getName());
         dep.renderable->render(dep.from, dep.to - dep.from);
         delete p;
-        if (!dynamic_cast<ImageRenderable*>(dep.renderable)) {
-            done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
-            log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
-        }
+        done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
+        log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
     }
     profileFlush;
 }
