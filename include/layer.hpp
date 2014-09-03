@@ -14,7 +14,9 @@ public:
         float last,
         int width,
         int height,
-        int blendMode = 0
+        int blendMode = 0,
+        int trkMat = 0,
+        bool showup = true
     );
 
     // access
@@ -34,6 +36,7 @@ public:
     float getLast() const;
 
     int getBlendMode() const;
+    int getTrackMatte() const;
 
     /*
      * Check whether this layer is visible 
@@ -41,6 +44,10 @@ public:
      * Note: the time @t are relative to upper layer
      */
     bool visible(float t) const;
+    /*
+     * FIXME: this will cause confusion with visible
+     */
+    bool show() const;
 
     // Assume the renderable stuff is rendered
     Frame applyFiltersToFrame(float); 
@@ -61,6 +68,8 @@ private:
     int width = 0;
     int height = 0;
     int blendMode = 0;
+    int trkMat = 0;
+    bool showup = true;
     std::map<std::string, Property> properties;
     std::vector<std::string> orderedKey;
 };

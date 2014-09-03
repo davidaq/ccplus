@@ -287,17 +287,19 @@ void Frame::setAudio(const std::vector<int16_t>& aud) {
 }
 
 void Frame::mergeFrame(const Frame& f, int mode) {
-    if (!f.getImage().empty()) {
-        // Calculate new boundary 
-        setXMin(min(getXMin(), f.getXMin()));
-        setXMax(max(getXMax(), f.getXMax()));
-        setYMin(min(getYMin(), f.getYMin()));
-        setYMax(max(getYMax(), f.getYMax()));
+    profile(mergeFrame) {
+        if (!f.getImage().empty()) {
+            // Calculate new boundary 
+            setXMin(min(getXMin(), f.getXMin()));
+            setXMax(max(getXMax(), f.getXMax()));
+            setYMin(min(getYMin(), f.getYMin()));
+            setYMax(max(getYMax(), f.getYMax()));
 
-        this->overlayImage(f.getImage(), getBlender(mode));
+            this->overlayImage(f.getImage(), getBlender(mode));
+        }
+
+        mergeAudio(f);
     }
-
-    mergeAudio(f);
 }
 
 void Frame::mergeAudio(const Frame& f) {
@@ -355,6 +357,57 @@ void Frame::overlayImage(const Frame& f, BLENDER_CORE blend) {
         *imagePixel = blendWithBlender(blend, *imagePixel, *inputPixel);
         imagePixel++;
         inputPixel++;
+    }
+}
+
+void Frame::trackMatte(const Frame& frame, int trkMat) {
+    if (!trkMat) return;
+    if (frame.empty()) return;
+    const Mat& input = frame.getImage();
+    if (this->getHeight() != input.rows || 
+            this->getWidth() != input.cols) {
+        log(logWARN) << "Track matte requires two layer have the same size";
+        return;
+    }
+
+    if (trkMat <= 2 && 
+            (frame.getImageChannels() < 4 || 
+             this->getImageChannels() < 4)) {
+        log(logWARN) << "Alpha mode track matte requires image to have alpha channel";
+        return;
+    }
+    int rows = this->getHeight();
+    int cols = this->getWidth();
+    // TODO: might need to consider alpha
+    auto luma = [] (const Vec4b& c) -> float {
+        int max = std::max<int>(c[0], std::max<int>(c[1], c[2]));
+        int min = std::min<int>(c[0], std::min<int>(c[1], c[2]));
+        return (max + min) / 2 / 255.0;
+    };
+    for (int i = 0; i < rows; i++) {
+        Vec4b* imagePtr = image.ptr<Vec4b>(i);
+        const Vec4b* inputPtr = input.ptr<Vec4b>(i);
+        for (int j = 0; j < cols; j++) {
+            Vec4b& col = imagePtr[j];
+            const Vec4b& inputcol = inputPtr[j];
+            float opa;
+            switch (trkMat) {
+                case 1:
+                    opa = inputcol[3] / 255.0f;
+                    col[3] = int(opa * col[3]);
+                    break;
+                case 2:
+                    opa = 1.0 - inputcol[3] / 255.0f;
+                    col[3] = int(opa * col[3]);
+                    break;
+                case 3:
+                    col[3] = int(luma(inputcol) * col[3]);
+                    break;
+                case 4:
+                    col[3] = int((1.0 - luma(inputcol)) * col[3]);
+                    break;
+            }
+        }
     }
 }
 

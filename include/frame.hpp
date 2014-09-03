@@ -22,8 +22,8 @@ public:
     Frame(int width, int height);
     Frame();
     ~Frame() {
-        image.release();
-        audio.release();
+        //image.release();
+        //audio.release();
     }
 
     static Frame emptyFrame(int, int);
@@ -40,6 +40,12 @@ public:
      */
     void mergeFrame(const Frame& f, int mode = 0); 
     void mergeAudio(const Frame& f);
+
+    /** 
+     * Track matte 
+     * take @frame's properties as this image's opacity
+     */
+    void trackMatte(const Frame& frame, int trkMat = 0);
 
     void setBlackBackground();
     
