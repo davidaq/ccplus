@@ -84,7 +84,6 @@ CCPLUS_FILTER(transform) {
                 0, 0, 0, 1);
         trans = rotate * trans;
 
-        //std::cout << "Rotation mat" << std::endl << rotate << std::endl;
         //std::cout << "After rotate: " << std::endl << trans << std::endl;
 
         Mat translate_back = (Mat_<double>(4, 4) << 
@@ -96,30 +95,7 @@ CCPLUS_FILTER(transform) {
 
         //std::cout << "After translate back: " << std::endl << trans << std::endl;
 
-        //invert(trans, trans);
         finalTrans = trans * finalTrans;
-    }
-
-    auto at = [&finalTrans] (int i, int j) {
-        return finalTrans.at<double>(i, j);
-    };
-    auto nonZero = [&at] (int i, int j) {
-        return std::abs(at(i, j)) > 0.00001;
-    };
-    bool affine = true;
-    if (nonZero(0, 2) || nonZero(1, 2) || nonZero(2, 0) ||
-        nonZero(2, 1) || nonZero(2, 3)) 
-        affine = false;
-    if (affine) {
-        Mat affineMat = (Mat_<double>(2, 3) << 
-                at(0, 0), at(0, 1), at(0, 3),
-                at(1, 0), at(1, 1), at(1, 3));
-        Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
-        }
-        frame.setImage(ret);
-        return;
     }
 
     auto apply = [](Mat trans, float x, float y, float z) {
@@ -174,6 +150,45 @@ CCPLUS_FILTER(transform) {
             idx++;
         }
 
+    xMin = std::max<float>(xMin, 0);
+    xMax = std::min<float>(xMax, width);
+    yMin = std::max<float>(yMin, 0);
+    yMax = std::min<float>(yMax, height);
+
+    frame.setXMin(xMin);
+    frame.setXMax(xMax);
+    frame.setYMin(yMin);
+    frame.setYMax(yMax);
+
+    /*
+     * Check whether it's a affin transform
+     */
+    auto at = [&finalTrans] (int i, int j) {
+        return finalTrans.at<double>(i, j);
+    };
+    auto nonZero = [&at] (int i, int j) {
+        return std::abs(at(i, j)) > 0.00001;
+    };
+    bool affine = true;
+    if (nonZero(0, 2) || nonZero(1, 2) || nonZero(2, 0) ||
+        nonZero(2, 1) || nonZero(2, 3)) 
+        affine = false;
+    if (affine) {
+        Mat affineMat = (Mat_<double>(2, 3) << 
+                at(0, 0), at(0, 1), at(0, 3),
+                at(1, 0), at(1, 1), at(1, 3));
+        Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        profile(Filter_transform_affine) {
+            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
+        }
+        frame.setImage(ret);
+        return;
+    }
+
+
+    /* 
+     * Calculate the homography 
+     **/
     invert(A, A);
     Mat H = A * C;
     H.push_back(1.0);
@@ -188,10 +203,6 @@ CCPLUS_FILTER(transform) {
         for(int j = 0; j < 3; j++) {
             tmatrix[i][j] = H.at<double>(i, j);
         }
-    xMin = std::max(xMin, 0.f);
-    xMax = std::min(xMax, (float)width);
-    yMin = std::max(yMin, 0.f);
-    yMax = std::min(yMax, (float)height);
 
     profileBegin(Filter_transform_map_func);
 

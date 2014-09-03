@@ -53,15 +53,31 @@ public:
     void setAudio(const std::vector<int16_t>&);
 
     void addAlpha(const std::vector<unsigned char>&);
-    
+
+    int getXMin() const;
+    int getYMin() const;
+    int getXMax() const;
+    int getYMax() const;
+
+    void setXMin(int _x) {xMin = _x;};
+    void setYMin(int _x) {yMin = _x;};
+    void setXMax(int _x) {xMax = _x;};
+    void setYMax(int _x) {yMax = _x;};
+
 private:
     /**
      * Put @input *UNDER* this image
      * REQUIRE: img must be a RGBA image
      */
-    void overlayImage(const cv::Mat& input, BLENDER_CORE blend);
+    //void overlayImage(const cv::Mat& input, BLENDER_CORE blend);
+    void overlayImage(const Frame& input, BLENDER_CORE blend);
     void rotateCWRightAngle(int angle);
     void to4Channels();
+
+    /*
+     * Effective boundary
+     */
+    int yMin = -1, yMax = 0x7fffffff, xMin = -1, xMax = 0x7fffffff;
 
     cv::Mat image;
     cv::Mat audio; 
