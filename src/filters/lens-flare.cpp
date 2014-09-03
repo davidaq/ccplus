@@ -8,6 +8,15 @@
 #include <map>
 #include <vector>
 
+#ifdef __ANDROID__
+template <typename T>
+static inline T round(T val) {
+    return val > 0 ? val : -val;
+}
+#else
+#define round std::round
+#endif
+
 using namespace cv;
 using namespace CCPlus;
 
@@ -58,7 +67,7 @@ CCPLUS_FILTER(lens_flare) {
             float tmp_x = t.x * 1.0 / fsize * 360.0;
             float tmp_y = t.y * 1.0 / fsize * 360.0;
             int cols = flare.cols;
-            int i = std::round(tmp_y), j = std::round(tmp_x);
+            int i = round(tmp_y), j = round(tmp_x);
             return flare.ptr<Vec3b>(0)[i * cols + j];
             //return flare.at<Vec3b>(std::round(tmp_y), std::round(tmp_x));
         };

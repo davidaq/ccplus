@@ -13,7 +13,7 @@
 
 #define log(level) if (level > logLevel) ; \
     else CCPlus::Logger(level, __LINE__, __FILE__)
-
+ 
 namespace CCPlus {
     class Logger;
     enum LogLevel {

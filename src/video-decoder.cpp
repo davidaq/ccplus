@@ -225,7 +225,7 @@ void VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> 
                 decodeContext->pkt.size -= ret;
             } while(goon && decodeContext->pkt.size > 0);
         }
-        av_free_packet(&(decodeContext->currentPkt));
+        //av_free_packet(&(decodeContext->currentPkt));
         decodeContext->haveCurrentPkt = false;
     }
 }

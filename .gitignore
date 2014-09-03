@@ -2,6 +2,7 @@
 build/
 
 # gyp + android
+deps/
 deps/gyp
 GypAndroid.mk
 *.target.mk
