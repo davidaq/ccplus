@@ -2,6 +2,7 @@
 
 #include "renderable.hpp"
 #include <map>
+#include <string>
 
 namespace CCPlus {
     class TextRenderable;
@@ -46,7 +47,7 @@ protected:
             if (kv.first > t)
                 break;
         }
-        return m[ret];
+        return m.at(ret);
     }
 
     int findKey(int f) const;

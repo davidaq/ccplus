@@ -68,7 +68,7 @@
                             "0" : "Arial.ttf"
                         },
                         "size" : {
-                            "0" : 16
+                            "0" : 60
                         },
                         "scale_x" : {
                             "0" : 1.0
@@ -89,7 +89,7 @@
                     "time" : 0,
                     "duration" : 10,
                     "start" : 0,
-                    "last" : 90909
+                    "last" : 10
                 },
                 {
                     "uri" : "file://test.png",

@@ -1,9 +1,17 @@
 #include "text-renderable.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
+#include <algorithm>
+
+extern "C" 
+{
+#include <ft2build.h>
+#include FT_FREETYPE_H
+}
 
 using namespace cv;
 using namespace CCPlus;
+using namespace std;
 
 TextRenderable::TextRenderable(Context* context, 
         const std::string& _uri) 
@@ -19,11 +27,19 @@ void TextRenderable::clear() {
 }
 
 int TextRenderable::getWidth() const {
-    return 0;
+    int n = 0;
+    for (auto& kv : text) {
+        n = max<int>(kv.second.length(), n);
+    }
+    return n * getHeight();
 }
 
 int TextRenderable::getHeight() const {
-    return 0;
+    int ret = 0;
+    for (auto& kv : size) {
+        ret = max<int>(ret, kv.second);
+    }
+    return ret;
 }
 
 float TextRenderable::getDuration() const {
@@ -72,8 +88,72 @@ void TextRenderable::render(float start, float duration) {
 
     int startFrame = getFrameNumber(start);
     int endFrame = getFrameNumber(start + duration);
+    int width = getWidth();
+    int height = getHeight();
+
+    // Init FreeType
+    FT_Library library;
+    FT_Face face;
+    int error;
+    error = FT_Init_FreeType(&library);
+    if ( error  ) {
+        log(logFATAL) << "Can't initialize FreeType";
+    }
+    //error = FT_New_Face( library,
+    //        "/Library/Fonts/Arial Black.ttf",
+    //        0,
+    //        &face);
+    error = FT_New_Face( library,
+            "/Library/Fonts/华文黑体.ttf",
+            0,
+            &face);
+    if ( error  ) {
+        log(logFATAL) << "ye";
+    }
+
     for (int i = startFrame; i <= endFrame; i++) {
         // Come on FreeType!
+        float time = getFrameTime(i);
+        int size = get(this->size, time);
+        if (FT_Set_Pixel_Sizes(face, 0, size)) {
+            log(logFATAL) << "Can't set text size";
+        }
+        Mat ret(height * 2, width * 2, CV_8UC4, {255, 255, 255, 0});
+        auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
+            int rows = bitmap->rows;
+            int cols = bitmap->width;
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    int ty = sy + i;
+                    int tx = sx + j;
+                    if (ty >= 2 * height || tx >= 2 * width || ty < 0 || tx < 0) 
+                        continue;
+                    ret.at<Vec4b>(ty, tx)[3] =
+                        bitmap->buffer[i * cols + j]; 
+                }
+            }
+        };
+
+        wstring s = get<wstring>(this->text, time);
+        int x = 0;
+        int y = height - 1;
+        for (int j = 0; j < s.length(); j++) {
+            error = FT_Load_Char( face, s[j], FT_LOAD_RENDER  );
+            if (error) {
+                log(logFATAL) << "No!";
+                return;
+            }
+
+            FT_GlyphSlot slot = face->glyph;
+            draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
+
+            x += (slot->advance.x >> 6);
+            y += (slot->advance.y >> 6);
+        }
+        Frame retFrame(ret);
+        rendered.insert(i);
+        std::string fp = getFramePath(i);
+        retFrame.write(fp, 75);
     }
 }
 
