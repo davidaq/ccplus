@@ -1,11 +1,17 @@
 #include <fstream>
+#include <locale>
+#include <codecvt>
 
 #include "tmlreader.hpp"
 #include "utils.hpp"
 #include "image-renderable.hpp"
 #include "video-renderable.hpp"
+#include "text-renderable.hpp"
 
 using namespace CCPlus;
+
+void fillTextProperties(TextRenderable*, 
+        const boost::property_tree::ptree&); 
 
 TMLReader::TMLReader(CCPlus::Context* ctx) :
     context(ctx)
@@ -123,8 +129,11 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 ext = "default";
             }
             renderable = extMap[ext](context, uri);
+        } else if (stringStartsWith(uri, "text://")) {
+            renderable = new TextRenderable(context, uri);
+            fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
-            log(logFATAL) << "Ahhhhhhhhhh, shit: " << uri;
+            log(logFATAL) << "Unkwown footage type " << uri;
         }
         if(renderable) {
             context->retain(renderable);
@@ -140,4 +149,43 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             blendMode, trkMat, showup);
     l.setProperties(readProperties(pt), readPropertiesOrder(pt));
     return l;
+}
+
+void fillTextProperties(TextRenderable* r, 
+        const boost::property_tree::ptree& tree) {
+    auto each = [&tree] (const std::string& name, auto f) {
+        for (auto& pc : 
+                tree.get_child(std::string("text-properties.") + name)) {
+            float t = std::atof(pc.first.data());
+            f(t, pc.second);
+        }
+    };
+
+    // I hate language without reflection
+    each("text", [r] (float t, const auto& pc) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        r->text[t] = converter.from_bytes(pc.data());
+    });
+    each("font", [&] (float t, auto& pc) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        r->font[t] = converter.from_bytes(pc.data());
+    });
+    each("size", [&] (float t, auto& pc) {
+        r->size[t] = std::atoi(pc.data().c_str());
+    });
+    each("tracking", [&] (float t, auto& pc) {
+        r->tracking[t] = std::atof(pc.data().c_str());
+    });
+    each("bold", [&] (float t, auto& pc) {
+        r->bold[t] = (pc.data()[0] == 't');
+    });
+    each("italic", [&] (float t, auto& pc) {
+        r->italic[t] = (pc.data()[0] == 't');
+    });
+    each("scale_x", [&] (float t, auto& pc) {
+        r->scale_x[t] = std::atof(pc.data().c_str());
+    });
+    each("scale_y", [&] (float t, auto& pc) {
+        r->scale_y[t] = std::atof(pc.data().c_str());
+    });
 }

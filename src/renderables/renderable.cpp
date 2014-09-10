@@ -29,3 +29,9 @@ float Renderable::getFrameTime(int frame) const {
     float inter = 1.0 / context->getFPS();
     return frame * inter;
 }
+
+std::string Renderable::getFramePath(int f) const {
+    char buff[20];
+    sprintf(buff, "%d", f);
+    return context->getStoragePath() + "/" + uuid + "_" + buff + ".zim";
+}

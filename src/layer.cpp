@@ -107,7 +107,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         }
     }
     if (low == nullptr || high == nullptr) {
-        log(logWARN) << "Parametere are not interpolatable at time " << time;
+        log(logWARN) << "Parametere for " << name << " are not interpolatable at time " << time;
         return ret;
     }
 
