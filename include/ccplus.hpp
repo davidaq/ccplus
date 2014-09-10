@@ -5,6 +5,7 @@
 namespace CCPlus {
     void* initContext(const char* tmlPath, const char* storagePath, int fps);
     void releaseContext(void* ctxHandle);
+    void freeMemory(void* ctxHandle);
     void renderPart(void* ctxHandle, float start = 0, float length = 5);
     void encodeVideo(void* ctxHandle, float start = 0, float length = -1);
     void go(

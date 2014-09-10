@@ -40,6 +40,14 @@ void CCPlus::releaseContext(void* ctxHandle) {
     delete uCtx;
 }
 
+void CCPlus::freeMemory(void* ctxHandle) {
+    if(!ctxHandle)
+        return;
+    UserContext* uCtx = (UserContext*) ctxHandle;
+    uCtx->ctx->releaseMemory();
+    log(logINFO) << "Released memory";
+}
+
 void CCPlus::renderPart(void* ctxHandle, float start, float length) {
     if(!ctxHandle)
         return;
