@@ -7,7 +7,8 @@ NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include \
 	-std=c++11 -D__ANDROID__ \
-	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS 
+	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
+	-O3 -ffast-math 
 
 NDK_AR:=${NDK_TOOLCHAIN_PREFIX}ar
 

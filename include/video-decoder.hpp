@@ -66,3 +66,4 @@ private:
     void decodeAudio(FILE* destFile, float durationLimit);
     int decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float durationLimit, float &start, float &gap);
 };
+

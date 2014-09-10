@@ -12,6 +12,7 @@
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',
+                '<!@(find src -type f -name "*.c")',
             ],
             'include_dirs': [
                 '.', 
