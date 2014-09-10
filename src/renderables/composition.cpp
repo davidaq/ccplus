@@ -269,11 +269,12 @@ const std::string Composition::getPrefix() const {
 
 bool Composition::still(float t1, float t2) {
     for (auto& l : layers) {
+        if (!l.getRenderObject()->still(t1, t2))
+            return false;
+        // TODO visibility buggy
         if (l.visible(t1) != l.visible(t2))
             return false;
         if (!l.visible(t1)) continue;
-        if (!l.getRenderObject()->still(t1, t2))
-            return false;
         const PropertyMap& mp = l.getProperties();
         for (auto& kv : mp) {
             std::string name = kv.first;

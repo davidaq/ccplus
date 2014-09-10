@@ -160,16 +160,13 @@ void GifRenderable::renderPart(float start, float duration) {
                 case 1:
                     // draw on top
                     prev = im.clone();
-                    L()<<"draw on top";
                     break;
                 case 3:
                     // restore
                     im = prev.clone();
-                    L()<<"restore";
                     break;
                 default:
                     // background
-                    L()<<"default";
                     prev = im;
                     im = cv::Mat();
                     break;
