@@ -284,3 +284,4 @@ bool Composition::still(float t1, float t2) {
     }
     return true;
 }
+

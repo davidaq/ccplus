@@ -2,7 +2,7 @@
 
 #include "animated-renderable.hpp"
 
-#define GIF_FPS 10
+#define GIF_FPS 15
 
 namespace CCPlus {
     class GifRenderable;
