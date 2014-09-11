@@ -132,10 +132,12 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
         }
     }
     int blendMode = pt.get("blend", 0);
+    int trkMat = pt.get("trkMat", 0);
+    bool showup = pt.get("visible", true);
     Layer l = Layer(
             context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
-            blendMode);
+            blendMode, trkMat, showup);
     l.setProperties(readProperties(pt), readPropertiesOrder(pt));
     return l;
 }

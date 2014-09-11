@@ -36,6 +36,19 @@ TEST(Frame, OverlayFrameTest2) {
     EXPECT_LE(std::abs(img2.getImage().at<Vec4b>(1, 0)[1]) - 255, 1);
 }
 
+TEST(Frame, trackMatteTest) {
+    Mat m1 = Mat::zeros(2, 2, CV_8UC4);
+    m1.at<Vec4b>(1, 1)[3] = 255;
+    m1.at<Vec4b>(0, 1)[3] = 127;
+    Mat m2(2, 2, CV_8UC4, {50, 100, 150, 127});
+    Frame f1(m1);
+    Frame f2(m2);
+    f2.trackMatte(f1, 1);
+    EXPECT_EQ(0, f2.getImage().at<Vec4b>(0, 0)[3]);
+    EXPECT_EQ(127, f2.getImage().at<Vec4b>(1, 1)[3]);
+    EXPECT_EQ(63, f2.getImage().at<Vec4b>(0, 1)[3]);
+}
+
 TEST(Frame, EmtpyFrameTest) {
     Frame img = Frame::emptyFrame(2, 3);
     EXPECT_EQ(img.getWidth(), 2);

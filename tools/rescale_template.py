@@ -93,7 +93,7 @@ class Resizer():
         del self.tml['usedfiles']
         del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
-        fp = open(self.dirname + '(resized)' + os.path.sep + 'result.tml', 'w')
+        fp = open(self.dirname + '(resized)' + os.path.sep + 'tpl.tml', 'w')
         fp.write(json)
         fp.close()
         cleandir(self.dirname + '(resized)' + os.path.sep)

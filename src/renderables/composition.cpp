@@ -189,27 +189,43 @@ void Composition::renderPart(float start, float duration) {
                     }
                 } else {
                     bool first = true; 
-                    profile(MergeFrame) {
-                        for (int i = layers.size() - 1; i >= 0; i--) {
-                            Layer l = layers[i];
-                            Frame frame = l.applyFiltersToFrame(now_t);
-                            if (frame.empty()) continue;
-                            if (first) {
-                                ret = frame;
-                                if (l.getBlendMode() != 0) {
-                                    ret.mergeFrame(
-                                            Frame::emptyFrame(
-                                                ret.getWidth(), 
-                                                ret.getHeight()), 
-                                            l.getBlendMode());
-                                }
-                                first = false;
-                            } else {
-                                frame.mergeFrame(ret, l.getBlendMode());
-                                ret = frame;
+                    bool buffer[layers.size()];
+                    Frame* bufferFrame = new Frame[layers.size()];
+                    memset(buffer, false, layers.size());
+                    for (int i = layers.size() - 1; i >= 0; i--) {
+                        Layer l = layers[i];
+                        Frame frame = buffer[i] ? 
+                            bufferFrame[i] :
+                            l.applyFiltersToFrame(now_t);
+                        if (frame.empty() || !l.show()) continue;
+                        /*
+                         * handle trkmat
+                         */
+                        if (l.getTrackMatte() && i != 0) {
+                            buffer[i - 1] = true;
+                            bufferFrame[i - 1] = layers[i - 1].applyFiltersToFrame(now_t);
+                            frame.trackMatte(bufferFrame[i - 1], l.getTrackMatte());
+                        }
+                        /*
+                         * Normal merge
+                         */
+                        if (first) {
+                            ret = frame;
+                            // TODO: the order here might be problematic
+                            if (l.getBlendMode() != 0) {
+                                ret.mergeFrame(
+                                        Frame::emptyFrame(
+                                            ret.getWidth(), 
+                                            ret.getHeight()), 
+                                        l.getBlendMode());
                             }
+                            first = false;
+                        } else {
+                            frame.mergeFrame(ret, l.getBlendMode());
+                            ret = frame;
                         }
                     }
+                    delete [] bufferFrame;
                 }
 
                 if (!flag) {

@@ -81,6 +81,34 @@ TEST(Filter, HSLTest) {
     }
 }
 
+void bgr2hsl(Vec4b& pixel);
+void hsl2bgr(Vec4b& pixel);
+
+TEST(Filter, HSLFormula) {
+    cv::Mat src = cv::imread("test/res/test2.jpg");
+    cv::Mat hsl;
+    cv::cvtColor(src, hsl, CV_BGR2HLS);
+    cv::imwrite("tmp/src.png", src);
+    cv::imwrite("tmp/cvhsl.png", hsl);
+
+    cv::cvtColor(src, src, CV_BGR2BGRA);
+    Vec4b* ptr = src.ptr<Vec4b>(0);
+    for(int i = 0, c = src.total(); i < c; i++) {
+        bgr2hsl((*ptr++));
+    }
+    cv::imwrite("tmp/ahsl.png", src);
+    
+    cv::cvtColor(src, hsl, CV_BGRA2BGR);
+    ptr = src.ptr<Vec4b>(0);
+    for(int i = 0, c = src.total(); i < c; i++) {
+        hsl2bgr((*ptr++));
+    }
+    cv::imwrite("tmp/abgr.png", src);
+
+    cv::cvtColor(hsl, hsl, CV_HLS2BGR);
+    cv::imwrite("tmp/cvbgr.png", hsl);
+}
+
 TEST(Filter, GrayScaleTest) {
     Frame img1(Mat(5, 5, CV_8UC4, {0, 255, 127, 127}));
     Filter("grayscale").apply(img1, {40, 60, 40, 60, 20, 80, 0, 0}, 30, 30);

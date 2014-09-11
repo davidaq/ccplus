@@ -15,7 +15,9 @@ Layer::Layer(
     float _last,
     int _width,
     int _height,
-    int _blendMode
+    int _blendMode,
+    int _trkMat,
+    bool _showup
 ) :
     context(ctx),
     renderableUri(_renderableUri),
@@ -26,7 +28,9 @@ Layer::Layer(
     last(_last),
     width(_width),
     height(_height), 
-    blendMode(_blendMode)
+    blendMode(_blendMode),
+    trkMat(_trkMat),
+    showup(_showup)
 {
 }
 
@@ -141,4 +145,12 @@ Frame Layer::applyFiltersToFrame(float t) {
 
 int Layer::getBlendMode() const {
     return blendMode;
+}
+
+int Layer::getTrackMatte() const {
+    return trkMat;
+}
+
+bool Layer::show() const {
+    return showup;
 }

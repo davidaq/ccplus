@@ -84,7 +84,7 @@ void bgr2hsl(Vec4b& pixel) {
 }
 
 void hsl2bgr(Vec4b& pixel) {
-    uint8_t s = pixel[2], l = pixel[1], h = pixel[0];
+    int s = pixel[2], l = pixel[1], h = pixel[0];
     if(s == 0)
         pixel[0] = pixel[1] = pixel[2] = l;
     else {
@@ -94,9 +94,9 @@ void hsl2bgr(Vec4b& pixel) {
         for(int i = 0; i < 3; i++) {
             int &c = bgr[i];
             while(c < 0)
-                c += 255;
-            while(c > 255)
-                c -= 255;
+                c += 180;
+            while(c >= 180)
+                c -= 180;
             if(c < 30) {
                 c = p + (q - p) * 6 * c / 180;
             } else if(c < 90) {
@@ -106,7 +106,8 @@ void hsl2bgr(Vec4b& pixel) {
             } else {
                 c = p;
             }
-            pixel[i] = c / 255;
+            pixel[i] = between(c / 255, 0, 255);
         }
     }
 }
+
