@@ -8,6 +8,7 @@
                 'dependency/boost/boost.gyp:boost',
                 'dependency/opencv/opencv.gyp:opencv',
                 'dependency/ffmpeg/ffmpeg.gyp:ffmpeg',
+                'dependency/freetype/freetype.gyp:freetype',
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',

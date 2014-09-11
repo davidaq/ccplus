@@ -36,8 +36,7 @@ public:
 
 
 protected:
-
-    virtual std::string getFramePath(int f) const = 0;
+    std::string getFramePath(int f) const;
 
     std::string uuid;
 

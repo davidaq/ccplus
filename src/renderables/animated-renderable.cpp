@@ -8,12 +8,6 @@ AnimatedRenderable::AnimatedRenderable(Context* context) :
 {
 }
 
-std::string AnimatedRenderable::getFramePath(int f) const {
-    char buff[20];
-    sprintf(buff, "%d", f);
-    return context->getStoragePath() + "/" + uuid + "_" + buff + ".zim";
-}
-
 void AnimatedRenderable::render(float start, float duration) {
     log(logINFO) << "\t Rendering " << this->getName() << " from " << 
         start << " to " << start + duration;

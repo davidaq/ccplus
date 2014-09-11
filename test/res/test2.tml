@@ -51,6 +51,47 @@
                     "visible" : false
                 },
                 {
+                    "uri" : "text://gofuckyourself",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [200, 200, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+                            "10" : [250, 250, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+                        }
+                    },
+                    "text-properties" : {
+                        "text" : {
+                            "0" : "耶",
+                            "5" : "Hello",
+                            "10" : "World"
+                        },
+                        "font" : {
+                            "0" : "Arial.ttf"
+                        },
+                        "size" : {
+                            "0" : 60
+                        },
+                        "scale_x" : {
+                            "0" : 1.0
+                        },
+                        "scale_y" : {
+                            "0" : 1.0
+                        },
+                        "tracking" : {
+                            "0" : 0
+                        },
+                        "bold" : {
+                            "0" : false
+                        },
+                        "italic" : {
+                            "0" : false
+                        }
+                    },
+                    "time" : 0,
+                    "duration" : 10,
+                    "start" : 0,
+                    "last" : 10
+                },
+                {
                     "uri" : "file://test.png",
                     "properties" : {
                         "transform" : {

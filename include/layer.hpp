@@ -50,6 +50,7 @@ public:
      */
     bool visible(float t) const;
     /*
+     * Show is to check whether this layer is visible
      * FIXME: this will cause confusion with visible
      */
     bool show() const;
