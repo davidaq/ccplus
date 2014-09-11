@@ -99,26 +99,26 @@ void TextRenderable::render(float start, float duration) {
     if ( error  ) {
         log(logFATAL) << "Can't initialize FreeType";
     }
-    //error = FT_New_Face( library,
-    //        "/Library/Fonts/Arial Black.ttf",
-    //        0,
-    //        &face);
     error = FT_New_Face( library,
             "/Library/Fonts/华文黑体.ttf",
             0,
             &face);
     if ( error  ) {
-        log(logFATAL) << "ye";
+        log(logFATAL) << "Can't load font...";
     }
 
     for (int i = startFrame; i <= endFrame; i++) {
         // Come on FreeType!
         float time = getFrameTime(i);
         int size = get(this->size, time);
-        if (FT_Set_Pixel_Sizes(face, 0, size)) {
+        float sx = get<float>(this->scale_x, time);
+        float sy = get<float>(this->scale_y, time);
+        if (FT_Set_Pixel_Sizes(face, (int)size * sx, (int)size * sy)) {
             log(logFATAL) << "Can't set text size";
         }
-        Mat ret(height * 2, width * 2, CV_8UC4, {255, 255, 255, 0});
+        Mat ret((int)height * 2 * sy, 
+                (int)width * 2 * sx, 
+                CV_8UC4, {255, 255, 255, 0});
         auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
             int cols = bitmap->width;
@@ -126,7 +126,10 @@ void TextRenderable::render(float start, float duration) {
                 for (int j = 0; j < cols; j++) {
                     int ty = sy + i;
                     int tx = sx + j;
-                    if (ty >= 2 * height || tx >= 2 * width || ty < 0 || tx < 0) 
+                    if (ty >= 2 * height || tx >= 2 * width || 
+                        ty < 0 || tx < 0) 
+                        continue;
+                    if (bitmap->buffer[i * cols + j] == 0)
                         continue;
                     ret.at<Vec4b>(ty, tx)[3] =
                         bitmap->buffer[i * cols + j]; 
@@ -136,25 +139,35 @@ void TextRenderable::render(float start, float duration) {
 
         wstring s = get<wstring>(this->text, time);
         int x = 0;
-        int y = height - 1;
+        int y = height * sy;
+        float tracking = get<float>(this->tracking, time);
         for (int j = 0; j < s.length(); j++) {
-            error = FT_Load_Char( face, s[j], FT_LOAD_RENDER  );
+            error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
             if (error) {
-                log(logFATAL) << "No!";
+                log(logFATAL) << "Can't load character: " << s[j];
                 return;
             }
 
             FT_GlyphSlot slot = face->glyph;
+            if (i == 180) {
+                L() << ret.rows << " " << ret.cols;
+                L() << slot->bitmap_left + x << " " << 
+                    y - slot->bitmap_top;
+            }
+
             draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
 
-            x += (slot->advance.x >> 6);
-            y += (slot->advance.y >> 6);
+            int advance = (slot->advance.x >> 6) - slot->bitmap.width;
+            advance = slot->bitmap.width + advance + tracking * advance;
+            x += advance;
         }
         Frame retFrame(ret);
         rendered.insert(i);
         std::string fp = getFramePath(i);
         retFrame.write(fp, 75);
     }
+
+    FT_Done_FreeType(library);
 }
 
 int TextRenderable::findKey(int f) const {

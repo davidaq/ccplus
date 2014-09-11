@@ -42,7 +42,7 @@ protected:
         float ret;
         // TODO: binary search
         for (auto& kv : m) {
-            if (kv.first <= t) 
+            if (kv.first <= t + 0.0001) 
                 ret = kv.first;
             if (kv.first > t)
                 break;
