@@ -6,8 +6,6 @@
 #include <sstream>
 #include <vector>
 
-#include <pthread.h>
-
 #define L() \
     log(logDEBUG)
 
@@ -41,7 +39,6 @@ private:
     int lineNumber;
     std::string file;
 
-    pthread_mutex_t printLock;
 
     std::vector<std::string> cols = {
         "\x1b[31m", // Red for Fatal

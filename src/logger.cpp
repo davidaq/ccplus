@@ -4,6 +4,8 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
+#else
+#include <pthread.h>
 #endif
 
 using namespace CCPlus;
@@ -12,8 +14,6 @@ CCPlus::LogLevel logLevel = CCPlus::logDEBUG;
 
 Logger::Logger(LogLevel _level, int _ln, const std::string& _file) 
 : level(_level), lineNumber(_ln), file(_file) {
-
-    pthread_mutex_init(&printLock, 0);
     if (level < logWARN)
         out = &std::cerr;
     _buffer << cols[level];
@@ -26,15 +26,20 @@ Logger::Logger(LogLevel _level, int _ln, const std::string& _file)
 
 Logger::~Logger() {
     _buffer << "\x1b[0m" << std::endl;
-    pthread_mutex_lock(&printLock);
 #ifdef __ANDROID__
     const static char* ANDROID_LOG_TAG[] = {"CCPLUS FATAL","CCPLUS ERROR", "CCPLUS WARN", "CCPLUS INFO",
         "CCPLUS DEBUG", "CCPLUS DEBUG1", "CCPLUS DEBUG2", "CCPLUS DEBUG3"};
     __android_log_print(ANDROID_LOG_INFO, ANDROID_LOG_TAG[(int)level], "%s", _buffer.str().c_str());
 #else
+    static pthread_mutex_t logLock;
+    static bool logLockInited = false;
+    if(!logLockInited) {
+        pthread_mutex_init(&logLock, 0);
+    }
+    pthread_mutex_lock(&logLock);
     (*out) << _buffer.str();
+    pthread_mutex_unlock(&logLock);
 #endif
-    pthread_mutex_unlock(&printLock);
 
     if (level == logFATAL)
         exit(-1);

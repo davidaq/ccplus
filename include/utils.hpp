@@ -51,7 +51,7 @@ static inline bool stringStartsWith(std::string content, std::string prefix) {
 
 static inline std::string toLower(const std::string& s) {
     std::string data = s;
-    auto tol = [](char c) {
+    const static auto tol = [](char c) {
         if (c >= 'A' && c <= 'Z')
             return char(c - 'Z' + 'z');
         return c;
@@ -62,7 +62,7 @@ static inline std::string toLower(const std::string& s) {
 
 static inline std::string toUpper(const std::string& s) {
     std::string data = s;
-    auto tol = [](char c) {
+    const static auto tol = [](char c) {
         if (c >= 'a' && c <= 'z')
             return char(c + 'Z' - 'z');
         return c;

@@ -180,7 +180,7 @@ GifFileType *DGifOpenFileName(const char *GifFileName, int *Error);
 GifFileType *DGifOpenFileHandle(int GifFileHandle, int *Error);
 int DGifSlurp(GifFileType * GifFile);
 GifFileType *DGifOpen(void *userPtr, InputFunc readFunc, int *Error);    /* new one (TVT) */
-    int DGifCloseFile(GifFileType * GifFile, int *ErrorCode);
+int DGifCloseFile(GifFileType * GifFile, int *ErrorCode);
 
 #define D_GIF_SUCCEEDED          0
 #define D_GIF_ERR_OPEN_FAILED    101    /* And DGif possible errors. */

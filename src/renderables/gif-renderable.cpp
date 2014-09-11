@@ -15,8 +15,9 @@ GifRenderable::GifRenderable(CCPlus::Context* context, const std::string& _uri):
     path = generatePath(context->getInputDir(), path);
     int error;
     ctx = DGifOpenFileName(path.c_str(), &error);
-    L() << "GIF open [" << error << "]: " << path;
-    DGifSlurp(ctx);
+    log(logINFO) << "GIF open [" << error << "]: " << path;
+    error = DGifSlurp(ctx);
+    log(logINFO) << "GIF slurp [" << error << "]: " << path;
     if(error != D_GIF_SUCCEEDED && error != 1)
         ctx = 0;
 }

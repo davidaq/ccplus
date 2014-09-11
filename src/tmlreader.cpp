@@ -102,29 +102,28 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                     return new VideoRenderable(context, uri);
                 };
                 extMap["default"]   = avExt;
-                //extMap["mov"]       = avExt;
-                //extMap["mp4"]       = avExt;
-                //extMap["gif"]       = avExt;
-                //extMap["flv"]       = avExt;
-                //extMap["f4v"]       = avExt;
-                //extMap["mp3"]       = avExt;
-                //extMap["flac"]      = avExt;
-                //extMap["m4a"]       = avExt;
-                //extMap["wav"]       = avExt;
-                //extMap["ogv"]       = avExt;
-                //extMap["ogg"]       = avExt;
-                //extMap["webm"]      = avExt;
-                //extMap["mkv"]       = avExt;
-                //extMap["wmv"]       = avExt;
-                //extMap["aac"]       = avExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
-            stringToLower(ext);
+            ext = toLower(ext);
             
             log(logDEBUG) << "Got file extention: " << ext;
             if(!extMap.count(ext)) {
                 ext = "default";
+                std::string path = uri;
+                if (stringStartsWith(path, "file://")) 
+                    path = uri.substr(7);
+                path = generatePath(context->getInputDir(), path);
+                FILE* fp = fopen(path.c_str(), "rb");
+                if(fp) {
+                    char buff[4];
+                    fread(buff, 1, 3, fp);
+                    fclose(fp);
+                    buff[3] = 0;
+                    if(strcmp(buff, "GIF") == 0) {
+                        ext = "gif";
+                    }
+                }
             }
             renderable = extMap[ext](context, uri);
         } else if (!stringStartsWith(uri, "composition://")) {

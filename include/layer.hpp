@@ -35,6 +35,11 @@ public:
     float getStart() const;
     float getLast() const;
 
+    /*
+     * map layer time to layer renderable item local time
+     */
+    float mapInnerTime(float time) const;
+
     int getBlendMode() const;
     int getTrackMatte() const;
 
