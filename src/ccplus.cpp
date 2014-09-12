@@ -18,10 +18,12 @@ struct UserContext {
     CCPlus::Composition* mainComp;
 };
 
-void* CCPlus::initContext(const char* tmlPath, const char* storagePath, int fps) {
+void* CCPlus::initContext(const char* tmlPath, 
+        const char* storagePath, int fps, bool enableGPU) {
     log(logINFO) << "Loading tml file......";
     UserContext* ret = new UserContext;
-    ret->ctx = new CCPlus::Context(storagePath, fps);
+    ret->ctx = new CCPlus::Context(storagePath, 
+            fps, enableGPU);
     CCPlus::TMLReader reader(ret->ctx);
     ret->mainComp = reader.read(tmlPath);
 
