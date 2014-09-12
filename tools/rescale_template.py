@@ -46,6 +46,8 @@ class Resizer():
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
                 rgb_video.export(out_file)
                 os.remove(out_file)
+            elif out_file[-4:].lower() == '.png':
+                os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
             else:
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
