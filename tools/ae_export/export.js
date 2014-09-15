@@ -23,22 +23,54 @@ Export.prototype.exportTo = function(filePath) {
         if(!this.comp.MAIN) {
             throw "Main composition doesn't exist";
         }
+        this.exported = {};
+        this.compsCount = this.getCompsCount(this.comp.MAIN);
         this.exportList = ['MAIN'];
-        var tml = {version:0.01, main:'MAIN', compositions:{}};
+        this.exported = {};
+        this.exportedCount = 0;
+        this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
+        var comma = false;
         while(this.exportList.length > 0) {
             var compName = this.exportList.pop();
-            tml.compositions[compName] = this.exportComp(this.comp[compName]);
+            if(this.exported[compName])
+                continue;
+            if(comma)
+                this.tmlFile.write(',');
+            comma = true;
+            var expComp = this.exportComp(this.comp[compName]);
+            this.tmlFile.write('"' + compName +'":');
+            this.tmlFile.write(obj2str(expComp));
+            log('  Write comp');
         }
-        tml.usedfiles = this.files;
-        tml.usedcolors = this.colors;
-        this.tmlFile.write(obj2str(tml));
+        this.tmlFile.write('},"usedfiles":');
+        this.tmlFile.write(obj2str(this.files));
+        this.tmlFile.write(',"usedcolors":');
+        this.tmlFile.write(obj2str(this.colors));
+        this.tmlFile.write('}');
     } finally {
         this.tmlFile.close();
     }
     alert('Export Done!');
 };
+Export.prototype.getCompsCount = function(comp) {
+    if(this.exported[comp.name])
+        return 0;
+    this.exported[comp.name] = true;
+    var count = 1;
+    for(var i = 1; i <= comp.layers.length; i++) {
+        var layer = comp.layers[i];
+        if(layer && layer.source && '[object CompItem]' == layer.source.toString()) {
+            count += this.getCompsCount(this.comp[layer.source.name]);
+        }
+    }
+    return count;
+};
 Export.prototype.exportComp = function(comp) {
+    if(this.exported[comp.name])
+        return NULL;
+    this.exported[comp.name] = true;
     log('Export Comp: ' + comp.name);
+    setProgressStatus('Composition: ' + comp.name);
     var ret = {};
     ret.resolution = {
         width: comp.width,
@@ -46,20 +78,29 @@ Export.prototype.exportComp = function(comp) {
     };
     ret.duration = comp.duration;
     ret.layers = [];
+    setSubProgress(0);
     for(var i = 1; i <= comp.layers.length; i++) {
         log('  Export Layer: ' + i);
         var exportedLayer = this.exportLayer(comp.layers[i]);
         if(NULL != exportedLayer)
             ret.layers.push(exportedLayer);
+        setSubProgress(i * 100 / comp.layers.length);
+        if(!isProgressWindowVisible())
+            throw 'Export Canceled';
     }
+    log('  Export layer finish');
+    this.exportedCount++;
+    setMainProgress(this.exportedCount * 100 / this.compsCount);
     return ret;
 };
 Export.prototype.exportLayer = function(layer) {
     var ret = {};
     var source = layer.source;
-    if(!source)
-        return NULL;
-    var type = source.toString();
+    var type;
+    if(source)
+        type = source.toString();
+    else
+        type = layer.toString();
     log('    Layer type: ' + type)
     if('[object CompItem]' == type) {
         this.exportList.push(source.name);
@@ -86,11 +127,70 @@ Export.prototype.exportLayer = function(layer) {
             height: source.height
         };
         log('    Export Footage: ' + path);
+    } else if('[object TextLayer]' == type) {
+        if(!this.textCounter)
+            this.textCounter = 0;
+        ret.uri = 'text://' + layer("Source Text").value.text + '@' + (this.textCounter++);
+        var txtProp = {};
+        var txtExport = function (key, aeKey, correction) {
+            var proced = false;
+            var prevVal = NULL;
+            var prop = {};
+            for(var t = layer.inPoint; ; t += 0.1) {
+                if(t > layer.outPoint) {
+                    if(proced)
+                        break;
+                    t = layer.outPoint;
+                    proced = true;
+                }
+                var st = layer("Source Text").valueAtTime(t, false);
+                var val = st[aeKey];
+                if(correction)
+                    val = correction(val);
+                if(val != prevVal) {
+                    prevVal = val;
+                    prop[t] = val;
+                }
+            }
+            txtProp[key] = prop;
+        };
+        txtExport('text', 'text');
+        txtExport('size', 'fontSize');
+        txtExport('justification', 'justification', function (val) {
+            var preset = {
+                6813:0, // left
+                6815:1, // center
+                6814:2, // right
+            };
+            if(preset[val])
+                return preset[val];
+            return 0; // default left
+        });
+        txtExport('color', 'fillColor', function(val) {
+            var r = val[0];
+            var g = val[1];
+            var b = val[2];
+            r =  Math.ceil(r * 127);
+            g =  Math.ceil(g * 127);
+            b =  Math.ceil(b * 127);
+            return r * 128 * 128 + g * 128 + b;
+        });
+        txtExport('tracking', 'tracking', function(val) {
+            return val * 0.01;
+        });
+        txtProp['scale_x'] = {'0':1};
+        txtProp['scale_y'] = {'0':1};
+        txtProp['bold'] = {'0':false};
+        txtProp['italic'] = {'0':false};
+        txtProp['font'] = {'0':'default'};
+        ret['text-properties'] = txtProp;
     } else {
         log('    Unexpected layer type');
         return NULL;
     }
 
+    ret.trkMat = layer.trackMatteType % 10 - 2;
+    ret.visible = layer.enabled ? 1 : 0;
     ret.blend = blendingModes[layer.blendingMode];
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;

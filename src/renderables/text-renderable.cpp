@@ -118,7 +118,11 @@ void TextRenderable::render(float start, float duration) {
         if (FT_Set_Pixel_Sizes(face, 0, size)) {
             log(logFATAL) << "Can't set text size";
         }
-        Mat ret(height * 2, width * 2, CV_8UC4, {255, 255, 255, 0});
+        int color = get(this->color, time);
+        int r = (color >> 14) * 255 / 127;
+        int g = ((color >> 7) & 127) * 255 / 127;
+        int b = (color & 127) * 255 / 127;
+        Mat ret(height * 2, width * 2, CV_8UC4, cv::Scalar(b, g, r, 100));
         auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
             int cols = bitmap->width;
@@ -151,6 +155,18 @@ void TextRenderable::render(float start, float duration) {
             y += (slot->advance.y >> 6);
         }
         Frame retFrame(ret);
+        retFrame.setAnchorAdjustY(size);
+        switch(get(this->justification, time)) {
+            case 0: // left
+                retFrame.setAnchorAdjustX(0);
+                break;
+            case 1: // center
+                retFrame.setAnchorAdjustX(retFrame.getWidth() / 2);
+                break;
+            case 2: // right
+                retFrame.setAnchorAdjustX(retFrame.getWidth());
+                break;
+        };
         rendered.insert(i);
         std::string fp = getFramePath(i);
         retFrame.write(fp, 75);

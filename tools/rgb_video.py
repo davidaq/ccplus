@@ -24,7 +24,7 @@ def extract_video(videofile):
     tmpdir = videofile + '__frames/'
     rmdir(tmpdir)
     os.mkdir(tmpdir)
-    os.system('ffmpeg -n -i "' + videofile + '" -f image2 -c:v rawvideo -pix_fmt argb "' + tmpdir + '%09d.argb"')
+    os.system('ffmpeg -n -i "' + videofile + '" -f image2 -c:v rawvideo -pix_fmt argb -y "' + tmpdir + '%09d.argb"')
 
 def filter_alpha(videofile):
     tmpdir = videofile + '__frames/'
@@ -49,11 +49,11 @@ def merge_alpha(videofile):
             height = stream['height']
             fps = stream['r_frame_rate']
     scale = str(width) + 'x' + str(height)
-    os.system('ffmpeg -r ' + fps + ' -s ' + scale + ' -f image2 -c:v rawvideo -pix_fmt gray -i "' + tmpdir + '%09d.argb" -r ' + fps + ' -c:v libx264 -pix_fmt yuv420p "' + videofile + '.opacity.mp4"')
+    os.system('ffmpeg -r ' + fps + ' -s ' + scale + ' -f image2 -c:v rawvideo -pix_fmt gray -i "' + tmpdir + '%09d.argb" -r ' + fps + ' -c:v libx264 -pix_fmt yuv420p -y "' + videofile + '.opacity.mp4"')
     return fps
 
 def extract_rgb(videofile, fps):
-    os.system('ffmpeg -n -i "' + videofile + '" -c:v libx264 -pix_fmt yuv420p -c:a aac -strict -2 -ac 1 -r ' + fps + ' "' + videofile + '.mp4"')
+    os.system('ffmpeg -i "' + videofile + '" -c:v libx264 -pix_fmt yuv420p -c:a aac -strict -2 -ac 1 -r ' + fps + ' -y "' + videofile + '.mp4"')
 
 def clean(videofile):
     tmpdir = videofile + '__frames/'

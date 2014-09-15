@@ -1,4 +1,5 @@
 ﻿function main() {
+    showProgressWindow();
     PropertyMapping.sort(function(a, b) {
         if(a.order)
             a = a.order;
@@ -16,12 +17,13 @@
     } catch (e) {
         alert(e);
     }
+    closeProgressWindow();
 }
 
 
 var logFile = new File(projDir + 'log');
 logFile.open('w');
-logFile.write(new Date().toGMTString());
+logFile.write(new Date().toGMTString() + "\n");
 logFile.close();
 function log(str) {
     logFile.open('a');

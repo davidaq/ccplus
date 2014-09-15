@@ -3,6 +3,7 @@
 
 from json import JSONDecoder
 from json import JSONEncoder
+from math import ceil
 import string
 import os
 import sys
@@ -69,6 +70,10 @@ class Resizer():
             comps[comp]['resolution']['width'] *= self.scale
             comps[comp]['resolution']['height'] *= self.scale
             for layer in comps[comp]['layers']:
+                if layer['uri'][0:7] == 'text://':
+                    txtProp = layer['text-properties']
+                    for t in txtProp['size']:
+                        txtProp['size'][t] = int(ceil(txtProp['size'][t] * self.scale))
                 transform = layer['properties']['transform']
                 for time in transform:
                     trans = transform[time]

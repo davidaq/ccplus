@@ -22,7 +22,9 @@ Frame::Frame(const std::string& filepath) {
         {
             log(logFATAL) << "Intermidiate file not exists: " << filepath;
         }
-        unsigned char* fileContent = new unsigned char[inFile->getSize()];
+        int sz = inFile->getSize();
+        unsigned char* fileContent = new unsigned char[sz];
+        unsigned char* endOfFile = fileContent + sz;
         inFile->readAll(fileContent);
         inFile->close();
         unsigned char* ptr = fileContent;
@@ -68,7 +70,7 @@ Frame::Frame(const std::string& filepath) {
          */
         uint32_t audioLen = NEXT(uint32_t);
         uint32_t audioRealByteLen = NEXT(uint32_t);
-        if (CCPlus::COMPRESS_AUDIO) {  
+        if (CCPlus::COMPRESS_AUDIO) {
             unsigned char* audioData = new unsigned char[audioRealByteLen];
             destLen = (unsigned long)0x7fffffff;
             profile(ZipUncompress) {
@@ -79,15 +81,21 @@ Frame::Frame(const std::string& filepath) {
             }
             // I don't trust memcpy
             std::vector<int16_t> tmp;
-            for (int i = 0; i < destLen / 2; i++) 
+            for (int i = 0; i < destLen / 2; i++)
                 tmp.push_back(((int16_t*) audioData)[i]);
             audio = Mat(tmp, true);
             delete[] audioData;
+            ptr += audioLen;
         } else {
-            vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);   
+            vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);
             audio = Mat(tmp, true);
+            ptr += audioRealByteLen;
         }        
         delete[] alphaBytes;
+        if(ptr != endOfFile) {
+            anchorAdjustX = NEXT(int16_t);
+            anchorAdjustY = NEXT(int16_t);
+        }
         delete[] fileContent;
     } else {
         // read from file system
@@ -95,7 +103,6 @@ Frame::Frame(const std::string& filepath) {
         image = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
         if (!image.data) {
             log(logFATAL) << "file not exists: " << filepath;
-            //throw std::ios_base::failure("File not exists");
         }
     }
 
@@ -238,6 +245,14 @@ void Frame::write(const std::string& file, int quality, bool inMemory) {
             outFile.write(&wlen, sizeof(wlen));
             outFile.write(audio.data, sizeof(int16_t), len);
         }
+        /*
+         * write anchor adjust
+         */
+        int16_t val = anchorAdjustX;
+        outFile.write(&val, sizeof(int16_t));
+        val = anchorAdjustY;
+        outFile.write(&val, sizeof(int16_t));
+
         outFile.close();
         delete[] uncompressedBytes;
         delete[] compressedBytes;
@@ -461,5 +476,21 @@ int Frame::getXMax() const {
 
 int Frame::getYMax() const { 
     return std::min(image.rows, yMax);
+}
+
+void Frame::setAnchorAdjustX(int val) {
+    anchorAdjustX = val;
+}
+
+void Frame::setAnchorAdjustY(int val) {
+    anchorAdjustY = val;
+}
+
+int Frame::getAnchorAdjustX() const {
+    return anchorAdjustX;
+}
+
+int Frame::getAnchorAdjustY() const {
+    return anchorAdjustY;
 }
 

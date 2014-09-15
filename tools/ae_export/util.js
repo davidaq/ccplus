@@ -39,21 +39,27 @@ function obj2str(obj) {
         } else if(type == 'object') {
             var ret = '';
             if(obj.length !== undefined) {
+                var cma = true;
                 for(k in obj) {
-                    ret += ',' + _obj2str(obj[k]);
+                    if(!cma)
+                        ret += ',';
+                    cma = false;
+                    ret += _obj2str(obj[k]);
                 }
                 return '[' + ret + ']';
             } else if('[object Object]' == obj.toString()) {
+                var cma = true;
                 for(k in obj) {
-                    ret += ',"' + k + '":' + _obj2str(obj[k]);
+                    if(!cma)
+                        ret += ',';
+                    cma = false;
+                    ret += '"' + k + '":' + _obj2str(obj[k]);
                 }
                 return '{' + ret + '}';
             }
         }
     }
     var ret = _obj2str(obj);
-    ret = ret.replace(/,/g, ",\n");
-    ret = ret.replace(/([\[\{]),/g, "$1");
     return ret;
     ret = ret.replace(/([\]\}])/g, "\n$1");
     ret = ret.replace(/\[[\n\s]*\]/g, '[]');
