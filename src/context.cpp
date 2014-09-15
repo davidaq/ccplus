@@ -4,14 +4,20 @@
 
 using namespace CCPlus;
 
-Context::Context(const std::string& _storagePath, int _fps):
+Context::Context(const std::string& _storagePath, 
+        int _fps, bool _enableGPU):
     storagePath(_storagePath), fps(_fps)
 {
-    // TODO clean it some where
     FileManager::getInstance();
+    
+    if (_enableGPU) {
+        gpu = new GPUWorker();
+    }
 }
 
 Context::~Context() {
+    if (gpu)
+        delete gpu;
 }
 
 void Context::releaseMemory() {
@@ -53,4 +59,12 @@ void Context::setInputDir(const std::string& dir) {
 
 const std::string& Context::getInputDir() const {
     return inputDir;
+}
+
+GPUWorker* Context::getGPUWorker() {
+    return gpu;
+}
+
+bool Context::enableGPU() const {
+    return gpu != 0;
 }

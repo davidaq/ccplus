@@ -32,6 +32,12 @@
                 'xcode_settings' : {
                     'SDKROOT': 'macosx10.9',
                 },
+                'link_settings' : {
+                    'libraries' : [
+                        '-framework',
+                        'OpenGL'
+                    ]
+                }
             }],
             ['OS=="android"', {
             }],

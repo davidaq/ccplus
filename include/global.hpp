@@ -20,6 +20,8 @@ namespace CCPlus {
     class Object;
 
     class Frame;
+
+    class GPUWorker;
 }
 
 // system dependencies
@@ -59,8 +61,8 @@ typedef std::map<std::string, Property> PropertyMap;
 #include "filter.hpp"
 #include "time.h"
 #include "logger.hpp"
-//#include "file-manager.hpp"
 #include "profile.hpp"
+#include "gpu-worker.hpp"
 
 #define PASS printf("passed line %d in %s at %lums\n", __LINE__, __FILE__, clock() * 1000 / CLOCKS_PER_SEC);
 
