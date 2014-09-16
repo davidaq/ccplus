@@ -9,10 +9,7 @@ Context::Context(const std::string& _storagePath,
     storagePath(_storagePath), fps(_fps)
 {
     FileManager::getInstance();
-}
 
-Context::~Context() {
-    
     extra = new ExtraContext;
     // Init FreeType
     int fterror;
@@ -27,6 +24,9 @@ Context::~Context() {
     if ( fterror ) {
         log(logFATAL) << "Can't load font...";
     }
+}
+
+Context::~Context() {
     FT_Done_Face(extra->font);
     FT_Done_FreeType(extra->freetype);
     delete extra;
