@@ -102,8 +102,9 @@ void TextRenderable::render(float start, float duration) {
         int r = (color >> 14) * 255 / 127;
         int g = ((color >> 7) & 127) * 255 / 127;
         int b = (color & 127) * 255 / 127;
-        Mat ret((int)height * 3 * sy, 
-                (int)width * 3 * sx, 
+        float tracking = get<float>(this->tracking, time);
+        Mat ret((int)height * 3 * sx, 
+                (int)width * (2 + tracking) * sy,
                 CV_8UC4, cv::Scalar(b, g, r, 0));
         auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
@@ -126,13 +127,12 @@ void TextRenderable::render(float start, float duration) {
         wstring s = get<wstring>(this->text, time);
         int x = 0;
         int y = height * sy;
-        float tracking = get<float>(this->tracking, time);
         int prevAdvance = 0;
         for (int j = 0; j < s.length(); j++) {
             error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
             if (error) {
                 log(logWARN) << "Can't load character: " << s[j];
-                x += size * 2;
+                x += size * 1.5;
             } else {
                 x += prevAdvance;
                 FT_GlyphSlot slot = face->glyph;
@@ -140,7 +140,8 @@ void TextRenderable::render(float start, float duration) {
                 float advance = (slot->advance.x >> 6) - slot->bitmap.width;
                 if(advance < 0.5)
                     advance = 0.5;
-                prevAdvance = slot->bitmap.width + (1 + tracking) * advance;
+                x += slot->bitmap.width;
+                prevAdvance = (1 + tracking) * advance;
             }
         }
         Frame retFrame(ret);
