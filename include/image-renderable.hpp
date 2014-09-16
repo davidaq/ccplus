@@ -30,7 +30,6 @@ protected:
     Frame cache;
     bool loaded = false;
     std::string path;
-    Frame image;
 
     std::string uri;
 };

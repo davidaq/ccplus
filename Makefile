@@ -41,7 +41,11 @@ clean-all: clean
 clean-zim: 
 	-rm -rf tmp/*.zim
 
-.dependency:
+make_bin_header:
+	mkdir -p build/res
+	find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
+
+.dependency:make_bin_header
 	@-./scripts/run load.py
 
 build/Makefile: .dependency

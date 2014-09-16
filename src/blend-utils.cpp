@@ -27,6 +27,7 @@ std::map<int, BLENDER_CORE> blendMap = {
 BLENDER_CORE getBlender(int mode) {
     if (!blendMap.count(mode)) {
         log(CCPlus::logFATAL) << "Mode " << mode << " is not suppported";
+        mode = NONE;
     }
     return blendMap[mode];
 }

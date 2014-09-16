@@ -18,9 +18,10 @@ typedef uint16_t ushort;
 Frame::Frame(const std::string& filepath) {
     if(stringEndsWith(filepath, ".zim")) {
         File* inFile = FileManager::getInstance()->open(filepath, "rb");
-        if(!inFile)
-        {
-            log(logFATAL) << "Intermidiate file not exists: " << filepath;
+        if(!inFile) {
+            log(logWARN) << "File not exists: " << filepath;
+            image = cv::Mat(8, 8, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+            return;
         }
         int sz = inFile->getSize();
         unsigned char* fileContent = new unsigned char[sz];

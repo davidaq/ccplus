@@ -15,9 +15,10 @@
                 '<!@(find src -type f -name "*.c")',
             ],
             'include_dirs': [
-                '.', 
                 'include',
-                'dependency'
+                'build',
+                'dependency',
+                '.', 
             ],
             'all_dependent_settings': {
                 'include_dirs': [

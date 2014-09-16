@@ -96,7 +96,11 @@ void TextRenderable::render(float start, float duration) {
         float sx = get<float>(this->scale_x, time);
         float sy = get<float>(this->scale_y, time);
         if (FT_Set_Pixel_Sizes(face, (int)size * sx, (int)size * sy)) {
-            log(logFATAL) << "Can't set text size";
+            if (FT_Set_Pixel_Sizes(face, (int)size, (int)size)) {
+                if (FT_Set_Pixel_Sizes(face, 20, 20)) {
+                    log(logFATAL) << "Can't set text size";
+                }
+            }
         }
         int color = get(this->color, time);
         int r = (color >> 14) * 255 / 127;

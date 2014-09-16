@@ -17,12 +17,14 @@ ImageRenderable::ImageRenderable(Context* context, const std::string& _uri) :
     path = generatePath(context->getInputDir(), path);
 }
 
+// Legacy deprecated
 int ImageRenderable::getWidth() const {
-    return image.getWidth();
+    return 0;
 }
 
+// Legacy deprecated
 int ImageRenderable::getHeight() const {
-    return image.getHeight();
+    return 0;
 }
 
 float ImageRenderable::getDuration() const {
@@ -33,9 +35,6 @@ void ImageRenderable::clear() {
 }
 
 void ImageRenderable::render(float start, float duration) {
-    //if (!loaded)
-    //    image = Frame(path);
-    //loaded = true;
     cache = Frame(path);
 }
 
