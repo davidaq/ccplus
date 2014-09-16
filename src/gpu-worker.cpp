@@ -3,6 +3,7 @@
 #include "gpu-worker.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
+#include "profile.hpp"
 
 using namespace CCPlus;
 
@@ -67,6 +68,12 @@ void GPUWorker::loadShader(const std::string& vertexShader,
 void GPUWorker::run(std::function<void(GLuint)> func, Frame& f) {
     int width = f.getWidth();
     int height = f.getHeight();
+
+    // Generate FBO
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    
     // Generate texture
     GLuint texture;
     glEnable(GL_TEXTURE_2D);
@@ -79,19 +86,10 @@ void GPUWorker::run(std::function<void(GLuint)> func, Frame& f) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_NEAREST);
-
-    // Generate FBO
-    GLuint fbo;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    
     // Bind texture to fbo
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
             GL_TEXTURE_2D, texture, 0);
+
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if(status != GL_FRAMEBUFFER_COMPLETE) {
@@ -99,15 +97,24 @@ void GPUWorker::run(std::function<void(GLuint)> func, Frame& f) {
     }
     
     glViewport(0, 0, width, height);
-    glClearColor(0.5, 0.5, 0.5, 0.9);
+    glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    /* Set ortho */
+    GLint orthoLocation = 
+        glGetUniformLocation(program, "Ortho");
+    cv::Mat ortho = (cv::Mat_<float>(3, 3) << 
+            2.0f / width, 0, -1,
+            0, 2.0f / height, -1,
+            0, 0, 1.0f);
+    glUniformMatrix3fv(orthoLocation, 1, 
+            GL_TRUE, ortho.ptr<float>(0));
+
     func(this->program);
     glFinish();
 
-    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
     GLubyte pixels[width * height * 4];
     glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
 
     memcpy(f.getImage().data, pixels, width * height * 4);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -5,15 +5,11 @@
 using namespace CCPlus;
 
 Context::Context(const std::string& _storagePath, 
-        int _fps, bool _enableGPU):
+        int _fps):
     storagePath(_storagePath), fps(_fps)
 {
     FileManager::getInstance();
-    
-    if (_enableGPU) {
-        gpu = new GPUWorker();
-    }
-    
+
     extra = new ExtraContext;
     // Init FreeType
     int fterror;
@@ -34,8 +30,6 @@ Context::Context(const std::string& _storagePath,
 }
 
 Context::~Context() {
-    if (gpu)
-        delete gpu;
     FT_Done_Face(extra->font);
     FT_Done_FreeType(extra->freetype);
     delete extra;
@@ -80,12 +74,4 @@ void Context::setInputDir(const std::string& dir) {
 
 const std::string& Context::getInputDir() const {
     return inputDir;
-}
-
-GPUWorker* Context::getGPUWorker() {
-    return gpu;
-}
-
-bool Context::enableGPU() const {
-    return gpu != 0;
 }

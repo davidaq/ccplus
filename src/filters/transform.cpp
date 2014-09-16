@@ -2,6 +2,8 @@
 #include "logger.hpp"
 #include "mat-cache.hpp"
 #include <cmath>
+#include "gpu-worker.hpp"
+#include "utils.hpp"
 
 #ifndef __ANDROID__
 #define round(X) std::round(X)
@@ -177,13 +179,14 @@ CCPLUS_FILTER(transform) {
     if (nonZero(0, 2) || nonZero(1, 2) || nonZero(2, 0) ||
         nonZero(2, 1) || nonZero(2, 3)) 
         affine = false;
-    if (affine) {
+    if (affine && !GPU_ACCELERATION) {
         Mat affineMat = (Mat_<double>(2, 3) << 
                 at(0, 0), at(0, 1), at(0, 3),
                 at(1, 0), at(1, 1), at(1, 3));
         Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
+            warpAffine(input, ret, affineMat, {width, height}, 
+                    INTER_LINEAR, BORDER_TRANSPARENT);
         }
         frame.setImage(ret);
         return;
@@ -207,6 +210,65 @@ CCPLUS_FILTER(transform) {
         for(int j = 0; j < 3; j++) {
             tmatrix[i][j] = H.at<double>(i, j);
         }
+
+    if (GPU_ACCELERATION) {
+        /* Set ortho */
+        float tm[9];
+        for (int i = 0; i < 9; i++) {
+            tm[i] = tmatrix[i / 3][i % 3];
+        }
+        GPUWorker gpu;
+        gpu.loadShader(slurp("shaders/transform_vertex.glsl"), 
+                slurp("shaders/test_fragment.glsl"));
+        Frame tmp(ret);
+        //L() << " Start herer";
+        gpu.run([&tm, &width, &height, &input] (GLuint program) {
+            GLint mLocation = glGetUniformLocation(program, "M");
+            glUniformMatrix3fv(mLocation, 1, 
+                    GL_TRUE, tm);
+
+            float T[] = {
+                1.0f * width / input.cols, 0,
+                0, 1.0f * height / input.rows
+            };
+            GLint tLocation = glGetUniformLocation(program, "T");
+            glUniformMatrix2fv(tLocation, 1, 
+                    GL_TRUE, T);
+            typedef struct {
+                float x, y;
+            } FloatType2D;
+            FloatType2D vertices[4];
+            vertices[0].x = 0;  vertices[0].y = 0;
+            vertices[1].x = width - 1;  vertices[1].y = 0;
+            vertices[2].x =  0;  vertices[2].y = height - 1;
+            vertices[3].x = width - 1;  vertices[3].y = height - 1;
+
+            GLuint buffer;
+            glGenBuffers(1, &buffer);
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+            GLuint location = glGetAttribLocation(program, 
+                    "vertex_position");
+            glEnableVertexAttribArray(location);
+            glVertexAttribPointer(location, 2, GL_FLOAT, 
+                    GL_FALSE, 0, (GLvoid*)(0));
+
+            GLuint texture;
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, input.cols, input.rows, 0, 
+                    GL_BGRA, GL_UNSIGNED_BYTE, input.data);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }, tmp);
+        frame.setImage(tmp.getImage());
+        return;
+    }
 
     profileBegin(Filter_transform_map_func);
 

@@ -11,7 +11,7 @@ namespace CCPlus {
 class CCPlus::Context : public CCPlus::Object {
 public:
     Context(const std::string& storagePath, 
-            int _fps, bool enableGPU = false);
+            int _fps);
     ~Context();
 
     void releaseMemory();
@@ -28,8 +28,6 @@ public:
     void setInputDir(const std::string& dir);
     const std::string& getInputDir() const;
 
-    bool enableGPU() const;
-    GPUWorker* getGPUWorker();
     CCPlus::ExtraContext& getExtra() {
         return *extra;
     }
@@ -44,8 +42,4 @@ private:
     int fps;
 
     std::string inputDir = "";
-
-    GPUWorker* gpu = 0;
-
-    // operations
 };

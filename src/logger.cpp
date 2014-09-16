@@ -8,6 +8,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 using namespace CCPlus;
 
 CCPlus::LogLevel logLevel = CCPlus::logDEBUG;
@@ -43,5 +47,15 @@ Logger::~Logger() {
 #endif
 
     if (level == logFATAL)
+    {
+#ifdef __ANDROID__
+#elif __APPLE__
+    #if TARGET_OS_IPHONE
+    #else
         exit(-1);
+    #endif
+#else
+        exit(-1);
+#endif
+    }
 }
