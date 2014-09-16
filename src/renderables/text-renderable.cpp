@@ -103,8 +103,8 @@ void TextRenderable::render(float start, float duration) {
         int g = ((color >> 7) & 127) * 255 / 127;
         int b = (color & 127) * 255 / 127;
         float tracking = get<float>(this->tracking, time);
-        Mat ret((int)height * 3 * sx, 
-                (int)width * (2 + tracking) * sy,
+        Mat ret((int)height * 2 * sy, 
+                (int)width * (2 + tracking) * sx,
                 CV_8UC4, cv::Scalar(b, g, r, 0));
         auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
