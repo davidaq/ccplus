@@ -1,13 +1,8 @@
 #include "text-renderable.hpp"
 #include "frame.hpp"
 #include "logger.hpp"
+#include "extra-context.hpp"
 #include <algorithm>
-
-extern "C" 
-{
-#include <ft2build.h>
-#include FT_FREETYPE_H
-}
 
 using namespace cv;
 using namespace CCPlus;
@@ -91,21 +86,8 @@ void TextRenderable::render(float start, float duration) {
     int width = getWidth();
     int height = getHeight();
 
-    // Init FreeType
-    FT_Library library;
-    FT_Face face;
+    FT_Face& face = context->getExtra().font;
     int error;
-    error = FT_Init_FreeType(&library);
-    if ( error  ) {
-        log(logFATAL) << "Can't initialize FreeType";
-    }
-    error = FT_New_Face( library,
-            "/Library/Fonts/华文黑体.ttf",
-            0,
-            &face);
-    if ( error  ) {
-        log(logFATAL) << "Can't load font...";
-    }
 
     for (int i = startFrame; i <= endFrame; i++) {
         // Come on FreeType!
@@ -120,9 +102,9 @@ void TextRenderable::render(float start, float duration) {
         int r = (color >> 14) * 255 / 127;
         int g = ((color >> 7) & 127) * 255 / 127;
         int b = (color & 127) * 255 / 127;
-        Mat ret((int)height * 2 * sy, 
-                (int)width * 2 * sx, 
-                CV_8UC4, cv::Scalar(b, g, r, 100));
+        Mat ret((int)height * 3 * sy, 
+                (int)width * 3 * sx, 
+                CV_8UC4, cv::Scalar(b, g, r, 0));
         auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
             int cols = bitmap->width;
@@ -145,25 +127,21 @@ void TextRenderable::render(float start, float duration) {
         int x = 0;
         int y = height * sy;
         float tracking = get<float>(this->tracking, time);
+        int prevAdvance = 0;
         for (int j = 0; j < s.length(); j++) {
             error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
             if (error) {
-                log(logFATAL) << "Can't load character: " << s[j];
-                return;
+                log(logWARN) << "Can't load character: " << s[j];
+                x += size * 2;
+            } else {
+                x += prevAdvance;
+                FT_GlyphSlot slot = face->glyph;
+                draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
+                float advance = (slot->advance.x >> 6) - slot->bitmap.width;
+                if(advance < 0.5)
+                    advance = 0.5;
+                prevAdvance = slot->bitmap.width + (1 + tracking) * advance;
             }
-
-            FT_GlyphSlot slot = face->glyph;
-            if (i == 180) {
-                L() << ret.rows << " " << ret.cols;
-                L() << slot->bitmap_left + x << " " << 
-                    y - slot->bitmap_top;
-            }
-
-            draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
-
-            int advance = (slot->advance.x >> 6) - slot->bitmap.width;
-            advance = slot->bitmap.width + advance + tracking * advance;
-            x += advance;
         }
         Frame retFrame(ret);
         retFrame.setAnchorAdjustY(size);
@@ -172,18 +150,16 @@ void TextRenderable::render(float start, float duration) {
                 retFrame.setAnchorAdjustX(0);
                 break;
             case 1: // center
-                retFrame.setAnchorAdjustX(retFrame.getWidth() / 2);
+                retFrame.setAnchorAdjustX(x / 2);
                 break;
             case 2: // right
-                retFrame.setAnchorAdjustX(retFrame.getWidth());
+                retFrame.setAnchorAdjustX(x);
                 break;
         };
         rendered.insert(i);
         std::string fp = getFramePath(i);
         retFrame.write(fp, 75);
     }
-
-    FT_Done_FreeType(library);
 }
 
 int TextRenderable::findKey(int f) const {

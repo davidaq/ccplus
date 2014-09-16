@@ -5,6 +5,9 @@
 
 // @ Context objects contains data that should be shared between process stages.
 // @ This class should not be inherited
+namespace CCPlus {
+    struct ExtraContext;
+};
 class CCPlus::Context : public CCPlus::Object {
 public:
     Context(const std::string& storagePath, 
@@ -27,11 +30,15 @@ public:
 
     bool enableGPU() const;
     GPUWorker* getGPUWorker();
+    CCPlus::ExtraContext& getExtra() {
+        return *extra;
+    }
 
     // inquery
 
 private:
     
+    CCPlus::ExtraContext *extra;
     // data
     std::string storagePath;
     

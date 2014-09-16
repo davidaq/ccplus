@@ -1,4 +1,4 @@
-#include "context.hpp"
+#include "extra-context.hpp"
 #include "file-manager.hpp"
 #include "mat-cache.hpp"
 
@@ -13,11 +13,29 @@ Context::Context(const std::string& _storagePath,
     if (_enableGPU) {
         gpu = new GPUWorker();
     }
+    
+    extra = new ExtraContext;
+    // Init FreeType
+    int fterror;
+    fterror = FT_Init_FreeType(&(extra->freetype));
+    if ( fterror ) {
+        log(logFATAL) << "Can't initialize FreeType";
+    }
+    // TODO pack real font
+    fterror = FT_New_Face(extra->freetype,
+            "res/font.ttf",
+            0, &(extra->font));
+    if ( fterror ) {
+        log(logFATAL) << "Can't load font...";
+    }
 }
 
 Context::~Context() {
     if (gpu)
         delete gpu;
+    FT_Done_Face(extra->font);
+    FT_Done_FreeType(extra->freetype);
+    delete extra;
 }
 
 void Context::releaseMemory() {
