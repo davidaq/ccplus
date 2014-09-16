@@ -53,6 +53,7 @@
                 'defines': [ 'NDEBUG' ],
                 'cflags': [
                     '-O3',
+                    '-ffast-math',
                     '-fomit-frame-pointer',
                     '-fdata-sections',
                     '-ffunction-sections',

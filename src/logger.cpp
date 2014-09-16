@@ -35,6 +35,7 @@ Logger::~Logger() {
     static bool logLockInited = false;
     if(!logLockInited) {
         pthread_mutex_init(&logLock, 0);
+        logLockInited = true;
     }
     pthread_mutex_lock(&logLock);
     (*out) << _buffer.str();

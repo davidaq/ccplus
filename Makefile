@@ -76,7 +76,7 @@ android:android_a android_so
 
 ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
-	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='armv7 armv7s' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
+	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
 
 test: testbuild

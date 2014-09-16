@@ -191,4 +191,10 @@ void fillTextProperties(TextRenderable* r,
     each("scale_y", [&] (float t, auto& pc) {
         r->scale_y[t] = std::atof(pc.data().c_str());
     });
+    each("color", [&] (float t, auto& pc) {
+        r->color[t] = std::atoi(pc.data().c_str());
+    });
+    each("justification", [&] (float t, auto& pc) {
+        r->justification[t] = std::atoi(pc.data().c_str());
+    });
 }

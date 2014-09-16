@@ -35,6 +35,8 @@ public:
     std::map<float, float> tracking;
     std::map<float, bool> bold;
     std::map<float, bool> italic;
+    std::map<float, int> color;
+    std::map<float, int> justification;
 
 protected:
     template<typename T> 

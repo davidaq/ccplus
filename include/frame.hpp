@@ -70,6 +70,11 @@ public:
     void setXMax(int _x) {xMax = _x;};
     void setYMax(int _x) {yMax = _x;};
 
+    int getAnchorAdjustX() const;
+    int getAnchorAdjustY() const;
+    void setAnchorAdjustX(int);
+    void setAnchorAdjustY(int);
+
 private:
     /**
      * Put @input *UNDER* this image
@@ -87,4 +92,6 @@ private:
 
     cv::Mat image;
     cv::Mat audio; 
+
+    int anchorAdjustX = 0, anchorAdjustY = 0;
 };
