@@ -19,16 +19,32 @@ struct UserContext {
 };
 
 void* CCPlus::initContext(const char* tmlPath, 
-        const char* storagePath, int fps, bool enableGPU) {
+        const char* storagePath, int fps) {
     log(logINFO) << "Loading tml file......";
     UserContext* ret = new UserContext;
-    ret->ctx = new CCPlus::Context(storagePath, 
-            fps, enableGPU);
+    ret->ctx = new CCPlus::Context(storagePath, fps);
     CCPlus::TMLReader reader(ret->ctx);
     ret->mainComp = reader.read(tmlPath);
 
     // Init rand seed
     srand(std::time(0));
+
+    if (GPU_ACCELERATION) {
+#ifdef __APPLE__
+        CGLContextObj context;
+        CGLPixelFormatAttribute attributes[4] = {
+            kCGLPFAAccelerated,   // no software rendering
+            kCGLPFAOpenGLProfile, // core profile with the version stated below
+            (CGLPixelFormatAttribute) kCGLOGLPVersion_Legacy,
+            (CGLPixelFormatAttribute) 0
+        };
+        CGLPixelFormatObj pix;
+        GLint num;
+        CGLChoosePixelFormat(attributes, &pix, &num);
+        CGLCreateContext(pix, NULL, &context);
+        CGLSetCurrentContext(context);
+#endif
+    }
 
     return (void*) ret;
 }
@@ -36,6 +52,12 @@ void* CCPlus::initContext(const char* tmlPath,
 void CCPlus::releaseContext(void* ctxHandle) {
     if(!ctxHandle)
         return;
+    if (GPU_ACCELERATION) {
+#ifdef __APPLE__
+        CGLSetCurrentContext(NULL);
+        //CGLDestroyContext(context);
+#endif
+    }
     UserContext* uCtx = (UserContext*) ctxHandle;
     uCtx->ctx->releaseMemory();
     delete uCtx->ctx;
