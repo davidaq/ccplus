@@ -110,7 +110,7 @@ void TextRenderable::render(float start, float duration) {
         Mat ret((int)height * 2 * sy, 
                 (int)width * (2 + tracking) * sx,
                 CV_8UC4, cv::Scalar(b, g, r, 0));
-        auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
+        auto draw = [&ret, width, height] (FT_Bitmap* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
             int cols = bitmap->width;
             for (int i = 0; i < rows; i++) {
