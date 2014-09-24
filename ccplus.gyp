@@ -8,14 +8,17 @@
                 'dependency/boost/boost.gyp:boost',
                 'dependency/opencv/opencv.gyp:opencv',
                 'dependency/ffmpeg/ffmpeg.gyp:ffmpeg',
+                'dependency/freetype/freetype.gyp:freetype',
             ],
             'sources': [
                 '<!@(find src -type f -name "*.cpp")',
+                '<!@(find src -type f -name "*.c")',
             ],
             'include_dirs': [
-                '.', 
                 'include',
-                'dependency'
+                'build',
+                'dependency',
+                '.', 
             ],
             'all_dependent_settings': {
                 'include_dirs': [

@@ -52,15 +52,9 @@ std::vector<CompositionDependency> Composition::directDependency(float from, flo
                         layer.getTime() + layer.getDuration());
                 CompositionDependency dp;
                 dp.renderable = layer.getRenderObject();
-                //dp.from = layer.getStart(); 
-                //dp.to = layer.getStart() + layer.getLast();
                 // Partial dependency
-                dp.from = layer.getStart() + 
-                    (layerFrom - layer.getTime()) / 
-                    layer.getDuration() * layer.getLast();
-                dp.to = layer.getStart() + 
-                    (layerTo - layer.getTime()) / 
-                    layer.getDuration() * layer.getLast();
+                dp.from = layer.mapInnerTime(layerFrom);
+                dp.to = layer.mapInnerTime(layerTo);
                 dps.push_back(dp);
             }
         }
@@ -272,7 +266,7 @@ bool Composition::still(float t1, float t2) {
         if (l.visible(t1) != l.visible(t2))
             return false;
         if (!l.visible(t1)) continue;
-        if (!l.getRenderObject()->still(t1, t2))
+        if (!l.getRenderObject()->still(l.mapInnerTime(t1), l.mapInnerTime(t2)))
             return false;
         const PropertyMap& mp = l.getProperties();
         for (auto& kv : mp) {
@@ -284,3 +278,4 @@ bool Composition::still(float t1, float t2) {
     }
     return true;
 }
+

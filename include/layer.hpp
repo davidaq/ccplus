@@ -35,6 +35,11 @@ public:
     float getStart() const;
     float getLast() const;
 
+    /*
+     * map layer time to layer renderable item local time
+     */
+    float mapInnerTime(float time) const;
+
     int getBlendMode() const;
     int getTrackMatte() const;
 
@@ -45,6 +50,7 @@ public:
      */
     bool visible(float t) const;
     /*
+     * Show is to check whether this layer is visible
      * FIXME: this will cause confusion with visible
      */
     bool show() const;

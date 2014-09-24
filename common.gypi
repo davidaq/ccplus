@@ -11,7 +11,7 @@
     'target_defaults': {
         'default_configuration': 'Debug',
         'cflags_cc': [ '-std=c++1y', '-fvisibility=hidden', '-fexceptions' ],
-        'cflags': ['-Wall'],
+        'cflags': ['-Wall', '-Wno-null-character'],
         'xcode_settings': {
             'OTHER_CFLAGS' : ['-Wall', '-fvisibility=hidden'],
             'OTHER_CPLUSPLUSFLAGS' : ['-Wall', '-fvisibility=hidden'],
@@ -32,6 +32,12 @@
                 'xcode_settings' : {
                     'SDKROOT': 'macosx10.9',
                 },
+                'link_settings' : {
+                    'libraries' : [
+                        '-framework',
+                        'OpenGL'
+                    ]
+                }
             }],
             ['OS=="android"', {
             }],
@@ -56,6 +62,7 @@
                 'defines': [ 'NDEBUG' ],
                 'cflags': [
                     '-O3',
+                    '-ffast-math',
                     '-fomit-frame-pointer',
                     '-fdata-sections',
                     '-ffunction-sections',

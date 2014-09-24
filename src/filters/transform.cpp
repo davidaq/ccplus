@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include "mat-cache.hpp"
 #include <cmath>
+#include "utils.hpp"
 
 #ifndef __ANDROID__
 #define round(X) std::round(X)
@@ -32,6 +33,10 @@ CCPLUS_FILTER(transform) {
         int pos_z = (int)parameters[2 + set];
         int anchor_x = (int)parameters[3 + set];
         int anchor_y = (int)parameters[4 + set];
+        if(set == 0) {
+            anchor_x += frame.getAnchorAdjustX();
+            anchor_y += frame.getAnchorAdjustY();
+        }
         int anchor_z = (int)parameters[5 + set];
         if (anchor_z != 0) {
             log(CCPlus::logWARN) << "Anchor z is not supported";
@@ -179,7 +184,8 @@ CCPLUS_FILTER(transform) {
                 at(1, 0), at(1, 1), at(1, 3));
         Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height}, INTER_LINEAR, BORDER_TRANSPARENT);
+            warpAffine(input, ret, affineMat, {width, height}, 
+                    INTER_LINEAR, BORDER_TRANSPARENT);
         }
         frame.setImage(ret);
         return;

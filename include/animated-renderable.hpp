@@ -20,6 +20,5 @@ public:
 protected:
     virtual void renderPart(float start, float duration) = 0;
     std::set<int> rendered;
-    std::string getFramePath(int f) const;
 };
 

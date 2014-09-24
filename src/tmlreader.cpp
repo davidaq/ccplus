@@ -1,16 +1,22 @@
 #include <fstream>
+#include <locale>
+#include <codecvt>
 
 #include "tmlreader.hpp"
 #include "utils.hpp"
 #include "image-renderable.hpp"
 #include "video-renderable.hpp"
+#include "text-renderable.hpp"
+#include "gif-renderable.hpp"
 
 using namespace CCPlus;
+
+void fillTextProperties(TextRenderable*, 
+        const boost::property_tree::ptree&); 
 
 TMLReader::TMLReader(CCPlus::Context* ctx) :
     context(ctx)
 {
-
 }
 
 Composition* TMLReader::read(const std::string& s) const {
@@ -93,38 +99,45 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 extMap["jpg"]       = imageExt;
                 extMap["png"]       = imageExt;
                 extMap["bmp"]       = imageExt;
+                auto gifExt = [](Context* context, const std::string& uri) {
+                    return new GifRenderable(context, uri);
+                };
+                extMap["gif"]       = gifExt;
+                // Just treat everything else as Audio/Video
                 auto avExt = [](Context* context, const std::string& uri) {
                     return new VideoRenderable(context, uri);
                 };
-                // Just treat everything else as Audio/Video
                 extMap["default"]   = avExt;
-                //extMap["mov"]       = avExt;
-                //extMap["mp4"]       = avExt;
-                //extMap["gif"]       = avExt;
-                //extMap["flv"]       = avExt;
-                //extMap["f4v"]       = avExt;
-                //extMap["mp3"]       = avExt;
-                //extMap["flac"]      = avExt;
-                //extMap["m4a"]       = avExt;
-                //extMap["wav"]       = avExt;
-                //extMap["ogv"]       = avExt;
-                //extMap["ogg"]       = avExt;
-                //extMap["webm"]      = avExt;
-                //extMap["mkv"]       = avExt;
-                //extMap["wmv"]       = avExt;
-                //extMap["aac"]       = avExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
-            stringToLower(ext);
+            ext = toLower(ext);
             
             log(logDEBUG) << "Got file extention: " << ext;
             if(!extMap.count(ext)) {
                 ext = "default";
+                std::string path = uri;
+                if (stringStartsWith(path, "file://")) 
+                    path = uri.substr(7);
+                path = generatePath(context->getInputDir(), path);
+                FILE* fp = fopen(path.c_str(), "rb");
+                if(fp) {
+                    char buff[4];
+                    fread(buff, 1, 3, fp);
+                    fclose(fp);
+                    buff[3] = 0;
+                    if(strcmp(buff, "GIF") == 0) {
+                        ext = "gif";
+                    }
+                }
             }
             renderable = extMap[ext](context, uri);
+        } else if (stringStartsWith(uri, "text://")) {
+            renderable = new TextRenderable(context, uri);
+            fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
-            log(logFATAL) << "Ahhhhhhhhhh, shit: " << uri;
+            log(logWARN) << "Unkwown footage type " << uri;
+            renderable = new ImageRenderable(context, "file://UNKNOWN");
         }
         if(renderable) {
             context->retain(renderable);
@@ -140,4 +153,48 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             blendMode, trkMat, showup);
     l.setProperties(readProperties(pt), readPropertiesOrder(pt));
     return l;
+}
+
+void fillTextProperties(TextRenderable* r, 
+        const boost::property_tree::ptree& tree) {
+    auto each = [&tree] (const std::string& name, auto f) {
+        for (auto& pc : 
+                tree.get_child(std::string("text-properties.") + name)) {
+            float t = std::atof(pc.first.data());
+            f(t, pc.second);
+        }
+    };
+    // I hate language without reflection
+    each("text", [r] (float t, const auto& pc) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        r->text[t] = converter.from_bytes(pc.data());
+    });
+    each("font", [&] (float t, auto& pc) {
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        r->font[t] = converter.from_bytes(pc.data());
+    });
+    each("size", [&] (float t, auto& pc) {
+        r->size[t] = std::atoi(pc.data().c_str());
+    });
+    each("tracking", [&] (float t, auto& pc) {
+        r->tracking[t] = std::atof(pc.data().c_str());
+    });
+    each("bold", [&] (float t, auto& pc) {
+        r->bold[t] = (pc.data()[0] == 't');
+    });
+    each("italic", [&] (float t, auto& pc) {
+        r->italic[t] = (pc.data()[0] == 't');
+    });
+    each("scale_x", [&] (float t, auto& pc) {
+        r->scale_x[t] = std::atof(pc.data().c_str());
+    });
+    each("scale_y", [&] (float t, auto& pc) {
+        r->scale_y[t] = std::atof(pc.data().c_str());
+    });
+    each("color", [&] (float t, auto& pc) {
+        r->color[t] = std::atoi(pc.data().c_str());
+    });
+    each("justification", [&] (float t, auto& pc) {
+        r->justification[t] = std::atoi(pc.data().c_str());
+    });
 }

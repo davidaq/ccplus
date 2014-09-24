@@ -1,13 +1,21 @@
 NDK_PATH := /Users/apple/Lib/android-ndk-r9d
 NDK_TOOLCHAIN_PREFIX := ${NDK_PATH}/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-
 ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
-NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
-	-Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers \
+NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
+	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
+	-std=c99 -D__ANDROID__ \
+	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
+	-O3 -ffast-math 
+NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
+	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
+	-I${ANDROID_SYS_ROOT}/usr/include \
+	-I{$NDK_PATH}/sources/cxx-stl/llvm-libc++/libcxx/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include \
 	-std=c++11 -D__ANDROID__ \
-	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS 
+	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
+	-O3 -ffast-math 
 
 NDK_AR:=${NDK_TOOLCHAIN_PREFIX}ar
 
@@ -34,8 +42,12 @@ clean-all: clean
 clean-zim: 
 	-rm -rf tmp/*.zim
 
-.dependency:
-	-./scripts/run load.py
+make_bin_header:
+	mkdir -p build/res
+	find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
+
+.dependency:make_bin_header
+	@-./scripts/run load.py
 
 build/Makefile: .dependency
 	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
@@ -54,6 +66,7 @@ android_a:build/android/_
 	chmod a+x .tmp.sh
 	find src -type d -exec mkdir -p build/android/{} \;
 	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
+	find src -name \*.c -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
 	rm -f .tmp.sh
 	@echo "\033[1;32mMake static lib\n\033[0m"
 	${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
@@ -68,7 +81,7 @@ android:android_a android_so
 
 ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
-	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='armv7 armv7s' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
+	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
 
 test: testbuild

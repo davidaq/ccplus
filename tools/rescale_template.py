@@ -3,6 +3,7 @@
 
 from json import JSONDecoder
 from json import JSONEncoder
+from math import ceil
 import string
 import os
 import sys
@@ -46,6 +47,8 @@ class Resizer():
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
                 rgb_video.export(out_file)
                 os.remove(out_file)
+            elif out_file[-4:].lower() == '.png':
+                os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
             else:
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n  "' + out_file + '"')
 
@@ -67,6 +70,10 @@ class Resizer():
             comps[comp]['resolution']['width'] *= self.scale
             comps[comp]['resolution']['height'] *= self.scale
             for layer in comps[comp]['layers']:
+                if layer['uri'][0:7] == 'text://':
+                    txtProp = layer['text-properties']
+                    for t in txtProp['size']:
+                        txtProp['size'][t] = int(ceil(txtProp['size'][t] * self.scale))
                 transform = layer['properties']['transform']
                 for time in transform:
                     trans = transform[time]

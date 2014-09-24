@@ -18,7 +18,8 @@ struct UserContext {
     CCPlus::Composition* mainComp;
 };
 
-void* CCPlus::initContext(const char* tmlPath, const char* storagePath, int fps) {
+void* CCPlus::initContext(const char* tmlPath, 
+        const char* storagePath, int fps) {
     log(logINFO) << "Loading tml file......";
     UserContext* ret = new UserContext;
     ret->ctx = new CCPlus::Context(storagePath, fps);
@@ -38,6 +39,14 @@ void CCPlus::releaseContext(void* ctxHandle) {
     uCtx->ctx->releaseMemory();
     delete uCtx->ctx;
     delete uCtx;
+}
+
+void CCPlus::freeMemory(void* ctxHandle) {
+    if(!ctxHandle)
+        return;
+    UserContext* uCtx = (UserContext*) ctxHandle;
+    uCtx->ctx->releaseMemory();
+    log(logINFO) << "Released memory";
 }
 
 void CCPlus::renderPart(void* ctxHandle, float start, float length) {

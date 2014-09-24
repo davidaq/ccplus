@@ -107,7 +107,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         }
     }
     if (low == nullptr || high == nullptr) {
-        log(logWARN) << "Parametere are not interpolatable at time " << time;
+        log(logWARN) << "Parametere for " << name << " are not interpolatable at time " << time;
         return ret;
     }
 
@@ -128,7 +128,7 @@ Frame Layer::applyFiltersToFrame(float t) {
         return Frame();
 
     // Calculate corresponding local time
-    float local_t = start + last / duration * (t - time);
+    float local_t = mapInnerTime(t);
     Frame frame = this->getRenderObject()->getFrame(local_t);
     if (orderedKey.empty()) {
         for (auto& kv : properties) {
@@ -141,6 +141,10 @@ Frame Layer::applyFiltersToFrame(float t) {
         }
     }
     return frame;
+}
+
+float Layer::mapInnerTime(float t) const {
+    return start + last / duration * (t - time);   
 }
 
 int Layer::getBlendMode() const {

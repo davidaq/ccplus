@@ -5,9 +5,13 @@
 
 // @ Context objects contains data that should be shared between process stages.
 // @ This class should not be inherited
+namespace CCPlus {
+    struct ExtraContext;
+};
 class CCPlus::Context : public CCPlus::Object {
 public:
-    Context(const std::string& storagePath, int _fps);
+    Context(const std::string& storagePath, 
+            int _fps);
     ~Context();
 
     void releaseMemory();
@@ -24,10 +28,12 @@ public:
     void setInputDir(const std::string& dir);
     const std::string& getInputDir() const;
 
+    CCPlus::ExtraContext& getExtra() {
+        return *extra;
+    }
     // inquery
-
 private:
-    
+    CCPlus::ExtraContext *extra;
     // data
     std::string storagePath;
     
@@ -36,6 +42,4 @@ private:
     int fps;
 
     std::string inputDir = "";
-
-    // operations
 };

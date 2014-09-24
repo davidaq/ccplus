@@ -9,4 +9,6 @@ namespace CCPlus {
     const bool COMPRESS_AUDIO = false;
 
     const bool MEMORY_FS = true;
+
+    const bool GPU_ACCELERATION = false;
 }

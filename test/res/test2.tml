@@ -51,6 +51,57 @@
                     "visible" : false
                 },
                 {
+                    "uri" : "text://gofuckyourself",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [100, 100, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+                            "10" : [150, 150, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+                        }
+                    },
+                    "text-properties" : {
+                        "text" : {
+                            "0" : "鑫淼磊厽晶品众畾",
+                            "5" : "秦泰奏熟热惹",
+                            "10" : "English。、【】《》……“”‘’"
+                        },
+                        "font" : {
+                            "0" : "Arial.ttf"
+                        },
+                        "size" : {
+                            "0" : 50
+                        },
+                        "scale_x" : {
+                            "0" : 1.0,
+                            "10" : 0.5
+                        },
+                        "scale_y" : {
+                            "0" : 1.0,
+                            "10" : 2.0
+                        },
+                        "tracking" : {
+                            "0" : 0,
+                            "5" : 3.25,
+                            "10" : -1
+                        },
+                        "bold" : {
+                            "0" : false
+                        },
+                        "italic" : {
+                            "0" : false
+                        },
+                        "color" : {
+                            "0" : 2097151
+                        },
+                        "justification": {
+                            "0" : 0
+                        }
+                    },
+                    "time" : 0,
+                    "duration" : 10,
+                    "start" : 0,
+                    "last" : 10
+                },
+                {
                     "uri" : "file://test.png",
                     "properties" : {
                         "transform" : {
