@@ -1,6 +1,10 @@
 #include <fstream>
 #include <locale>
+
+#ifdef __APPLE__
 #include <codecvt>
+#endif
+#include <boost/locale.hpp>
 
 #include "tmlreader.hpp"
 #include "utils.hpp"
@@ -157,44 +161,48 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
 
 void fillTextProperties(TextRenderable* r, 
         const boost::property_tree::ptree& tree) {
-    auto each = [&tree] (const std::string& name, auto f) {
+    using boost::property_tree::ptree;
+    auto each = [&tree] (const std::string& name, 
+            std::function<void(float, const std::string&)> f) {
         for (auto& pc : 
                 tree.get_child(std::string("text-properties.") + name)) {
             float t = std::atof(pc.first.data());
-            f(t, pc.second);
+            f(t, pc.second.data());
         }
     };
     // I hate language without reflection
-    each("text", [r] (float t, const auto& pc) {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        r->text[t] = converter.from_bytes(pc.data());
+    each("text", [&] (float t, const std::string& pc) {
+        //wstring_convert<codecvt_utf16<wchar_t> > converter;
+        //r->text[t] = converter.from_bytes(pc.data());
+        r->text[t] = boost::locale::conv::to_utf<wchar_t>(pc, "UTF-8");
     });
-    each("font", [&] (float t, auto& pc) {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        r->font[t] = converter.from_bytes(pc.data());
+    each("font", [&] (float t, const std::string& pc) {
+        //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t> > converter;
+        //r->font[t] = converter.from_bytes(pc.data());
+        r->text[t] = boost::locale::conv::to_utf<wchar_t>(pc, "UTF-8");
     });
-    each("size", [&] (float t, auto& pc) {
-        r->size[t] = std::atoi(pc.data().c_str());
+    each("size", [&] (float t, const std::string& pc) {
+        r->size[t] = std::atoi(pc.c_str());
     });
-    each("tracking", [&] (float t, auto& pc) {
-        r->tracking[t] = std::atof(pc.data().c_str());
+    each("tracking", [&] (float t, const std::string& pc) {
+        r->tracking[t] = std::atof(pc.c_str());
     });
-    each("bold", [&] (float t, auto& pc) {
-        r->bold[t] = (pc.data()[0] == 't');
+    each("bold", [&] (float t, const std::string& pc) {
+        r->bold[t] = (pc[0] == 't');
     });
-    each("italic", [&] (float t, auto& pc) {
-        r->italic[t] = (pc.data()[0] == 't');
+    each("italic", [&] (float t, const std::string& pc) {
+        r->italic[t] = (pc[0] == 't');
     });
-    each("scale_x", [&] (float t, auto& pc) {
-        r->scale_x[t] = std::atof(pc.data().c_str());
+    each("scale_x", [&] (float t, const std::string& pc) {
+        r->scale_x[t] = std::atof(pc.c_str());
     });
-    each("scale_y", [&] (float t, auto& pc) {
-        r->scale_y[t] = std::atof(pc.data().c_str());
+    each("scale_y", [&] (float t, const std::string& pc) {
+        r->scale_y[t] = std::atof(pc.c_str());
     });
-    each("color", [&] (float t, auto& pc) {
-        r->color[t] = std::atoi(pc.data().c_str());
+    each("color", [&] (float t, const std::string& pc) {
+        r->color[t] = std::atoi(pc.c_str());
     });
-    each("justification", [&] (float t, auto& pc) {
-        r->justification[t] = std::atoi(pc.data().c_str());
+    each("justification", [&] (float t, const std::string& s) {
+        r->justification[t] = std::atoi(s.c_str());
     });
 }

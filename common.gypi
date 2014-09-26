@@ -42,8 +42,8 @@
             ['OS=="android"', {
             }],
             ['OS=="linux"', {
-                'cflags': ['-pthread'],
-                'cxxflags': ['-pthread'],
+                'cflags': ['-c' , '-w', '-pthread', '-std=c++11'],
+                'cxxflags': ['-c', '-pthread'],
                 'link_settings':{
                     "libraries":[
                         "-pthread"
