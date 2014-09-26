@@ -1,6 +1,5 @@
 #include <fstream>
 #include <locale>
-#include <codecvt>
 
 #include "tmlreader.hpp"
 #include "utils.hpp"
@@ -165,12 +164,10 @@ void fillTextProperties(TextRenderable* r,
     };
     // I hate language without reflection
     each("text", [r] (float t, const auto& pc) {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        r->text[t] = converter.from_bytes(pc.data());
+        utf8toWStr(r->text[t], pc.data());
     });
     each("font", [&] (float t, auto& pc) {
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        r->font[t] = converter.from_bytes(pc.data());
+        utf8toWStr(r->font[t], pc.data());
     });
     each("size", [&] (float t, auto& pc) {
         r->size[t] = std::atoi(pc.data().c_str());

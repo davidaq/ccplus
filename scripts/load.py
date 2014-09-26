@@ -3,7 +3,7 @@ import os
 import shutil
 from json import JSONDecoder
 
-REPO_URL = 'http://121.201.7.143:17950/ccplus-dependency/'
+REPO_URL = 'http://dev.ccme.me/ccplus-dependency/'
 DEP_DIR = 'dependency/'
 
 try:
