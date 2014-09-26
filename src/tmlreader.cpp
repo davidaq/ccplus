@@ -1,11 +1,6 @@
 #include <fstream>
 #include <locale>
 
-#ifdef __APPLE__
-#include <codecvt>
-#endif
-#include <boost/locale.hpp>
-
 #include "tmlreader.hpp"
 #include "utils.hpp"
 #include "image-renderable.hpp"
@@ -174,12 +169,12 @@ void fillTextProperties(TextRenderable* r,
     each("text", [&] (float t, const std::string& pc) {
         //wstring_convert<codecvt_utf16<wchar_t> > converter;
         //r->text[t] = converter.from_bytes(pc.data());
-        r->text[t] = boost::locale::conv::to_utf<wchar_t>(pc, "UTF-8");
+        utf8toWStr(r->text[t], pc);
     });
     each("font", [&] (float t, const std::string& pc) {
         //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t> > converter;
         //r->font[t] = converter.from_bytes(pc.data());
-        r->text[t] = boost::locale::conv::to_utf<wchar_t>(pc, "UTF-8");
+        utf8toWStr(r->font[t], pc);
     });
     each("size", [&] (float t, const std::string& pc) {
         r->size[t] = std::atoi(pc.c_str());
