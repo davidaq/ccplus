@@ -31,11 +31,8 @@ public:
     CCPlus::ExtraContext& getExtra() {
         return *extra;
     }
-
     // inquery
-
 private:
-    
     CCPlus::ExtraContext *extra;
     // data
     std::string storagePath;

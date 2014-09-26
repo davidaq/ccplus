@@ -135,7 +135,8 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             renderable = new TextRenderable(context, uri);
             fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
-            log(logFATAL) << "Unkwown footage type " << uri;
+            log(logWARN) << "Unkwown footage type " << uri;
+            renderable = new ImageRenderable(context, "file://UNKNOWN");
         }
         if(renderable) {
             context->retain(renderable);

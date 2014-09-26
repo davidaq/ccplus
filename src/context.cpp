@@ -17,11 +17,13 @@ Context::Context(const std::string& _storagePath,
     if ( fterror ) {
         log(logFATAL) << "Can't initialize FreeType";
     }
-    // TODO pack real font
-    fterror = FT_New_Face(extra->freetype,
-            "res/font.ttf",
-            0, &(extra->font));
-    if ( fterror ) {
+    fterror = FT_New_Memory_Face(extra->freetype,
+        (const unsigned char*)
+#include "res/font.ttf"
+    , 
+#include "res/font.ttf.count"
+    , 0, &(extra->font));
+    if (fterror) {
         log(logFATAL) << "Can't load font...";
     }
 }

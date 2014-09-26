@@ -96,7 +96,11 @@ void TextRenderable::render(float start, float duration) {
         float sx = get<float>(this->scale_x, time);
         float sy = get<float>(this->scale_y, time);
         if (FT_Set_Pixel_Sizes(face, (int)size * sx, (int)size * sy)) {
-            log(logFATAL) << "Can't set text size";
+            if (FT_Set_Pixel_Sizes(face, (int)size, (int)size)) {
+                if (FT_Set_Pixel_Sizes(face, 20, 20)) {
+                    log(logFATAL) << "Can't set text size";
+                }
+            }
         }
         int color = get(this->color, time);
         int r = (color >> 14) * 255 / 127;
@@ -106,7 +110,7 @@ void TextRenderable::render(float start, float duration) {
         Mat ret((int)height * 2 * sy, 
                 (int)width * (2 + tracking) * sx,
                 CV_8UC4, cv::Scalar(b, g, r, 0));
-        auto draw = [&ret, width, height] (auto* bitmap, int sx, int sy) {
+        auto draw = [&ret, width, height] (FT_Bitmap* bitmap, int sx, int sy) {
             int rows = bitmap->rows;
             int cols = bitmap->width;
             for (int i = 0; i < rows; i++) {

@@ -16,6 +16,7 @@ var Export = function() {
 Export.prototype.exportTo = function(filePath) {
     log('Export to: ' + filePath);
     this.tmlFile = new File(filePath);
+    this.tmlFile.encoding = 'UTF8';
     this.tmlFile.open('w');
     this.files = {};
     this.colors = {};
