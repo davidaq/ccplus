@@ -167,13 +167,9 @@ void fillTextProperties(TextRenderable* r,
     };
     // I hate language without reflection
     each("text", [&] (float t, const std::string& pc) {
-        //wstring_convert<codecvt_utf16<wchar_t> > converter;
-        //r->text[t] = converter.from_bytes(pc.data());
         utf8toWStr(r->text[t], pc);
     });
     each("font", [&] (float t, const std::string& pc) {
-        //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t> > converter;
-        //r->font[t] = converter.from_bytes(pc.data());
         utf8toWStr(r->font[t], pc);
     });
     each("size", [&] (float t, const std::string& pc) {
