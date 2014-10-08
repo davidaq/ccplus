@@ -5,8 +5,9 @@
 using namespace CCPlus;
 
 TEST(RenderableTest, getFrameNumberTest) {
-    Context* ctx = new Context(".", 4);
-    Composition r(ctx, "", 0, 0, 0);
+    Context* ctx = Context::getInstance();
+    ctx->init(".", 4);
+    Composition r("", 0, 0, 0);
     
     EXPECT_EQ(r.getFrameNumber(0.124), 0);
     EXPECT_EQ(r.getFrameNumber(0.125), 1);

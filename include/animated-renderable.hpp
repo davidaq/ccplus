@@ -9,7 +9,7 @@ namespace CCPlus {
 
 class CCPlus::AnimatedRenderable : public CCPlus::Renderable {
 public:
-    AnimatedRenderable(CCPlus::Context*);
+    AnimatedRenderable();
 
     void render(float start, float duration);
     Frame getFrame(float time) const;

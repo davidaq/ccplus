@@ -10,7 +10,7 @@ namespace CCPlus {
 // @ handle videos, make'm to preprocessed image
 class CCPlus::VideoRenderable : public CCPlus::AnimatedRenderable {
 public:
-    VideoRenderable(CCPlus::Context* context, const std::string& uri);
+    VideoRenderable(const std::string& uri);
     ~VideoRenderable();
 
     float getDuration() const;

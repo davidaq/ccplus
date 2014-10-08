@@ -8,9 +8,8 @@ using namespace cv;
 using namespace CCPlus;
 using namespace std;
 
-TextRenderable::TextRenderable(Context* context, 
-        const std::string& _uri) 
-    : Renderable(context), uri(_uri) {
+TextRenderable::TextRenderable(const std::string& _uri) 
+    : Renderable(), uri(_uri) {
     
 } 
 

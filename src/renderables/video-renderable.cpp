@@ -5,8 +5,8 @@
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(Context* context, const std::string& _uri) :
-    AnimatedRenderable(context),
+VideoRenderable::VideoRenderable(const std::string& _uri) :
+    AnimatedRenderable(),
     uri(_uri)
 {
     std::string path = uri;

@@ -12,10 +12,9 @@
 
 using namespace CCPlus;
 
-Composition::Composition(
-        CCPlus::Context* ctx, std::string _name,
+Composition::Composition(const std::string& _name,
         float _dur, int _width, int _height) :
-    AnimatedRenderable(ctx), 
+    AnimatedRenderable(), 
     name(_name), width(_width), height(_height), duration(_dur)
 {
     pthread_mutex_init(&renderedLock, 0);

@@ -5,7 +5,8 @@
 using namespace CCPlus;
 
 TEST(Context, Constructor) {
-    Context ctx("res", 18);
-    EXPECT_EQ(ctx.getStoragePath(), "res");
-    EXPECT_EQ(ctx.getFPS(), 18);
+    Context* ctx = Context::getInstance();
+    ctx->init("res", 18);
+    EXPECT_EQ(ctx->getStoragePath(), "res");
+    EXPECT_EQ(ctx->getFPS(), 18);
 }

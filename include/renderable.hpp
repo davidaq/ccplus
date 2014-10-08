@@ -9,7 +9,7 @@ namespace CCPlus {
 // @ base class of anything that could be referenced by a layer
 class CCPlus::Renderable : public CCPlus::Object {
 public:
-    Renderable(CCPlus::Context*);
+    Renderable();
     
     virtual void render(float start, float duration) = 0;
     virtual Frame getFrame(float time) const = 0;

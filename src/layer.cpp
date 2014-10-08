@@ -7,7 +7,6 @@ Layer::Layer() {}
 
 
 Layer::Layer(
-    Context* ctx,
     const std::string& _renderableUri, 
     float _time, 
     float _duration, 
@@ -19,7 +18,6 @@ Layer::Layer(
     int _trkMat,
     bool _showup
 ) :
-    context(ctx),
     renderableUri(_renderableUri),
     renderObject(0),
     time(_time),
@@ -32,6 +30,7 @@ Layer::Layer(
     trkMat(_trkMat),
     showup(_showup)
 {
+    this->context = Context::getInstance();
 }
 
 Renderable* Layer::getRenderObject() {

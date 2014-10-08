@@ -13,9 +13,9 @@ using namespace CCPlus;
 void fillTextProperties(TextRenderable*, 
         const boost::property_tree::ptree&); 
 
-TMLReader::TMLReader(CCPlus::Context* ctx) :
-    context(ctx)
+TMLReader::TMLReader()
 {
+    this->context = Context::getInstance();
 }
 
 Composition* TMLReader::read(const std::string& s) const {
@@ -45,7 +45,6 @@ Composition* TMLReader::read(const std::string& s) const {
 
 void TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
     Composition* comp = new Composition(
-            context, 
             name,
             pt.get("duration", 0.0f),
             pt.get("resolution.width", 0.0),
@@ -90,21 +89,21 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     if (!context->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "file://")) {
-            static std::map<std::string, std::function<Renderable*(Context*, const std::string&)> > extMap;
+            static std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
             if(extMap.empty()) {
-                auto imageExt = [](Context* context, const std::string& uri) {
-                    return new ImageRenderable(context, uri);
+                auto imageExt = [](const std::string& uri) {
+                    return new ImageRenderable(uri);
                 };
                 extMap["jpg"]       = imageExt;
                 extMap["png"]       = imageExt;
                 extMap["bmp"]       = imageExt;
-                auto gifExt = [](Context* context, const std::string& uri) {
-                    return new GifRenderable(context, uri);
+                auto gifExt = [](const std::string& uri) {
+                    return new GifRenderable(uri);
                 };
                 extMap["gif"]       = gifExt;
                 // Just treat everything else as Audio/Video
-                auto avExt = [](Context* context, const std::string& uri) {
-                    return new VideoRenderable(context, uri);
+                auto avExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri);
                 };
                 extMap["default"]   = avExt;
             }
@@ -130,13 +129,13 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                     }
                 }
             }
-            renderable = extMap[ext](context, uri);
+            renderable = extMap[ext](uri);
         } else if (stringStartsWith(uri, "text://")) {
-            renderable = new TextRenderable(context, uri);
+            renderable = new TextRenderable(uri);
             fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Unkwown footage type " << uri;
-            renderable = new ImageRenderable(context, "file://UNKNOWN");
+            renderable = new ImageRenderable("file://UNKNOWN");
         }
         if(renderable) {
             context->retain(renderable);
@@ -146,8 +145,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     int blendMode = pt.get("blend", 0);
     int trkMat = pt.get("trkMat", 0);
     bool showup = pt.get("visible", true);
-    Layer l = Layer(
-            context, uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
+    Layer l = Layer(uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
             blendMode, trkMat, showup);
     l.setProperties(readProperties(pt), readPropertiesOrder(pt));

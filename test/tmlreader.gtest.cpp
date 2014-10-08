@@ -8,14 +8,13 @@ class TMLReaderTest : public ::testing::Test {
 
 protected:
     virtual void SetUp() {
-        ctx = new Context("res/tmp", 18);
-        this->reader = new TMLReader(ctx);
+        this->ctx = Context::getInstance();
+        this->reader = new TMLReader();
         ctx->retain(this->reader);
         ASSERT_NO_THROW(this->mainComp = reader->read("test/res/test1.tml"));
     }
 
     virtual void TearDown() {
-        delete ctx;
     }
 
     Composition* mainComp;

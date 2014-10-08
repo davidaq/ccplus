@@ -4,10 +4,7 @@
 
 using namespace CCPlus;
 
-Context::Context(const std::string& _storagePath, 
-        int _fps):
-    storagePath(_storagePath), fps(_fps)
-{
+Context::Context() {
     FileManager::getInstance();
 
     extra = new ExtraContext;
@@ -32,6 +29,17 @@ Context::~Context() {
     FT_Done_Face(extra->font);
     FT_Done_FreeType(extra->freetype);
     delete extra;
+}
+
+Context* Context::getInstance() {
+    static Context ctx;
+    return &ctx;
+}
+
+void Context::init(const std::string& _storagePath, int _fps) {
+    this->storagePath = _storagePath;
+    this->fps = _fps;
+    this->inputDir = "";
 }
 
 void Context::releaseMemory() {
@@ -73,4 +81,12 @@ void Context::setInputDir(const std::string& dir) {
 
 const std::string& Context::getInputDir() const {
     return inputDir;
+}
+
+void Context::setStoragePath(const std::string& path) {
+    this->storagePath = path;
+}
+
+void Context::setFPS(int fps) {
+    this->fps = fps;
 }

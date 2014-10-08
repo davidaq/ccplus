@@ -13,11 +13,12 @@
 
 using namespace CCPlus;
 
-Renderable::Renderable(Context* _ctx) 
-    : context(_ctx)
+Renderable::Renderable() 
 {
     boost::uuids::uuid u = boost::uuids::random_generator()();
     uuid = boost::lexical_cast<std::string>(u);
+
+    context = Context::getInstance();
 }
 
 int Renderable::getFrameNumber(float time) const {

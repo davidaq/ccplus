@@ -9,7 +9,7 @@ namespace CCPlus {
 // @ static image, period.
 class CCPlus::ImageRenderable : public CCPlus::Renderable {
 public:
-    ImageRenderable(CCPlus::Context* context, const std::string& uri);
+    ImageRenderable(const std::string& uri);
 
     void render(float start, float duration);
     Frame getFrame(float time) const;

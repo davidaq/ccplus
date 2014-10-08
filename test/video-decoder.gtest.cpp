@@ -88,8 +88,9 @@ TEST(VideoDecoder, DecodeAudioToVector) {
 }
 
 TEST(VideoDecoder, DecodeAudioFromVideoRenderable) {
-    Context ctx("tmp/", 18);
-    VideoRenderable video(&ctx, "test/res/test.mp4");
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
+    VideoRenderable video("test/res/test.mp4");
     video.render(0, 9);
     FILE* fp = fopen("tmp/decodevectorfromrenderable.pcm", "w");
     for(float t = 0; t < video.getDuration(); t += 1 / 18.0) {
@@ -107,8 +108,9 @@ TEST(VideoDecoder, DecodeAudioPartial) {
 }
 
 TEST(VideoDecoder, VideoRenderable) {
-    Context ctx("tmp", 18);
-    VideoRenderable v(&ctx, "test/res/test.mp4");
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
+    VideoRenderable v("test/res/test.mp4");
     //v.render(0, 10);
 }
 

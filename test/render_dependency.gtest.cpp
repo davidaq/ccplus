@@ -6,8 +6,9 @@
 using namespace CCPlus;
 
 TEST(CompositionDependencyTest, DirectDependencyTest1) {
-    Context ctx("", 18);
-    TMLReader reader(&ctx);
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
+    TMLReader reader;
     Composition* mainComp = reader.read("test/res/test1.tml");
     EXPECT_EQ(mainComp->directDependency(0, 5).size(), 1);
     EXPECT_EQ(mainComp->directDependency(0, 0).size(), 0);
@@ -19,25 +20,27 @@ TEST(CompositionDependencyTest, DirectDependencyTest1) {
 }
 
 TEST(CompositionDependencyTest, DirectDependencyTest2) {
-    Context* ctx = new Context("tmp", 18);
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
     std::string uri = "file://test/res/test.mp4";
-    VideoRenderable* render = new VideoRenderable(ctx, uri);
+    VideoRenderable* render = new VideoRenderable(uri);
     ctx->putRenderable(uri, render);
-    Layer l(ctx, uri, 0, 10, 0, 10, 500, 500);
-    Composition* mainComp = new Composition(ctx, "main", 1, 500, 500);
+    Layer l(uri, 0, 10, 0, 10, 500, 500);
+    Composition* mainComp = new Composition("main", 1, 500, 500);
     mainComp->putLayer(l);
     EXPECT_EQ(1, mainComp->directDependency(0, 1).size());
 }
 
 TEST(CompositionDependencyTest, DirectDependencyTest3) {
-    Context* ctx = new Context("tmp", 18);
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
     std::string uri = "file://test/res/test.mp4";
-    VideoRenderable* render = new VideoRenderable(ctx, uri);
-    render->retain(ctx);
+    VideoRenderable* render = new VideoRenderable(uri);
+    //render->retain(ctx);
     ctx->putRenderable(uri, render);
 
-    Layer l(ctx, uri, 0, 5, 0, 10, 500, 500);
-    Composition* mainComp = new Composition(ctx, "main", 10, 500, 500);
+    Layer l(uri, 0, 5, 0, 10, 500, 500);
+    Composition* mainComp = new Composition("main", 10, 500, 500);
     mainComp->putLayer(l);
     EXPECT_EQ(1, mainComp->directDependency(3, 7).size());
     EXPECT_EQ(6, mainComp->directDependency(3, 7)[0].from);
@@ -49,12 +52,13 @@ TEST(CompositionDependencyTest, DirectDependencyTest3) {
 }
 
 TEST(CompositionDependencyTest, FullDependency) {
-    Context* ctx = new Context("tmp", 18);
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
     std::string uri = "file://test/res/test.mp4";
-    VideoRenderable* render = new VideoRenderable(ctx, uri);
+    VideoRenderable* render = new VideoRenderable(uri);
     ctx->putRenderable(uri, render);
-    Layer l(ctx, uri, 0, 1, 0, 1, 500, 500);
-    Composition* mainComp = new Composition(ctx, "main", 100, 500, 500);
+    Layer l(uri, 0, 1, 0, 1, 500, 500);
+    Composition* mainComp = new Composition("main", 100, 500, 500);
 
     mainComp->putLayer(l);
 
@@ -64,5 +68,5 @@ TEST(CompositionDependencyTest, FullDependency) {
     EXPECT_EQ(0, deps[0].from);
     EXPECT_EQ(1, deps[0].to);
 
-    delete ctx;
+    //delete ctx;
 }

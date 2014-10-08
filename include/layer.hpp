@@ -6,7 +6,6 @@ class CCPlus::Layer : public CCPlus::Object {
 public:
     Layer();
     Layer(
-        Context* ctx,
         const std::string& renderableUri, 
         float time, 
         float duration, 

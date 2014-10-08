@@ -31,8 +31,9 @@ TEST(VideoEncoder, DecodeImageAndEncode) {
 TEST(VideoEncoder, DecodeImageAndAudioThenEncode) {
     VideoEncoder encoder("tmp/decode-encode-with-audio.mp4", 18);
 
-    Context context("tmp/", 18);
-    VideoRenderable renderable(&context, "test/res/test.mp4");
+    Context* ctx = Context::getInstance();
+    ctx->init("tmp/", 18);
+    VideoRenderable renderable("test/res/test.mp4");
     renderable.render(0, 10);
     float t = 0;
     float step = 1.0 / 18;

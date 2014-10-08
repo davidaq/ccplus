@@ -17,8 +17,7 @@ public:
 class CCPlus::Composition : public CCPlus::AnimatedRenderable {
 
 public:
-    Composition( CCPlus::Context* context,
-            std::string, float, int, int);
+    Composition(const std::string&, float, int, int);
     ~Composition();
 
     void renderPart(float start, float duration);

@@ -10,7 +10,7 @@ namespace CCPlus {
 
 class CCPlus::TextRenderable : public CCPlus::Renderable {
 public:
-    TextRenderable(CCPlus::Context* context, const std::string& uri);
+    TextRenderable(const std::string& uri);
 
     void render(float start, float duration);
 

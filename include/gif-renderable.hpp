@@ -13,7 +13,7 @@ struct GifFileType;
 // @ handle gif animations
 class CCPlus::GifRenderable : public CCPlus::AnimatedRenderable {
 public:
-    GifRenderable(CCPlus::Context* context, const std::string& uri);
+    GifRenderable(const std::string& uri);
     ~GifRenderable();
 
     float getDuration() const;

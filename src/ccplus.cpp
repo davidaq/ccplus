@@ -22,8 +22,9 @@ void* CCPlus::initContext(const char* tmlPath,
         const char* storagePath, int fps) {
     log(logINFO) << "Loading tml file......";
     UserContext* ret = new UserContext;
-    ret->ctx = new CCPlus::Context(storagePath, fps);
-    CCPlus::TMLReader reader(ret->ctx);
+    ret->ctx = CCPlus::Context::getInstance();
+    ret->ctx->init(storagePath, fps);
+    CCPlus::TMLReader reader;
     ret->mainComp = reader.read(tmlPath);
 
     // Init rand seed
@@ -37,7 +38,6 @@ void CCPlus::releaseContext(void* ctxHandle) {
         return;
     UserContext* uCtx = (UserContext*) ctxHandle;
     uCtx->ctx->releaseMemory();
-    delete uCtx->ctx;
     delete uCtx;
 }
 

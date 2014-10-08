@@ -6,8 +6,8 @@
 
 using namespace CCPlus;
 
-GifRenderable::GifRenderable(CCPlus::Context* context, const std::string& _uri):
-    AnimatedRenderable(context), uri(_uri)
+GifRenderable::GifRenderable(const std::string& _uri):
+    AnimatedRenderable(), uri(_uri)
 {
     std::string path = uri;
     if (stringStartsWith(path, "file://")) 

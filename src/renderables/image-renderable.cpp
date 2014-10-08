@@ -7,8 +7,8 @@
 
 using namespace CCPlus;
 
-ImageRenderable::ImageRenderable(Context* context, const std::string& _uri) :
-    Renderable(context),
+ImageRenderable::ImageRenderable(const std::string& _uri) :
+    Renderable(),
     uri(_uri)
 {
     path = uri;

@@ -3,8 +3,8 @@
 
 using namespace CCPlus;
 
-AnimatedRenderable::AnimatedRenderable(Context* context) :
-    Renderable(context)
+AnimatedRenderable::AnimatedRenderable() :
+    Renderable()
 {
 }
 
