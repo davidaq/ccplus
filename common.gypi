@@ -34,8 +34,9 @@
                 },
                 'link_settings' : {
                     'libraries' : [
-                        '-framework',
-                        'OpenGL'
+                        #'-framework',
+                        #'OpenGL'
+                        '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework'
                     ]
                 }
             }],
