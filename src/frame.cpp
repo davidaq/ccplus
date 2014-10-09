@@ -125,19 +125,24 @@ Frame::Frame(const std::string& filepath) {
             log(logWARN) << "Failed getting image rotationg angle";
         }
     }
+
+    /* Load image into GPU */
+    glGenTextures(1, &this->texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 
+            0, GL_BGRA, GL_UNSIGNED_BYTE, image.data);
 }
 
 Frame::Frame(int width, int height) {
-    image = Mat::zeros(height, width, CV_8UC4);
+    //image = Mat::zeros(height, width, CV_8UC4);
 }
 
-Frame::Frame(const cv::Mat& _data) {
-    if (_data.type() == CV_16S) {
-        audio = _data;
-    } else if (_data.type() == CV_8UC4) {
-        image = _data;
-    }
-}
+//Frame::Frame(const cv::Mat& _data) {
+//    if (_data.type() == CV_16S) {
+//        audio = _data;
+//    } else if (_data.type() == CV_8UC4) {
+//        image = _data;
+//    }
+//}
 
 Frame::Frame(const std::vector<int16_t>& data) {
     audio = Mat(data, true);
@@ -171,6 +176,9 @@ void Frame::to4Channels() {
 }
 
 void Frame::write(const std::string& file, int quality, bool inMemory) {
+    /* Get pixel from texture and save into image */
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.data);
+
     if(stringEndsWith(file, ".zim")) {   
         FileManager* fm = FileManager::getInstance();
         File& outFile = *fm->open(file, "wb", inMemory);
@@ -305,15 +313,8 @@ void Frame::setAudio(const std::vector<int16_t>& aud) {
 void Frame::mergeFrame(const Frame& f, int mode) {
     profile(mergeFrame) {
         if (!f.getImage().empty()) {
-            // Calculate new boundary 
-            setXMin(min(getXMin(), f.getXMin()));
-            setXMax(max(getXMax(), f.getXMax()));
-            setYMin(min(getYMin(), f.getYMin()));
-            setYMax(max(getYMax(), f.getYMax()));
-
-            this->overlayImage(f.getImage(), getBlender(mode));
+            this->overlayImage(f, getBlender(mode));
         }
-
         mergeAudio(f);
     }
 }
@@ -355,19 +356,6 @@ void Frame::overlayImage(const Frame& f, BLENDER_CORE blend) {
 
     cv::Vec4b* imagePixel = image.ptr<cv::Vec4b>(0);
     const cv::Vec4b* inputPixel = input.ptr<cv::Vec4b>(0);
-    // Merge effective zone only BETA
-    //int cols = image.cols;
-    //int ymn = f.getYMin();
-    //int ymx = f.getYMax();
-    //int xmn = f.getXMin();
-    //int xmx = f.getXMax();
-    //for (int i = ymn; i < ymx; i++) {
-    //    for (int j = xmn; j < xmx; j++) {
-    //        imagePixel[i * cols + j] = blendWithBlender(blend,
-    //                imagePixel[i * cols + j], 
-    //                inputPixel[i * cols + j]);
-    //    }
-    //}
     // Merge all 
     for (int i = 0, c = this->getWidth() * this->getHeight(); i < c; i++) { 
         *imagePixel = blendWithBlender(blend, *imagePixel, *inputPixel);
@@ -452,32 +440,16 @@ void Frame::setBlackBackground() {
         }
     }
 }
-
-void Frame::addAlpha(const std::vector<unsigned char>& input) {
-    if (this->image.empty()) return;
-    if (this->image.channels() == 3)
-        to4Channels();
-    for (int i = 0, j = 3; i < input.size() && j < image.total() * 4; 
-            i++, j += 4) {
-        image.data[j] = input[i];
-    }
-}
-
-int Frame::getXMin() const { 
-    return std::max(0, xMin);
-}
-
-int Frame::getYMin() const { 
-    return std::max(0, yMin);
-}
-
-int Frame::getXMax() const { 
-    return std::min(image.cols, xMax);
-}
-
-int Frame::getYMax() const { 
-    return std::min(image.rows, yMax);
-}
+//
+//void Frame::addAlpha(const std::vector<unsigned char>& input) {
+//    if (this->image.empty()) return;
+//    if (this->image.channels() == 3)
+//        to4Channels();
+//    for (int i = 0, j = 3; i < input.size() && j < image.total() * 4; 
+//            i++, j += 4) {
+//        image.data[j] = input[i];
+//    }
+//}
 
 void Frame::setAnchorAdjustX(int val) {
     anchorAdjustX = val;
@@ -495,3 +467,6 @@ int Frame::getAnchorAdjustY() const {
     return anchorAdjustY;
 }
 
+GLuint Frame::getTexture() {
+    return this->texture;
+}

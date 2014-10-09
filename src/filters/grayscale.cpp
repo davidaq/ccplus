@@ -51,6 +51,6 @@ CCPLUS_FILTER(grayscale) {
     }
     
     cvtColor(mat, mat, CV_HSV2BGR);
-    frame.addAlpha(alphas);
+    //frame.addAlpha(alphas);
     return;
 }

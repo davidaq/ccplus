@@ -160,11 +160,6 @@ CCPLUS_FILTER(transform) {
     yMin = std::max<float>(yMin, 0);
     yMax = std::min<float>(yMax, height);
 
-    frame.setXMin(xMin);
-    frame.setXMax(xMax);
-    frame.setYMin(yMin);
-    frame.setYMax(yMax);
-
     /*
      * Check whether it's a affin transform
      */
