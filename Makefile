@@ -4,7 +4,7 @@ ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
 	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
-	-std=c99 -D__ANDROID__ \
+	-std=gnu99 -D__ANDROID__ \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
@@ -78,6 +78,16 @@ android_so:
 
 android:android_a android_so
 	@echo "\033[1;32mDone!!\n\033[0m"
+
+ft_android:
+	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
+	chmod a+x .tmp.sh
+	find port/android/freetype/src -type d -exec mkdir -p build/ft_android/{} \;
+	find port/android/freetype/src -name \*.c -exec "./.tmp.sh" ${NDK_CC} {} -c -o build/ft_android/{}.o \;
+	-ls port/android/freetype/src | while read x;do "./.tmp.sh" ${NDK_CC} port/android/freetype/src/$$x/$$x.c -c -o build/ft_android/$$x.o; done
+	rm -f .tmp.sh
+	@echo "\033[1;32mMake static lib\n\033[0m"
+	${NDK_AR} cr build/ft_android/libfreetype.a `find build/ft_android/ -type f -name \*.o`
 
 ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios

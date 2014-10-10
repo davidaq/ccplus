@@ -187,7 +187,7 @@ void Composition::renderPart(float start, float duration) {
                     Frame* bufferFrame = new Frame[layers.size()];
                     memset(buffer, false, layers.size());
                     for (int i = layers.size() - 1; i >= 0; i--) {
-                        Layer l = layers[i];
+                        Layer& l = layers[i];
                         Frame frame = buffer[i] ? 
                             bufferFrame[i] :
                             l.applyFiltersToFrame(now_t);

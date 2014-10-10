@@ -103,7 +103,9 @@ Frame::Frame(const std::string& filepath) {
         // ignore audio
         image = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
         if (!image.data) {
-            log(logFATAL) << "file not exists: " << filepath;
+            log(logWARN) << "File not exists: " << filepath;
+            image = cv::Mat(8, 8, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+            return;
         }
     }
 
@@ -376,6 +378,12 @@ void Frame::overlayImage(const Frame& f, BLENDER_CORE blend) {
     }
 }
 
+static inline float luma(const Vec4b& c) {
+    int max = std::max<int>(c[0], std::max<int>(c[1], c[2]));
+    int min = std::min<int>(c[0], std::min<int>(c[1], c[2]));
+    return (max + min) / 2 / 255.0;
+}
+
 void Frame::trackMatte(const Frame& frame, int trkMat) {
     if (!trkMat) return;
     if (frame.empty()) return;
@@ -394,12 +402,6 @@ void Frame::trackMatte(const Frame& frame, int trkMat) {
     }
     int rows = this->getHeight();
     int cols = this->getWidth();
-    // TODO: might need to consider alpha
-    auto luma = [] (const Vec4b& c) -> float {
-        int max = std::max<int>(c[0], std::max<int>(c[1], c[2]));
-        int min = std::min<int>(c[0], std::min<int>(c[1], c[2]));
-        return (max + min) / 2 / 255.0;
-    };
     for (int i = 0; i < rows; i++) {
         Vec4b* imagePtr = image.ptr<Vec4b>(i);
         const Vec4b* inputPtr = input.ptr<Vec4b>(i);

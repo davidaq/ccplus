@@ -132,6 +132,12 @@ Export.prototype.exportComp = function(comp) {
     return ret;
 };
 Export.prototype.exportLayer = function(layer) {
+    if(layer.adjustmentLayer) {
+        if(!this.adjustLayers)
+            this.adjustLayers = [];
+        this.adjustLayers.push(layer);
+        return NULL;
+    }
     var ret = {};
     var source = layer.source;
     var type;
