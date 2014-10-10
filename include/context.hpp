@@ -1,3 +1,4 @@
+#pragma once
 #include "global.hpp"
 
 class CCPlus::Context : public CCPlus::Object {
