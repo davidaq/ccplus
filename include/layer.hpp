@@ -1,6 +1,16 @@
 #pragma once
 #include "global.hpp"
 
+struct DoubleLess {
+    bool operator() (float left, float right) const
+    {
+        //return left < right;
+        return (std::abs(left - right) > 0.00001) && (left < right);
+    }
+}; 
+typedef std::map<float, std::vector<float>, DoubleLess> Property;
+typedef std::map<std::string, Property> PropertyMap;
+
 class CCPlus::Layer : public CCPlus::Object {
 
 public:
