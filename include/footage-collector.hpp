@@ -16,12 +16,16 @@ public:
     // Return the time point before that all preparation was done
     float finished();
 
+private:
+    typedef std::vector<std::pair<float, float> > segs_t;
     struct FootageDependency {
         CCPlus::Renderable* renderable;
         float firstAppear, lastAppear; 
-        std::vector<std::pair<float, float> > segments;
+        segs_t segments;
     };
 
+    void mergeDependency(Layer* l, const std::vector<FootageDependency>& deps);
+    segs_t mergeSegments(const segs_t&, const segs_t&);
     float* tl_pointers;
-    std::vector<CCPlus::Renderable*> deps;
+    std::vector<FootageDependency> dependencies;
 };
