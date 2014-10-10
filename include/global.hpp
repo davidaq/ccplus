@@ -32,4 +32,3 @@ namespace CCPlus {
 #include "object.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
-
