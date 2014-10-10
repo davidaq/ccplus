@@ -17,6 +17,7 @@ public:
     float finished();
 
     struct FootageDependency {
+        Renderable* renderable;
         float firstAppear, lastAppear; 
         std::vector<std::pair<float, float> > segments;
     };
