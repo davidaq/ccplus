@@ -7,9 +7,9 @@
  * Use multi-thread to prepare footages
  * Return finished time point
  */
-class FootageCollector : public Object {
+class CCPlus::FootageCollector : public CCPlus::Object {
 public:
-    FootageCollector(const Composition* main);
+    FootageCollector(const CCPlus::Composition* main);
     ~FootageCollector();
 
     void prepare();
@@ -17,11 +17,11 @@ public:
     float finished();
 
     struct FootageDependency {
-        Renderable* renderable;
+        CCPlus::Renderable* renderable;
         float firstAppear, lastAppear; 
         std::vector<std::pair<float, float> > segments;
     };
 
     float* tl_pointers;
-    std::vector<Renderable*> deps;
-}
+    std::vector<CCPlus::Renderable*> deps;
+};

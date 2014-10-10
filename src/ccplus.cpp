@@ -1,6 +1,7 @@
 #include "global.hpp"
 #include "ccplus.hpp"
 #include "context.hpp"
+#include "footage-collector.hpp"
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
@@ -18,7 +19,7 @@ void CCPlus::releaseContext() {
 }
 
 void CCPlus::render() {
-    // TODO implement
+    Context::getContext()->collector->prepare();
 }
 
 void CCPlus::encode() {
