@@ -31,29 +31,26 @@ public:
         bool showup = true
     );
 
-    // access
     CCPlus::Renderable* getRenderObject(); 
     /*
      * @time and @duration are to upper layer 
      * comp's timeline
      * @duration is length
      */
-    float getTime() const;
-    float getDuration() const;
+    float time, duration;
     /*
      * Here @start and @last are to local timeline of @Renderable object
      * @last is length
      */
-    float getStart() const;
-    float getLast() const;
+    float start, last;
+
+    int blendMode = 0;
+    int trkMat = 0;
 
     /*
      * map layer time to layer renderable item local time
      */
     float mapInnerTime(float time) const;
-
-    int getBlendMode() const;
-    int getTrackMatte() const;
 
     /*
      * Check whether this layer is visible 
@@ -65,7 +62,7 @@ public:
      * Show is to check whether this layer is visible
      * FIXME: this will cause confusion with visible
      */
-    bool show() const;
+    bool show = true;
 
     // Assume the renderable stuff is rendered
     Frame applyFiltersToFrame(float); 
@@ -81,12 +78,8 @@ private:
     std::string renderableUri;
     CCPlus::Renderable* renderObject = 0;
     
-    float time = 0, duration = 0, start = 0, last = 0;
     int width = 0;
     int height = 0;
-    int blendMode = 0;
-    int trkMat = 0;
-    bool showup = true;
     std::map<std::string, Property> properties;
     std::vector<std::string> orderedKey;
 };
