@@ -1,11 +1,6 @@
 #pragma once
 
 #include "global.hpp"
-#include <cstdio>
-#include <cmath>
-#include <iostream>
-#include <sstream>
-#include <vector>
 
 #define L() \
     log(logDEBUG)

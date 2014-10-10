@@ -19,3 +19,18 @@ namespace CCPlus {
     class VideoRenderable;
     class AnimatedRenderable;
 };
+
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <opencv2/opencv.hpp>
+
+#include "config.hpp"
+#include "object.hpp"
+#include "utils.hpp"
+#include "logger.hpp"
+
