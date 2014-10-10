@@ -13,6 +13,7 @@ extern "C" {
 
 #include "global.hpp"
 #include "video-encoder.hpp"
+#include "frame.hpp"
 
 using namespace CCPlus;
 
@@ -50,8 +51,8 @@ VideoEncoder::~VideoEncoder() {
 
 void VideoEncoder::appendFrame(const Frame& frame) {
     if(!ctx) {
-        width = frame.getWidth();
-        height = frame.getHeight();
+        width = frame.image.cols;
+        height = frame.image.rows;
         if(width == 0 || height == 0)
             return;
         if(width & 1)
@@ -62,12 +63,12 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         frameNum = 0;
     }
     cv::Mat img;
-    if(frame.getWidth() == 0 || frame.getHeight() == 0) {
+    if(frame.image.cols == 0 || frame.image.rows == 0) {
         img = cv::Mat::zeros(height, width, CV_8UC4);
     } else
-        img = frame.getImage();
+        img = frame.image;
     writeVideoFrame(img);
-    cv::Mat mat = frame.getAudio();
+    cv::Mat mat = frame.audio;
     if(mat.total() > 0) {
         writeAudioFrame(mat);
     }
