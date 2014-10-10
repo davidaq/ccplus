@@ -150,7 +150,8 @@ Frame VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        decodedImage = new Frame(data);
+        decodedImage = new Frame();
+        decodedImage->image = data;
     }
     return *decodedImage;
 }
