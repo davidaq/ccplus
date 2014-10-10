@@ -14,14 +14,10 @@ void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
-Frame Composition::getFrame(int time) {
+Frame Composition::getFrame(float time) {
     return Frame();
 }
 
-void Composition::prepare() {
-    
-}
-
-int Composition::getDuration() {
+float Composition::getDuration() {
     return duration;
 }

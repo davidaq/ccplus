@@ -8,9 +8,14 @@ public:
     Renderable();
     ~Renderable();
 
-    virtual Frame getFrame(int time) = 0;
-    virtual void prepare() = 0;
-    virtual int getDuration() = 0;
+    virtual Frame getFrame(float time);
+    virtual void prepare();
+    virtual void release();
+    virtual float getDuration();
+
+    static inline std::string parseUri2File(const std::string& uri) {
+        return uri;
+    }
 private:
     std::map<int, Frame> frames;
     float firstAppearTime = 0, lastAppearTime = 0;

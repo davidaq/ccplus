@@ -26,7 +26,6 @@ Composition* TMLReader::read(const std::string& s) const {
 
     for (auto& child: pt.get_child("compositions")) {
         ptree& comp = child.second;
-
         initComposition(child.first.data(), comp);
     }
 
