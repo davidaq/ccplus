@@ -9,4 +9,7 @@ public:
     ~Frame();
     cv::Mat image, audio;
     GLuint textureID = 0;
+    
+    void write(const std::string& fp);
+    void read(const std::string& zim);
 };
