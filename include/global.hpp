@@ -14,6 +14,7 @@ namespace CCPlus {
     class FootageCollector;
 
     class Renderable;
+    class Composition;
     class ImageRenderable;
     class VideoRenderable;
     class AnimatedRenderable;
