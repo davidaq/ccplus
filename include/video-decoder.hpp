@@ -1,11 +1,10 @@
 #pragma once
 
+#include "global.hpp"
 #include <vector>
-
 #include "frame.hpp"
 
 namespace CCPlus {
-    class VideoDecoder;
     struct VideoInfo;
     struct DecodeContext;
 }

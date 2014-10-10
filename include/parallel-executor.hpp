@@ -1,14 +1,11 @@
 #pragma once
+#include "global.hpp"
 #include <list>
 #include <functional>
 #include <pthread.h>
 #include <semaphore.h>
 
-namespace CCPlus {
-    class ParallelExecutor;
-};
-
-// Acts as an thread pool, but takes the current thread as an worker thread
+// Acts as an thread pool, but takes the current thread as a worker thread
 class CCPlus::ParallelExecutor {
 public:
     ParallelExecutor(int threadCount);
