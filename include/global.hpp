@@ -2,6 +2,8 @@
 
 namespace CCPlus {
     class Object;
+    class Lock;
+    class Semaphore;
     class Context;
     class Layer;
     class Profiler;
