@@ -1,6 +1,7 @@
 #pragma once
 #include "global.hpp"
-#include <opencv/opencv2.hpp>
+
+#define GLuint unsigned int
 
 class CCPlus::Frame : public CCPlus::Object {
 public:
