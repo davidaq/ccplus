@@ -1,10 +1,7 @@
 #pragma once
 
+#include "global.hpp"
 #include <set>
-
-namespace CCPlus {
-    class Object;
-}
 
 class CCPlus::Object {
 public:
