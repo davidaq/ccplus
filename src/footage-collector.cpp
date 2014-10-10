@@ -1,6 +1,7 @@
 #include "footage-collector.hpp"
 #include "layer.hpp"
 #include "composition.hpp"
+#include "context.hpp"
 
 #include <algorithm>
 
@@ -65,7 +66,12 @@ FootageCollector::FootageCollector(const Composition* comp) {
 FootageCollector::~FootageCollector() {
 }
 
-void FootageCollector::prepare() {}
+void FootageCollector::prepare() {
+    Context* ctx = Context::getContext();
+    for (auto ite : ctx->renderables) {
+        ite.second->prepare();
+    }
+}
 
 void FootageCollector::mergeDependency(Layer* l, const std::vector<FootageDependency>& deps) {
     //// Comp duration
