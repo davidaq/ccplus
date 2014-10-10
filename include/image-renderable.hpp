@@ -11,7 +11,6 @@ public:
     void release();
     float getDuration();
     
-    float getDuration() const;
     int getWidth() const;
     int getHeight() const;
 

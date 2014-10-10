@@ -13,9 +13,7 @@ public:
     virtual void release();
     virtual float getDuration();
 
-    static inline std::string parseUri2File(const std::string& uri) {
-        return uri;
-    }
+    static std::string parseUri2File(std::string uri);
 private:
     std::map<int, Frame> frames;
     float firstAppearTime = 0, lastAppearTime = 0;
