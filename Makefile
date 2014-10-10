@@ -91,7 +91,6 @@ xcode:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
 
 todo:
-	@grep TODO `find src -type f -name *.cpp -o -name *.hpp`
-
-	@grep TODO `find include -type f -name *.cpp -o -name *.hpp`
+	@grep -n TODO `find src -type f -name *.cpp -o -name *.hpp`
+	@grep -n TODO `find include -type f -name *.cpp -o -name *.hpp`
 
