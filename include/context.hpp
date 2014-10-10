@@ -10,9 +10,18 @@ public:
     
     std::string getFootagePath(const std::string& relativePath);
     std::string getStoragePath(const std::string& relativePath);
+    bool hasRenderable(const std::string& uri);
+    void putRenderable(const std::string& uri, Renderable* renderable);
+    Renderable* getRenderable(const std::string& uri);
 
     std::string tmlDir = "", storagePath = "";
     std::map<std::string, Renderable*> renderables;
     int fps = 0;
+
+    Composition* mainComposition;
+    FootageCollector* collector;
+
+private:
+    bool active = false;
 };
 
