@@ -5,6 +5,9 @@ class CCPlus::Layer : public CCPlus::Object {
 
 public:
     Layer();
+    /*
+     * TODO: Verify start and time
+     */
     Layer(
         const std::string& renderableUri, 
         float time, 
