@@ -1,5 +1,6 @@
 #pragma once
 
+#include "global.hpp"
 #include <cstdio>
 #include <cmath>
 #include <iostream>
@@ -13,7 +14,6 @@
     else CCPlus::Logger(level, __LINE__, __FILE__)
  
 namespace CCPlus {
-    class Logger;
     enum LogLevel {
         logFATAL, logERROR, logWARN, logINFO, logDEBUG, logDEBUG1
     };

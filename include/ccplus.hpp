@@ -1,3 +1,4 @@
+#pragma once
 namespace CCPlus {
     void go(const std::string& tmlPath, const std::string& outputPath, int fps);
     void initContext(const std::string& tmlPath, const std::string& outputPath, int fps);
