@@ -124,6 +124,10 @@ std::vector<Layer> Composition::getLayers() const {
     return layers;
 }
 
+const std::vector<Layer>& Composition::getLayers() const {
+    return layers;
+}
+
 void Composition::putLayer(const Layer& layer) {
     layers.push_back(layer);
 }

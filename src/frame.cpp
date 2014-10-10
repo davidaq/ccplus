@@ -148,7 +148,7 @@ Frame::Frame(const std::vector<int16_t>& data) {
     audio = Mat(data, true);
 }
 
-Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audio(_audio) {};
+//Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audio(_audio) {};
 
 Frame::Frame() {}
 

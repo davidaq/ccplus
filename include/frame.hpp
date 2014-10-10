@@ -17,7 +17,7 @@ typedef uint (*BLENDER_CORE)(uint, uint, uint, uint);
 class CCPlus::Frame : public CCPlus::Object {
 public:
     Frame(const std::string& filepath);
-    Frame(const cv::Mat& _image, const cv::Mat& _audio);
+    //Frame(const cv::Mat& _image, const cv::Mat& _audio);
     //Frame(const cv::Mat&);
     Frame(const std::vector<int16_t>&);
     Frame(int width, int height);

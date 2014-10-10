@@ -28,6 +28,7 @@ public:
 
     void putLayer(const Layer&);
     std::vector<Layer> getLayers() const;
+    const std::vector<Layer>& getLayers() const;
     
     std::vector<CompositionDependency> directDependency(float from, float to) const;
     std::vector<CompositionDependency> fullOrderedDependency(float from, float to) const;
