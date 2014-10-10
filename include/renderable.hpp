@@ -8,9 +8,8 @@ public:
     Renderable();
     ~Renderable();
 
-    virtual void Frame getFrame(int time) = 0;
+    virtual Frame getFrame(int time) = 0;
     virtual void prepare() = 0;
-
     virtual int getDuration() = 0;
 private:
     std::map<int, Frame> frames;
