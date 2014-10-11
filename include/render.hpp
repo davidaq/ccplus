@@ -2,15 +2,11 @@
 #include "global.hpp"
 
 namespace CCPlus {
-
-    enum AttribLocation {
-        ATTRIB_VERTEX = 1
-    };
-
     enum BlendMode {
         NONE = -1, DEFAUT = 0,
         ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,
-        LIGHTEN, OVERLAY, DIFFERENCE 
+        LIGHTEN, OVERLAY, DIFFERENCE,
+        BLEND_MODE_COUNT
     };
     void mergeFrame(CCPlus::GPUFrame& bottom, CCPlus::GPUFrame& top, CCPlus::BlendMode blendmode);
 

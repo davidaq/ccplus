@@ -1,12 +1,19 @@
 #include "render.hpp"
 #include "context.hpp"
 #include "gpu-frame.hpp"
+#include "glprogram-manager.hpp"
 
 using namespace CCPlus;
 
 GLuint squareVBO;
 float squareCoord[8];
 int squareIndex[4];
+
+struct {
+    const char* name;
+    const char* vshader;
+    const char* fshader;
+} programs[BLEND_MODE_COUNT];
 
 void initGlobalVars() {
     static bool inited = false;
@@ -22,13 +29,20 @@ void initGlobalVars() {
     squareIndex[1] = 1;
     squareIndex[2] = 2;
     squareIndex[3] = 3;
+
+    programs[DEFAUT] = {
+        .name = "blend default",
+        .vshader = "shader/fill.v.glsl",
+        .fshader = "shader/blend/default.f.glsl"
+    };
 }
 
 
 void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
+    initGlobalVars();
     bottom.bindFBO();
     glBindTexture(GL_TEXTURE_2D, top.textureID);
-    // use program
+    GLProgramManager::getManager()->getProgram("blend");
     fillSprite();
 }
 
