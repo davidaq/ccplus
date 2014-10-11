@@ -42,8 +42,22 @@ void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
     bottom.bindFBO();
     glBindTexture(GL_TEXTURE_2D, top.textureID);
-    GLProgramManager::getManager()->getProgram(programs[blendmode].name,
+    GLuint program = GLProgramManager::getManager()->getProgram(
+            programs[blendmode].name,
             programs[blendmode].vshader, programs[blendmode].fshader);
+    glUseProgram(program);
+
+    glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
+    glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
+
+    // UP
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, top.textureID);
+
+    // Bottom
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, bottom.textureID);
+
     fillSprite();
 }
 
