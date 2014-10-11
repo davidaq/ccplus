@@ -32,6 +32,7 @@ namespace CCPlus {
 #include <map>
 #include <opencv2/opencv.hpp>
 #include "externals/gl2.h"
+#include "externals/gl2ext.h"
 
 #include "config.hpp"
 #include "object.hpp"
