@@ -2,6 +2,8 @@
 
 #include "context.hpp"
 #include "frame.hpp"
+#include "renderable.hpp"
+#include "filter.hpp"
 
 using namespace CCPlus;
 
@@ -107,23 +109,22 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 Frame Layer::applyFiltersToFrame(float t) {
-    //if (!visible(t)) 
-    //    return Frame();
+    if (!visible(t)) 
+        return Frame();
 
-    //// Calculate corresponding local time
-    //float local_t = mapInnerTime(t);
-    //Frame frame = this->getRenderObject()->getFrame(local_t);
-    //if (orderedKey.empty()) {
-    //    for (auto& kv : properties) {
-    //        Filter(kv.first).apply(
-    //                frame, interpolate(kv.first, t), width, height);
-    //    }
-    //} else {
-    //    for (auto& k : orderedKey) {
-    //        Filter(k).apply(frame, interpolate(k, t), width, height);
-    //    }
-    //}
-    Frame frame;
+    // Calculate corresponding local time
+    float local_t = mapInnerTime(t);
+    Frame frame = this->getRenderObject()->getFrame(local_t);
+    if (orderedKey.empty()) {
+        for (auto& kv : properties) {
+            Filter(kv.first).apply(
+                    frame, interpolate(kv.first, t), width, height);
+        }
+    } else {
+        for (auto& k : orderedKey) {
+            Filter(k).apply(frame, interpolate(k, t), width, height);
+        }
+    }
     return frame;
 }
 
