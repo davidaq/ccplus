@@ -7,8 +7,8 @@ public:
     Composition(const std::string& name, float duration, int width, int height);
     void appendLayer(const Layer&);
 
-    Frame getFrame(float time);
     float getDuration();
+    void updateGPUFrame(GPUFrame& frame, float time);
 
     std::vector<Layer> layers;
     std::string name;

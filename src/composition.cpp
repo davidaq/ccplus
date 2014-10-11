@@ -14,8 +14,7 @@ void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
-Frame Composition::getFrame(float time) {
-    return Frame();
+void Composition::updateGPUFrame(GPUFrame& frame, float time) {
 }
 
 float Composition::getDuration() {

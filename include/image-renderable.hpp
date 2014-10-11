@@ -6,7 +6,7 @@ class CCPlus::ImageRenderable : public CCPlus::Renderable {
 public:
     ImageRenderable(const std::string& uri);
 
-    Frame getFrame(float);
+    void updateGPUFrame(GPUFrame& frame, float time);
     void prepare();
     void release();
     float getDuration();
