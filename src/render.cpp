@@ -61,8 +61,8 @@ void CCPlus::fillSprite() {
     } else {
         glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
     }
-    glEnableVertexAttribArray(ATTRIB_VERTEX);
-    glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
+    glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glDrawElements(GL_TRIANGLE_STRIP, 2, GL_UNSIGNED_INT, squareIndex);
 }
 
