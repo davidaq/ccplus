@@ -41,7 +41,7 @@ void CCPlus::render() {
 void CCPlus::encode() {
     Context* ctx = Context::getContext();
     VideoEncoder encoder(
-            generatePath(ctx->storagePath, ""),
+            ctx->getStoragePath("result.mp4"),
             ctx->fps);
     float delta = 1.0 / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
@@ -49,7 +49,7 @@ void CCPlus::encode() {
     for (float i = 0; i <= duration; i += delta) {
         Frame f;
         char buf[64];
-        sprintf(buf, "%07d.zim", fn);
+        sprintf(buf, "%d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
         encoder.appendFrame(f);
         fn++;
