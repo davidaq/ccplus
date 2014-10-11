@@ -1,10 +1,9 @@
 #include "frame.hpp"
 #include "profile.hpp"
-#include <cstring>
-
-#include <vector>
+#include "zip.hpp"
 
 using namespace CCPlus;
+using namespace std;
 
 Frame::Frame() {
 
@@ -22,11 +21,12 @@ void Frame::read(const std::string& zimpath) {
     FILE* file = fopen(zimpath.c_str(), "rb");
     //File* inFile = FileManager::getInstance()->open(filepath, "rb");
     if(!file) {
-        log(logERROR) << "File not exists: " << filepath;
+        log(logERROR) << "File not exists: " << zimpath;
         return;
     }
+    //int sz = inFile->getSize();
     fseek(file, 0, SEEK_END);
-    int sz = inFile->getSize();
+    int sz = ftell(file);
     fseek(file, 0, SEEK_SET);
     unsigned char* fileContent = new unsigned char[sz];
     unsigned char* endOfFile = fileContent + sz;
@@ -75,10 +75,11 @@ void Frame::read(const std::string& zimpath) {
     /*
      * Read audio channel
      */
-    uint32_t audioLen = NEXT(uint32_t);
+    //uint32_t audioLen = NEXT(uint32_t);
     uint32_t audioRealByteLen = NEXT(uint32_t);
+    audioRealByteLen = NEXT(uint32_t);
     vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);
-    audio = Mat(tmp, true);
+    audio = cv::Mat(tmp, true);
     ptr += audioRealByteLen;
 
     delete[] alphaBytes;
@@ -100,10 +101,10 @@ void Frame::write(const std::string& zimpath, int quality) {
     FILE* file = fopen(zimpath.c_str(), "wb");
     ushort metric; 
     // write size first
-    metric = (ushort)getWidth();
+    metric = (ushort) image.cols;
     //outFile.write(&metric, sizeof(metric));
     fwrite(&metric, sizeof(metric), 1, file);
-    metric = (ushort)getHeight();
+    metric = (ushort) image.rows;
     fwrite(&metric, sizeof(metric), 1, file);
     //outFile.write(&metric, sizeof(metric));
 

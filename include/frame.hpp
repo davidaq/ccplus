@@ -15,6 +15,6 @@ public:
     int anchorAdjustX = 0;
     int anchorAdjustY = 0;
 
-    void write(const std::string& zim);
-    void read(const std::string& zim, int quality = 75);
+    void write(const std::string& zim, int quality = 75);
+    void read(const std::string& zim);
 };
