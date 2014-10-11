@@ -16,6 +16,7 @@ namespace CCPlus {
     class GPUFrame;
     class FootageCollector;
     class Filter;
+    class GLProgramManager;
 
     class Renderable;
     class Composition;
