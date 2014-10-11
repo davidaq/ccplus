@@ -23,21 +23,22 @@ void CCPlus::releaseContext() {
 
 void CCPlus::render() {
     Context* ctx = Context::getContext();
+    createGLContext();
     ctx->collector->prepare();
     float delta = 1.0f / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
     int fn = 0;
-    for (float i = 0; i <= duration; i+=delta) {
+    for (float i = 0; i <= duration; i += delta) {
         Frame f = ctx->mainComposition->getFrame(i);
         char buf[64];
         sprintf(buf, "%07d.zim", fn);
+        f.gpu2cpu();
         f.write(generatePath(ctx->storagePath, buf));
         fn++;
     }
 }
 
 void CCPlus::encode() {
-    // TODO implement
     Context* ctx = Context::getContext();
     VideoEncoder encoder(
             generatePath(ctx->storagePath, ""),
@@ -45,7 +46,7 @@ void CCPlus::encode() {
     float delta = 1.0 / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
     int fn = 0;
-    for (float i = 0; i <= duration; i+=delta) {
+    for (float i = 0; i <= duration; i += delta) {
         Frame f;
         char buf[64];
         sprintf(buf, "%07d.zim", fn);

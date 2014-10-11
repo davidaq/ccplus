@@ -10,6 +10,9 @@ public:
     cv::Mat image, audio;
     GLuint textureID = 0;
     
+    void gpu2cpu();
+    void cpu2gpu();
+
     void write(const std::string& fp);
     void read(const std::string& zim);
 };
