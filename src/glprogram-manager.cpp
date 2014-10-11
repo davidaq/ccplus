@@ -8,14 +8,20 @@ GLProgramManager* GLProgramManager::getManager() {
     return &program; 
 }
 
-void GLProgramManager::addProgram(
+void GLProgramManager::clean() {
+    for (auto& kv : programPool) {
+        glDeleteProgram(kv.second);
+    }
+    programPool.clear();
+}
+
+GLuint GLProgramManager::getProgram(
         const std::string& name,
         const std::string& vshaderPath,
         const std::string& fshaderPath) {
 
     if (programPool.count(name)) {
-        log(logWARN) << "Program: " << name << " already exists";
-        return;
+        return programPool[name];
     }
 
     GLuint vertex_shader, fragment_shader;
@@ -51,10 +57,5 @@ void GLProgramManager::addProgram(
     glLinkProgram(program);
 
     programPool[name] = program;
-}
-
-GLuint GLProgramManager::getProgram(const std::string& name) {
-    if (programPool.count(name))
-        return programPool[name];
-    return 0;
+    return program;
 }

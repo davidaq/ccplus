@@ -1,6 +1,7 @@
 #include "context.hpp"
 #include "tmlreader.hpp"
 #include "footage-collector.hpp"
+#include "glprogram-manager.hpp"
 
 using namespace CCPlus;
 
@@ -33,6 +34,9 @@ void Context::end() {
     delete collector;
     collector = nullptr;
     deleteRetained();
+
+    GLProgramManager::getManager()->clean();
+
     active = false;
 }
 
