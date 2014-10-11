@@ -15,7 +15,7 @@ void GLProgramManager::clean() {
     programPool.clear();
 }
 
-void GLProgramManager::getProgram(
+GLuint GLProgramManager::getProgram(
         const std::string& name,
         const std::string& vshaderPath,
         const std::string& fshaderPath) {
