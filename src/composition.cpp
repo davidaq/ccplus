@@ -1,5 +1,7 @@
 #include "composition.hpp"
 #include "layer.hpp"
+#include "render.hpp"
+#include "gpu-frame.hpp"
 
 using namespace CCPlus;
 
@@ -27,7 +29,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
         Layer& l = layers[i];
         l.applyFiltersToFrame(frames[i], time);
 
-        mergeFrame(frames[i], frame, 0);
+        mergeFrame(frames[i], frame, DEFAUT);
     }
 }
 

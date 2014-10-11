@@ -3,7 +3,7 @@
 
 using namespace CCPlus;
 
-void mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
+void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
 
 }
 
