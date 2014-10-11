@@ -21,6 +21,7 @@ public:
     Composition* mainComposition;
     FootageCollector* collector;
 
+    std::set<std::string> flags;
 private:
     bool active = false;
 };

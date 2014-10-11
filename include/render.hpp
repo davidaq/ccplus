@@ -2,6 +2,11 @@
 #include "global.hpp"
 
 namespace CCPlus {
+
+    enum AttribLocation {
+        ATTRIB_VERTEX = 1
+    };
+
     enum BlendMode {
         NONE = -1, DEFAUT = 0,
         ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,
@@ -13,5 +18,7 @@ namespace CCPlus {
     enum TrackMatteMode {
         TRKMTE_NONE = 0, TRKMTE_ALPHA, TRKMTE_ALPHA_INV, TRKMTE_LUMA, TRKMTE_LUMA_INV
     };
-    CCPlus::Frame trackMatte(const CCPlus::Frame& color, const CCPlus::Frame& alpha, CCPlus::TrackMatteMode);
+    void trackMatte(CCPlus::GPUFrame& color, CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);
+
+    void fillSprite();
 }
