@@ -24,6 +24,7 @@ public:
     void notifyAll();
 private:
     sem_t* sem;
+    bool named;
 };
 
 class CCPlus::Object {
