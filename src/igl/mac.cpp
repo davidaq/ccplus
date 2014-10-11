@@ -1,5 +1,6 @@
 #ifdef __OSX__
 
+#include "igl.hpp"
 #include "externals/gl2.h"
 #include <OpenGL/OpenGl.h>
 #include <OpenGL/CGLTypes.h>
