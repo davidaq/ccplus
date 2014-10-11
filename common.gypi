@@ -29,6 +29,7 @@
                 'cflags': ['-D_RELEASE'],
             }],
             ['OS=="mac"', {
+                'defines': ['__OSX__'],
                 'xcode_settings' : {
                     'SDKROOT': 'macosx10.9',
                 },
