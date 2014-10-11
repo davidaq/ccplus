@@ -1,4 +1,5 @@
 #include "global.hpp"
+#include "igl.hpp"
 #include "ccplus.hpp"
 #include "context.hpp"
 #include "footage-collector.hpp"
@@ -29,7 +30,7 @@ void CCPlus::render() {
     for (float i = 0; i <= duration; i+=delta) {
         Frame f = ctx->mainComposition->getFrame(i);
         char buf[64];
-        sprintf(buf, "%d.zim", fn);
+        sprintf(buf, "%07d.zim", fn);
         f.write(generatePath(ctx->storagePath, buf));
         fn++;
     }
@@ -47,7 +48,7 @@ void CCPlus::encode() {
     for (float i = 0; i <= duration; i+=delta) {
         Frame f;
         char buf[64];
-        sprintf(buf, "%d.zim", fn);
+        sprintf(buf, "%07d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
         encoder.appendFrame(f);
         fn++;

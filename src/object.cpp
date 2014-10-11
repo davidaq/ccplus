@@ -46,7 +46,6 @@ Semaphore::Semaphore(std::string name) {
     } else {
         named = true;
     }
-    L() << name << sem;
 }
 
 Semaphore::~Semaphore() {
