@@ -36,6 +36,9 @@ void GPUFrame::createTexture(int width, int height, void* data) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, data);
+
+        this->width = width;
+        this->height = height;
     }
 }
 
@@ -44,7 +47,7 @@ Frame GPUFrame::toCPU() {
     ret.audio = audio.clone();
     if(textureID) {
         glBindTexture(GL_TEXTURE_2D, textureID);
-        ret.image = cv::Mat(height, width, CV_8UC4);
+        ret.image = cv::Mat::zeros(height, width, CV_8UC4);
         bindFBO();
         glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
     }

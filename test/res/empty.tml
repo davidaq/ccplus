@@ -1,0 +1,15 @@
+{
+    "version" : 0.01,
+    "main" : "MAIN",
+    "compositions" : {
+        "MAIN" : {
+            "resolution" : {
+                "width" : 600,
+                "height" : 400
+            },
+            "duration" : 10,
+            "layers" : [
+            ]
+        }
+    }
+}

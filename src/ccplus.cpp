@@ -50,8 +50,9 @@ void CCPlus::encode() {
     for (float i = 0; i <= duration; i += delta) {
         Frame f;
         char buf[64];
-        sprintf(buf, "%d.zim", fn);
+        sprintf(buf, "%07d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
+        L() << f.image.rows << " " << f.image.cols;
         encoder.appendFrame(f);
         fn++;
     }
