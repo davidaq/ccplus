@@ -4,8 +4,8 @@
     "compositions" : {
         "MAIN" : {
             "resolution" : {
-                "width" : 1920,
-                "height" : 1080
+                "width" : 640,
+                "height" : 360
             },
             "duration" : 10,
             "layers" : [
