@@ -31,6 +31,7 @@ void Context::end() {
     renderables.clear();
     delete collector;
     collector = nullptr;
+    deleteRetained();
     active = false;
 }
 

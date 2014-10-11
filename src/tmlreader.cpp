@@ -3,7 +3,7 @@
 #include "tmlreader.hpp"
 #include "context.hpp"
 #include "composition.hpp"
-//#include "image-renderable.hpp"
+#include "image-renderable.hpp"
 //#include "video-renderable.hpp"
 //#include "text-renderable.hpp"
 //#include "gif-renderable.hpp"
@@ -74,62 +74,62 @@ std::vector<std::string> TMLReader::readPropertiesOrder(const boost::property_tr
 
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
-//    if (!Context::getContext()->hasRenderable(uri)) {
-//        Renderable* renderable = 0;
-//        if (stringStartsWith(uri, "file://")) {
-//            static std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
-//            if(extMap.empty()) {
-//                //auto imageExt = [](Context* context, const std::string& uri) {
-//                //    return new ImageRenderable(context, uri);
-//                //};
-//                //extMap["jpg"]       = imageExt;
-//                //extMap["png"]       = imageExt;
-//                //extMap["bmp"]       = imageExt;
-//                //auto gifExt = [](Context* context, const std::string& uri) {
-//                //    return new GifRenderable(context, uri);
-//                //};
-//                //extMap["gif"]       = gifExt;
-//                //// Just treat everything else as Audio/Video
-//                //auto avExt = [](Context* context, const std::string& uri) {
-//                //    return new VideoRenderable(context, uri);
-//                //};
-//                //extMap["default"]   = avExt;
-//            }
-//            size_t dotPos = uri.find_last_of('.');
-//            std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
-//            ext = toLower(ext);
-//            
-//            log(logDEBUG) << "Got file extention: " << ext;
-//            if(!extMap.count(ext)) {
-//                ext = "default";
-//                std::string path = uri;
-//                if (stringStartsWith(path, "file://")) 
-//                    path = uri.substr(7);
-//                path = Context::getContext()->getFootagePath(path);
-//                FILE* fp = fopen(path.c_str(), "rb");
-//                if(fp) {
-//                    char buff[4];
-//                    fread(buff, 1, 3, fp);
-//                    fclose(fp);
-//                    buff[3] = 0;
-//                    if(strcmp(buff, "GIF") == 0) {
-//                        ext = "gif";
-//                    }
-//                }
-//            }
-//            renderable = extMap[ext](uri);
-//        //} else if (stringStartsWith(uri, "text://")) {
-//        //    renderable = new TextRenderable(context, uri);
-//        //    fillTextProperties((TextRenderable*)renderable, pt);
-//        } else if (!stringStartsWith(uri, "composition://")) {
-//            log(logWARN) << "Unkwown footage type " << uri;
-//            //renderable = new ImageRenderable(context, "file://UNKNOWN");
-//        }
-//        if(renderable) {
-//            context->retain(renderable);
-//            context->putRenderable(uri, renderable);
-//        }
-//    }
+    if (!Context::getContext()->hasRenderable(uri)) {
+        Renderable* renderable = 0;
+        if (stringStartsWith(uri, "file://")) {
+            static std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
+            if(extMap.empty()) {
+                auto imageExt = [](const std::string& uri) {
+                    return new ImageRenderable(uri);
+                };
+                extMap["jpg"]       = imageExt;
+                extMap["png"]       = imageExt;
+                extMap["bmp"]       = imageExt;
+                //auto gifExt = [](Context* context, const std::string& uri) {
+                //    return new GifRenderable(context, uri);
+                //};
+                //extMap["gif"]       = gifExt;
+                //// Just treat everything else as Audio/Video
+                //auto avExt = [](Context* context, const std::string& uri) {
+                //    return new VideoRenderable(context, uri);
+                //};
+                //extMap["default"]   = avExt;
+            }
+            size_t dotPos = uri.find_last_of('.');
+            std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
+            ext = toLower(ext);
+            
+            log(logDEBUG) << "Got file extention: " << ext;
+            if(!extMap.count(ext)) {
+                ext = "default";
+                std::string path = uri;
+                if (stringStartsWith(path, "file://")) 
+                    path = uri.substr(7);
+                path = Context::getContext()->getFootagePath(path);
+                FILE* fp = fopen(path.c_str(), "rb");
+                if(fp) {
+                    char buff[4];
+                    fread(buff, 1, 3, fp);
+                    fclose(fp);
+                    buff[3] = 0;
+                    if(strcmp(buff, "GIF") == 0) {
+                        ext = "gif";
+                    }
+                }
+            }
+            renderable = extMap[ext](uri);
+        //} else if (stringStartsWith(uri, "text://")) {
+        //    renderable = new TextRenderable(context, uri);
+        //    fillTextProperties((TextRenderable*)renderable, pt);
+        } else if (!stringStartsWith(uri, "composition://")) {
+            log(logWARN) << "Unkwown footage type " << uri;
+            //renderable = new ImageRenderable(context, "file://UNKNOWN");
+        }
+        if(renderable) {
+            Context::getContext()->retain(renderable);
+            Context::getContext()->putRenderable(uri, renderable);
+        }
+    }
     int blendMode = pt.get("blend", 0);
     int trkMat = pt.get("trkMat", 0);
     bool showup = pt.get("visible", true);

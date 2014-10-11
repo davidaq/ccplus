@@ -6,9 +6,14 @@
 using namespace CCPlus;
 
 Object::~Object() {
+    deleteRetained();
+}
+
+void Object::deleteRetained() {
     for(Object* obj : retains) {
         delete obj;
     }
+    retains.clear();
 }
 
 void Object::retain(Object* obj) {

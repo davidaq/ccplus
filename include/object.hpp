@@ -32,6 +32,7 @@ public:
     virtual ~Object();
     
     void retain(Object* obj);
+    void deleteRetained();
 private:
     void unretain(Object* obj);
     
