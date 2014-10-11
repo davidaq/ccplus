@@ -31,6 +31,7 @@ void CCPlus::render() {
     int fn = 0;
     GPUFrame screen;
     for (float i = 0; i <= duration; i += delta) {
+        L() << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
@@ -52,7 +53,6 @@ void CCPlus::encode() {
         char buf[64];
         sprintf(buf, "%07d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
-        L() << f.image.rows << " " << f.image.cols;
         encoder.appendFrame(f);
         fn++;
     }

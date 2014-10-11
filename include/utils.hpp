@@ -181,7 +181,7 @@ static inline void utf8toWStr(std::wstring& dest, const std::string& src){
         dest.push_back(err);
 }
 
-static inline void mat3to4(cv::Mat org) {
+static inline void mat3to4(cv::Mat& org) {
     if (org.channels() == 3) {
         cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
         int from_to[] = {0, 0, 1, 1, 2, 2};
