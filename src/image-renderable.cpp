@@ -18,6 +18,9 @@ void ImageRenderable::prepare() {
     image.image = cv::imread(parseUri2File(uri));
 }
 
+void ImageRenderable::release() {
+}
+
 int ImageRenderable::getWidth() const {
     return image.image.cols;
 }

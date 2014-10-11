@@ -3,6 +3,10 @@
 
 using namespace CCPlus;
 
+Renderable::Renderable() {}
+
+Renderable::~Renderable() {}
+
 Frame Renderable::getFrame(float time) {
     return Frame();
 }
