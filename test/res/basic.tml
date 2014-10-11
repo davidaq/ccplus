@@ -12,15 +12,6 @@
                 {
                     "uri" : "composition://the minor",
                     "properties" : {
-                        "position" : {
-                            "0" : [100, 20],
-                            "10" : [300, 300]
-                        },
-                        "scale" : {
-                            "0" : [0.1, 0.1],
-                            "1" : [0.5, 0.7],
-                            "10" : [1, 1]
-                        }
                     },
                     "time" : 1,
                     "duration" : 10,
@@ -34,8 +25,18 @@
                 "width" : 100,
                 "height" : 200
             },
-            "duration" : 20,
-            "layers" : []
+            "duration" : 10,
+            "layers" : [
+                {
+                    "uri" : "file://test3.jpg",
+                    "properties" : {
+                    },
+                    "time" : 0,
+                    "duration" : 10,
+                    "start" : 0,
+                    "last" : 10
+                }
+            ]
         }
     }
 }

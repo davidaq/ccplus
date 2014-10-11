@@ -30,11 +30,19 @@ void initGlobalVars() {
     squareIndex[2] = 2;
     squareIndex[3] = 3;
 
-    programs[DEFAUT] = {
-        .name = "blend default",
-        .vshader = "shader/fill.v.glsl",
-        .fshader = "shader/blend/default.f.glsl"
-    };
+#define SET_PROGRAM(ID, NAME) programs[ID] = { \
+        .name = "blend " #NAME, \
+        .vshader = "shaders/fill.v.glsl", \
+        .fshader = "shaders/blenders/" #NAME ".f.glsl" };
+    SET_PROGRAM(DEFAULT, default);
+    SET_PROGRAM(ADD, add);
+    SET_PROGRAM(MULTIPLY, multiply);
+    SET_PROGRAM(SCREEN, screen);
+    SET_PROGRAM(DISOLVE, disolve);
+    SET_PROGRAM(DARKEN, darken);
+    SET_PROGRAM(LIGHTEN, lighten);
+    SET_PROGRAM(OVERLAY, overlay);
+    SET_PROGRAM(DIFFERENCE, difference);
 }
 
 
