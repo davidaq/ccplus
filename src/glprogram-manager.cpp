@@ -54,6 +54,7 @@ GLuint GLProgramManager::getProgram(
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
 
+    glBindAttribLocation(program, ATTRIB_VERTEX_POSITION, "vertex_position");
     glLinkProgram(program);
 
     programPool[name] = program;

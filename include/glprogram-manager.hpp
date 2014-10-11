@@ -3,7 +3,7 @@
 
 namespace CCPlus {
     enum AttribLocation {
-        ATTRIB_VERTEX = 1
+        ATTRIB_VERTEX_POSITION = 1
     };
 }
 
