@@ -3,6 +3,9 @@
 
 #define GLuint unsigned int
 
+/* 
+ * Imutable data structure
+ */
 class CCPlus::Frame : public CCPlus::Object {
 public:
     Frame();
@@ -10,8 +13,8 @@ public:
     cv::Mat image, audio;
     GLuint textureID = 0;
     
-    void gpu2cpu();
-    void cpu2gpu();
+    Frame gpu2cpu();
+    Frame cpu2gpu();
 
     void write(const std::string& fp);
     void read(const std::string& zim);

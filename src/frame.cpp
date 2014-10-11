@@ -10,13 +10,13 @@ Frame::~Frame() {
 
 }
 
-void Frame::gpu2cpu() {
+Frame Frame::gpu2cpu() {
     if(image.empty()) {
 
     }
 }
 
-void Frame::cpu2gpu() {
+Frame Frame::cpu2gpu() {
     if(!textureID) {
         
     }
