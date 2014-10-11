@@ -1,15 +1,9 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <map>
-#include "frame.hpp"
+#include "global.hpp"
 
 namespace CCPlus {
     class FilterLoader;
-    class Filter;
-    class Frame;
-    class Profiler;
 }
 
 typedef void (*CCPLUS_FILTER_FUNC) (CCPlus::Frame& input, const std::vector<float>& parameters, int width, int height);
@@ -43,4 +37,3 @@ void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(CCPlus::Frame& frame, const std::vecto
 #define CCPLUS_FILTER(NAME) \
 void _CCPLUS_FILTER_##NAME##_FILTER_AAPLY(CCPlus::Frame& frame, const std::vector<float>& parameters, int width, int height)
 
-#include "global.hpp"

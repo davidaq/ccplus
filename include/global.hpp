@@ -14,6 +14,7 @@ namespace CCPlus {
     class TMLReader;
     class Frame;
     class FootageCollector;
+    class Filter;
 
     class Renderable;
     class Composition;
