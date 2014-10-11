@@ -1,6 +1,7 @@
 #ifdef __OSX__
 
 #include "externals/gl2.h"
+#include <OpenGL/OpenGl.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
 
@@ -18,7 +19,7 @@ void createGLContext() {
     CGLError errorCode;
     GLint num; // stores the number of possible pixel formats
     errorCode = CGLChoosePixelFormat( attributes, &pix, &num  );
-    errorCode = CGLCreateContext( pix, NULL, &ctx  ); // second parameter can be another context for object sharing
+    errorCode = CGLCreateContext( pix, nullptr, &ctx  ); // second parameter can be another context for object sharing
     CGLDestroyPixelFormat( pix  );
 
     errorCode = CGLSetCurrentContext( ctx  );

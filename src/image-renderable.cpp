@@ -16,10 +16,11 @@ float ImageRenderable::getDuration() {
 }
 
 void ImageRenderable::prepare() {
-    Mat org = cv::imread(parseUri2File(uri));
+    std::string filepath = parseUri2File(uri);
+    Mat org = cv::imread(filepath);
     if (org.channels() == 3) {
         cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
-        int from_to = {0, 0, 1, 1, 2, 2};
+        int from_to[] = {0, 0, 1, 1, 2, 2};
         mixChannels(&org, 1, &newimg, 1, from_to, 3);
         org = newimg;
     }
