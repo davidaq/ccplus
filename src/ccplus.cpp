@@ -32,7 +32,6 @@ void CCPlus::render() {
         Frame f = ctx->mainComposition->getFrame(i);
         char buf[64];
         sprintf(buf, "%07d.zim", fn);
-        f.gpu2cpu();
         f.write(generatePath(ctx->storagePath, buf));
         fn++;
     }
