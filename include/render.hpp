@@ -7,7 +7,7 @@ namespace CCPlus {
         ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,
         LIGHTEN, OVERLAY, DIFFERENCE 
     };
-    CCPlus::Frame mergeFrame(const CCPlus::Frame& bottom, const CCPlus::Frame& top, CCPlus::BlendMode blendmode);
+    void mergeFrame(CCPlus::GPUFrame& bottom, CCPlus::GPUFrame& top, CCPlus::BlendMode blendmode);
 
 
     enum TrackMatteMode {

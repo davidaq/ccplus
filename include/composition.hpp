@@ -11,6 +11,7 @@ public:
     void updateGPUFrame(GPUFrame& frame, float time);
 
     std::vector<Layer> layers;
+    std::vector<GPUFrame> frames;
     std::string name;
     float duration;
     float width;
