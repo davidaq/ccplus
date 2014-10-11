@@ -1,0 +1,41 @@
+{
+    "version" : 0.01,
+    "main" : "MAIN",
+    "compositions" : {
+        "MAIN" : {
+            "resolution" : {
+                "width" : 1920,
+                "height" : 1080
+            },
+            "duration" : 10,
+            "layers" : [
+                {
+                    "uri" : "composition://the minor",
+                    "properties" : {
+                        "position" : {
+                            "0" : [100, 20],
+                            "10" : [300, 300]
+                        },
+                        "scale" : {
+                            "0" : [0.1, 0.1],
+                            "1" : [0.5, 0.7],
+                            "10" : [1, 1]
+                        }
+                    },
+                    "time" : 1,
+                    "duration" : 10,
+                    "start" : 2,
+                    "last" : 11
+                }
+            ]
+        },
+        "the minor" : {
+            "resolution" : {
+                "width" : 100,
+                "height" : 200
+            },
+            "duration" : 20,
+            "layers" : []
+        }
+    }
+}
