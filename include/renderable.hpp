@@ -8,10 +8,11 @@ public:
     Renderable();
     ~Renderable();
 
-    virtual Frame getFrame(float time);
     virtual void prepare();
     virtual void release();
     virtual float getDuration();
+
+    virtual void updateGPUFrame(GPUFrame& frame, float time);
 
     static std::string parseUri2File(std::string uri);
 private:

@@ -10,18 +10,6 @@ Frame::~Frame() {
 
 }
 
-Frame Frame::gpu2cpu() {
-    if(image.empty()) {
-
-    }
-}
-
-Frame Frame::cpu2gpu() {
-    if(!textureID) {
-        
-    }
-}
-
 void Frame::write(const std::string& s) {
 
 }

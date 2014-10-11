@@ -13,6 +13,7 @@ namespace CCPlus {
     class ParallelExecutor;
     class TMLReader;
     class Frame;
+    class GPUFrame;
     class FootageCollector;
     class Filter;
 
@@ -30,6 +31,7 @@ namespace CCPlus {
 #include <vector>
 #include <map>
 #include <opencv2/opencv.hpp>
+#include "externals/gl2.h"
 
 #include "config.hpp"
 #include "object.hpp"

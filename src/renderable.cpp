@@ -7,10 +7,6 @@ Renderable::Renderable() {}
 
 Renderable::~Renderable() {}
 
-Frame Renderable::getFrame(float time) {
-    return Frame();
-}
-
 void Renderable::prepare() {
 }
 
@@ -26,4 +22,7 @@ std::string Renderable::parseUri2File(std::string uri) {
         uri = uri.substr(7);
     }
     return Context::getContext()->getFootagePath(uri);
+}
+
+void Renderable::updateGPUFrame(GPUFrame& frame, float time) {
 }

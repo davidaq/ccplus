@@ -11,10 +11,6 @@ public:
     Frame();
     ~Frame();
     cv::Mat image, audio;
-    GLuint textureID = 0;
-    
-    Frame gpu2cpu();
-    Frame cpu2gpu();
 
     void write(const std::string& fp);
     void read(const std::string& zim);
