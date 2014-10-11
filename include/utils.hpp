@@ -180,3 +180,12 @@ static inline void utf8toWStr(std::wstring& dest, const std::string& src){
     if (bytes)
         dest.push_back(err);
 }
+
+static inline void mat3to4(cv::Mat org) {
+    if (org.channels() == 3) {
+        cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
+        int from_to[] = {0, 0, 1, 1, 2, 2};
+        mixChannels(&org, 1, &newimg, 1, from_to, 3);
+        org = newimg;
+    } 
+}
