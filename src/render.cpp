@@ -42,7 +42,8 @@ void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
     bottom.bindFBO();
     glBindTexture(GL_TEXTURE_2D, top.textureID);
-    GLProgramManager::getManager()->getProgram("blend");
+    GLProgramManager::getManager()->getProgram(programs[blendmode].name,
+            programs[blendmode].vshader, programs[blendmode].fshader);
     fillSprite();
 }
 
