@@ -1,6 +1,6 @@
 #define CCPLUS_FILTER_SELF
 #include "filter.hpp"
-#include "frame.hpp"
+#include "gpu-frame.hpp"
 
 #include "profile.hpp"
 
@@ -23,7 +23,7 @@ Filter::~Filter() {
         delete profiler;
 }
 
-void Filter::apply(Frame& frame, const std::vector<float>& parameters, int width, int height) {
+void Filter::apply(GPUFrame& frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
         profileBegin(Filters);
         func(frame, parameters, width, height);

@@ -15,15 +15,12 @@ class CCPlus::Layer : public CCPlus::Object {
 
 public:
     Layer();
-    /*
-     * TODO: Verify start and time
-     */
     Layer(
         const std::string& renderableUri, 
-        float time, 
-        float duration, 
-        float start, 
-        float last,
+        float time,      // time in the parent composition where this layer starts
+        float duration,  // total appearance time of this layer in parent scale
+        float start,     // the begining time of the refered renderable
+        float last,      // total cliped length of the refered renderable
         int width,
         int height,
         int blendMode = 0,
@@ -65,7 +62,7 @@ public:
     bool show = true;
 
     // Assume the renderable stuff is rendered
-    Frame applyFiltersToFrame(float); 
+    void applyFiltersToFrame(GPUFrame& frame, float time); 
 
     void setProperties(const std::map<std::string, Property>&);
     void setProperties(const std::map<std::string, Property>&,

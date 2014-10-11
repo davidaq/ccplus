@@ -1,7 +1,7 @@
 #include "layer.hpp"
 
 #include "context.hpp"
-#include "frame.hpp"
+#include "gpu-frame.hpp"
 #include "renderable.hpp"
 #include "filter.hpp"
 
@@ -92,7 +92,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         }
     }
     if (low == nullptr || high == nullptr) {
-        log(logWARN) << "Parametere for " << name << " are not interpolatable at time " << time;
+        log(logWARN) << "Parameter for " << name << " are not interpolatable at time " << time;
         return ret;
     }
 
@@ -108,25 +108,41 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-Frame Layer::applyFiltersToFrame(float t) {
+void Layer::applyFiltersToFrame(GPUFrame& frame, float t) {
     if (!visible(t)) 
-        return Frame();
-
-    // Calculate corresponding local time
+        return;
     float local_t = mapInnerTime(t);
-    //Frame frame = this->getRenderObject()->getFrame(local_t);
-    //if (orderedKey.empty()) {
-    //    for (auto& kv : properties) {
-    //        Filter(kv.first).apply(
-    //                frame, interpolate(kv.first, t), width, height);
-    //    }
-    //} else {
-    //    for (auto& k : orderedKey) {
-    //        Filter(k).apply(frame, interpolate(k, t), width, height);
-    //    }
-    //}
-    //return frame;
-    return Frame();
+    getRenderObject()->updateGPUFrame(frame, local_t);
+    if(!frame.textureID)
+        return;
+    GPUFrame secondary;
+    GPUFrame* dblBuffer[2] = {&frame, &secondary};
+    int currentSrc = 0;
+    if (orderedKey.empty()) {
+        for (auto& kv : properties) {
+            int currentCvs = currentSrc ^ 1;
+            dblBuffer[currentCvs]->bindFBO();
+            Filter(kv.first).apply(*dblBuffer[currentSrc],
+                    interpolate(kv.first, t), width, height);
+            dblBuffer[currentCvs]->audio = dblBuffer[currentSrc]->audio;
+            currentSrc = currentCvs;
+        }
+    } else {
+        for (auto& k : orderedKey) {
+            int currentCvs = currentSrc ^ 1;
+            dblBuffer[currentCvs]->bindFBO();
+            Filter(k).apply(*dblBuffer[currentSrc],
+                    interpolate(k, t), width, height);
+            dblBuffer[currentCvs]->audio = dblBuffer[currentSrc]->audio;
+            currentSrc = currentCvs;
+        }
+    }
+    if(currentSrc == 1) {
+        frame.destroy();
+        frame.textureID = secondary.textureID;
+        frame.fboID = secondary.fboID;
+        frame.audio = secondary.audio;
+    }
 }
 
 float Layer::mapInnerTime(float t) const {

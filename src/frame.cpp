@@ -15,5 +15,4 @@ void Frame::write(const std::string& s) {
 }
 
 void Frame::read(const std::string& r) {
-    gpu2cpu();
 }

@@ -6,9 +6,11 @@ using namespace CCPlus;
 void GPUFrame::destroy() {
     if(fboID) {
         glDeleteFramebuffers(1, &fboID);
+        fboID = 0;
     }
     if(textureID) {
         glDeleteTextures(1, &textureID);
+        textureID = 0;
     }
     audio = cv::Mat();
 }
@@ -16,10 +18,12 @@ void GPUFrame::destroy() {
 void GPUFrame::bindFBO() {
     if(fboID) {
         glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+        glViewport(0, 0, width, height);
     } else if(textureID) {
         glGenFramebuffers(1, &fboID);
         glBindFramebuffer(GL_FRAMEBUFFER, fboID);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+        glViewport(0, 0, width, height);
     }
 }
 
