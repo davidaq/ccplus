@@ -3,7 +3,7 @@
 
 namespace CCPlus {
     enum BlendMode {
-        NONE = -1, DEFAUT = 0,
+        NONE = -1, DEFAULT = 0,
         ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,
         LIGHTEN, OVERLAY, DIFFERENCE,
         BLEND_MODE_COUNT

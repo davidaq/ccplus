@@ -29,7 +29,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
         Layer& l = layers[i];
         l.applyFiltersToFrame(frames[i], time);
 
-        mergeFrame(frames[i], frame, DEFAUT);
+        mergeFrame(frames[i], frame, DEFAULT);
     }
 }
 
