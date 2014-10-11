@@ -1,12 +1,19 @@
 #include "object.hpp"
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 using namespace CCPlus;
 
 Object::~Object() {
+    deleteRetained();
+}
+
+void Object::deleteRetained() {
     for(Object* obj : retains) {
         delete obj;
     }
+    retains.clear();
 }
 
 void Object::retain(Object* obj) {
@@ -31,15 +38,28 @@ Semaphore::Semaphore(std::string name) {
     }
     name = "CCPLUS_" + name;
     sem_unlink(name.c_str());
-    sem = sem_open(name.c_str(), O_CREAT, O_RDWR, 0);
+    sem = sem_open(name.c_str(), O_CREAT, 0655, 0);
+    if(sem == (sem_t*)-1) {
+        sem = new sem_t;
+        sem_init(sem, 0, 0);
+        named = false;
+    } else {
+        named = true;
+    }
+    L() << name << sem;
 }
 
 Semaphore::~Semaphore() {
     sem_close(sem);
+    if(!named) {
+        sem_destroy(sem);
+        delete sem;
+    }
 }
 
 void Semaphore::wait() {
     sem_wait(sem);
+    usleep(10000);
 }
 
 void Semaphore::notify() {

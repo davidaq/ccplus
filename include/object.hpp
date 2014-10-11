@@ -24,6 +24,7 @@ public:
     void notifyAll();
 private:
     sem_t* sem;
+    bool named;
 };
 
 class CCPlus::Object {
@@ -31,6 +32,7 @@ public:
     virtual ~Object();
     
     void retain(Object* obj);
+    void deleteRetained();
 private:
     void unretain(Object* obj);
     
