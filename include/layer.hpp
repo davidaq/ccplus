@@ -64,7 +64,6 @@ public:
     // Assume the renderable stuff is rendered
     void applyFiltersToFrame(GPUFrame& frame, float time); 
 
-    void setProperties(const std::map<std::string, Property>&);
     void setProperties(const std::map<std::string, Property>&,
             const std::vector<std::string>& keyOrder);
     const std::map<std::string, Property>& getProperties() const;

@@ -39,8 +39,9 @@ cv::Mat readAsset(std::string name) {
     fseek(fp, 0, SEEK_END);
     size_t len = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    cv::Mat ret = cv::Mat(1, len, CV_8U);
+    cv::Mat ret(1, len, CV_8U);
     fread(ret.data, 1, len, fp);
+    fclose(fp);
     return ret;
 }
 

@@ -31,7 +31,7 @@ void CCPlus::render() {
     int fn = 0;
     GPUFrame screen;
     for (float i = 0; i <= duration; i += delta) {
-        L() << i;
+        L() << "-- " << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);

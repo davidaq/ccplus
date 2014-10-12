@@ -6,8 +6,12 @@
 using namespace CCPlus;
 
 GLuint squareVBO;
-float squareCoord[8];
-int squareIndex[4];
+float squareCoord[8] = {
+    1.0,  1.0,  
+    -1.0, 1.0,  
+    1.0,  -1.0, 
+    -1.0, -1.0 
+};
 
 struct {
     const char* name;
@@ -20,15 +24,6 @@ void initGlobalVars() {
     if(inited)
         return;
     inited = true;
-    squareCoord[0] = -1.f; squareCoord[1] = -1.f;
-    squareCoord[2] = 1.f; squareCoord[3] = -1.f;
-    squareCoord[4] = 1.f; squareCoord[5] = 1.f;
-    squareCoord[6] = -1.f; squareCoord[7] = 1.f;
-
-    squareIndex[0] = 0;
-    squareIndex[1] = 1;
-    squareIndex[2] = 2;
-    squareIndex[3] = 3;
 
 #define SET_PROGRAM(ID, NAME) programs[ID] = { \
         .name = "blend " #NAME, \
@@ -48,17 +43,19 @@ void initGlobalVars() {
 
 void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
-    bottom.bindFBO();
-    glBindTexture(GL_TEXTURE_2D, top.textureID);
-    GLuint program = GLProgramManager::getManager()->getProgram(
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint program = manager->getProgram(
             programs[blendmode].name,
-            programs[blendmode].vshader, programs[blendmode].fshader);
+            programs[blendmode].vshader, 
+            programs[blendmode].fshader);
     glUseProgram(program);
 
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
     glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
 
     // UP
+    // TODO: shouldn't bind this to FBO and texture at the same time 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, top.textureID);
 
@@ -66,6 +63,7 @@ void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, bottom.textureID);
 
+    top.bindFBO();
     fillSprite();
 }
 
@@ -85,6 +83,6 @@ void CCPlus::fillSprite() {
     }
     glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
     glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glDrawElements(GL_TRIANGLE_STRIP, 2, GL_UNSIGNED_INT, squareIndex);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

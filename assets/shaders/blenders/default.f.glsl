@@ -1,7 +1,5 @@
 #version 120
 
-uniform sampler2D tex;
-
 varying vec2 xy;
 
 uniform sampler2D tex_up;

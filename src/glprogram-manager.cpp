@@ -24,28 +24,44 @@ GLuint GLProgramManager::getProgram(
         return programPool[name];
     }
 
-    GLuint vertex_shader, fragment_shader;
-    GLuint program;
+    GLuint vertex_shader, fragment_shader, program;
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
     cv::Mat tmp1 = readAsset(vshaderPath);
-    glShaderSource(vertex_shader, 1, (const char**)&tmp1.data, NULL);
+    int vsz = tmp1.total();
     cv::Mat tmp2 = readAsset(fshaderPath);
-    glShaderSource(fragment_shader, 1, (const char**)&tmp2.data, NULL);
+    int fsz = tmp2.total();
+    glShaderSource(vertex_shader, 1, 
+            (const char**)&tmp1.data, &vsz);
+    glShaderSource(fragment_shader, 1, 
+            (const char**)&tmp2.data, &fsz);
 
     glCompileShader(vertex_shader);
     glCompileShader(fragment_shader);
 
+    auto printCompileError = [] (GLuint shader) {
+        GLint logMaxSize, logLength;
+        glGetShaderiv( shader, GL_INFO_LOG_LENGTH, 
+                &logMaxSize );
+        char* logMsg = new char[logMaxSize];
+        glGetShaderInfoLog( shader, logMaxSize, 
+                &logLength, logMsg );
+        printf("error message: %s\n", logMsg);
+        delete[] logMsg;
+    };
+
     GLint compiled;
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
+        printCompileError(vertex_shader);
         log(logFATAL) << "Can't compile vertex shader for " << name;
     }
 
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled);
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
+        printCompileError(fragment_shader);
         log(logFATAL) << "Can't compile fragment shader for " << name;
     }
 
