@@ -27,6 +27,9 @@ void createGLContext() {
 
     errorCode = CGLSetCurrentContext( ctx  );
     //printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
 }
 
 cv::Mat readAsset(std::string name) {
