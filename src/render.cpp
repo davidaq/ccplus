@@ -43,6 +43,10 @@ void initGlobalVars() {
 
 void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
+    if (bottom.width != top.width || 
+        bottom.height != top.height) {
+        log(logWARN) << "Merge frame requires frames to have equal sizes";
+    }
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?

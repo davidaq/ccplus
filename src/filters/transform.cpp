@@ -166,8 +166,6 @@ CCPLUS_FILTER(transform) {
         }
     }
 
-    std::cout << H << std::endl;
-
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
         "filter_transform",
