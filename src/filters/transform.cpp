@@ -165,6 +165,8 @@ CCPLUS_FILTER(transform) {
         }
     }
 
+    //std::cout << H << std::endl;
+
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
         "filter_transform",
@@ -179,8 +181,6 @@ CCPLUS_FILTER(transform) {
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame.textureID);
-
-    glClear(GL_COLOR_BUFFER_BIT);
 
     fillSprite();
 }

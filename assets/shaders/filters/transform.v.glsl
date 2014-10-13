@@ -7,10 +7,10 @@ varying vec2 xy;
 uniform mat3 T;
 
 void main() {
-    gl_Position = vertex_position;
-
-    vec3 tmp = gl_Position.xyz;
-    tmp = (tmp + 1.0) / 2.0;
+    xy = (vertex_position.xy + 1.0) / 2.0;
+    vec3 tmp = vec3(vertex_position.xy, 1);
     tmp = T * tmp;
-    xy = tmp.xy;
+    tmp.xy = tmp.xy / tmp.z;
+    gl_Position.xy = tmp.xy;
+
 }
