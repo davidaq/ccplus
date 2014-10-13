@@ -1,6 +1,7 @@
 #include "filter.hpp"
-
+#include "glprogram-manager.hpp"
 #include "gpu-frame.hpp"
+#include "render.hpp"
 
 using namespace cv;
 using namespace CCPlus;
@@ -157,10 +158,29 @@ CCPLUS_FILTER(transform) {
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
-    float tmatrix[3][3];
+    float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
-            tmatrix[i][j] = H.at<double>(i, j);
+            tmatrix[i * 3 + j] = H.at<double>(i, j);
         }
     }
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint program = manager->getProgram(
+        "filter_transform",
+        "shaders/filters/transform.v.glsl",
+        "shaders/filters/transform.f.glsl"
+    );
+    glUseProgram(program);
+
+    GLuint location = glGetUniformLocation(program, "T");
+    glUniformMatrix3fv(location, 1, GL_TRUE, tmatrix);
+
+    glUniform1i(glGetUniformLocation(program, "tex"), 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, frame.textureID);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    fillSprite();
 }
