@@ -158,6 +158,7 @@ CCPLUS_FILTER(transform) {
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
+    invert(H, H);
     float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
@@ -165,7 +166,7 @@ CCPLUS_FILTER(transform) {
         }
     }
 
-    //std::cout << H << std::endl;
+    std::cout << H << std::endl;
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(

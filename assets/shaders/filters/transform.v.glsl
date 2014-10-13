@@ -8,9 +8,9 @@ uniform mat3 T;
 
 void main() {
     xy = (vertex_position.xy + 1.0) / 2.0;
-    vec3 tmp = vec3(vertex_position.xy, 1);
+    vec3 tmp = vec3(vertex_position.xy + 1.0, 1);
     tmp = T * tmp;
     tmp.xy = tmp.xy / tmp.z;
-    gl_Position.xy = tmp.xy;
+    gl_Position.xy = tmp.xy - 1.0;
 
 }
