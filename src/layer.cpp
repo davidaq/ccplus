@@ -116,6 +116,7 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
     if(!buffer.textureID) {
         buffer.createTexture(width, height);
     }
+    buffer.audio = frame.audio.clone();
     GPUDoubleBuffer dblBuffer(buffer, width, height);
     bool first = true;
     for (auto& k : orderedKey) {

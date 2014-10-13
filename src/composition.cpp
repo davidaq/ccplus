@@ -28,17 +28,21 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
     // Apply filters
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
-        if(!l.visible(time))
+        if(!l.show || !l.visible(time)) {
+            // frame will be destroyed once not visible
+            frames[i].destroy();
+            filteredFrames[i].destroy();
             continue;
+        }
         l.applyFiltersToFrame(frames[i], filteredFrames[i], time);
     }
-    // Clean screen ~
+    // Merge, track matte, audio
     GPUDoubleBuffer buffer(frame, width, height);
     GPUFrame matteBuffer;
     matteBuffer.createTexture(width, height);
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
-        if(!l.show || !l.visible(time))
+        if(!l.visible(time))
             continue;
         if(i != 0 && l.trkMat) {
             matteBuffer.bindFBO();
@@ -51,9 +55,10 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
             GPUFrame &cframe = filteredFrames[i];
             buffer.swap([&cframe](GPUFrame& source) {
                 glClear(GL_COLOR_BUFFER_BIT);
-                mergeFrame(source, cframe, DEFAULT);
+                mergeFrame(source, cframe, OVERLAY);
             });
         }
+        // TODO merge audio
     }
     matteBuffer.destroy();
     buffer.finish();
