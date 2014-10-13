@@ -23,12 +23,14 @@ Filter::~Filter() {
         delete profiler;
 }
 
-void Filter::apply(GPUFrame& frame, const std::vector<float>& parameters, int width, int height) {
+bool Filter::apply(GPUFrame& frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
         profileBegin(Filters);
         func(frame, parameters, width, height);
         profileEnd(Filters);
+        return true;
     }
+    return false;
 }
 
 FilterLoader::FilterLoader() {

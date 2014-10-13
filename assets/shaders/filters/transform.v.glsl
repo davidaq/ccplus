@@ -12,5 +12,5 @@ void main() {
     tmp = T * tmp;
     tmp.xy = tmp.xy / tmp.z;
     gl_Position.xy = tmp.xy - 1.0;
-
+    gl_Position.zw = vertex_position.zw;
 }

@@ -117,17 +117,11 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
         buffer.createTexture(width, height);
     }
     GPUDoubleBuffer dblBuffer(buffer, width, height);
-    dblBuffer.swap([&frame](GPUFrame& src) {
-        glClear(GL_COLOR_BUFFER_BIT);
-    });
-    dblBuffer.swap([&frame](GPUFrame& src) {
-        glClear(GL_COLOR_BUFFER_BIT);
-    });
     bool first = true;
     for (auto& k : orderedKey) {
         dblBuffer.swap([first, &frame, &k, t, this](GPUFrame& src) {
-            L() << "filter " << first;
-            Filter(k).apply(first ? frame : src,
+            glClear(GL_COLOR_BUFFER_BIT);
+            return Filter(k).apply(first ? frame : src,
                 this->interpolate(k, t), this->width, this->height);
         });
         first = false;

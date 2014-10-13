@@ -31,7 +31,6 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
         if(!l.visible(time))
             continue;
         l.applyFiltersToFrame(frames[i], filteredFrames[i], time);
-        GPUFrame& filteredFrame = filteredFrames[i];
     }
     // Clean screen ~
     GPUDoubleBuffer buffer(frame, width, height);
@@ -45,7 +44,6 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
             matteBuffer.bindFBO();
             glClear(GL_COLOR_BUFFER_BIT);
             trackMatte(filteredFrames[i], filteredFrames[i - 1], (TrackMatteMode)l.trkMat);
-
             buffer.swap([&matteBuffer](GPUFrame& source) {
                 mergeFrame(source, matteBuffer, DEFAULT);
             });

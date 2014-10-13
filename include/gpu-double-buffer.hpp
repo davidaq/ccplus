@@ -10,6 +10,7 @@ public:
     void finish();
 
     void swap(const std::function<void(CCPlus::GPUFrame&)>&);
+    void swap(const std::function<bool(CCPlus::GPUFrame&)>&);
 private:
     GPUFrame* source = 0, *secondary = 0;
     bool cSource, cSecondary;

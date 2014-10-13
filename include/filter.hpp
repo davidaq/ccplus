@@ -13,7 +13,7 @@ public:
     Filter(const std::string& name);
     ~Filter();
     
-    virtual void apply(CCPlus::GPUFrame& image, const std::vector<float>& parameters, int width, int height);
+    virtual bool apply(CCPlus::GPUFrame& image, const std::vector<float>& parameters, int width, int height);
     
 private:
     CCPLUS_FILTER_FUNC func;

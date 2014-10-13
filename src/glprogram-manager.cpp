@@ -72,6 +72,10 @@ GLuint GLProgramManager::getProgram(
 
     glBindAttribLocation(program, ATTRIB_VERTEX_POSITION, "vertex_position");
     glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &compiled);
+    if (!compiled)  {
+        log(logFATAL) << "Program linked failed for " << name;
+    }
 
     programPool[name] = program;
     return program;

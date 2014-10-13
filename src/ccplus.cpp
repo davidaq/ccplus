@@ -6,6 +6,7 @@
 #include "composition.hpp"
 #include "video-encoder.hpp"
 #include "gpu-frame.hpp"
+#include "render.hpp"
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
@@ -30,12 +31,20 @@ void CCPlus::render() {
     float duration = ctx->mainComposition->getDuration();
     int fn = 0;
     GPUFrame screen;
+    GPUFrame black;
     for (float i = 0; i <= duration; i += delta) {
         L() << "-- " << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
+        if(!black.textureID)
+            black.createTexture(screen.width, screen.height);
+        black.bindFBO();
+        glClearColor(0, 0, 0, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0, 0, 0, 0);
+        mergeFrame(screen, screen, NONE);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
-        screen.toCPU().write(generatePath(ctx->storagePath, buf));
+        black.toCPU().write(generatePath(ctx->storagePath, buf));
     }
     screen.destroy();
 }

@@ -72,3 +72,13 @@ void GPUDoubleBuffer::swap(const std::function<void(CCPlus::GPUFrame&)>& func) {
     currentSrc = currentBuffer;
 }
 
+void GPUDoubleBuffer::swap(const std::function<bool(CCPlus::GPUFrame&)>& func) {
+    int currentBuffer = currentSrc ^ 1;
+    dblBuffer[currentBuffer]->bindFBO();
+    if(func(*dblBuffer[currentSrc])) {
+        currentSrc = currentBuffer;
+    } else {
+        L() << "Dont flip";
+    }
+}
+
