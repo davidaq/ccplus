@@ -9,6 +9,8 @@ public:
     void createTexture(int width, int height, void* pixelData=0);
     // @ must be called to ensure resource releasements
     void destroy();
+    // @ reset to empty without releasing an resource
+    void reset();
     // @ return a cpu copy of the frame
     CCPlus::Frame toCPU();
     // @ load a frame from cpu to gpu

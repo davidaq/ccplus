@@ -62,7 +62,7 @@ public:
     bool show = true;
 
     // Assume the renderable stuff is rendered
-    void applyFiltersToFrame(GPUFrame& frame, float time); 
+    void applyFiltersToFrame(GPUFrame& frame, GPUDoubleBuffer& buffer, float time); 
 
     void setProperties(const std::map<std::string, Property>&,
             const std::vector<std::string>& keyOrder);

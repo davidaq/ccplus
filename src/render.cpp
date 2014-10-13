@@ -45,10 +45,15 @@ void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
     initGlobalVars();
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
+    GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
+        manager->getProgram(
             programs[blendmode].name,
             programs[blendmode].vshader, 
-            programs[blendmode].fshader);
+            programs[blendmode].fshader) :
+        manager->getProgram(
+                "blend none",
+                "shaders/fill.v.glsl",
+                "shaders/blenders/none.f.glsl");
     glUseProgram(program);
 
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);

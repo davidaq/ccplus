@@ -4,6 +4,7 @@
 #include "gpu-frame.hpp"
 #include "renderable.hpp"
 #include "filter.hpp"
+#include "gpu-double-buffer.hpp"
 
 using namespace CCPlus;
 
@@ -104,35 +105,24 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-void Layer::applyFiltersToFrame(GPUFrame& frame, float t) {
+void Layer::applyFiltersToFrame(GPUFrame& frame, GPUDoubleBuffer& buffer, float t) {
     if (!visible(t)) 
         return;
     float local_t = mapInnerTime(t);
     getRenderObject()->updateGPUFrame(frame, local_t);
     if(!frame.textureID)
         return;
-    GPUFrame secondary;
-    secondary.createTexture(width, height);
-    GPUFrame* dblBuffer[2] = {&frame, &secondary};
-    int currentSrc = 0;
-    secondary.bindFBO();
-    glClear(GL_COLOR_BUFFER_BIT);
+    int clearFlag = 0;
     for (auto& k : orderedKey) {
-        int currentBuffer = currentSrc ^ 1;
-        dblBuffer[currentBuffer]->bindFBO();
-        Filter(k).apply(*dblBuffer[currentSrc],
-                interpolate(k, t), width, height);
-        dblBuffer[currentBuffer]->audio = dblBuffer[currentSrc]->audio;
-        currentSrc = currentBuffer;
+        buffer.swap([&clearFlag, &k, t, this](GPUFrame& src) {
+            if(clearFlag < 2) {
+                glClear(GL_COLOR_BUFFER_BIT);
+                clearFlag++;
+            }
+            Filter(k).apply(src, this->interpolate(k, t), this->width, this->height);
+        });
     }
-    if(currentSrc == 1) {
-        frame.destroy();
-        frame.textureID = secondary.textureID;
-        frame.fboID = secondary.fboID;
-        frame.audio = secondary.audio;
-    } else {
-        secondary.destroy();
-    }
+    buffer.finish();
 }
 
 float Layer::mapInnerTime(float t) const {

@@ -9,12 +9,16 @@ GPUFrame::~GPUFrame() {
 void GPUFrame::destroy() {
     if(fboID) {
         glDeleteFramebuffers(1, &fboID);
-        fboID = 0;
     }
     if(textureID) {
         glDeleteTextures(1, &textureID);
-        textureID = 0;
     }
+    reset();
+}
+
+void GPUFrame::reset() {
+    fboID = 0;
+    textureID = 0;
     audio = cv::Mat();
 }
 
