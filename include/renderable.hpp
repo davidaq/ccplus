@@ -15,8 +15,11 @@ public:
     virtual void updateGPUFrame(GPUFrame& frame, float time);
 
     static std::string parseUri2File(std::string uri);
+
+    // first and last moments this renderable is visible in the main composition
+    float firstAppearTime = 0, lastAppearTime = 0;
+    // chunks of used fragments of this renderable as <start,length>
+    std::vector<std::pair<float,float> > usedFragments;
 private:
     std::map<int, Frame> frames;
-    float firstAppearTime = 0, lastAppearTime = 0;
-    std::vector<std::pair<float,float> > usedFragments;
 };

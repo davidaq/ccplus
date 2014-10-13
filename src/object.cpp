@@ -30,6 +30,7 @@ void Object::unretain(Object* obj) {
 }
 
 Semaphore::Semaphore(std::string name) {
+#ifdef __OSX__
     if(name == "") {
         static int counter = 0;
         char sname[20];
@@ -39,6 +40,9 @@ Semaphore::Semaphore(std::string name) {
     name = "CCPLUS_" + name;
     sem_unlink(name.c_str());
     sem = sem_open(name.c_str(), O_CREAT, 0655, 0);
+#else
+    sem = (sem_t*)-1;
+#endif
     if(sem == (sem_t*)-1) {
         sem = new sem_t;
         sem_init(sem, 0, 0);
@@ -49,7 +53,9 @@ Semaphore::Semaphore(std::string name) {
 }
 
 Semaphore::~Semaphore() {
+#ifdef __OSX__
     sem_close(sem);
+#endif
     if(!named) {
         sem_destroy(sem);
         delete sem;
