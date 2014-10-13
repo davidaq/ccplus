@@ -62,6 +62,7 @@ void CCPlus::encode() {
         char buf[64];
         sprintf(buf, "%07d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
+        std::cout << f.image.at<cv::Vec4b>(100, 100) << std::endl;
         encoder.appendFrame(f);
         fn++;
     }
