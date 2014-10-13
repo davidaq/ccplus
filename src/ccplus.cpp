@@ -32,6 +32,7 @@ void CCPlus::render() {
     int fn = 0;
     GPUFrame screen;
     GPUFrame black;
+    glBlendMode(GL_ONE, GL_DST_ALPHA);
     for (float i = 0; i <= duration; i += delta) {
         L() << "-- " << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
