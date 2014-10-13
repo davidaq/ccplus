@@ -25,11 +25,29 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
     // Clean screen ~
     frame.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
+    GPUFrame secondary;
+    secondary.createTexture(width, height);
+    GPUFrame* dblBuffer[2] = {&frame, &secondary};
+    int currentSrc = 0;
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
+        if(!l.visible(time))
+            continue;
         l.applyFiltersToFrame(frames[i], time);
 
-        mergeFrame(frames[i], frame, DEFAULT);
+        int currentBuffer = currentSrc ^ 1;
+        dblBuffer[currentBuffer]->bindFBO();
+        glClear(GL_COLOR_BUFFER_BIT);
+        mergeFrame(*dblBuffer[currentSrc], frames[i], DEFAULT);
+        currentSrc = currentBuffer;
+    }
+    if(currentSrc == 1) {
+        frame.destroy();
+        frame.textureID = secondary.textureID;
+        frame.fboID = secondary.fboID;
+        frame.audio = secondary.audio;
+    } else {
+        secondary.destroy();
     }
 }
 

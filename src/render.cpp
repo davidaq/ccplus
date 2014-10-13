@@ -41,7 +41,7 @@ void initGlobalVars() {
 }
 
 
-void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
+void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
 
     GLProgramManager* manager = GLProgramManager::getManager();
@@ -63,7 +63,6 @@ void CCPlus::mergeFrame(GPUFrame& bottom, GPUFrame& top, BlendMode blendmode) {
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, bottom.textureID);
 
-    top.bindFBO();
     fillSprite();
 }
 

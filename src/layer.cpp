@@ -112,21 +112,26 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, float t) {
     if(!frame.textureID)
         return;
     GPUFrame secondary;
+    secondary.createTexture(width, height);
     GPUFrame* dblBuffer[2] = {&frame, &secondary};
     int currentSrc = 0;
+    secondary.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
     for (auto& k : orderedKey) {
-        int currentCvs = currentSrc ^ 1;
-        dblBuffer[currentCvs]->bindFBO();
+        int currentBuffer = currentSrc ^ 1;
+        dblBuffer[currentBuffer]->bindFBO();
         Filter(k).apply(*dblBuffer[currentSrc],
                 interpolate(k, t), width, height);
-        dblBuffer[currentCvs]->audio = dblBuffer[currentSrc]->audio;
-        currentSrc = currentCvs;
+        dblBuffer[currentBuffer]->audio = dblBuffer[currentSrc]->audio;
+        currentSrc = currentBuffer;
     }
     if(currentSrc == 1) {
         frame.destroy();
         frame.textureID = secondary.textureID;
         frame.fboID = secondary.fboID;
         frame.audio = secondary.audio;
+    } else {
+        secondary.destroy();
     }
 }
 

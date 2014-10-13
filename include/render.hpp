@@ -8,7 +8,9 @@ namespace CCPlus {
         LIGHTEN, OVERLAY, DIFFERENCE,
         BLEND_MODE_COUNT
     };
-    void mergeFrame(CCPlus::GPUFrame& bottom, CCPlus::GPUFrame& top, CCPlus::BlendMode blendmode);
+    void mergeFrame(const CCPlus::GPUFrame& bottom,
+            const CCPlus::GPUFrame& top,
+            CCPlus::BlendMode blendmode);
 
 
     enum TrackMatteMode {
