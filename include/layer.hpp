@@ -61,7 +61,8 @@ public:
      */
     bool show = true;
 
-    // Assume the renderable stuff is rendered
+    // update frame with the referenced renderable and
+    // apply layer filters putting filtered result to buffer
     void applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float time); 
 
     void setProperties(const std::map<std::string, Property>&,
