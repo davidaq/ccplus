@@ -7,6 +7,7 @@
 #include "video-encoder.hpp"
 #include "gpu-frame.hpp"
 #include "render.hpp"
+#include "externals/gl2.h"
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
@@ -32,6 +33,7 @@ void CCPlus::render() {
     int fn = 0;
     GPUFrame screen;
     GPUFrame black;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (float i = 0; i <= duration; i += delta) {
         L() << "-- " << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
@@ -41,7 +43,9 @@ void CCPlus::render() {
         glClearColor(0, 0, 0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 0);
+        glEnable(GL_BLEND);
         mergeFrame(screen, screen, NONE);
+        glDisable(GL_BLEND);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
         black.toCPU().write(generatePath(ctx->storagePath, buf));
@@ -62,7 +66,6 @@ void CCPlus::encode() {
         char buf[64];
         sprintf(buf, "%07d.zim", fn);
         f.read(generatePath(ctx->storagePath, buf));
-        std::cout << f.image.at<cv::Vec4b>(100, 100) << std::endl;
         encoder.appendFrame(f);
         fn++;
     }
