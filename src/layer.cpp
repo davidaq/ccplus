@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "gpu-frame.hpp"
 #include "renderable.hpp"
+#include "render.hpp"
 #include "filter.hpp"
 #include "gpu-double-buffer.hpp"
 
@@ -105,24 +106,33 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-void Layer::applyFiltersToFrame(GPUFrame& frame, GPUDoubleBuffer& buffer, float t) {
+void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
     if (!visible(t)) 
         return;
     float local_t = mapInnerTime(t);
     getRenderObject()->updateGPUFrame(frame, local_t);
     if(!frame.textureID)
         return;
-    int clearFlag = 0;
-    for (auto& k : orderedKey) {
-        buffer.swap([&clearFlag, &k, t, this](GPUFrame& src) {
-            if(clearFlag < 2) {
-                glClear(GL_COLOR_BUFFER_BIT);
-                clearFlag++;
-            }
-            Filter(k).apply(src, this->interpolate(k, t), this->width, this->height);
-        });
+    if(!buffer.textureID) {
+        buffer.createTexture(width, height);
     }
-    buffer.finish();
+    GPUDoubleBuffer dblBuffer(buffer, width, height);
+    dblBuffer.swap([&frame](GPUFrame& src) {
+        glClear(GL_COLOR_BUFFER_BIT);
+    });
+    dblBuffer.swap([&frame](GPUFrame& src) {
+        glClear(GL_COLOR_BUFFER_BIT);
+    });
+    bool first = true;
+    for (auto& k : orderedKey) {
+        dblBuffer.swap([first, &frame, &k, t, this](GPUFrame& src) {
+            L() << "filter " << first;
+            Filter(k).apply(first ? frame : src,
+                this->interpolate(k, t), this->width, this->height);
+        });
+        first = false;
+    }
+    dblBuffer.finish();
 }
 
 float Layer::mapInnerTime(float t) const {

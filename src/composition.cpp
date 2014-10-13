@@ -25,21 +25,16 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
     }
     frame.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
-    GPUDoubleBuffer buffer(frame, width, height);
     // Apply filters
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
         if(!l.visible(time))
             continue;
-        l.applyFiltersToFrame(frames[i], buffer, time);
+        l.applyFiltersToFrame(frames[i], filteredFrames[i], time);
         GPUFrame& filteredFrame = filteredFrames[i];
-        buffer.swap([&filteredFrame](GPUFrame& src) {
-            filteredFrame.bindFBO();
-            glClear(GL_COLOR_BUFFER_BIT);
-            mergeFrame(src, src, NONE);
-        });
     }
     // Clean screen ~
+    GPUDoubleBuffer buffer(frame, width, height);
     GPUFrame matteBuffer;
     matteBuffer.createTexture(width, height);
     for (int i = layers.size() - 1; i >= 0; i--) {
@@ -49,13 +44,13 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
         if(i != 0 && l.trkMat) {
             matteBuffer.bindFBO();
             glClear(GL_COLOR_BUFFER_BIT);
-            trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
+            trackMatte(filteredFrames[i], filteredFrames[i - 1], (TrackMatteMode)l.trkMat);
 
             buffer.swap([&matteBuffer](GPUFrame& source) {
                 mergeFrame(source, matteBuffer, DEFAULT);
             });
         } else {
-            GPUFrame &cframe = frames[i];
+            GPUFrame &cframe = filteredFrames[i];
             buffer.swap([&cframe](GPUFrame& source) {
                 glClear(GL_COLOR_BUFFER_BIT);
                 mergeFrame(source, cframe, DEFAULT);
