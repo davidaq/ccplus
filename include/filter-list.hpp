@@ -1,1 +1,3 @@
 CCPLUS_FILTER(transform)
+CCPLUS_FILTER(opacity)
+CCPLUS_FILTER(volume)
