@@ -55,7 +55,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
             GPUFrame &cframe = filteredFrames[i];
             buffer.swap([&cframe](GPUFrame& source) {
                 glClear(GL_COLOR_BUFFER_BIT);
-                mergeFrame(source, cframe, DEFAULT);
+                mergeFrame(source, cframe, OVERLAY);
             });
         }
         // TODO merge audio

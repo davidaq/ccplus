@@ -14,6 +14,7 @@ public:
     ~GPUDoubleBuffer();
 
     // call to make sure the final results are moved to source buffer
+    // note that secondary will be destroyed once called
     void finish();
 
     // do opengl drawing and swap buffer
