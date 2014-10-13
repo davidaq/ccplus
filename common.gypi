@@ -48,7 +48,7 @@
                 'cxxflags': ['-c', '-pthread'],
                 'link_settings':{
                     "libraries":[
-                        "-pthread"
+                        "-pthread", "-lGL"
                     ]
                 }
             }],

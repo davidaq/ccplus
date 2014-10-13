@@ -16,6 +16,7 @@ namespace CCPlus {
     class GPUFrame;
     class GPUDoubleBuffer;
     class FootageCollector;
+    class DependencyWalker;
     class Filter;
     class GLProgramManager;
 
