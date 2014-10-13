@@ -13,8 +13,8 @@
                     "uri" : "composition://the minor",
                     "properties" : {
                         "transform": {
-                            "1": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],
-                            "10": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0]
+                            "1": [0, 100, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],
+                            "10": [400, 100, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 80]
                         },
                         "opacity" : {
                             "1": [0],
@@ -31,13 +31,13 @@
         },
         "the minor" : {
             "resolution" : {
-                "width" : 100,
-                "height" : 200
+                "width" : 300,
+                "height" : 300
             },
             "duration" : 10,
             "layers" : [
                 {
-                    "uri" : "file://test3.jpg",
+                    "uri" : "file://test1.jpg",
                     "properties" : {
                         "transform": {
                             "0": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],
