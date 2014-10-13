@@ -184,7 +184,7 @@ CCPLUS_FILTER(transform) {
     glUniform1f(glGetUniformLocation(program, "src_height"), 1.0f * frame.height);
     glUniform1f(glGetUniformLocation(program, "dst_width"), 1.0f * width);
     glUniform1f(glGetUniformLocation(program, "dst_height"), 1.0f * height);
-    std::cout << H << std::endl;
+    //std::cout << H << std::endl;
     //L() << 1.0f * width / frame.width << " " << 1.0f * height / frame.height;
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame.textureID);
