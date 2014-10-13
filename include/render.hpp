@@ -16,7 +16,7 @@ namespace CCPlus {
     enum TrackMatteMode {
         TRKMTE_NONE = 0, TRKMTE_ALPHA, TRKMTE_ALPHA_INV, TRKMTE_LUMA, TRKMTE_LUMA_INV
     };
-    void trackMatte(CCPlus::GPUFrame& color, CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);
+    void trackMatte(const CCPlus::GPUFrame& color, const CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);
 
     void fillSprite();
 }

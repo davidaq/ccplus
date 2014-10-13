@@ -3,6 +3,9 @@
 
 using namespace CCPlus;
 
+GPUFrame::~GPUFrame() {
+}
+
 void GPUFrame::destroy() {
     if(fboID) {
         glDeleteFramebuffers(1, &fboID);

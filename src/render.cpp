@@ -55,7 +55,6 @@ void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
     glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
 
     // UP
-    // TODO: shouldn't bind this to FBO and texture at the same time 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, top.textureID);
 
@@ -66,7 +65,7 @@ void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
     fillSprite();
 }
 
-void CCPlus::trackMatte(GPUFrame& color, GPUFrame& alpha, TrackMatteMode) {
+void CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode) {
 
 }
 

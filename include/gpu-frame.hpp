@@ -4,6 +4,7 @@
 
 class CCPlus::GPUFrame : public Object {
 public:
+    ~GPUFrame();
     // @ generate a texture using the parameters
     void createTexture(int width, int height, void* pixelData=0);
     // @ must be called to ensure resource releasements

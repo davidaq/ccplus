@@ -14,6 +14,7 @@ namespace CCPlus {
     class TMLReader;
     class Frame;
     class GPUFrame;
+    class GPUDoubleBuffer;
     class FootageCollector;
     class Filter;
     class GLProgramManager;
