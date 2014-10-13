@@ -7,5 +7,5 @@ varying vec2 xy;
 void main() {
     gl_Position = vertex_position;
 
-    xy = gl_Position.xy;
+    xy = (gl_Position.xy + 1.0) / 2.0;
 }
