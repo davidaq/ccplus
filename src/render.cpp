@@ -6,6 +6,7 @@
 using namespace CCPlus;
 
 GLuint squareVBO;
+GLuint trianglesVBO;
 float squareCoord[8] = {
     1.0,  1.0,  
     -1.0, 1.0,  
@@ -93,3 +94,33 @@ void CCPlus::fillSprite() {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
+void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
+    if (pnts.size() % 3 != 0 || pnts.size() == 0) {
+        log(logERROR) << "Invalid fillTriangles parameters number";
+        return;
+    } 
+
+    int sz = pnts.size() * 2;
+    float* fv = new float[sz];
+    for (int i = 0; i < sz; i+=2) {
+        fv[i] = pnts[i / 2].first;
+        fv[i + 1] = pnts[i / 2].second;
+    }
+
+    //for (int i = 0; i < sz; i++)
+    //    std::cout << fv[i] << std::endl;
+
+    //if (!Context::getContext()->flags.count("init fill trg")) {
+    //    glGenBuffers(1, &trianglesVBO);
+    //    glBindBuffer(GL_ARRAY_BUFFER, trianglesVBO);
+    //    Context::getContext()->flags.insert("init fill trg");
+    //} else {
+    //    glBindBuffer(GL_ARRAY_BUFFER, trianglesVBO);
+    //}
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
+    glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, fv);
+    glDrawArrays(GL_TRIANGLES, 0, sz / 2);
+    delete [] fv;
+}

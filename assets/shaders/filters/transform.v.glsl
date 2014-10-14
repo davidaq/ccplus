@@ -23,11 +23,4 @@ void main() {
     tmp.y /= dst_height;
     gl_Position.xy = tmp.xy * 2.0 - 1.0;
     gl_Position.zw = vertex_position.zw;
-    //vec3 tmp = vec3(vertex_position.xy + 1.0, 1);
-    //tmp.x /= sratio_x;
-    //tmp.y /= sratio_y;
-    //tmp = T * tmp;
-    //tmp.xy = tmp.xy / tmp.z;
-    //gl_Position.xy = tmp.xy - 1.0;
-    //gl_Position.zw = vertex_position.zw;
 }

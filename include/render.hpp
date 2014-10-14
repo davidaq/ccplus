@@ -21,4 +21,9 @@ namespace CCPlus {
 
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();
+
+    // Draw a set of triangles. 
+    // Useful when generating masks
+    // size of pnts must satisfy pnts.size() % 3 = 0
+    void fillTriangles(const std::vector<std::pair<float, float>>& pnts);
 }
