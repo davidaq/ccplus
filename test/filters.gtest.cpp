@@ -65,3 +65,32 @@ TEST(Filter, Gaussian) {
 
     imwrite("tmp/ret.png", dst.toCPU().image);
 }
+
+TEST(Filter, 4Color) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test1.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(src.width, src.height);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    profileBegin(4color);
+    Filter* filter = new Filter("4color");
+    filter->apply(dst, src, {
+            0, 0, 255, 0, 0, 
+            279, 0, 0, 255, 0, 
+            0, 242, 0, 0, 255, 
+            140, 121, 255, 255, 255, 
+            5, 0.5, 0}, 280, 243);
+    glFinish();
+    profileEnd(4color);
+    Profiler::flush();
+
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
