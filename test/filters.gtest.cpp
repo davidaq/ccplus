@@ -13,6 +13,27 @@
 using namespace std;
 using namespace CCPlus;
 
+TEST(Filter, Transform) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test1.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(500, 500);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+    // TEST
+    
+    Filter* filter = new Filter("transform");
+    filter->apply(dst, src, {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500);
+
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
+
 TEST(Filter, Mask) {
     createGLContext();
 
