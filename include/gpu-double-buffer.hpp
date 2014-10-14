@@ -20,8 +20,13 @@ public:
     // do opengl drawing and swap buffer, return false in callback to prevent swaping
     bool swap(const std::function<bool(CCPlus::GPUFrame&)>&);
 
+    // get the gpu frame currently used as buffer
     GPUFrame& currentBuffer();
+
+    // prevent the current double buffer from swaping
+    static void preventSwap();
 private:
+    static bool prevent;
     GPUFrame* source = 0, *secondary = 0;
     bool cSource, cSecondary;
 
