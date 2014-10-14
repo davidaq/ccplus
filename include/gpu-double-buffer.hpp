@@ -17,10 +17,8 @@ public:
     // note that secondary will be destroyed once called
     void finish();
 
-    // do opengl drawing and swap buffer
-    void swap(const std::function<void(CCPlus::GPUFrame&)>&);
     // do opengl drawing and swap buffer, return false in callback to prevent swaping
-    void swapConditioned(const std::function<bool(CCPlus::GPUFrame&)>&);
+    bool swap(const std::function<bool(CCPlus::GPUFrame&)>&);
 private:
     GPUFrame* source = 0, *secondary = 0;
     bool cSource, cSecondary;

@@ -42,11 +42,12 @@ void initGlobalVars() {
 }
 
 
-void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
+bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
     initGlobalVars();
     if (bottom.width != top.width || 
         bottom.height != top.height) {
         log(logWARN) << "Merge frame requires frames to have equal sizes";
+        return false;
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
@@ -73,6 +74,7 @@ void CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
     glBindTexture(GL_TEXTURE_2D, bottom.textureID);
 
     fillSprite();
+    return true;
 }
 
 void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
@@ -95,8 +97,8 @@ void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
     }
 }
 
-void CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode) {
-
+bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode) {
+    return false;
 }
 
 void CCPlus::fillSprite() {

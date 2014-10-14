@@ -37,7 +37,7 @@
             "duration" : 10,
             "layers" : [
                 {
-                    "uri" : "file://test1.jpg",
+                    "uri" : "file://test.mp4",
                     "properties" : {
                         "transform": {
                             "0": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],

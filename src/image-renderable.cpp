@@ -55,6 +55,7 @@ void ImageRenderable::prepare() {
 }
 
 void ImageRenderable::release() {
+    image.image = cv::Mat();
 }
 
 int ImageRenderable::getWidth() const {

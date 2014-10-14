@@ -4,7 +4,7 @@
 #include "context.hpp"
 #include "composition.hpp"
 #include "image-renderable.hpp"
-//#include "video-renderable.hpp"
+#include "video-renderable.hpp"
 //#include "text-renderable.hpp"
 //#include "gif-renderable.hpp"
 
@@ -85,15 +85,15 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 extMap["jpg"]       = imageExt;
                 extMap["png"]       = imageExt;
                 extMap["bmp"]       = imageExt;
-                //auto gifExt = [](Context* context, const std::string& uri) {
-                //    return new GifRenderable(context, uri);
+                //auto gifExt = [](const std::string& uri) {
+                //    return new GifRenderable(uri);
                 //};
                 //extMap["gif"]       = gifExt;
                 //// Just treat everything else as Audio/Video
-                //auto avExt = [](Context* context, const std::string& uri) {
-                //    return new VideoRenderable(context, uri);
-                //};
-                //extMap["default"]   = avExt;
+                auto avExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri);
+                };
+                extMap["default"]   = avExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";

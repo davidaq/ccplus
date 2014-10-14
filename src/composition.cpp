@@ -53,13 +53,14 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
             glClear(GL_COLOR_BUFFER_BIT);
             trackMatte(filteredFrames[i], filteredFrames[i - 1], (TrackMatteMode)l.trkMat);
             buffer.swap([&matteBuffer, &l](GPUFrame& source) {
-                mergeFrame(source, matteBuffer, (BlendMode)l.blendMode);
+                glClear(GL_COLOR_BUFFER_BIT);
+                return mergeFrame(source, matteBuffer, (BlendMode)l.blendMode);
             });
         } else {
             GPUFrame &cframe = filteredFrames[i];
             buffer.swap([&cframe, &l](GPUFrame& source) {
                 glClear(GL_COLOR_BUFFER_BIT);
-                mergeFrame(source, cframe, (BlendMode)l.blendMode);
+                return mergeFrame(source, cframe, (BlendMode)l.blendMode);
             });
         }
     }

@@ -15,6 +15,11 @@ public:
     int anchorAdjustX = 0;
     int anchorAdjustY = 0;
 
+    cv::Mat zimCompressed(int quality = 75);
+    void readZimCompressed(const cv::Mat&);
+
     void write(const std::string& zim, int quality = 75);
     void read(const std::string& zim);
+private:
+    void frameCompress(std::function<void(void*, size_t, size_t)>, int quality);
 };

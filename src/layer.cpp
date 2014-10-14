@@ -107,10 +107,10 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
 }
 
 void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
-    if (!visible(t)) 
+    if (!visible(t) || !getRenderObject())
         return;
     float local_t = mapInnerTime(t);
-    getRenderObject()->updateGPUFrame(frame, local_t);
+    getRenderObject()->updateWrapedGPUFrame(frame, local_t);
     if(!frame.textureID)
         return;
     if(!buffer.textureID) {
@@ -120,12 +120,11 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
     GPUDoubleBuffer dblBuffer(buffer, width, height);
     bool first = true;
     for (auto& k : orderedKey) {
-        dblBuffer.swapConditioned([first, &frame, &k, t, this](GPUFrame& src) {
+        if(dblBuffer.swap([first, &frame, &k, t, this](GPUFrame& src) {
             glClear(GL_COLOR_BUFFER_BIT);
             return Filter(k).apply(first ? frame : src,
                 this->interpolate(k, t), this->width, this->height);
-        });
-        first = false;
+        })) first = false;
     }
     dblBuffer.finish();
 }

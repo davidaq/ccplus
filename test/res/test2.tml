@@ -154,7 +154,7 @@
                     "duration" : 5,
                     "start" : 0,
                     "last" : 10,
-                    "blend" : 4
+                    "blend" : 0
                 }
             ]
         }

@@ -9,7 +9,7 @@ namespace CCPlus {
         BLEND_MODE_COUNT
     };
     // Merge frames using blendmode, result will be rendered to current frame buffer
-    void mergeFrame(const CCPlus::GPUFrame& bottom,
+    bool mergeFrame(const CCPlus::GPUFrame& bottom,
             const CCPlus::GPUFrame& top,
             CCPlus::BlendMode blendmode);
     // Remix audio in into base
@@ -19,7 +19,7 @@ namespace CCPlus {
         TRKMTE_NONE = 0, TRKMTE_ALPHA, TRKMTE_ALPHA_INV, TRKMTE_LUMA, TRKMTE_LUMA_INV
     };
     // Track matte frames using mode, result will be rendered to current frame buffer
-    void trackMatte(const CCPlus::GPUFrame& color, const CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);
+    bool trackMatte(const CCPlus::GPUFrame& color, const CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);
 
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();

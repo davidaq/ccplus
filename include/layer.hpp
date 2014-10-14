@@ -70,9 +70,9 @@ public:
     const std::map<std::string, Property>& getProperties() const;
 
     std::vector<float> interpolate(const std::string&, float) const;
-private:
-    // data
+
     std::string renderableUri;
+private:
     CCPlus::Renderable* renderObject = 0;
     
     int width = 0;

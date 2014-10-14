@@ -26,3 +26,13 @@ std::string Renderable::parseUri2File(std::string uri) {
 
 void Renderable::updateGPUFrame(GPUFrame& frame, float time) {
 }
+
+void Renderable::updateWrapedGPUFrame(GPUFrame& frame, float time) {
+    float duration = getDuration();
+    while(time <= 0)
+        time += duration;
+    while(time > duration)
+        time -= duration;
+    updateGPUFrame(frame, time);
+}
+

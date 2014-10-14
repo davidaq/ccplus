@@ -12,6 +12,7 @@ public:
     virtual void release();
     virtual float getDuration();
 
+    void updateWrapedGPUFrame(GPUFrame& frame, float time);
     virtual void updateGPUFrame(GPUFrame& frame, float time);
 
     static std::string parseUri2File(std::string uri);
