@@ -48,10 +48,20 @@ TEST(Filter, Gaussian) {
     dst.createTexture(src.width, src.height);
     dst.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
-    // TEST
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint program = manager->getProgram(
+            "filter_gaussian",
+            "shaders/fill.v.glsl",
+            "shaders/filters/gaussian.f.glsl"
+            );
     
+    profileBegin(Gaussian);
     Filter* filter = new Filter("gaussian");
     filter->apply(dst, src, {35, 1}, 640, 852);
+    glFinish();
+    profileEnd(Gaussian);
+    Profiler::flush();
 
     imwrite("tmp/ret.png", dst.toCPU().image);
 }

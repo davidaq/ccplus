@@ -14,6 +14,8 @@ CCPLUS_FILTER(gaussian) {
         return;
     }
     int size = (int) parameters[0];
+    // Tmp
+    size = 35;
     int direction = (int) parameters[1];
 
     //TODO
