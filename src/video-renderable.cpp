@@ -48,7 +48,7 @@ void VideoRenderable::updateGPUFrame(GPUFrame& gpuFrame, float time) {
         cv::imwrite("tmp/video.jpg", frame.image);
         gpuFrame.load(frame);
     } else {
-        gpuFrame.audio = cv::Mat();
+        gpuFrame.ext = FrameExt();
     }
 }
 
@@ -119,7 +119,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                         }
                     }
                 }
-                ret.audio = subAudio(audios, f);
+                ret.ext.audio = subAudio(audios, f);
                 framesCache[f] = ret.zimCompressed();
                 lastFrame = f;
             }
@@ -141,7 +141,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 makeup_frames(f, lastFrame);
                 if (!framesCache.count(f)) {
                     Frame ret;
-                    ret.audio = subAudio(audios, f);
+                    ret.ext.audio = subAudio(audios, f);
                     framesCache[f] = ret.zimCompressed();
                     lastFrame = f;
                 }

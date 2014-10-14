@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.hpp"
+#include "frame.hpp"
 
 class CCPlus::GPUFrame : public Object {
 public:
@@ -21,6 +22,7 @@ public:
 
     int width = 0, height = 0;
     GLuint textureID = 0, fboID = 0;
-    cv::Mat audio;
 
+    CCPlus::FrameExt ext;
+    int tag = -1;
 };

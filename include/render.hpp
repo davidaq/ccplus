@@ -16,7 +16,10 @@ namespace CCPlus {
     void mergeAudio(cv::Mat& base, cv::Mat in);
 
     enum TrackMatteMode {
-        TRKMTE_NONE = 0, TRKMTE_ALPHA, TRKMTE_ALPHA_INV, TRKMTE_LUMA, TRKMTE_LUMA_INV
+        TRKMTE_NONE = 0,
+        TRKMTE_ALPHA, TRKMTE_ALPHA_INV,
+        TRKMTE_LUMA, TRKMTE_LUMA_INV,
+        TRKMTE_MODE_COUNT
     };
     // Track matte frames using mode, result will be rendered to current frame buffer
     bool trackMatte(const CCPlus::GPUFrame& color, const CCPlus::GPUFrame& alpha, CCPlus::TrackMatteMode);

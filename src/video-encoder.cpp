@@ -68,7 +68,7 @@ void VideoEncoder::appendFrame(const Frame& frame) {
     } else
         img = frame.image;
     writeVideoFrame(img);
-    cv::Mat mat = frame.audio;
+    cv::Mat mat = frame.ext.audio;
     if(mat.total() > 0) {
         writeAudioFrame(mat);
     }

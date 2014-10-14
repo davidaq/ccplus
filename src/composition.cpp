@@ -26,7 +26,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
     }
     frame.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
-    frame.audio = cv::Mat();
+    frame.ext.audio = cv::Mat();
     // Apply filters & merge audio
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
@@ -38,7 +38,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
             continue;
         }
         l.applyFiltersToFrame(frames[i], filteredFrames[i], time);
-        mergeAudio(frame.audio, filteredFrames[i].audio);
+        mergeAudio(frame.ext.audio, filteredFrames[i].ext.audio);
     }
     // Merge & track matte 
     GPUDoubleBuffer buffer(frame, width, height);

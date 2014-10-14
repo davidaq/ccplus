@@ -49,7 +49,7 @@ void CCPlus::render() {
         glDisable(GL_BLEND);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
-        black.audio = screen.audio;
+        black.ext = screen.ext;
         black.toCPU().write(generatePath(ctx->storagePath, buf));
     }
     screen.destroy();

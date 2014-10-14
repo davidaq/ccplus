@@ -20,7 +20,7 @@ void GPUFrame::destroy() {
 void GPUFrame::reset() {
     fboID = 0;
     textureID = 0;
-    audio = cv::Mat();
+    ext = FrameExt();
 }
 
 void GPUFrame::bindFBO() {
@@ -52,7 +52,7 @@ void GPUFrame::createTexture(int width, int height, void* data) {
 
 Frame GPUFrame::toCPU() {
     Frame ret;
-    ret.audio = audio.clone();
+    ret.ext = ext;
     if(textureID) {
         glBindTexture(GL_TEXTURE_2D, textureID);
         ret.image = cv::Mat::zeros(height, width, CV_8UC4);
@@ -66,7 +66,7 @@ Frame GPUFrame::toCPU() {
 void GPUFrame::load(const Frame& frame) {
     width = frame.image.cols;
     height = frame.image.rows;
-    audio = frame.audio.clone();
+    ext = frame.ext;
     if(width * height > 0) {
         if(!textureID) {
             createTexture(width, height, frame.image.data);

@@ -22,6 +22,7 @@ public:
     FootageCollector* collector;
 
     std::set<std::string> flags;
+    FT_Face& fontFace();
 private:
     bool active = false;
 };

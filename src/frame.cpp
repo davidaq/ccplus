@@ -66,13 +66,13 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
     audioRealByteLen = NEXT(uint32_t);
     if(audioRealByteLen) {
         vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);
-        audio = cv::Mat(tmp, true);
+        ext.audio = cv::Mat(tmp, true);
         ptr += audioRealByteLen;
     }
 
     if(ptr != endOfFile) {
-        anchorAdjustX = NEXT(int16_t);
-        anchorAdjustY = NEXT(int16_t);
+        ext.anchorAdjustX = NEXT(int16_t);
+        ext.anchorAdjustY = NEXT(int16_t);
     }
 }
 
@@ -132,18 +132,18 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     /*
      * Compress audio data
      */
-    len = audio.total();
+    len = ext.audio.total();
     uint32_t wlen = 0;
     write(&wlen, sizeof(wlen), 1);
     wlen = len * 2;
     write(&wlen, sizeof(wlen), 1);
-    write(audio.data, sizeof(int16_t), len);
+    write(ext.audio.data, sizeof(int16_t), len);
     /*
      * write anchor adjust
      */
-    int16_t val = anchorAdjustX;
+    int16_t val = ext.anchorAdjustX;
     write(&val, sizeof(int16_t), 1);
-    val = anchorAdjustY;
+    val = ext.anchorAdjustY;
     write(&val, sizeof(int16_t), 1);
 }
 

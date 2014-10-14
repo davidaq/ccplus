@@ -15,7 +15,7 @@ GPUDoubleBuffer::GPUDoubleBuffer(int width, int height) {
     cSource = cSecondary = true;
     dblBuffer[0] = this->source;
     dblBuffer[1] = this->secondary;
-    secondary->audio = source->audio;
+    secondary->ext = source->ext;
 }
 
 GPUDoubleBuffer::GPUDoubleBuffer(GPUFrame& source, int width, int height) {
@@ -28,7 +28,7 @@ GPUDoubleBuffer::GPUDoubleBuffer(GPUFrame& source, int width, int height) {
     cSecondary = true;
     dblBuffer[0] = this->source;
     dblBuffer[1] = this->secondary;
-    secondary->audio = source.audio;
+    secondary->ext = source.ext;
 }
 
 GPUDoubleBuffer::GPUDoubleBuffer(GPUFrame& source, GPUFrame& secondary) {
@@ -38,7 +38,7 @@ GPUDoubleBuffer::GPUDoubleBuffer(GPUFrame& source, GPUFrame& secondary) {
     cSecondary = false;
     dblBuffer[0] = this->source;
     dblBuffer[1] = this->secondary;
-    secondary.audio = source.audio;
+    secondary.ext = source.ext;
 }
 
 GPUDoubleBuffer::~GPUDoubleBuffer() {
@@ -61,7 +61,7 @@ void GPUDoubleBuffer::finish() {
         source->destroy();
         source->textureID = secondary->textureID;
         source->fboID = secondary->fboID;
-        source->audio = secondary->audio;
+        source->ext = secondary->ext;
         secondary->reset();
     } else {
         secondary->destroy();

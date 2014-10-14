@@ -24,16 +24,16 @@ Layer::Layer(
     int _trkMat,
     bool _showup
 ) :
-    renderableUri(_renderableUri),
     time(_time),
     duration(_duration),
     start(_start),
     last(_last),
-    width(_width),
-    height(_height), 
     blendMode(_blendMode),
     trkMat(_trkMat),
-    show(_showup)
+    show(_showup),
+    renderableUri(_renderableUri),
+    width(_width),
+    height(_height)
 {
 }
 
@@ -116,7 +116,8 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
     if(!buffer.textureID) {
         buffer.createTexture(width, height);
     }
-    buffer.audio = frame.audio.clone();
+    buffer.ext = frame.ext;
+    buffer.ext.audio = frame.ext.audio.clone();
     GPUDoubleBuffer dblBuffer(buffer, width, height);
     bool first = true;
     for (auto& k : orderedKey) {

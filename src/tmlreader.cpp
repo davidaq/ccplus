@@ -5,7 +5,7 @@
 #include "composition.hpp"
 #include "image-renderable.hpp"
 #include "video-renderable.hpp"
-//#include "text-renderable.hpp"
+#include "text-renderable.hpp"
 //#include "gif-renderable.hpp"
 
 using namespace CCPlus;
@@ -118,9 +118,11 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 }
             }
             renderable = extMap[ext](uri);
-        //} else if (stringStartsWith(uri, "text://")) {
-        //    renderable = new TextRenderable(context, uri);
-        //    fillTextProperties((TextRenderable*)renderable, pt);
+        } else if (stringStartsWith(uri, "text://")) {
+            renderable = new TextRenderable();
+            void fillTextProperties(TextRenderable* r, 
+                    const boost::property_tree::ptree& tree);
+            fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Unkwown footage type " << uri;
             //renderable = new ImageRenderable(context, "file://UNKNOWN");
@@ -141,46 +143,46 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     return l;
 }
 
-//void fillTextProperties(TextRenderable* r, 
-//        const boost::property_tree::ptree& tree) {
-//    using boost::property_tree::ptree;
-//    auto each = [&tree] (const std::string& name, 
-//            std::function<void(float, const std::string&)> f) {
-//        for (auto& pc : 
-//                tree.get_child(std::string("text-properties.") + name)) {
-//            float t = std::atof(pc.first.data());
-//            f(t, pc.second.data());
-//        }
-//    };
-//    // I hate language without reflection
-//    each("text", [&] (float t, const std::string& pc) {
-//        utf8toWStr(r->text[t], pc);
-//    });
-//    each("font", [&] (float t, const std::string& pc) {
-//        utf8toWStr(r->font[t], pc);
-//    });
-//    each("size", [&] (float t, const std::string& pc) {
-//        r->size[t] = std::atoi(pc.c_str());
-//    });
-//    each("tracking", [&] (float t, const std::string& pc) {
-//        r->tracking[t] = std::atof(pc.c_str());
-//    });
-//    each("bold", [&] (float t, const std::string& pc) {
-//        r->bold[t] = (pc[0] == 't');
-//    });
-//    each("italic", [&] (float t, const std::string& pc) {
-//        r->italic[t] = (pc[0] == 't');
-//    });
-//    each("scale_x", [&] (float t, const std::string& pc) {
-//        r->scale_x[t] = std::atof(pc.c_str());
-//    });
-//    each("scale_y", [&] (float t, const std::string& pc) {
-//        r->scale_y[t] = std::atof(pc.c_str());
-//    });
-//    each("color", [&] (float t, const std::string& pc) {
-//        r->color[t] = std::atoi(pc.c_str());
-//    });
-//    each("justification", [&] (float t, const std::string& s) {
-//        r->justification[t] = std::atoi(s.c_str());
-//    });
-//}
+void CCPlus::fillTextProperties(TextRenderable* r, 
+        const boost::property_tree::ptree& tree) {
+    using boost::property_tree::ptree;
+    auto each = [&tree] (const std::string& name, 
+            std::function<void(int, const std::string&)> f) {
+        for (auto& pc : 
+                tree.get_child(std::string("text-properties.") + name)) {
+            float t = std::atof(pc.first.data());
+            f(FI(t), pc.second.data());
+        }
+    };
+    // I hate language without reflection
+    each("text", [&] (int t, const std::string& pc) {
+        utf8toWStr(r->text[t], pc);
+    });
+    each("font", [&] (int t, const std::string& pc) {
+        utf8toWStr(r->font[t], pc);
+    });
+    each("size", [&] (int t, const std::string& pc) {
+        r->size[t] = std::atoi(pc.c_str());
+    });
+    each("tracking", [&] (int t, const std::string& pc) {
+        r->tracking[t] = std::atof(pc.c_str());
+    });
+    each("bold", [&] (int t, const std::string& pc) {
+        r->bold[t] = (pc[0] == 't');
+    });
+    each("italic", [&] (int t, const std::string& pc) {
+        r->italic[t] = (pc[0] == 't');
+    });
+    each("scale_x", [&] (int t, const std::string& pc) {
+        r->scale_x[t] = std::atof(pc.c_str());
+    });
+    each("scale_y", [&] (int t, const std::string& pc) {
+        r->scale_y[t] = std::atof(pc.c_str());
+    });
+    each("color", [&] (int t, const std::string& pc) {
+        r->color[t] = std::atoi(pc.c_str());
+    });
+    each("justification", [&] (int t, const std::string& s) {
+        r->justification[t] = std::atoi(s.c_str());
+    });
+}

@@ -23,11 +23,10 @@ CCPLUS_FILTER(transform) {
         int pos_z = (int)parameters[2 + set];
         int anchor_x = (int)parameters[3 + set];
         int anchor_y = (int)parameters[4 + set];
-        // TODO fixit
-        //if(set == 0) {
-        //    anchor_x += frame.getAnchorAdjustX();
-        //    anchor_y += frame.getAnchorAdjustY();
-        //}
+        if(set == 0) {
+            anchor_x += frame.ext.anchorAdjustX;
+            anchor_y += frame.ext.anchorAdjustY;
+        }
         int anchor_z = (int)parameters[5 + set];
         if (anchor_z != 0) {
             log(CCPlus::logWARN) << "Anchor z is not supported";

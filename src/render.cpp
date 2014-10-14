@@ -16,9 +16,8 @@ float squareCoord[8] = {
 
 struct {
     const char* name;
-    const char* vshader;
     const char* fshader;
-} programs[BLEND_MODE_COUNT];
+} programs[BLEND_MODE_COUNT + TRKMTE_MODE_COUNT];
 
 void initGlobalVars() {
     static bool inited = false;
@@ -28,7 +27,6 @@ void initGlobalVars() {
 
 #define SET_PROGRAM(ID, NAME) programs[ID] = { \
         .name = "blend " #NAME, \
-        .vshader = "shaders/fill.v.glsl", \
         .fshader = "shaders/blenders/" #NAME ".f.glsl" };
     SET_PROGRAM(DEFAULT, default);
     SET_PROGRAM(ADD, add);
@@ -39,27 +37,18 @@ void initGlobalVars() {
     SET_PROGRAM(LIGHTEN, lighten);
     SET_PROGRAM(OVERLAY, overlay);
     SET_PROGRAM(DIFFERENCE, difference);
+#undef SET_PROGRAM
+#define SET_PROGRAM(ID, NAME) programs[TRKMTE_ ## ID + BLEND_MODE_COUNT - 1] = { \
+        .name = "trkMat " #NAME, \
+        .fshader = "shaders/trkmat/" #NAME ".f.glsl" };
+    SET_PROGRAM(ALPHA, alpha);
+    SET_PROGRAM(ALPHA_INV, alpha_inv);
+    SET_PROGRAM(LUMA, luma);
+    SET_PROGRAM(LUMA_INV, luma_inv);
+#undef SET_PROGRAM
 }
 
-
-bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
-    initGlobalVars();
-    if (bottom.width != top.width || 
-        bottom.height != top.height) {
-        log(logWARN) << "Merge frame requires frames to have equal sizes";
-        return false;
-    }
-
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
-        manager->getProgram(
-            programs[blendmode].name,
-            programs[blendmode].vshader, 
-            programs[blendmode].fshader) :
-        manager->getProgram(
-                "blend none",
-                "shaders/fill.v.glsl",
-                "shaders/blenders/none.f.glsl");
+void blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b) {
     glUseProgram(program);
 
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
@@ -67,13 +56,34 @@ bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
 
     // UP
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, top.textureID);
+    glBindTexture(GL_TEXTURE_2D, a.textureID);
 
     // Bottom
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, bottom.textureID);
+    glBindTexture(GL_TEXTURE_2D, b.textureID);
+
+    glActiveTexture(GL_TEXTURE0);
 
     fillSprite();
+}
+
+bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
+    if (bottom.width != top.width || 
+        bottom.height != top.height) {
+        log(logWARN) << "Merge frame requires frames to have equal sizes";
+        return false;
+    }
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
+        manager->getProgram(
+            programs[blendmode].name,
+            "shaders/fill.v.glsl",
+            programs[blendmode].fshader) :
+        manager->getProgram(
+                "blend none",
+                "shaders/fill.v.glsl",
+                "shaders/blenders/none.f.glsl");
+    blendUsingProgram(program, top, bottom);
     return true;
 }
 
@@ -97,8 +107,18 @@ void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
     }
 }
 
-bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode) {
-    return false;
+bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode mode) {
+    if (color.width != alpha.width || 
+        color.height != alpha.height) {
+        log(logWARN) << "Track matte frame requires frames to have equal sizes";
+        return false;
+    }
+    GLuint program = GLProgramManager::getManager()->getProgram(
+        programs[mode + BLEND_MODE_COUNT - 1].name,
+        "shaders/fill.v.glsl",
+        programs[mode + BLEND_MODE_COUNT - 1].fshader);
+    blendUsingProgram(program, alpha, color);
+    return true;
 }
 
 void CCPlus::fillSprite() {

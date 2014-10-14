@@ -34,6 +34,8 @@ namespace CCPlus {
 #include <vector>
 #include <map>
 #include <opencv2/opencv.hpp>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "externals/gl2.h"
 #include "externals/gl2ext.h"
 

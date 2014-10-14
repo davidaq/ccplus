@@ -1,7 +1,15 @@
 #pragma once
 #include "global.hpp"
 
-#define GLuint unsigned int
+namespace CCPlus {
+    struct FrameExt;
+}
+
+struct CCPlus::FrameExt {
+    int anchorAdjustX = 0;
+    int anchorAdjustY = 0;
+    cv::Mat audio;
+};
 
 /* 
  * Imutable data structure
@@ -10,10 +18,8 @@ class CCPlus::Frame : public CCPlus::Object {
 public:
     Frame();
     ~Frame();
-    cv::Mat image, audio;
-
-    int anchorAdjustX = 0;
-    int anchorAdjustY = 0;
+    cv::Mat image;
+    CCPlus::FrameExt ext;
 
     cv::Mat zimCompressed(int quality = 75);
     void readZimCompressed(const cv::Mat&);
