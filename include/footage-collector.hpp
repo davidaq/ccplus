@@ -10,12 +10,12 @@
 class CCPlus::FootageCollector : public CCPlus::Object {
 public:
     FootageCollector(CCPlus::Composition* main);
-    ~FootageCollector();
 
     void prepare();
     // Return the time point before that all preparation was done
     float finished();
     CCPlus::Semaphore signal;
 private:
+    float finishedTime = 0;
     CCPlus::Composition* main;
 };
