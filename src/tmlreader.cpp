@@ -8,6 +8,11 @@
 #include "text-renderable.hpp"
 //#include "gif-renderable.hpp"
 
+namespace CCPlus {
+    void fillTextProperties(TextRenderable* r, 
+            const boost::property_tree::ptree& tree);
+}
+
 using namespace CCPlus;
 
 //void fillTextProperties(TextRenderable*, const boost::property_tree::ptree&); 
@@ -120,8 +125,6 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             renderable = extMap[ext](uri);
         } else if (stringStartsWith(uri, "text://")) {
             renderable = new TextRenderable();
-            void fillTextProperties(TextRenderable* r, 
-                    const boost::property_tree::ptree& tree);
             fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Unkwown footage type " << uri;
