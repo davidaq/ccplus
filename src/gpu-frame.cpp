@@ -21,6 +21,7 @@ void GPUFrame::reset() {
     fboID = 0;
     textureID = 0;
     ext = FrameExt();
+    tag = -1;
 }
 
 void GPUFrame::bindFBO() {

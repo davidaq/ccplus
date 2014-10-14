@@ -36,6 +36,9 @@ void CCPlus::render() {
     GPUFrame black;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (float i = 0; i <= duration; i += delta) {
+        while(ctx->collector->finished() < i) {
+            ctx->collector->signal.wait();
+        }
         L() << "-- " << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
         if(!black.textureID)

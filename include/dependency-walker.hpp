@@ -7,6 +7,7 @@ namespace CCPlus {
         Range* parent;
         float left, right, refStart, refEnd, maxDuration;
     };
+    typedef std::vector<Range> RangeSet;
 }
 
 class CCPlus::DependencyWalker : public CCPlus::Object {
@@ -18,8 +19,7 @@ private:
     void scan(CCPlus::Composition* , CCPlus::Range* );
     void cleanup();
     void calcItem(CCPlus::Renderable* item, std::vector<CCPlus::Range*> chunks);
-    void simplify(std::vector<std::pair<float,float> >& );
-    void calcChunk(CCPlus::Renderable*, CCPlus::Range* chunk);
+    CCPlus::RangeSet calcChunk(CCPlus::Renderable*, CCPlus::Range* chunk);
     std::map<CCPlus::Renderable*, std::vector<CCPlus::Range*> > fragments;
     std::vector<CCPlus::Range*> ranges;
     CCPlus::Composition* mainComp;
