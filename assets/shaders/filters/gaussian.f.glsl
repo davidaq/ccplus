@@ -1,11 +1,12 @@
 #version 120
 
 varying vec2 xy;
+varying vec2 nbs[9];
 
 uniform sampler2D tex;
 
-uniform vec2 pixelOffset;
-uniform int ksize;
+//uniform vec2 pixelOffset;
+//uniform int ksize;
 
 vec3 GaussianBlur(sampler2D tex0, vec2 centreUV, vec2 pixelOffset, int size)
 {                                                                              
@@ -50,6 +51,22 @@ vec3 GaussianBlur(sampler2D tex0, vec2 centreUV, vec2 pixelOffset, int size)
 }                                                                                
 
 void main() {
-    gl_FragColor.xyz = GaussianBlur(tex, xy, pixelOffset, ksize);
-    gl_FragColor.w = 1;
+    //gl_FragColor.xyz = GaussianBlur(tex, xy, pixelOffset, ksize);
+    //gl_FragColor.w = 1;
+    gl_FragColor = vec4(0, 0, 0, 1);
+    const float gWeights[9] = float[9](
+        0.10855,
+        0.13135,
+        0.10406,
+        0.07216,
+        0.04380,
+        0.02328,
+        0.01083,
+        0.00441,
+        0.00157
+    );
+    for (int i = 0; i < 9; i++) {
+        vec3 col = texture2D(tex, xy + nbs[i]).rgb + texture2D(tex, xy - nbs[i]).rgb;
+        gl_FragColor.rgb += gWeights[i] * col;
+    }
 }

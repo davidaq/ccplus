@@ -70,12 +70,12 @@ TEST(Filter, Gaussian) {
     dst.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_gaussian",
-            "shaders/fill.v.glsl",
-            "shaders/filters/gaussian.f.glsl"
-            );
+    //GLProgramManager* manager = GLProgramManager::getManager();
+    //GLuint program = manager->getProgram(
+    //        "filter_gaussian",
+    //        "shaders/fill.v.glsl",
+    //        "shaders/filters/gaussian.f.glsl"
+    //        );
     
     profileBegin(Gaussian);
     Filter* filter = new Filter("gaussian");
