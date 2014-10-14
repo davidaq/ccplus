@@ -1,5 +1,6 @@
 #include "filter.hpp"
 #include "gpu-frame.hpp"
+#include "gpu-double-buffer.hpp"
 
 using namespace cv;
 using namespace CCPlus;
@@ -19,4 +20,5 @@ CCPLUS_FILTER(volume) {
         tmp = (short) tmp * perct;
         frame.audio.at<short>(i) = tmp;
     }
+    GPUDoubleBuffer::preventSwap();
 }

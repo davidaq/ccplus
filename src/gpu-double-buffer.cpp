@@ -71,12 +71,19 @@ void GPUDoubleBuffer::finish() {
 bool GPUDoubleBuffer::swap(const std::function<bool(CCPlus::GPUFrame&)>& func) {
     int currentBuffer = currentSrc ^ 1;
     dblBuffer[currentBuffer]->bindFBO();
-    if(func(*dblBuffer[currentSrc])) {
+    prevent = false;
+    if(func(*dblBuffer[currentSrc]) && !prevent) {
         currentSrc = currentBuffer;
         return true;
     } else {
         return false;
     }
+}
+
+bool GPUDoubleBuffer::prevent = false;
+
+void GPUDoubleBuffer::preventSwap() {
+    prevent = true;
 }
 
 GPUFrame& GPUDoubleBuffer::currentBuffer() {
