@@ -60,14 +60,16 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
 }
 
 typedef std::vector<Range> RangeSet;
-//void union(RangeSet& a, RangeSet& r) {
-//}
-//void intersect(RangeSet& a, RangeSet& r) {
-//}
-//void translate(RangeSet& a, float d) {
-//}
-//void scale(RangeSet& a, float f) {
-//}
+RangeSet unionset(const RangeSet& a, const RangeSet& b) {
+}
+void intersect(RangeSet& a, float left, float right) {
+}
+RangeSet translate(const RangeSet& a, float d) {
+    for(RangeSet::const_iterator i = a.cbegin(); i != a.cend(); i++) {
+    }
+}
+void scale(RangeSet& a, float f) {
+}
 
 void DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     while(chunk) {
