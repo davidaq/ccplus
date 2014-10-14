@@ -26,7 +26,7 @@ CCPLUS_FILTER(mask) {
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
-        "filter_opacity",
+        "filter_mask",
         "shaders/fill.v.glsl",
         "shaders/filters/mask.f.glsl"
     );
