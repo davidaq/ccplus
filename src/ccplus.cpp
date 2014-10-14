@@ -7,13 +7,14 @@
 #include "video-encoder.hpp"
 #include "gpu-frame.hpp"
 #include "render.hpp"
-#include "externals/gl2.h"
+#include "profile.hpp"
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
     render();
     encode();
     releaseContext();
+    profileFlush;
 }
 
 void CCPlus::initContext(const std::string& tmlPath, const std::string& outputPath, int fps) {
@@ -48,6 +49,7 @@ void CCPlus::render() {
         glDisable(GL_BLEND);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
+        black.audio = screen.audio;
         black.toCPU().write(generatePath(ctx->storagePath, buf));
     }
     screen.destroy();

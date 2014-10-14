@@ -93,7 +93,7 @@ void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
     int16_t* basePtr = base.ptr<int16_t>(0);
     int16_t* inPtr = o.ptr<int16_t>(0);
     for(int i = 0; i < base.total(); i++) {
-        basePtr += inPtr[i];
+        basePtr[i] += inPtr[i];
     }
 }
 

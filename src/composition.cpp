@@ -30,7 +30,7 @@ void Composition::updateGPUFrame(GPUFrame& frame, float time) {
     // Apply filters & merge audio
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
-        if(!l.show || !l.visible(time)) {
+        if(!layers[i + 1].trkMat && (!l.show || !l.visible(time))) {
             // frame will be destroyed once not visible
             frames[i].destroy();
             filteredFrames[i].destroy();

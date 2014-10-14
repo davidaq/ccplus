@@ -1,5 +1,6 @@
 #include "gpu-frame.hpp"
 #include "frame.hpp"
+#include "profile.hpp"
 
 using namespace CCPlus;
 
@@ -57,6 +58,7 @@ Frame GPUFrame::toCPU() {
         ret.image = cv::Mat::zeros(height, width, CV_8UC4);
         bindFBO();
         glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
+        glFinish();
     }
     return ret;
 }
