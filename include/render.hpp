@@ -12,6 +12,8 @@ namespace CCPlus {
     void mergeFrame(const CCPlus::GPUFrame& bottom,
             const CCPlus::GPUFrame& top,
             CCPlus::BlendMode blendmode);
+    // Remix audio in into base
+    void mergeAudio(cv::Mat& base, cv::Mat in);
 
     enum TrackMatteMode {
         TRKMTE_NONE = 0, TRKMTE_ALPHA, TRKMTE_ALPHA_INV, TRKMTE_LUMA, TRKMTE_LUMA_INV
