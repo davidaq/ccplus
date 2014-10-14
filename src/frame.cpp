@@ -55,6 +55,7 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
             image.data[i] = alphaBytes[j];
         }
         ptr += alphaLen;
+        delete[] alphaBytes;
     }
 
     /*
@@ -69,7 +70,6 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
         ptr += audioRealByteLen;
     }
 
-    delete[] alphaBytes;
     if(ptr != endOfFile) {
         anchorAdjustX = NEXT(int16_t);
         anchorAdjustY = NEXT(int16_t);
@@ -122,6 +122,8 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
         uint32_t wlen = tmplen;
         write(&wlen, sizeof(wlen), 1);
         write(compressedBytes, sizeof(char), wlen);
+        delete[] uncompressedBytes;
+        delete[] compressedBytes;
     } else {
         uint32_t wlen = 0;
         write(&wlen, sizeof(wlen), 1);
@@ -143,9 +145,6 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&val, sizeof(int16_t), 1);
     val = anchorAdjustY;
     write(&val, sizeof(int16_t), 1);
-
-    delete[] uncompressedBytes;
-    delete[] compressedBytes;
 }
 
 cv::Mat Frame::zimCompressed(int quality) {

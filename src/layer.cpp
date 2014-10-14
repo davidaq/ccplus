@@ -120,9 +120,9 @@ void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
     GPUDoubleBuffer dblBuffer(buffer, width, height);
     bool first = true;
     for (auto& k : orderedKey) {
-        if(dblBuffer.swap([first, &frame, &k, t, this](GPUFrame& src) {
+        if(dblBuffer.swap([first, &frame, &k, t, this, &dblBuffer](GPUFrame& src) {
             glClear(GL_COLOR_BUFFER_BIT);
-            return Filter(k).apply(first ? frame : src,
+            return Filter(k).apply(dblBuffer.currentBuffer(), first ? frame : src,
                 this->interpolate(k, t), this->width, this->height);
         })) first = false;
     }

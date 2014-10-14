@@ -79,3 +79,6 @@ bool GPUDoubleBuffer::swap(const std::function<bool(CCPlus::GPUFrame&)>& func) {
     }
 }
 
+GPUFrame& GPUDoubleBuffer::currentBuffer() {
+    return *dblBuffer[currentSrc ^ 1];
+}

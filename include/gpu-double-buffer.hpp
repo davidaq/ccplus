@@ -19,6 +19,8 @@ public:
 
     // do opengl drawing and swap buffer, return false in callback to prevent swaping
     bool swap(const std::function<bool(CCPlus::GPUFrame&)>&);
+
+    GPUFrame& currentBuffer();
 private:
     GPUFrame* source = 0, *secondary = 0;
     bool cSource, cSecondary;
