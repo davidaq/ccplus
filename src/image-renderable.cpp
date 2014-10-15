@@ -1,4 +1,5 @@
 #include "image-renderable.hpp"
+#include "gpu-frame-impl.hpp"
 #include "gpu-frame-cache.hpp"
 
 using namespace CCPlus;
@@ -9,7 +10,7 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 }
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
-    GPUFrame frame = GPUFrameCache::alloc(image.cols, image.rows);
+    GPUFrame frame = GPUFrameCache::alloc(image.image.cols, image.image.rows);
     frame->load(image);
 }
 
