@@ -31,7 +31,7 @@ CCPLUS_FILTER(opacity) {
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame.textureID);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     fillSprite();
     return ret;
