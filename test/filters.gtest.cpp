@@ -16,7 +16,11 @@ using namespace CCPlus;
 
 static inline Frame testFilter(const std::string srcFile, const std::string filterName, const std::vector<float>& parameters, 
         int width=-1, int height=-1) {
-    createGLContext();
+    static bool needContext = true;
+    if(needContext) {
+        createGLContext();
+        needContext = false;
+    }
 
     Frame tmp;
     tmp.image = cv::imread(srcFile);
@@ -42,7 +46,7 @@ TEST(Filter, Mask) {
 }
 
 TEST(Filter, Gaussian) {
-    imwrite("tmp/gassian.png", testFilter("test/res/test2.jpg", "gassian",
+    imwrite("tmp/gaussian.png", testFilter("test/res/test2.jpg", "gaussian",
                 {35, 1}, 640, 852).image);
 }
 
