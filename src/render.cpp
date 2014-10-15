@@ -67,7 +67,30 @@ GPUFrame blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b)
     return frame;
 }
 
-GPUFrame CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
+cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
+    if(in.empty()) {
+        return base.clone();
+    }
+    if(base.empty()) {
+        return in.clone();
+    }
+    cv::Mat ret = cv::Mat(1, AUDIO_SAMPLE_RATE / Context::getContext()->fps, CV_16S, cv::Scalar(0));
+    cv::Mat o;
+    if(base.total() != in.total()) {
+        cv::resize(in, o, base.size(), CV_INTER_LINEAR);
+    } else {
+        o = in;
+    }
+    int16_t* basePtr = base.ptr<int16_t>(0);
+    int16_t* inPtr = o.ptr<int16_t>(0);
+    int16_t* retPtr = ret.ptr<int16_t>(0);
+    for(int i = 0; i < base.total(); i++) {
+        retPtr[i] = basePtr[i] + inPtr[i];
+    }
+    return ret;
+}
+
+GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     if (bottom->width != top->width || 
         bottom->height != top->height) {
         log(logWARN) << "Merge frame requires frames to have equal sizes";
@@ -84,26 +107,6 @@ GPUFrame CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMo
                 "shaders/fill.v.glsl",
                 "shaders/blenders/none.f.glsl");
     return blendUsingProgram(program, top, bottom);
-}
-
-void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
-    if(in.empty()) {
-        return;
-    }
-    if(base.empty()) {
-        base = cv::Mat(1, AUDIO_SAMPLE_RATE / Context::getContext()->fps, CV_16S, cv::Scalar(0));
-    }
-    cv::Mat o;
-    if(base.total() != in.total()) {
-        cv::resize(in, o, base.size(), CV_INTER_LINEAR);
-    } else {
-        o = in;
-    }
-    int16_t* basePtr = base.ptr<int16_t>(0);
-    int16_t* inPtr = o.ptr<int16_t>(0);
-    for(int i = 0; i < base.total(); i++) {
-        basePtr[i] += inPtr[i];
-    }
 }
 
 bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode mode) {
