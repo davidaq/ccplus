@@ -39,16 +39,16 @@ void VideoRenderable::prepare() {
         preparePart(part.first, part.second - part.first);
 }
 
-void VideoRenderable::updateGPUFrame(GPUFrame& gpuFrame, float time) {
+GPUFrame VideoRenderable::getGPUFrame(GPUFrame& gpuFrame, float time) {
     int frameNum = time2frame(time);
     if(framesCache.count(frameNum)) {
         Frame frame;
-        //frame = framesCache[frameNum];
         frame.readZimCompressed(framesCache[frameNum]);
-        cv::imwrite("tmp/video.jpg", frame.image);
-        gpuFrame.load(frame);
+        GPUFrame ret = GPUFrameCache::alloc(width, height);
+        ret->load(frame);
+        return ret;
     } else {
-        gpuFrame.ext = FrameExt();
+        return GPUFrame();
     }
 }
 
