@@ -165,3 +165,28 @@ TEST(Filter, RampRadial) {
     Profiler::flush();
     imwrite("tmp/ret.png", dst.toCPU().image);
 }
+
+TEST(Filter, HSL) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test2.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(src.width, src.height);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    profileBegin(hsl);
+    Filter* filter = new Filter("hsl");
+    filter->apply(dst, src, 
+            {135, 1.1, 1.5}, 
+            640, 852);
+    glFinish();
+    profileEnd(hsl);
+    Profiler::flush();
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
