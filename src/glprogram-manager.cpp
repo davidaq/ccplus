@@ -74,6 +74,14 @@ GLuint GLProgramManager::getProgram(
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &compiled);
     if (!compiled)  {
+        GLint logMaxSize, logLength;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, 
+                &logMaxSize);
+        char* logMsg = new char[logMaxSize];
+        glGetProgramInfoLog(program, logMaxSize, 
+                &logLength, logMsg);
+        printf("error message: %s\n", logMsg);
+        delete[] logMsg;
         log(logFATAL) << "Program linked failed for " << name;
     }
 

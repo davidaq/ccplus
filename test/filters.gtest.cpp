@@ -70,12 +70,12 @@ TEST(Filter, Gaussian) {
     dst.bindFBO();
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_gaussian",
-            "shaders/fill.v.glsl",
-            "shaders/filters/gaussian.f.glsl"
-            );
+    //GLProgramManager* manager = GLProgramManager::getManager();
+    //GLuint program = manager->getProgram(
+    //        "filter_gaussian",
+    //        "shaders/fill.v.glsl",
+    //        "shaders/filters/gaussian.f.glsl"
+    //        );
     
     profileBegin(Gaussian);
     Filter* filter = new Filter("gaussian");
@@ -113,5 +113,80 @@ TEST(Filter, 4Color) {
     profileEnd(4color);
     Profiler::flush();
 
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
+
+TEST(Filter, RampLinear) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test2.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(src.width, src.height);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    profileBegin(ramp_linear);
+    Filter* filter = new Filter("ramp");
+    filter->apply(dst, src, 
+            {-1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 
+            640, 852);
+    glFinish();
+    profileEnd(ramp_linear);
+    Profiler::flush();
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
+
+TEST(Filter, RampRadial) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test2.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(src.width, src.height);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    profileBegin(ramp_radial);
+    Filter* filter = new Filter("ramp");
+    filter->apply(dst, src, 
+            {1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 
+            640, 852);
+    glFinish();
+    profileEnd(ramp_radial);
+    Profiler::flush();
+    imwrite("tmp/ret.png", dst.toCPU().image);
+}
+
+TEST(Filter, HSL) {
+    createGLContext();
+
+    Frame tmp;
+    tmp.image = cv::imread("test/res/test2.jpg");
+    mat3to4(tmp.image);
+    GPUFrame src;
+    src.load(tmp);
+
+    GPUFrame dst;
+    dst.createTexture(src.width, src.height);
+    dst.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    profileBegin(hsl);
+    Filter* filter = new Filter("hsl");
+    filter->apply(dst, src, 
+            {135, 1.1, 1.5}, 
+            640, 852);
+    glFinish();
+    profileEnd(hsl);
+    Profiler::flush();
     imwrite("tmp/ret.png", dst.toCPU().image);
 }

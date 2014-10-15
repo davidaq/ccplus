@@ -24,7 +24,7 @@ CCPLUS_FILTER(gaussian) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
             "filter_gaussian",
-            "shaders/fill.v.glsl",
+            "shaders/filters/gaussian.v.glsl",
             "shaders/filters/gaussian.f.glsl"
             );
     glUseProgram(program);
