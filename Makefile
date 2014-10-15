@@ -50,7 +50,7 @@ make_bin_header:
 	@-./scripts/run load.py
 
 build/Makefile: .dependency
-	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
+	-dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
 
 testbuild: build/Makefile
 	-rm -rf tmp/
@@ -88,7 +88,7 @@ test: testbuild
 	./test.sh '*'
 
 xcode:
-	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
+	-dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
 
 todo:
 	@grep -n TODO `find src -type f -name *.cpp -o -name *.hpp`

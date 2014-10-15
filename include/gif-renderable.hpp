@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderable.hp"
+#include "renderable.hpp"
 
 namespace CCPlus {
     class GifRenderable;
