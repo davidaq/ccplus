@@ -3,7 +3,6 @@
 #include "gpu-frame.hpp"
 #include "render.hpp"
 #include "externals/triangulate.h"
-#include "gpu-double-buffer.hpp"
 
 using namespace cv;
 using namespace CCPlus;
@@ -11,7 +10,7 @@ using namespace CCPlus;
 CCPLUS_FILTER(hsl) {
     if (parameters.size() < 3) {
         log(logERROR) << "Insufficient parameters for hsl effect";
-        return;
+        return Frame();
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
@@ -29,5 +28,8 @@ CCPLUS_FILTER(hsl) {
     glUniform1f(glGetUniformLocation(program, "sat"), parameters[1]);
     glUniform1f(glGetUniformLocation(program, "lit"), parameters[2]);
 
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
     fillSprite();
+    return ret;
 }
