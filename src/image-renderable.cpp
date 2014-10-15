@@ -12,6 +12,7 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 GPUFrame ImageRenderable::getGPUFrame(float) {
     GPUFrame frame = GPUFrameCache::alloc(image.image.cols, image.image.rows);
     frame->load(image);
+    return frame;
 }
 
 float ImageRenderable::getDuration() {

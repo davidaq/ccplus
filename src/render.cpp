@@ -93,6 +93,8 @@ GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFram
     GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
     frame->bindFBO();
 
+    frame->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
+
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
     glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
 
