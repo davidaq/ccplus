@@ -110,7 +110,7 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
     if (color.width != alpha.width || 
         color.height != alpha.height) {
         log(logWARN) << "Track matte frame requires frames to have equal sizes";
-        return false;
+        return color;
     }
     GLuint program = GLProgramManager::getManager()->getProgram(
         programs[mode + BLEND_MODE_COUNT - 1].name,
