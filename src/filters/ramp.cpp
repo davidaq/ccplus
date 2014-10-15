@@ -27,14 +27,18 @@ CCPLUS_FILTER(ramp) {
     float eb = parameters[10] / 255.0;
 
     std::string fshader = "";
-    if (type < 0)
+    std::string name = "";
+    if (type < 0) {
+        name = "filter_ramp_linear";
         fshader = "shaders/filters/ramp_linear.f.glsl";
-    else
+    } else {
+        name = "filter_ramp_radial";
         fshader = "shaders/filters/ramp_radial.f.glsl";
+    }
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
-            "filter_ramp",
+            name,
             "shaders/fill.v.glsl",
             fshader
             );
