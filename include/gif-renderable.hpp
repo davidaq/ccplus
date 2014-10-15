@@ -20,4 +20,5 @@ private:
     std::string path;
     std::vector<std::pair<float, Frame> > framesCache;
     std::vector<GPUFrame> gpuFramesCache;
+    float duration = 0xffffff;
 };
