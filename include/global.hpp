@@ -13,7 +13,8 @@ namespace CCPlus {
     class ParallelExecutor;
     class TMLReader;
     class Frame;
-    class GPUFrame;
+    class GPUFrameImpl;
+    class GPUFrameCache;
     class GPUDoubleBuffer;
     class FootageCollector;
     class DependencyWalker;
@@ -35,6 +36,7 @@ namespace CCPlus {
 #include <map>
 #include <opencv2/opencv.hpp>
 #include <ft2build.h>
+#include <boost/shared_ptr.hpp>
 #include FT_FREETYPE_H
 #include "externals/gl2.h"
 #include "externals/gl2ext.h"
@@ -43,3 +45,7 @@ namespace CCPlus {
 #include "object.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
+
+namespace CCPlus {
+    typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
+}
