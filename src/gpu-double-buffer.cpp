@@ -59,9 +59,10 @@ void GPUDoubleBuffer::finish() {
     finished = true;
     if(currentSrc == 1) {
         source->destroy();
-        source->textureID = secondary->textureID;
-        source->fboID = secondary->fboID;
-        source->ext = secondary->ext;
+        //source->textureID = secondary->textureID;
+        //source->fboID = secondary->fboID;
+        //source->ext = secondary->ext;
+        source->load(*secondary);
         secondary->reset();
     } else {
         secondary->destroy();

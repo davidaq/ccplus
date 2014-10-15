@@ -16,6 +16,8 @@ public:
     CCPlus::Frame toCPU();
     // @ load a frame from cpu to gpu
     void load(const CCPlus::Frame& );
+    // @ Copy another gpu frame to this
+    void load(const CCPlus::GPUFrame&);
     // @ make this texture the current frame buffer, a frame buffer 
     // will be created if needed
     void bindFBO();

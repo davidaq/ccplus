@@ -78,3 +78,10 @@ void GPUFrame::load(const Frame& frame) {
     }
 }
 
+void GPUFrame::load(const GPUFrame& f) {
+    this->textureID = f.textureID;
+    this->fboID = f.fboID;
+    this->ext = f.ext;
+    //this->width = f.width;
+    //this->height = f.height;
+}
