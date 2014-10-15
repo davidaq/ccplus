@@ -39,6 +39,7 @@ void CCPlus::render() {
     glClearColor(0, 0, 0, 0);
     for (float i = 0; i <= duration; i += delta) {
         while(ctx->collector->finished() < i) {
+            log(logINFO) << "wait --" << ctx->collector->finished();
             ctx->collector->signal.wait();
         }
         log(logINFO) << "render frame --" << i;

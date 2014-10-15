@@ -14,6 +14,7 @@ extern "C" {
 #include "global.hpp"
 #include "video-encoder.hpp"
 #include "frame.hpp"
+#include "context.hpp"
 
 using namespace CCPlus;
 
@@ -69,9 +70,13 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         img = frame.image;
     writeVideoFrame(img);
     cv::Mat mat = frame.ext.audio;
-    if(mat.total() > 0) {
-        writeAudioFrame(mat);
+    int sz = AUDIO_SAMPLE_RATE / Context::getContext()->fps;
+    if(mat.empty()) {
+        mat = cv::Mat(1, sz, CV_16S, cv::Scalar(0));
+    } else if(mat.total() != sz) {
+        cv::resize(mat, mat, cv::Size(1, sz));
     }
+    writeAudioFrame(mat);
     frameNum++;
 }
 

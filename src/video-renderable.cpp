@@ -36,7 +36,7 @@ void VideoRenderable::release() {
 
 void VideoRenderable::prepare() {
     for(const auto& part : usedFragments)
-        preparePart(part.first, part.second - part.first);
+        preparePart((int)(part.first - 0.5), (int)(part.second - part.first + 1));
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
