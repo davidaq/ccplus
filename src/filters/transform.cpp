@@ -162,6 +162,10 @@ CCPLUS_FILTER(transform) {
         }
     }
 
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
         "filter_transform",
@@ -181,8 +185,6 @@ CCPLUS_FILTER(transform) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
-    ret->bindFBO();
     fillSprite();
     ret->ext = frame->ext;
     return ret;
