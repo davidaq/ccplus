@@ -39,7 +39,7 @@ void VideoRenderable::prepare() {
         preparePart(part.first, part.second - part.first);
 }
 
-GPUFrame VideoRenderable::getGPUFrame(GPUFrame& gpuFrame, float time) {
+GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
     if(framesCache.count(frameNum)) {
         Frame frame;

@@ -4,7 +4,6 @@
 #include "gpu-frame-impl.hpp"
 #include "render.hpp"
 #include "externals/triangulate.h"
-#include "gpu-double-buffer.hpp"
 
 using namespace cv;
 using namespace CCPlus;

@@ -57,8 +57,8 @@ GPUFrame TextRenderable::getGPUFrame(float time) {
     int kTime = findKeyTime(time);
     if(!gpuFramesCache.count(kTime)) {
         Frame cframe = framesCache[kTime];
-        gpuFramesCache = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
-        gpuFramesCache->load(cframe);
+        gpuFramesCache[kTime] = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
+        gpuFramesCache[kTime]->load(cframe);
     }
     return gpuFramesCache[kTime];
 }

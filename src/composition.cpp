@@ -2,7 +2,6 @@
 #include "layer.hpp"
 #include "render.hpp"
 #include "gpu-frame.hpp"
-#include "gpu-double-buffer.hpp"
 #include "context.hpp"
 
 using namespace CCPlus;
