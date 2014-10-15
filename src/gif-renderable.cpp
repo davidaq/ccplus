@@ -6,7 +6,7 @@
 
 using namespace CCPlus;
 
-GifRenderable::GifRenderable(CCPlus::Context* context, const std::string& _uri) {
+GifRenderable::GifRenderable(const std::string& _uri) {
     path = Context::getContext()->getFootagePath(path);
 }
 
