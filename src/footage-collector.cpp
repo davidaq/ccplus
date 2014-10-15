@@ -16,30 +16,68 @@ FootageCollector::FootageCollector(Composition* comp) {
 void FootageCollector::prepare() {
     DependencyWalker dep(*main);
     dep.walkThrough();
-    Context* ctx = Context::getContext();
+
+    auto& renderables = Context::getContext()->renderables;
+    sortedList = new Renderable*[renderables.size() + 2];
+    sortedListPtr = 0;
+    for(auto ite : renderables) {
+        sortedList[sortedListPtr++] = ite.second;
+        L() << ite.first << ':' << ite.second->firstAppearTime << '-' << ite.second->lastAppearTime;
+    }
+    std::sort(sortedList, sortedList + sortedListPtr, [](Renderable* const & a, Renderable* const & b) {
+        return a->firstAppearTime < b->firstAppearTime;
+    });
     ParallelExecutor::runInNewThread([&]() {
-        ParallelExecutor executor(2);
-        std::vector<Renderable*> list;
-        list.reserve(ctx->renderables.size());
-        for(auto ite : ctx->renderables) {
-            list.push_back(ite.second);
+        bool goon = true;
+        while(goon) {
+            sync.lock();
+            if(sortedListPtr > 0) {
+                Renderable* pitem = sortedList[--sortedListPtr];
+                //finishedTime[0] = pitem->firstAppearTime - 1;
+                sync.unlock();
+                L() << "prepare";
+                pitem->prepare();
+                L() << "prepared" << pitem->lastAppearTime;
+                sync.lock();
+                finishedTime[0] = pitem->lastAppearTime;
+            } else {
+                finishedTime[0] = main->duration + 1;
+                L() << "finished " << finishedTime[0];
+                goon = false;
+            }
+            sync.unlock();
+            signal.notify();
         }
-        std::sort(list.begin(), list.end(), [](Renderable* const & a, Renderable* const & b) {
-            return a->firstAppearTime < b->firstAppearTime;
-        });
-        for(Renderable* r : list) {
-            executor.execute([&]() {
-                r->prepare();
-                if(finishedTime < r->firstAppearTime)
-                    finishedTime = r->firstAppearTime;
-            });
+    });
+
+    ParallelExecutor::runInNewThread([&]() {
+        bool goon = true;
+        while(goon) {
+            sync.lock();
+            if(sortedListPtr > 0) {
+                Renderable* pitem = sortedList[--sortedListPtr];
+                //finishedTime[1] = pitem->firstAppearTime - 1;
+                sync.unlock();
+                L() << "prepare";
+                pitem->prepare();
+                L() << "prepared" << pitem->lastAppearTime;
+                sync.lock();
+                finishedTime[1] = pitem->lastAppearTime;
+            } else {
+                finishedTime[1] = main->duration + 1;
+                L() << "finished " << finishedTime[1];
+                goon = false;
+            }
+            sync.unlock();
+            signal.notify();
         }
-        executor.waitForAll();
-        finishedTime = main->duration + 1;
     });
 }
 
 float FootageCollector::finished() {
-    return finishedTime;
+    sync.lock();
+    float ret = std::min(finishedTime[0], finishedTime[1]);
+    sync.unlock();
+    return ret;
 }
 
