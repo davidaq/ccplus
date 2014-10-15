@@ -6,22 +6,22 @@ using namespace CCPlus;
 
 GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {
-        return shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
+        return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
     }
-    auto* p = cache[Size(width, height)];
+    auto* p = &cache[Size(width, height)];
     int sz = p->size();
     if (sz > 0) {
-        GPUFrameImpl* frame = new GPUFrameCache();
-        frame.width = width;
-        frame.height = height;
-        frame.textureID = (*p)[sz - 1].first;
-        frame.fboID = (*p)[sz - 1].second;
+        GPUFrameImpl* frame = new GPUFrameImpl();
+        frame->width = width;
+        frame->height = height;
+        frame->textureID = (*p)[sz - 1].first;
+        frame->fboID = (*p)[sz - 1].second;
         p->pop_back();
-        return shared_ptr<GPUFrameImpl>(frame); 
+        return boost::shared_ptr<GPUFrameImpl>(frame); 
     } else {
-        GPUFrameImpl* frame = new GPUFrameCache();
-        frame.width = width;
-        frame.height = height;
+        GPUFrameImpl* frame = new GPUFrameImpl();
+        frame->width = width;
+        frame->height = height;
         
         glGenTextures(1, &frame->textureID);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
@@ -35,13 +35,13 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         glGenFramebuffers(1, &frame->fboID);
         glBindFramebuffer(GL_FRAMEBUFFER, frame->fboID);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
-                GL_TEXTURE_2D, textureID, 0);
+                GL_TEXTURE_2D, frame->textureID, 0);
         glViewport(0, 0, width, height);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return shared_ptr<GPUFrameImpl>(frame); 
+        return boost::shared_ptr<GPUFrameImpl>(frame); 
     }
 }
 
 void GPUFrameCache::reuse(GPUFrameImpl* frame) {
-    cache[Size(frame.width, frame.height)].push_back({frame.textureID, frame.fboID});
+    cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
 }

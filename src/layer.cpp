@@ -5,7 +5,6 @@
 #include "renderable.hpp"
 #include "render.hpp"
 #include "filter.hpp"
-#include "gpu-double-buffer.hpp"
 
 using namespace CCPlus;
 
