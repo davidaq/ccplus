@@ -53,19 +53,20 @@ void TextRenderable::prepare() {
     }
 }
 
-void TextRenderable::updateGPUFrame(GPUFrame& frame, float time) {
+GPUFrame TextRenderable::getGPUFrame(float time) {
     int kTime = findKeyTime(time);
-    if(frame.tag != kTime) {
-        L() << kTime;
-        frame.tag = kTime;
+    if(!gpuFramesCache.count(kTime)) {
         Frame cframe = framesCache[kTime];
-        frame.load(cframe);
+        gpuFramesCache = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
+        gpuFramesCache->load(cframe);
     }
+    return gpuFramesCache[kTime];
 }
 
 void TextRenderable::release() {
     framesCache.clear();
     keyframes.clear();
+    gpuFramesCache.clear();
 }
 
 void TextRenderable::prepareFrame(int itime) {

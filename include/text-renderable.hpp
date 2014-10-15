@@ -20,7 +20,7 @@ public:
     void prepare();
 
     float getDuration();
-    void getGPUFrame(float time);
+    CCPlus::GPUFrame getGPUFrame(float time);
     void release();
 
     int getWidth() const;
@@ -55,5 +55,6 @@ protected:
     int findKeyTime(float time);
     std::vector<int> keyframes;
     std::map<int, Frame> framesCache;
+    std::map<int, GPUFrame> gpuFramesCache;
     std::string uri;
 };
