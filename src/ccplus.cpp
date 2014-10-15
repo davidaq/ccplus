@@ -37,10 +37,9 @@ void CCPlus::render() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (float i = 0; i <= duration; i += delta) {
         while(ctx->collector->finished() < i) {
-            L() << "wait: " << ctx->collector->finished();
             ctx->collector->signal.wait();
         }
-        L() << "-- " << i;
+        log(logINFO) << "render frame --" << i;
         ctx->mainComposition->updateGPUFrame(screen, i);
         if(!black.textureID)
             black.createTexture(screen.width, screen.height);

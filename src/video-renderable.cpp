@@ -35,8 +35,8 @@ void VideoRenderable::release() {
 }
 
 void VideoRenderable::prepare() {
-    // TODO prepare only used parts
-    preparePart(0, getDuration());
+    for(const auto& part : usedFragments)
+        preparePart(part.first, part.second - part.first);
 }
 
 void VideoRenderable::updateGPUFrame(GPUFrame& gpuFrame, float time) {

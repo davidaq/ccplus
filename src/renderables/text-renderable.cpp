@@ -31,23 +31,21 @@ float TextRenderable::getDuration() {
 
 void TextRenderable::prepare() {
     // Generate key frame list
+    auto f = [&] (int t) {
+        keyframes.push_back(t);
+    };
+    for (auto& kv : text)  f(kv.first);
+    for (auto& kv : font)  f(kv.first);
+    for (auto& kv : size)  f(kv.first);
+    for (auto& kv : scale_x)  f(kv.first);
+    for (auto& kv : scale_y)  f(kv.first);
+    for (auto& kv : tracking)  f(kv.first);
+    for (auto& kv : bold)  f(kv.first);
+    for (auto& kv : italic)  f(kv.first);
+    std::unique(keyframes.begin(), keyframes.end());
+    std::sort(keyframes.begin(), keyframes.end());
     if (keyframes.empty()) {
-        auto f = [&] (float t) {
-            keyframes.push_back(t);
-        };
-        for (auto& kv : text)  f(kv.first);
-        for (auto& kv : font)  f(kv.first);
-        for (auto& kv : size)  f(kv.first);
-        for (auto& kv : scale_x)  f(kv.first);
-        for (auto& kv : scale_y)  f(kv.first);
-        for (auto& kv : tracking)  f(kv.first);
-        for (auto& kv : bold)  f(kv.first);
-        for (auto& kv : italic)  f(kv.first);
-        sort(keyframes.begin(), keyframes.end());
-        unique(keyframes.begin(), keyframes.end());
-        if (keyframes.empty()) {
-            log(logWARN) << "TextRenderable hasn't been given parameters";
-        }
+        log(logWARN) << "TextRenderable hasn't been given parameters";
     }
     // prepare only key frames
     for(int f : keyframes) {
@@ -56,8 +54,9 @@ void TextRenderable::prepare() {
 }
 
 void TextRenderable::updateGPUFrame(GPUFrame& frame, float time) {
-    int kTime = FI(findKeyTime(time));
+    int kTime = findKeyTime(time);
     if(frame.tag != kTime) {
+        L() << kTime;
         frame.tag = kTime;
         Frame cframe = framesCache[kTime];
         frame.load(cframe);
@@ -69,8 +68,9 @@ void TextRenderable::release() {
     keyframes.clear();
 }
 
-void TextRenderable::prepareFrame(float time) {
-    if(framesCache.count(FI(time)))
+void TextRenderable::prepareFrame(int itime) {
+    float time = IF(itime);
+    if(framesCache.count(itime))
         return;
     int width = getWidth();
     int height = getHeight();
@@ -148,13 +148,17 @@ void TextRenderable::prepareFrame(float time) {
             retFrame.ext.anchorAdjustX = x;
             break;
     };
-    framesCache[FI(time)] = retFrame;
+    framesCache[itime] = retFrame;
 }
 
-float TextRenderable::findKeyTime(float time) {
-    for (float key : keyframes) {
-        if (key <= time) 
-            return key;
+int TextRenderable::findKeyTime(float time) {
+    int itime = FI(time);
+    int ret = itime;
+    for (int key : keyframes) {
+        if (key <= itime) 
+            ret = key;
+        if(key > itime)
+            break;
     }
-    return 0;
+    return ret;
 }

@@ -24,7 +24,7 @@ public:
 
     template <typename T>
     Logger& operator<<(T const & value) {
-        _buffer << value;
+        _buffer << value << ' ';
         return *this;
     }
 private: 

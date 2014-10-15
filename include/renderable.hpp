@@ -21,6 +21,8 @@ public:
     float firstAppearTime = 0, lastAppearTime = 0;
     // chunks of used fragments of this renderable as <start,end>
     std::vector<std::pair<float,float> > usedFragments;
+    std::string getUri();
 private:
     std::map<int, Frame> frames;
+    std::string uri;
 };
