@@ -36,3 +36,14 @@ void Renderable::updateWrapedGPUFrame(GPUFrame& frame, float time) {
     updateGPUFrame(frame, time);
 }
 
+std::string Renderable::getUri() {
+    if(uri.empty()) {
+        for(const auto & item : Context::getContext()->renderables) {
+            if(item.second == this) {
+                uri = item.first;
+                break;
+            }
+        }
+    }
+    return uri;
+}

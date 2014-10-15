@@ -23,30 +23,28 @@ void DependencyWalker::cleanup() {
 void DependencyWalker::walkThrough() {
     cleanup();
     scan(mainComp, 0);
-    for(std::map<CCPlus::Renderable*, std::vector<CCPlus::Range*> >::iterator item = fragments.begin();
-            item != fragments.end(); item++) {
-        calcItem(item->first, item->second);
+    for(auto& item : fragments) {
+        calcItem(item.first, item.second);
     }
 }
 
 void DependencyWalker::scan(Composition* comp, Range* parent) {
-    for(std::vector<Layer>::iterator layer = comp->layers.begin(); layer != comp->layers.end(); layer++) {
-        Renderable* renderable = layer->getRenderObject();
+    for(Layer& layer : comp->layers) {
+        Renderable* renderable = layer.getRenderObject();
         Composition* child = dynamic_cast<Composition*>(renderable);
         Range* range = new Range {
             .parent = parent,
-            .left = layer->time,
-            .right = layer->time + layer->duration,
-            .refStart = layer->start,
-            .refEnd = layer->start + layer->last,
+            .left = layer.time,
+            .right = layer.time + layer.duration,
+            .refStart = layer.start,
+            .refEnd = layer.start + layer.last,
             .maxDuration = renderable->getDuration()
         };
         ranges.push_back(range);
         if(child) {
             scan(child, range);
-        } else {
-            fragments[renderable].push_back(range);
         }
+        fragments[renderable].push_back(range);
     }
 }
 
@@ -64,11 +62,13 @@ RangeSet crop(const RangeSet& a, float left, float right) {
         for(Range range : a) {
             if(range.right > left && range.left < right) {
                 if(range.left < left) {
-                    range.refStart = range.refEnd - (range.refEnd - range.refStart) * (range.right - left) / (range.right - range.left);
+                    range.refStart = range.refEnd -
+                        (range.refEnd - range.refStart) * (range.right - left) / (range.right - range.left);
                     range.left = left;
                 }
                 if(range.right > right) {
-                    range.refEnd = range.refStart + (range.refEnd - range.refStart) * (right - range.left) / (range.right - range.left);
+                    range.refEnd = range.refStart +
+                        (range.refEnd - range.refStart) * (right - range.left) / (range.right - range.left);
                     range.right = right;
                 }
                 ret.push_back(range);
@@ -81,8 +81,9 @@ RangeSet transform(const RangeSet& a, float translate, float scale) {
     RangeSet ret;
     ret.reserve(a.size());
     for(Range range : a) {
+        float d = range.right - range.left;
         range.left += translate;
-        range.right = range.left + scale * (range.right + translate - range.left);
+        range.right = range.left + scale * d;
         ret.push_back(range);
     }
     return ret;
@@ -119,11 +120,33 @@ void simplify(std::vector<TimePair>& ranges) {
         ranges.push_back(TimePair(cleft, cright));
     }
 }
+std::string toString(const Range& range) {
+    char buff[40];
+    sprintf(buff, "[%.3f:%.3f, %.3f:%.3f, %.3f]", range.left, range.right, range.refStart, range.refEnd, range.maxDuration);
+    return buff;
+}
+std::string toString(RangeSet set) {
+    std::string ret = "";
+    for(const Range& range : set) {
+        ret += toString(range);
+    }
+    return "{" + ret + "}";
+}
+std::string toString(std::vector<TimePair> set) {
+    std::string ret = "";
+    for(const TimePair& range : set) {
+        char buff[40];
+        sprintf(buff, "[%.3f:%.3f]", range.first, range.second);
+        ret += buff;
+    }
+    return "{" + ret + "}";
+}
 
 void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
     RangeSet set;
-    for(std::vector<Range*>::iterator chunk = chunks.begin(); chunk != chunks.end(); chunk++) {
-        set = concat(set, calcChunk(item, *chunk));
+    log(logINFO) << "dependency --" << item->getUri();
+    for(const auto & chunk : chunks) {
+        set = concat(set, calcChunk(item, chunk));
     }
     item->firstAppearTime = 9999999;
     item->lastAppearTime = 0;
@@ -134,7 +157,11 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
             item->lastAppearTime = r.right;
         item->usedFragments.push_back(std::pair<float,float>(r.refStart, r.refEnd));
     }
+    if(item->firstAppearTime > item->lastAppearTime)
+        item->firstAppearTime = item->lastAppearTime;
     simplify(item->usedFragments);
+    log(logINFO) << "-- from" << item->firstAppearTime << "to" << item->lastAppearTime
+        << "using" << toString(item->usedFragments);
 }
 
 RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
@@ -144,19 +171,18 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     full.right = chunk->maxDuration;
     full.refStart = 0;
     full.refEnd = chunk->maxDuration;
+    full.maxDuration = 0;
     set.push_back(full);
+    log(logINFO) << "full" << toString(full);
     while(chunk) {
+        log(logINFO) << "chunk" << toString(*chunk);
         explode(set, *chunk);
-        set = transform(set, chunk->left - chunk->refStart, (chunk->right - chunk->left) / (chunk->refStart - chunk->refEnd));
+        log(logINFO) << "explode" << toString(set);
+        set = transform(set, chunk->left - chunk->refStart,
+                (chunk->right - chunk->left) / (chunk->refEnd - chunk->refStart));
+        log(logINFO) << "transform" << toString(set);
         chunk = chunk->parent;
     }
     return set;
-    //if(range.left < item->firstAppearTime)
-    //    item->firstAppearTime = range.left;
-    //if(range.right > item->lastAppearTime)
-    //    item->lastAppearTime = range.right;
-    //item->usedFragments.push_back(
-    //    std::pair<float,float>(range.refStart, range.refEnd - range.refStart)
-    //);
 }
 

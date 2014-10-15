@@ -9,8 +9,52 @@
 
 using namespace CCPlus;
 
+class CCPlus::CollectorThread : public Object {
+public:
+    CollectorThread(int index, FootageCollector* collector) :c(*collector) {
+        this->index = index;
+    }
+    void start() {
+        ParallelExecutor::runInNewThread([&]() {
+            bool goon = true;
+            while(goon) {
+                c.sync.lock();
+                if(c.sortedListPtr > 0) {
+                    Renderable* pitem = c.sortedList[--c.sortedListPtr];
+                    c.finishedTime[index] = pitem->firstAppearTime - 1;
+                    c.sync.unlock();
+                    log(logINFO) << "prepare" << pitem->getUri();
+                    pitem->prepare();
+                    c.sync.lock();
+                    c.finishedTime[index] = pitem->lastAppearTime;
+                } else {
+                    c.finishedTime[index] = c.main->duration + 1;
+                    goon = false;
+                }
+                c.sync.unlock();
+                c.signal.notify();
+            }
+        });
+    }
+private:
+    int index;
+    FootageCollector& c;
+};
+
 FootageCollector::FootageCollector(Composition* comp) {
     main = comp;
+    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+        finishedTime[i] = 0;
+        threads[i] = new CollectorThread(i, this);
+    }
+}
+
+FootageCollector::~FootageCollector() {
+    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+        delete threads[i];
+    }
+    if(sortedList)
+        delete[] sortedList;
 }
 
 void FootageCollector::prepare() {
@@ -21,57 +65,17 @@ void FootageCollector::prepare() {
     sortedList = new Renderable*[renderables.size() + 2];
     sortedListPtr = 0;
     for(auto ite : renderables) {
-        sortedList[sortedListPtr++] = ite.second;
-        L() << ite.first << ':' << ite.second->firstAppearTime << '-' << ite.second->lastAppearTime;
+        if(ite.second != main)
+            sortedList[sortedListPtr++] = ite.second;
     }
-    std::sort(sortedList, sortedList + sortedListPtr, [](Renderable* const & a, Renderable* const & b) {
-        return a->firstAppearTime < b->firstAppearTime;
+    std::sort(sortedList, sortedList + sortedListPtr,
+            [](Renderable* const & a, Renderable* const & b) {
+        return a->firstAppearTime > b->firstAppearTime;
     });
-    ParallelExecutor::runInNewThread([&]() {
-        bool goon = true;
-        while(goon) {
-            sync.lock();
-            if(sortedListPtr > 0) {
-                Renderable* pitem = sortedList[--sortedListPtr];
-                //finishedTime[0] = pitem->firstAppearTime - 1;
-                sync.unlock();
-                L() << "prepare";
-                pitem->prepare();
-                L() << "prepared" << pitem->lastAppearTime;
-                sync.lock();
-                finishedTime[0] = pitem->lastAppearTime;
-            } else {
-                finishedTime[0] = main->duration + 1;
-                L() << "finished " << finishedTime[0];
-                goon = false;
-            }
-            sync.unlock();
-            signal.notify();
-        }
-    });
-
-    ParallelExecutor::runInNewThread([&]() {
-        bool goon = true;
-        while(goon) {
-            sync.lock();
-            if(sortedListPtr > 0) {
-                Renderable* pitem = sortedList[--sortedListPtr];
-                //finishedTime[1] = pitem->firstAppearTime - 1;
-                sync.unlock();
-                L() << "prepare";
-                pitem->prepare();
-                L() << "prepared" << pitem->lastAppearTime;
-                sync.lock();
-                finishedTime[1] = pitem->lastAppearTime;
-            } else {
-                finishedTime[1] = main->duration + 1;
-                L() << "finished " << finishedTime[1];
-                goon = false;
-            }
-            sync.unlock();
-            signal.notify();
-        }
-    });
+    sortedList[sortedListPtr++] = main;
+    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+        threads[i]->start();
+    }
 }
 
 float FootageCollector::finished() {

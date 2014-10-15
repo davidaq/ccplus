@@ -11,6 +11,9 @@ namespace CCPlus {
 static inline int FI(float v) {
     return (int)(v * 1000);
 }
+static inline float IF(int v) {
+    return (float)v * 0.001;
+}
 
 class CCPlus::TextRenderable : public CCPlus::Renderable {
 public:
@@ -38,20 +41,19 @@ protected:
     template<typename T> 
     T get(const std::map<int, T>& m, float _t) const {
         int t = FI(_t);
-        T ret;
-        // TODO: binary search
+        int ret;
         for (auto& kv : m) {
             if (kv.first <= t) 
-                ret = kv.second;
+                ret = kv.first;
             if (kv.first > t)
                 break;
         }
-        return ret;
+        return m.at(ret);
     }
 
-    void prepareFrame(float time);
-    float findKeyTime(float time);
-    std::vector<float> keyframes;
+    void prepareFrame(int itime);
+    int findKeyTime(float time);
+    std::vector<int> keyframes;
     std::map<int, Frame> framesCache;
     std::string uri;
 };

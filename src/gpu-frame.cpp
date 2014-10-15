@@ -65,6 +65,10 @@ Frame GPUFrame::toCPU() {
 }
 
 void GPUFrame::load(const Frame& frame) {
+    if(textureID && (width != frame.image.cols || 
+                height != frame.image.rows)) {
+        destroy();
+    }
     width = frame.image.cols;
     height = frame.image.rows;
     ext = frame.ext;

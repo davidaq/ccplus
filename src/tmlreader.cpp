@@ -94,7 +94,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 //    return new GifRenderable(uri);
                 //};
                 //extMap["gif"]       = gifExt;
-                //// Just treat everything else as Audio/Video
+                // Just treat everything else as Audio/Video
                 auto avExt = [](const std::string& uri) {
                     return new VideoRenderable(uri);
                 };
@@ -104,7 +104,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
             ext = toLower(ext);
             
-            log(logDEBUG) << "Got file extention: " << ext;
+            log(logINFO) << "Got file extention: " << ext;
             if(!extMap.count(ext)) {
                 ext = "default";
                 std::string path = uri;
@@ -127,8 +127,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             renderable = new TextRenderable();
             fillTextProperties((TextRenderable*)renderable, pt);
         } else if (!stringStartsWith(uri, "composition://")) {
-            log(logWARN) << "Unkwown footage type " << uri;
-            //renderable = new ImageRenderable(context, "file://UNKNOWN");
+            log(logWARN) << "Ignore unkwown footage type " << uri;
         }
         if(renderable) {
             Context::getContext()->retain(renderable);
@@ -157,7 +156,6 @@ void CCPlus::fillTextProperties(TextRenderable* r,
             f(FI(t), pc.second.data());
         }
     };
-    // I hate language without reflection
     each("text", [&] (int t, const std::string& pc) {
         utf8toWStr(r->text[t], pc);
     });
