@@ -109,6 +109,7 @@ GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFram
 }
 
 GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
+    initGlobalVars();
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
         manager->getProgram(
@@ -123,6 +124,7 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
+    initGlobalVars();
     GLuint program = GLProgramManager::getManager()->getProgram(
         programs[mode + BLEND_MODE_COUNT - 1].name,
         "shaders/fill.v.glsl",
