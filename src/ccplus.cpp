@@ -42,15 +42,12 @@ void CCPlus::render() {
             ctx->collector->signal.wait();
         }
         log(logINFO) << "render frame --" << i;
-        GPUFrame frame = ctx->mainComposition->getGPUFrame(screen, i);
-        if(!black.textureID)
-            black.createTexture(screen.width, screen.height);
+        GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         frame = mergeFrame(blackBackground, frame, DEFAULT);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
-        frame.toCPU().write(generatePath(ctx->storagePath, buf));
+        frame->toCPU().write(generatePath(ctx->storagePath, buf));
     }
-    screen.destroy();
 }
 
 void CCPlus::encode() {
