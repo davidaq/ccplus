@@ -8,13 +8,10 @@ using namespace CCPlus;
 
 CCPLUS_FILTER(transform) {
     if (parameters.size() == 0)
-        return;
+        return frame;
     if (parameters.size() < 12 || parameters.size() % 12 != 0) {
         log(CCPlus::logERROR) << "Not enough parameters for transform";
-        return;
-    }
-    if (!frame.textureID) {
-        return;
+        return frame;
     }
     Mat finalTrans = Mat::eye(4, 4, CV_64F);
     for (int set = 0; set < parameters.size(); set += 12) {
@@ -24,8 +21,8 @@ CCPLUS_FILTER(transform) {
         int anchor_x = (int)parameters[3 + set];
         int anchor_y = (int)parameters[4 + set];
         if(set == 0) {
-            anchor_x += frame.ext.anchorAdjustX;
-            anchor_y += frame.ext.anchorAdjustY;
+            anchor_x += frame->ext.anchorAdjustX;
+            anchor_y += frame->ext.anchorAdjustY;
         }
         int anchor_z = (int)parameters[5 + set];
         if (anchor_z != 0) {
@@ -116,8 +113,8 @@ CCPLUS_FILTER(transform) {
     int idx = 0;
     for (int i = 0; i <= 1; i++)
         for (int j = 0; j <= 1; j++) {
-            int x1 = i * (frame.width - 1);
-            int y1 = j * (frame.height - 1);
+            int x1 = i * (frame->width - 1);
+            int y1 = j * (frame->height - 1);
             Vec3f tmp = apply(finalTrans, x1, y1, 0);
             // Black magic
             double ratio = (tmp[2] + 1777) / 1777;
@@ -177,16 +174,15 @@ CCPLUS_FILTER(transform) {
     glUniformMatrix3fv(location, 1, GL_TRUE, tmatrix);
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    //glUniform1f(glGetUniformLocation(program, "sratio_x"), 1.0f * width / frame.width);
-    //glUniform1f(glGetUniformLocation(program, "sratio_y"), 1.0f * height / frame.height);
-    glUniform1f(glGetUniformLocation(program, "src_width"), 1.0f * frame.width);
-    glUniform1f(glGetUniformLocation(program, "src_height"), 1.0f * frame.height);
+    glUniform1f(glGetUniformLocation(program, "src_width"), 1.0f * frame->width);
+    glUniform1f(glGetUniformLocation(program, "src_height"), 1.0f * frame->height);
     glUniform1f(glGetUniformLocation(program, "dst_width"), 1.0f * width);
     glUniform1f(glGetUniformLocation(program, "dst_height"), 1.0f * height);
-    //std::cout << H << std::endl;
-    //L() << 1.0f * width / frame.width << " " << 1.0f * height / frame.height;
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame.textureID);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
     fillSprite();
+    ret->ext = frame->ext;
+    return ret;
 }
