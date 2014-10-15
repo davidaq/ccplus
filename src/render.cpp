@@ -48,7 +48,7 @@ void initGlobalVars() {
 #undef SET_PROGRAM
 }
 
-void blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b) {
+GPUFrame blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b) {
     glUseProgram(program);
 
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
@@ -56,22 +56,22 @@ void blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b) {
 
     // UP
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, a.textureID);
+    glBindTexture(GL_TEXTURE_2D, a->textureID);
 
     // Bottom
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, b.textureID);
+    glBindTexture(GL_TEXTURE_2D, b->textureID);
 
-    glActiveTexture(GL_TEXTURE0);
-
+    GPUFrame frame = GPUFrameCache::alloc(a->width, a->height);
     fillSprite();
+    return frame;
 }
 
-bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
-    if (bottom.width != top.width || 
-        bottom.height != top.height) {
+GPUFrame CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode blendmode) {
+    if (bottom->width != top->width || 
+        bottom->height != top->height) {
         log(logWARN) << "Merge frame requires frames to have equal sizes";
-        return false;
+        return frame;
     }
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
@@ -83,8 +83,7 @@ bool CCPlus::mergeFrame(const GPUFrame& bottom, const GPUFrame& top, BlendMode b
                 "blend none",
                 "shaders/fill.v.glsl",
                 "shaders/blenders/none.f.glsl");
-    blendUsingProgram(program, top, bottom);
-    return true;
+    return blendUsingProgram(program, top, bottom);
 }
 
 void CCPlus::mergeAudio(cv::Mat& base, cv::Mat in) {
