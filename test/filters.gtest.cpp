@@ -14,174 +14,58 @@
 using namespace std;
 using namespace CCPlus;
 
-TEST(Filter, Transform) {
+static inline Frame testFilter(const std::string srcFile, const std::string filterName, const std::vector<float>& parameters, 
+        int width=-1, int height=-1) {
     createGLContext();
 
     Frame tmp;
-    tmp.image = cv::imread("test/res/test1.jpg");
+    tmp.image = cv::imread(srcFile);
     mat3to4(tmp.image);
     GPUFrame src = GPUFrameCache::alloc(tmp.image.cols, tmp.image.rows);
     src->load(tmp);
 
-    Filter* filter = new Filter("transform");
-    GPUFrame dst = filter->apply(src, {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500);
-
-    imwrite("tmp/ret.png", dst->toCPU().image);
+    if(width < 0)
+        width = tmp.image.cols;
+    if(height < 0)
+        height = tmp.image.rows;
+    return Filter(filterName).apply(src, parameters, width, height)->toCPU();
 }
 
-//TEST(Filter, Mask) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test2.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//    // TEST
-//    
-//    Filter* filter = new Filter("mask");
-//    //filter->apply(src, {0, 0, 100, 100, 200, 100, 200, 200, 100, 200}, 640, 852);
-//    filter->apply(dst, src, {0, 0, 100, 100, 125, 100, 150, 50, 175, 100, 200, 100, 150, 300}, 640, 852);
-//
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
-//
-//TEST(Filter, Gaussian) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test2.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    //GLProgramManager* manager = GLProgramManager::getManager();
-//    //GLuint program = manager->getProgram(
-//    //        "filter_gaussian",
-//    //        "shaders/fill.v.glsl",
-//    //        "shaders/filters/gaussian.f.glsl"
-//    //        );
-//    
-//    profileBegin(Gaussian);
-//    Filter* filter = new Filter("gaussian");
-//    filter->apply(dst, src, {35, 1}, 640, 852);
-//    glFinish();
-//    profileEnd(Gaussian);
-//    Profiler::flush();
-//
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
-//
-//TEST(Filter, 4Color) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test1.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    profileBegin(4color);
-//    Filter* filter = new Filter("4color");
-//    filter->apply(dst, src, {
-//            0, 0, 255, 0, 0, 
-//            279, 0, 0, 255, 0, 
-//            0, 242, 0, 0, 255, 
-//            140, 121, 255, 255, 255, 
-//            5, 0.5, 0}, 280, 243);
-//    glFinish();
-//    profileEnd(4color);
-//    Profiler::flush();
-//
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
-//
-//TEST(Filter, RampLinear) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test2.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    profileBegin(ramp_linear);
-//    Filter* filter = new Filter("ramp");
-//    filter->apply(dst, src, 
-//            {-1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 
-//            640, 852);
-//    glFinish();
-//    profileEnd(ramp_linear);
-//    Profiler::flush();
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
-//
-//TEST(Filter, RampRadial) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test2.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    profileBegin(ramp_radial);
-//    Filter* filter = new Filter("ramp");
-//    filter->apply(dst, src, 
-//            {1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 
-//            640, 852);
-//    glFinish();
-//    profileEnd(ramp_radial);
-//    Profiler::flush();
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
-//
-//TEST(Filter, HSL) {
-//    createGLContext();
-//
-//    Frame tmp;
-//    tmp.image = cv::imread("test/res/test2.jpg");
-//    mat3to4(tmp.image);
-//    GPUFrame src;
-//    src.load(tmp);
-//
-//    GPUFrame dst;
-//    dst.createTexture(src.width, src.height);
-//    dst.bindFBO();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    profileBegin(hsl);
-//    Filter* filter = new Filter("hsl");
-//    filter->apply(dst, src, 
-//            {135, 1.1, 1.5}, 
-//            640, 852);
-//    glFinish();
-//    profileEnd(hsl);
-//    Profiler::flush();
-//    imwrite("tmp/ret.png", dst.toCPU().image);
-//}
+TEST(Filter, Transform) {
+    imwrite("tmp/transform.png", testFilter("test/res/test1.jpg", "transform",
+                {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500).image);
+}
+
+TEST(Filter, Mask) {
+    imwrite("tmp/mask.png", testFilter("test/res/test2.jpg", "mask",
+                {0, 0, 100, 100, 125, 100, 150, 50, 175, 100, 200, 100, 150, 300}, 640, 852).image);
+}
+
+TEST(Filter, Gaussian) {
+    imwrite("tmp/gassian.png", testFilter("test/res/test2.jpg", "gassian",
+                {35, 1}, 640, 852).image);
+}
+
+TEST(Filter, 4Color) {
+    imwrite("tmp/4color.png", testFilter("test/res/test1.jpg", "4color",
+                { 0, 0, 255, 0, 0, 
+                279, 0, 0, 255, 0, 
+                0, 242, 0, 0, 255, 
+                140, 121, 255, 255, 255, 
+                5, 0.5, 0}, 280, 243).image);
+}
+
+TEST(Filter, RampLinear) {
+    imwrite("tmp/ramp-linear.png", testFilter("test/res/test2.jpg", "ramp",
+                {-1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 640, 852).image);
+}
+
+TEST(Filter, RampRadial) {
+    imwrite("tmp/ramp-radial.png", testFilter("test/res/test2.jpg", "ramp",
+                {1, 300, 0, 0, 0, 0, 300, 800, 255, 255, 255, 0.2}, 640, 852).image);
+}
+
+TEST(Filter, HSL) {
+    imwrite("tmp/hsl.png", testFilter("test/res/test2.jpg", "hsl",
+                {135, 1.1, 1.5}, 640, 852).image);
+}
