@@ -3,6 +3,7 @@
 
 using namespace cv;
 using namespace CCPlus;
+using namespace boost;
 
 GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {

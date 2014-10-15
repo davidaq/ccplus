@@ -16,7 +16,7 @@ public:
     void release();
     float getDuration();
 
-    void updateGPUFrame(GPUFrame& frame, float time);
+    CCPlus::GPUFrame getGPUFrame(float time);
 
 private:
     void preparePart(float start, float duration);

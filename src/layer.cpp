@@ -109,7 +109,6 @@ GPUFrame Layer::getFilteredFrame(float t) {
         return GPUFrame();
     float local_t = mapInnerTime(t);
     GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
-    bool first = true;
     for (auto& k : orderedKey) {
         frame = Filter(k).apply(frame, interpolate(k, t), width, height);
     }
