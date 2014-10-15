@@ -34,15 +34,15 @@ CCPLUS_FILTER(gaussian) {
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     GPUFrame tmp = GPUFrameCache::alloc(frame->width, frame->height);
     if (direction != 2) { // With X
+        tmp->bindFBO();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
         glUniform2f(glGetUniformLocation(program, "pixelOffset"), 1.0f / frame->width, 0);
-        tmp->bindFBO();
-        glClearColor(0, 0, 0, 0);
         fillSprite(); // Draw on tmp
     } 
     if (direction != 3) { // With Y
         glUniform2f(glGetUniformLocation(program, "pixelOffset"), 0, 1.0f / frame->width);
+        ret->bindFBO();
         if (direction == 2) { // never go x
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, frame->textureID);
@@ -50,8 +50,6 @@ CCPLUS_FILTER(gaussian) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tmp->textureID);
         }
-        ret->bindFBO();
-        glClearColor(0, 0, 0, 0);
         fillSprite();
     } else {
         tmp->ext = frame->ext;
