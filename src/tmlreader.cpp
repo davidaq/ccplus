@@ -1,5 +1,4 @@
 #include <fstream>
-#include <locale>
 #include "tmlreader.hpp"
 #include "context.hpp"
 #include "composition.hpp"
@@ -7,11 +6,6 @@
 #include "video-renderable.hpp"
 #include "text-renderable.hpp"
 #include "gif-renderable.hpp"
-
-namespace CCPlus {
-    void fillTextProperties(TextRenderable* r, 
-            const boost::property_tree::ptree& tree);
-}
 
 using namespace CCPlus;
 
@@ -121,8 +115,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             }
             renderable = extMap[ext](uri);
         } else if (stringStartsWith(uri, "text://")) {
-            renderable = new TextRenderable();
-            fillTextProperties((TextRenderable*)renderable, pt);
+            renderable = new TextRenderable(pt);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }
@@ -142,45 +135,3 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     return l;
 }
 
-void CCPlus::fillTextProperties(TextRenderable* r, 
-        const boost::property_tree::ptree& tree) {
-    using boost::property_tree::ptree;
-    auto each = [&tree] (const std::string& name, 
-            std::function<void(int, const std::string&)> f) {
-        for (auto& pc : 
-                tree.get_child(std::string("text-properties.") + name)) {
-            float t = std::atof(pc.first.data());
-            f(FI(t), pc.second.data());
-        }
-    };
-    each("text", [&] (int t, const std::string& pc) {
-        utf8toWStr(r->text[t], pc);
-    });
-    each("font", [&] (int t, const std::string& pc) {
-        utf8toWStr(r->font[t], pc);
-    });
-    each("size", [&] (int t, const std::string& pc) {
-        r->size[t] = std::atoi(pc.c_str());
-    });
-    each("tracking", [&] (int t, const std::string& pc) {
-        r->tracking[t] = std::atof(pc.c_str());
-    });
-    each("bold", [&] (int t, const std::string& pc) {
-        r->bold[t] = (pc[0] == 't');
-    });
-    each("italic", [&] (int t, const std::string& pc) {
-        r->italic[t] = (pc[0] == 't');
-    });
-    each("scale_x", [&] (int t, const std::string& pc) {
-        r->scale_x[t] = std::atof(pc.c_str());
-    });
-    each("scale_y", [&] (int t, const std::string& pc) {
-        r->scale_y[t] = std::atof(pc.c_str());
-    });
-    each("color", [&] (int t, const std::string& pc) {
-        r->color[t] = std::atoi(pc.c_str());
-    });
-    each("justification", [&] (int t, const std::string& s) {
-        r->justification[t] = std::atoi(s.c_str());
-    });
-}

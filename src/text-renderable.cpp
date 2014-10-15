@@ -4,10 +4,63 @@
 #include "logger.hpp"
 #include "context.hpp"
 #include <algorithm>
+#include <locale>
 
 using namespace cv;
 using namespace CCPlus;
 using namespace std;
+
+static inline int FI(float v) {
+    return (int)(v * 1000);
+}
+static inline float IF(int v) {
+    return (float)v * 0.001;
+}
+
+TextRenderable::TextRenderable(const boost::property_tree::ptree& tree) {
+    auto each = [&tree] (const std::string& name, 
+            std::function<void(int, const std::string&)> f,
+            const std::string& defVal) {
+        try {
+            for (auto& pc : tree.get_child("text-properties." + name)) {
+                float t = std::atof(pc.first.data());
+                f(FI(t), pc.second.data());
+            }
+        } catch(...) {
+            f(0, defVal);
+        }
+    };
+    each("text", [&] (int t, const std::string& pc) {
+        utf8toWStr(text[t], pc);
+    }, "");
+    each("font", [&] (int t, const std::string& pc) {
+        utf8toWStr(font[t], pc);
+    }, "Arial.ttf");
+    each("size", [&] (int t, const std::string& pc) {
+        size[t] = std::atoi(pc.c_str());
+    }, "20");
+    each("tracking", [&] (int t, const std::string& pc) {
+        tracking[t] = std::atof(pc.c_str());
+    }, "0");
+    each("bold", [&] (int t, const std::string& pc) {
+        bold[t] = (pc[0] == 't');
+    }, "false");
+    each("italic", [&] (int t, const std::string& pc) {
+        italic[t] = (pc[0] == 't');
+    }, "false");
+    each("scale_x", [&] (int t, const std::string& pc) {
+        scale_x[t] = std::atof(pc.c_str());
+    }, "1");
+    each("scale_y", [&] (int t, const std::string& pc) {
+        scale_y[t] = std::atof(pc.c_str());
+    }, "1");
+    each("color", [&] (int t, const std::string& pc) {
+        color[t] = std::atoi(pc.c_str());
+    }, "2097151");
+    each("justification", [&] (int t, const std::string& s) {
+        justification[t] = std::atoi(s.c_str());
+    }, "0");
+}
 
 int TextRenderable::getWidth() const {
     int n = 0;
@@ -69,9 +122,8 @@ void TextRenderable::release() {
     gpuFramesCache.clear();
 }
 
-void TextRenderable::prepareFrame(int itime) {
-    float time = IF(itime);
-    if(framesCache.count(itime))
+void TextRenderable::prepareFrame(int time) {
+    if(framesCache.count(time))
         return;
     int width = getWidth();
     int height = getHeight();
@@ -149,7 +201,7 @@ void TextRenderable::prepareFrame(int itime) {
             retFrame.ext.anchorAdjustX = x;
             break;
     };
-    framesCache[itime] = retFrame;
+    framesCache[time] = retFrame;
 }
 
 int TextRenderable::findKeyTime(float time) {
