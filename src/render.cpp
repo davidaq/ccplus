@@ -90,6 +90,9 @@ GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFram
 
     glUseProgram(program);
 
+    GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
+    frame->bindFBO();
+
     glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
     glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
 
@@ -101,7 +104,6 @@ GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFram
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, bottom->textureID);
 
-    GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
     fillSprite();
     return frame;
 }
@@ -155,17 +157,6 @@ void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
         fv[i] = pnts[i / 2].first;
         fv[i + 1] = pnts[i / 2].second;
     }
-
-    //for (int i = 0; i < sz; i++)
-    //    std::cout << fv[i] << std::endl;
-
-    //if (!Context::getContext()->flags.count("init fill trg")) {
-    //    glGenBuffers(1, &trianglesVBO);
-    //    glBindBuffer(GL_ARRAY_BUFFER, trianglesVBO);
-    //    Context::getContext()->flags.insert("init fill trg");
-    //} else {
-    //    glBindBuffer(GL_ARRAY_BUFFER, trianglesVBO);
-    //}
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);

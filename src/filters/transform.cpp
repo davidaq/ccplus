@@ -164,7 +164,6 @@ CCPLUS_FILTER(transform) {
 
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     ret->bindFBO();
-    glClear(GL_COLOR_BUFFER_BIT);
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(

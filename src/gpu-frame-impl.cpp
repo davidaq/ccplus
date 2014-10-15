@@ -9,9 +9,13 @@ GPUFrameImpl::~GPUFrameImpl() {
     GPUFrameCache::reuse(this);
 }
 
-void GPUFrameImpl::bindFBO() {
+void GPUFrameImpl::bindFBO(bool clear) {
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
     glViewport(0, 0, width, height);
+
+    if (clear) {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
 }
 
 Frame GPUFrameImpl::toCPU() {
