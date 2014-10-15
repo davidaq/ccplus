@@ -20,6 +20,10 @@ CCPLUS_FILTER(hsl) {
             "shaders/filters/hsl.f.glsl");
     glUseProgram(program);
 
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
@@ -28,8 +32,6 @@ CCPLUS_FILTER(hsl) {
     glUniform1f(glGetUniformLocation(program, "sat"), parameters[1]);
     glUniform1f(glGetUniformLocation(program, "lit"), parameters[2]);
 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
-    ret->bindFBO();
     fillSprite();
     ret->ext = frame->ext;
     return ret;

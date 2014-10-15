@@ -11,7 +11,7 @@ public:
     // @ load a frame from cpu to gpu
     void load(const CCPlus::Frame& );
     // @ make this texture the current frame buffer, a frame buffer 
-    void bindFBO();
+    void bindFBO(bool clear = true);
 
     int width = 0, height = 0;
     GLuint textureID = 0, fboID = 0;
