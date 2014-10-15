@@ -10,7 +10,7 @@ using namespace CCPlus;
 CCPLUS_FILTER(hsl) {
     if (parameters.size() < 3) {
         log(logERROR) << "Insufficient parameters for hsl effect";
-        return Frame();
+        return frame;
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
@@ -22,7 +22,7 @@ CCPLUS_FILTER(hsl) {
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame.textureID);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     glUniform1f(glGetUniformLocation(program, "hue"), parameters[0] / 180.0);
     glUniform1f(glGetUniformLocation(program, "sat"), parameters[1]);
@@ -31,5 +31,6 @@ CCPLUS_FILTER(hsl) {
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     ret->bindFBO();
     fillSprite();
+    ret->ext = frame->ext;
     return ret;
 }
