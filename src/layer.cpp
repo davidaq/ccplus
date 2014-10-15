@@ -59,7 +59,6 @@ const std::map<std::string, Property>& Layer::getProperties() const {
     return properties;
 }
 
-// TODO: binary search needed here
 std::vector<float> Layer::interpolate(const std::string& name, float time) const {
     std::vector<float> ret;
     if (properties.find(name) == properties.end()) {
@@ -106,28 +105,16 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-void Layer::applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float t) {
+GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
-        return;
+        return GPUFrame();
     float local_t = mapInnerTime(t);
-    getRenderObject()->updateWrapedGPUFrame(frame, local_t);
-    if(!frame.textureID)
-        return;
-    if(!buffer.textureID) {
-        buffer.createTexture(width, height);
-    }
-    buffer.ext = frame.ext;
-    buffer.ext.audio = frame.ext.audio.clone();
-    GPUDoubleBuffer dblBuffer(buffer, width, height);
+    GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
     bool first = true;
     for (auto& k : orderedKey) {
-        if(dblBuffer.swap([first, &frame, &k, t, this, &dblBuffer](GPUFrame& src) {
-            glClear(GL_COLOR_BUFFER_BIT);
-            return Filter(k).apply(dblBuffer.currentBuffer(), first ? frame : src,
-                this->interpolate(k, t), this->width, this->height);
-        })) first = false;
+        frame = Filter(k).apply(frame, interpolate(k, t), width, height);
     }
-    dblBuffer.finish();
+    return frame;
 }
 
 float Layer::mapInnerTime(float t) const {

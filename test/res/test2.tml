@@ -150,8 +150,8 @@
                             "5.5" : [0.0]
                         }
                     },
-                    "time": 0.5,
-                    "duration" : 5,
+                    "time": 8.5,
+                    "duration" : 15,
                     "start" : 0,
                     "last" : 10,
                     "blend" : 0

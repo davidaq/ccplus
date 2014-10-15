@@ -61,9 +61,8 @@ public:
      */
     bool show = true;
 
-    // update frame with the referenced renderable and
-    // apply layer filters putting filtered result to buffer
-    void applyFiltersToFrame(GPUFrame& frame, GPUFrame& buffer, float time); 
+    // return a GPUFrame containing the result passed through filters
+    GPUFrame getFilteredFrame(float time);
 
     void setProperties(const std::map<std::string, Property>&,
             const std::vector<std::string>& keyOrder);

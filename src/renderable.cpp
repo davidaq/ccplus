@@ -24,16 +24,16 @@ std::string Renderable::parseUri2File(std::string uri) {
     return Context::getContext()->getFootagePath(uri);
 }
 
-void Renderable::updateGPUFrame(GPUFrame& frame, float time) {
+GPUFrame Renderable::getGPUFrame(float time) {
 }
 
-void Renderable::updateWrapedGPUFrame(GPUFrame& frame, float time) {
+GPUFrame Renderable::getWrapedGPUFrame(float time) {
     float duration = getDuration();
     while(time <= 0)
         time += duration;
     while(time > duration)
         time -= duration;
-    updateGPUFrame(frame, time);
+    return getGPUFrame(time);
 }
 
 std::string Renderable::getUri() {

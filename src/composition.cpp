@@ -7,8 +7,7 @@
 
 using namespace CCPlus;
 
-Composition::Composition(const std::string& name, float duration, int width, int height) {
-    this->name = name;
+Composition::Composition(float duration, int width, int height) {
     this->duration = duration;
     this->width = width;
     this->height = height;
@@ -16,56 +15,37 @@ Composition::Composition(const std::string& name, float duration, int width, int
 
 void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
-    frames.push_back(GPUFrame());
-    filteredFrames.push_back(GPUFrame());
 }
 
-void Composition::updateGPUFrame(GPUFrame& frame, float time) {
-    if (!frame.textureID) {
-        frame.createTexture(width, height);
-    }
-    frame.bindFBO();
-    glClear(GL_COLOR_BUFFER_BIT);
-    frame.ext.audio = cv::Mat();
-    // Apply filters & merge audio
+GPUFrame Composition::getGPUFrame(float time) {
+    // Apply filters
+    GPUFrame* frames = new GPUFrame[layers.size()];
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
         if(!layers[i + 1].trkMat && (!l.show || !l.visible(time))) {
-            // frame will be destroyed once not visible
-            frames[i].destroy();
-            filteredFrames[i].destroy();
-            // TODO check and release renderable
-            continue;
+            frames[i] = GPUFrame();
+        } else {
+            frames[i] = l.getFilteredFrame(time);
         }
-        l.applyFiltersToFrame(frames[i], filteredFrames[i], time);
-        mergeAudio(frame.ext.audio, filteredFrames[i].ext.audio);
     }
     // Merge & track matte 
-    GPUDoubleBuffer buffer(frame, width, height);
-    GPUFrame matteBuffer;
-    matteBuffer.createTexture(width, height);
+    GPUFrame ret;
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
-        if(!l.visible(time))
+        if(!l.show || !l.visible(time))
             continue;
-        if(i != 0 && l.trkMat) {
-            matteBuffer.bindFBO();
-            glClear(GL_COLOR_BUFFER_BIT);
-            trackMatte(filteredFrames[i], filteredFrames[i - 1], (TrackMatteMode)l.trkMat);
-            buffer.swap([&matteBuffer, &l](GPUFrame& source) {
-                glClear(GL_COLOR_BUFFER_BIT);
-                return mergeFrame(source, matteBuffer, (BlendMode)l.blendMode);
-            });
+        if(ret) {
+            GPUFrame cframe = frames[i];
+            if(i != 0 && l.trkMat) {
+                cframe = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
+            }
+            ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
         } else {
-            GPUFrame &cframe = filteredFrames[i];
-            buffer.swap([&cframe, &l](GPUFrame& source) {
-                glClear(GL_COLOR_BUFFER_BIT);
-                return mergeFrame(source, cframe, (BlendMode)l.blendMode);
-            });
+            ret = frames[i];
         }
     }
-    matteBuffer.destroy();
-    buffer.finish();
+    delete[] frames;
+    return ret;
 }
 
 float Composition::getDuration() {

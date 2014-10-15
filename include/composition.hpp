@@ -4,15 +4,13 @@
 
 class CCPlus::Composition: public CCPlus::Renderable {
 public:
-    Composition(const std::string& name, float duration, int width, int height);
-    void appendLayer(const Layer&);
+    Composition(float duration, int width, int height);
 
+    void appendLayer(const Layer&);
     float getDuration();
-    void updateGPUFrame(GPUFrame& frame, float time);
+    GPUFrame getGPUFrame(float time);
 
     std::vector<Layer> layers;
-    std::vector<GPUFrame> frames, filteredFrames;
-    std::string name;
     float duration;
     float width;
     float height;

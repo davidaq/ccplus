@@ -20,7 +20,7 @@ public:
     void prepare();
 
     float getDuration();
-    void updateGPUFrame(GPUFrame& frame, float time);
+    void getGPUFrame(float time);
     void release();
 
     int getWidth() const;
