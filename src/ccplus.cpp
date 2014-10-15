@@ -32,28 +32,23 @@ void CCPlus::render() {
     float delta = 1.0f / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
     int fn = 0;
-    GPUFrame screen;
-    GPUFrame black;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GPUFrame blackBackground = GPUFrameCache::alloc(ctx->mainComposition->width, ctx->mainComposition->height);
+    blackBackground->bindFBO();
+    glClearColor(0, 0, 0, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0, 0, 0, 0);
     for (float i = 0; i <= duration; i += delta) {
         while(ctx->collector->finished() < i) {
             ctx->collector->signal.wait();
         }
         log(logINFO) << "render frame --" << i;
-        ctx->mainComposition->updateGPUFrame(screen, i);
+        GPUFrame frame = ctx->mainComposition->getGPUFrame(screen, i);
         if(!black.textureID)
             black.createTexture(screen.width, screen.height);
-        black.bindFBO();
-        glClearColor(0, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0, 0, 0, 0);
-        glEnable(GL_BLEND);
-        mergeFrame(screen, screen, NONE);
-        glDisable(GL_BLEND);
+        frame = mergeFrame(blackBackground, frame, DEFAULT);
         char buf[64];
         sprintf(buf, "%07d.zim", fn++);
-        black.ext = screen.ext;
-        black.toCPU().write(generatePath(ctx->storagePath, buf));
+        frame.toCPU().write(generatePath(ctx->storagePath, buf));
     }
     screen.destroy();
 }
