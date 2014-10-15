@@ -6,7 +6,7 @@
 #include "image-renderable.hpp"
 #include "video-renderable.hpp"
 #include "text-renderable.hpp"
-//#include "gif-renderable.hpp"
+#include "gif-renderable.hpp"
 
 namespace CCPlus {
     void fillTextProperties(TextRenderable* r, 
@@ -14,8 +14,6 @@ namespace CCPlus {
 }
 
 using namespace CCPlus;
-
-//void fillTextProperties(TextRenderable*, const boost::property_tree::ptree&); 
 
 Composition* TMLReader::read(const std::string& s) const {
     std::ifstream fstream(s, std::ios::in);
@@ -89,10 +87,10 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 extMap["jpg"]       = imageExt;
                 extMap["png"]       = imageExt;
                 extMap["bmp"]       = imageExt;
-                //auto gifExt = [](const std::string& uri) {
-                //    return new GifRenderable(uri);
-                //};
-                //extMap["gif"]       = gifExt;
+                auto gifExt = [](const std::string& uri) {
+                    return new GifRenderable(uri);
+                };
+                extMap["gif"]       = gifExt;
                 // Just treat everything else as Audio/Video
                 auto avExt = [](const std::string& uri) {
                     return new VideoRenderable(uri);

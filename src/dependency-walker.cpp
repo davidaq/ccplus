@@ -31,6 +31,8 @@ void DependencyWalker::walkThrough() {
 void DependencyWalker::scan(Composition* comp, Range* parent) {
     for(Layer& layer : comp->layers) {
         Renderable* renderable = layer.getRenderObject();
+        if(!renderable)
+            continue;
         Composition* child = dynamic_cast<Composition*>(renderable);
         Range* range = new Range {
             .parent = parent,
@@ -175,6 +177,8 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     set.push_back(full);
     log(logINFO) << "full" << toString(full);
     while(chunk) {
+        if(chunk->maxDuration <= 0)
+            return RangeSet();
         log(logINFO) << "chunk" << toString(*chunk);
         explode(set, *chunk);
         log(logINFO) << "explode" << toString(set);

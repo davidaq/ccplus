@@ -65,7 +65,7 @@ void FootageCollector::prepare() {
     sortedList = new Renderable*[renderables.size() + 2];
     sortedListPtr = 0;
     for(auto ite : renderables) {
-        if(ite.second != main)
+        if(ite.second && ite.second != main)
             sortedList[sortedListPtr++] = ite.second;
     }
     std::sort(sortedList, sortedList + sortedListPtr,
