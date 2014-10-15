@@ -5,6 +5,8 @@ using namespace cv;
 using namespace CCPlus;
 using namespace boost;
 
+std::map<CCPlus::GPUFrameCache::Size, std::vector<std::pair<GLuint, GLuint>>> GPUFrameCache::cache;
+
 GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {
         return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 

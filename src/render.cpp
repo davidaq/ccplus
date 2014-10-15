@@ -48,25 +48,6 @@ void initGlobalVars() {
 #undef SET_PROGRAM
 }
 
-GPUFrame blendUsingProgram(GLuint program, const GPUFrame& a, const GPUFrame& b) {
-    glUseProgram(program);
-
-    glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
-    glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
-
-    // UP
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, a->textureID);
-
-    // Bottom
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, b->textureID);
-
-    GPUFrame frame = GPUFrameCache::alloc(a->width, a->height);
-    fillSprite();
-    return frame;
-}
-
 cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     if(in.empty()) {
         return base.clone();
@@ -90,12 +71,42 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     return ret;
 }
 
-GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
-    if (bottom->width != top->width || 
-        bottom->height != top->height) {
-        log(logWARN) << "Merge frame requires frames to have equal sizes";
-        return frame;
+GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFrame& top) {
+    if (!bottom) return top;
+    if (!top) return bottom;
+    if ((bottom->width != top->width || bottom->height != top->height)) {
+        if (bottom->textureID && top->textureID) {
+            log(logWARN) << "Merge frame requires frames to have equal sizes";
+            return bottom;
+        }
+        if (bottom->textureID) {
+            bottom->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
+            return bottom;
+        } else {
+            top->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
+            return top;
+        }
     }
+
+    glUseProgram(program);
+
+    glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
+    glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
+
+    // UP
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, top->textureID);
+
+    // Bottom
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, bottom->textureID);
+
+    GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
+    fillSprite();
+    return frame;
+}
+
+GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
         manager->getProgram(
@@ -106,15 +117,10 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
                 "blend none",
                 "shaders/fill.v.glsl",
                 "shaders/blenders/none.f.glsl");
-    return blendUsingProgram(program, top, bottom);
+    return blendUsingProgram(program, bottom, top);
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
-    if (color.width != alpha.width || 
-        color.height != alpha.height) {
-        log(logWARN) << "Track matte frame requires frames to have equal sizes";
-        return color;
-    }
     GLuint program = GLProgramManager::getManager()->getProgram(
         programs[mode + BLEND_MODE_COUNT - 1].name,
         "shaders/fill.v.glsl",

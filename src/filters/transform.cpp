@@ -182,6 +182,7 @@ CCPLUS_FILTER(transform) {
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
     fillSprite();
     ret->ext = frame->ext;
     return ret;
