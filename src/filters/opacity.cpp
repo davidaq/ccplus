@@ -1,16 +1,22 @@
 #include "filter.hpp"
 #include "glprogram-manager.hpp"
-#include "gpu-frame.hpp"
+#include "gpu-frame-cache.hpp"
+#include "gpu-frame-impl.hpp"
 #include "render.hpp"
 
 using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(opacity) {
-    if (parameters.size() == 0)
-        return;
+    if (parameters.size() == 0) {
+        log(logERROR) << "Not enough parameters for opacity";
+        return frame;
+    }
 
     float opa = parameters[0];
+
+    GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
+    ret->ext = frame->ext;
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
@@ -28,4 +34,5 @@ CCPLUS_FILTER(opacity) {
     glBindTexture(GL_TEXTURE_2D, frame.textureID);
 
     fillSprite();
+    return ret;
 }
