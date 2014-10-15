@@ -3,7 +3,6 @@
 #include "gpu-frame.hpp"
 #include "render.hpp"
 #include "externals/triangulate.h"
-#include "gpu-double-buffer.hpp"
 
 using namespace cv;
 using namespace CCPlus;
@@ -11,15 +10,15 @@ using namespace CCPlus;
 CCPLUS_FILTER(4color) {
     if (parameters.size() < 23) {
         log(CCPlus::logERROR) << "Insufficient parameters for 4 color effect";
-        return;
+        return GPUFrame();
     }
     // Initializing
     std::vector<float> rgbs; 
     std::vector<float> xs, ys; 
     
     for (int i = 0; i < 20; i+=5) {
-        xs.push_back(parameters[i + 0] / frame.width);
-        ys.push_back(parameters[i + 1] / frame.height);
+        xs.push_back(parameters[i + 0] / frame->width);
+        ys.push_back(parameters[i + 1] / frame->height);
         rgbs.push_back(parameters[i + 2] / 255.0f);
         rgbs.push_back(parameters[i + 3] / 255.0f);
         rgbs.push_back(parameters[i + 4] / 255.0f);
@@ -38,9 +37,8 @@ CCPLUS_FILTER(4color) {
 
     glUniform1f(glGetUniformLocation(program, "opacity"), opacity);
 
-    GPUFrame tmp_frame;
-    tmp_frame.createTexture(frame.width, frame.height);
-    tmp_frame.bindFBO();
+    GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
+    tmp_frame->bindFBO();
 
     for (int ch = 0; ch < 3; ch++) {
         // A * x = C
@@ -98,7 +96,5 @@ CCPLUS_FILTER(4color) {
     }
     fillSprite();
 
-    buffer.bindFBO();
-    mergeFrame(frame, tmp_frame, (BlendMode)mode);
-    tmp_frame.destroy();
+    return mergeFrame(frame, tmp_frame, (BlendMode)mode);
 }
