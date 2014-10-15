@@ -44,7 +44,7 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
     if(framesCache.count(frameNum)) {
         Frame frame;
         frame.readZimCompressed(framesCache[frameNum]);
-        GPUFrame ret = GPUFrameCache::alloc(width, height);
+        GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
         ret->load(frame);
         return ret;
     } else {
