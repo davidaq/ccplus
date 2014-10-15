@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "gif_lib.h"
+#include "externals/gif_lib.h"
 
 #define MAX(x, y)    (((x) > (y)) ? (x) : (y))
 

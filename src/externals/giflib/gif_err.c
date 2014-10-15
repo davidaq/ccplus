@@ -6,8 +6,8 @@ gif_err.c - handle error reporting for the GIF library.
 
 #include <stdio.h>
 
-#include "gif_lib.h"
-#include "gif_lib_private.h"
+#include "externals/gif_lib.h"
+#include "externals/gif_lib_private.h"
 
 /*****************************************************************************
  Return a string description of  the last GIF error

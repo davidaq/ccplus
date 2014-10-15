@@ -2,7 +2,7 @@
 #include "context.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
-#include "../giflib/gif_lib.h"
+#include "externals/gif_lib.h"
 
 using namespace CCPlus;
 

@@ -20,8 +20,8 @@ two modules will be linked.  Preserve this property!
 #include <io.h>
 #endif /* _WIN32 */
 
-#include "gif_lib.h"
-#include "gif_lib_private.h"
+#include "externals/gif_lib.h"
+#include "externals/gif_lib_private.h"
 
 /* compose unsigned little endian value */
 #define UNSIGNED_LITTLE_ENDIAN(lo, hi)	((lo) | ((hi) << 8))
