@@ -11,7 +11,7 @@ using namespace CCPlus;
 CCPLUS_FILTER(mask) {
     if (parameters.size() <= 0) {
         log(logERROR) << "Not enough parameters for mask";
-        return GPUFrame();
+        return frame;
     }
     std::vector<std::pair<float, float>> pnts;
     int kwidth = parameters[0];
