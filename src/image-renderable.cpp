@@ -1,5 +1,5 @@
 #include "image-renderable.hpp"
-#include "gpu-frame.hpp"
+#include "gpu-frame-cache.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -8,9 +8,9 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
     this->uri = uri;
 }
 
-void ImageRenderable::updateGPUFrame(GPUFrame& frame, float) {
-    if(!frame.textureID)
-        frame.load(image);
+GPUFrame ImageRenderable::getGPUFrame(float) {
+    GPUFrame frame = GPUFrameCache::alloc(image.cols, image.rows);
+    frame->load(image);
 }
 
 float ImageRenderable::getDuration() {
