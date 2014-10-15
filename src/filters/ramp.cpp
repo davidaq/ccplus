@@ -3,7 +3,6 @@
 #include "gpu-frame.hpp"
 #include "render.hpp"
 #include "externals/triangulate.h"
-#include "gpu-double-buffer.hpp"
 
 using namespace cv;
 using namespace CCPlus;
@@ -11,18 +10,18 @@ using namespace CCPlus;
 CCPLUS_FILTER(ramp) {
     if (parameters.size() < 12) {
         log(logERROR) << "Insufficient parameters for ramp effect";
-        return;
+        return frame;
     }
     float alpha = 1 - parameters[11];
     int type = parameters[0];
-    float start_x = parameters[1] / frame.width;
-    float start_y = parameters[2] / frame.height;
+    float start_x = parameters[1] / frame->width;
+    float start_y = parameters[2] / frame->height;
     float sr = parameters[3] / 255.0;
     float sg = parameters[4] / 255.0;
     float sb = parameters[5] / 255.0;
 
-    float end_x = parameters[6] / frame.width;
-    float end_y = parameters[7] / frame.height;
+    float end_x = parameters[6] / frame->width;
+    float end_y = parameters[7] / frame->height;
     float er = parameters[8] / 255.0;
     float eg = parameters[9] / 255.0;
     float eb = parameters[10] / 255.0;
@@ -41,9 +40,8 @@ CCPLUS_FILTER(ramp) {
             );
     glUseProgram(program);
 
-    GPUFrame tmp_frame;
-    tmp_frame.createTexture(frame.width, frame.height);
-    tmp_frame.bindFBO();
+    GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
+    tmp_frame->bindFBO();
 
     float dx = start_x - end_x;
     float dy = start_y - end_y;
@@ -57,8 +55,5 @@ CCPLUS_FILTER(ramp) {
 
     fillSprite();
 
-    buffer.bindFBO();
-    mergeFrame(frame, tmp_frame, (BlendMode)0);
-    //mergeFrame(tmp_frame, tmp_frame, (BlendMode) -1);
-    tmp_frame.destroy();
+    return mergeFrame(frame, tmp_frame, (BlendMode)0);
 }
