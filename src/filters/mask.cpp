@@ -1,6 +1,7 @@
 #include "filter.hpp"
 #include "glprogram-manager.hpp"
-#include "gpu-frame.hpp"
+#include "gpu-frame-cache.hpp"
+#include "gpu-frame-impl.hpp"
 #include "render.hpp"
 #include "externals/triangulate.h"
 
@@ -10,7 +11,7 @@ using namespace CCPlus;
 CCPLUS_FILTER(mask) {
     if (parameters.size() <= 0) {
         log(logERROR) << "Not enough parameters for mask";
-        return;
+        return GPUFrame();
     }
     std::vector<std::pair<float, float>> pnts;
     int kwidth = parameters[0];
@@ -31,12 +32,17 @@ CCPLUS_FILTER(mask) {
         "shaders/filters/mask.f.glsl"
     );
     glUseProgram(program);
-    
+
+    GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
+    ret->ext = frame->ext;
+    ret->bindFBO();
+
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame.textureID);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     fillTriangles(pnts);
+    return ret;
 }
