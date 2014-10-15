@@ -16,6 +16,9 @@ public:
     float finished();
     CCPlus::Semaphore signal;
 private:
-    float finishedTime = 0;
+    float finishedTime[2] = {0};
     CCPlus::Composition* main;
+    Renderable** sortedList;
+    int sortedListPtr;
+    Lock sync;
 };
