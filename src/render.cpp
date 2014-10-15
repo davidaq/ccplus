@@ -109,7 +109,7 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
     return blendUsingProgram(program, top, bottom);
 }
 
-bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatteMode mode) {
+GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
     if (color.width != alpha.width || 
         color.height != alpha.height) {
         log(logWARN) << "Track matte frame requires frames to have equal sizes";
@@ -119,8 +119,7 @@ bool CCPlus::trackMatte(const GPUFrame& color, const GPUFrame& alpha, TrackMatte
         programs[mode + BLEND_MODE_COUNT - 1].name,
         "shaders/fill.v.glsl",
         programs[mode + BLEND_MODE_COUNT - 1].fshader);
-    blendUsingProgram(program, alpha, color);
-    return true;
+    return blendUsingProgram(program, alpha, color);
 }
 
 void CCPlus::fillSprite() {
