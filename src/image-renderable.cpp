@@ -10,9 +10,11 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 }
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
-    GPUFrame frame = GPUFrameCache::alloc(image.image.cols, image.image.rows);
-    frame->load(image);
-    return frame;
+    if(!gpuCache) {
+        gpuCache = GPUFrameCache::alloc(image.image.cols, image.image.rows);
+        gpuCache->load(image);
+    }
+    return gpuCache;
 }
 
 float ImageRenderable::getDuration() {
@@ -22,6 +24,7 @@ float ImageRenderable::getDuration() {
 void ImageRenderable::prepare() {
     std::string filepath = parseUri2File(uri);
     Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
+
     mat3to4(org);
 
     auto rotateCWRightAngle = [&org] (int angle) {
@@ -53,11 +56,29 @@ void ImageRenderable::prepare() {
         }
     }
 
+    int w = org.cols, h = org.rows;
+    if(w > 1024) {
+        h *= 1024.0 / w;
+        w = 1024;
+    }
+    if(h > 1024) {
+        w *= 1024.0 / h;
+        h = 1024;
+    }
+    if(w != org.cols) {
+        int x = org.cols;
+        int y = org.rows;
+        cv::resize(org, org, {w, h});
+        image.ext.scaleAdjustX = x * 1.0f / org.cols;
+        image.ext.scaleAdjustY = y * 1.0f / org.rows;
+    }
+
     image.image = org;
 }
 
 void ImageRenderable::release() {
     image.image = cv::Mat();
+    gpuCache = GPUFrame();
 }
 
 int ImageRenderable::getWidth() const {

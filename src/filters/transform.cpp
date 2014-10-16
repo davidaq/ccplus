@@ -13,8 +13,16 @@ CCPLUS_FILTER(transform) {
         log(CCPlus::logERROR) << "Not enough parameters for transform";
         return frame;
     }
-    Mat finalTrans = Mat::eye(4, 4, CV_64F);
+    Mat finalTrans = (Mat_<double>(4, 4) << 
+            frame->ext.scaleAdjustX, 0, 0, 0, 
+            0, frame->ext.scaleAdjustY, 0, 0, 
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+
     for (int set = 0; set < parameters.size(); set += 12) {
+        if(set >= 12) {
+            L();
+        }
         int pos_x = (int)parameters[0 + set];
         int pos_y = (int)parameters[1 + set];
         int pos_z = (int)parameters[2 + set];
@@ -186,5 +194,7 @@ CCPLUS_FILTER(transform) {
 
     fillSprite();
     ret->ext = frame->ext;
+    ret->ext.anchorAdjustX = ret->ext.anchorAdjustY = 0;
+    ret->ext.scaleAdjustX = ret->ext.scaleAdjustY = 1;
     return ret;
 }

@@ -16,6 +16,7 @@ public:
 
 protected:
     Frame image;
+    GPUFrame gpuCache;
     std::string uri;
 };
 

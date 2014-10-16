@@ -9,6 +9,8 @@ struct CCPlus::FrameExt {
     int anchorAdjustX = 0;
     int anchorAdjustY = 0;
     cv::Mat audio;
+    float scaleAdjustX = 1;
+    float scaleAdjustY = 1;
 };
 
 /* 
