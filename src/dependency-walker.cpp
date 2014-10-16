@@ -1,6 +1,7 @@
 #include "dependency-walker.hpp"
 #include "layer.hpp"
 #include "composition.hpp"
+#include "profile.hpp"
 
 using namespace CCPlus;
 
@@ -22,9 +23,11 @@ void DependencyWalker::cleanup() {
 
 void DependencyWalker::walkThrough() {
     cleanup();
-    scan(mainComp, 0);
-    for(auto& item : fragments) {
-        calcItem(item.first, item.second);
+    profile(CalcDependency) {
+        scan(mainComp, 0);
+        for(auto& item : fragments) {
+            calcItem(item.first, item.second);
+        }
     }
 }
 
