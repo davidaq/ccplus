@@ -97,6 +97,11 @@ void explode(RangeSet& set, Range chunk) {
         set = concat(set, transform(original, d, 1));
         d += chunk.maxDuration;
     }
+    d = 0;
+    while(d > chunk.refStart) {
+        d -= chunk.maxDuration;
+        set = concat(set, transform(original, d, 1));
+    }
     set = crop(set, chunk.refStart, chunk.refEnd);
 }
 typedef std::pair<float,float> TimePair;
@@ -150,6 +155,7 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
     for(const auto & chunk : chunks) {
         set = concat(set, calcChunk(item, chunk));
     }
+    crop(set, 0, mainComp->duration);
     item->firstAppearTime = 9999999;
     item->lastAppearTime = 0;
     for(const Range& r : set) {
@@ -159,9 +165,10 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
             item->lastAppearTime = r.right;
         item->usedFragments.push_back(std::pair<float,float>(r.refStart, r.refEnd));
     }
-    if(item->firstAppearTime > item->lastAppearTime)
-        item->firstAppearTime = item->lastAppearTime;
-    simplify(item->usedFragments);
+    if(item->firstAppearTime < item->lastAppearTime)
+        simplify(item->usedFragments);
+    else
+        item->usedFragments.clear();
     log(logINFO) << "-- from" << item->firstAppearTime << "to" << item->lastAppearTime
         << "using" << toString(item->usedFragments);
 }
@@ -175,16 +182,16 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     full.refEnd = chunk->maxDuration;
     full.maxDuration = 0;
     set.push_back(full);
-    log(logINFO) << "full" << toString(full);
+    //log(logINFO) << "full" << toString(full);
     while(chunk) {
         if(chunk->maxDuration <= 0)
             return RangeSet();
-        log(logINFO) << "chunk" << toString(*chunk);
+        //log(logINFO) << "chunk" << toString(*chunk);
         explode(set, *chunk);
-        log(logINFO) << "explode" << toString(set);
+        //log(logINFO) << "explode" << toString(set);
         set = transform(set, chunk->left - chunk->refStart,
                 (chunk->right - chunk->left) / (chunk->refEnd - chunk->refStart));
-        log(logINFO) << "transform" << toString(set);
+        //log(logINFO) << "transform" << toString(set);
         chunk = chunk->parent;
     }
     return set;

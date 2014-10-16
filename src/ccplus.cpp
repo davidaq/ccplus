@@ -45,7 +45,7 @@ void CCPlus::render() {
         log(logINFO) << "render frame --" << i;
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         frame = mergeFrame(blackBackground, frame, DEFAULT);
-        char buf[64];
+        char buf[20];
         sprintf(buf, "%07d.zim", fn++);
         frame->toCPU().write(generatePath(ctx->storagePath, buf));
     }
