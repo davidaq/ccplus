@@ -25,5 +25,8 @@ public:
     CCPlus::Composition* main = 0;
     Renderable** sortedList = 0;
     int sortedListPtr;
+
+    // wait if prepared over limit
+    float limit;
     Lock sync;
 };

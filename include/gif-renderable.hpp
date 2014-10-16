@@ -14,6 +14,7 @@ public:
     float getDuration();
     GPUFrame getGPUFrame(float time);
     void prepare();
+    void prepareGif();
     void release();
 
 private:

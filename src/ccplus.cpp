@@ -28,6 +28,7 @@ void CCPlus::releaseContext() {
 void CCPlus::render() {
     Context* ctx = Context::getContext();
     createGLContext();
+    ctx->collector->limit = 10;
     ctx->collector->prepare();
     float delta = 1.0f / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
@@ -42,12 +43,24 @@ void CCPlus::render() {
             log(logINFO) << "wait --" << ctx->collector->finished();
             ctx->collector->signal.wait();
         }
+        ctx->collector->limit = i + 10;
         log(logINFO) << "render frame --" << i;
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         frame = mergeFrame(blackBackground, frame, DEFAULT);
         char buf[20];
         sprintf(buf, "%07d.zim", fn++);
         frame->toCPU().write(generatePath(ctx->storagePath, buf));
+        for(auto item = ctx->renderables.begin();
+                item != ctx->renderables.end(); ) {
+            Renderable* r = item->second;
+            if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                log(logINFO) << "release" << item->first;
+                r->release();
+                ctx->renderables.erase(item++);
+            } else {
+                item++;
+            }
+        }
     }
 }
 

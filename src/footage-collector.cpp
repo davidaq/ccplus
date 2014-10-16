@@ -17,17 +17,20 @@ public:
     void start() {
         ParallelExecutor::runInNewThread([&]() {
             bool goon = true;
+            float fStep = 1.0 / Context::getContext()->fps;
             while(goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
                     Renderable* pitem = c.sortedList[--c.sortedListPtr];
-                    c.finishedTime[index] = pitem->firstAppearTime - 0.1;
+                    float t = c.finishedTime[index] = pitem->firstAppearTime - fStep;
                     c.sync.unlock();
                     if(!pitem->usedFragments.empty()) {
                         log(logINFO) << "prepare begin" << pitem->getUri();
                         pitem->prepare();
                         log(logINFO) << "prepare end" << pitem->getUri();
                     }
+                    while(t > c.limit)
+                        sleep(1);
                     c.sync.lock();
                 } else {
                     c.finishedTime[index] = c.main->duration + 1;

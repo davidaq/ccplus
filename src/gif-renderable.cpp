@@ -65,6 +65,13 @@ GifPallete readGifExt(const T& src, GifPallete defVal) {
 }
 
 void GifRenderable::prepare() {
+    static Lock gifPrepareLock;
+    gifPrepareLock.lock();
+    prepareGif();
+    gifPrepareLock.unlock();
+}
+
+void GifRenderable::prepareGif() {
     int error;
     GifFileType* ctx = DGifOpenFileName(path.c_str(), &error);
     log(logINFO) << "GIF open [" << error << "]: " << path;
