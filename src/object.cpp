@@ -38,6 +38,7 @@ Semaphore::Semaphore(std::string name) {
         name = sname;
     }
     name = "CCPLUS_" + name;
+    this->name = name;
     sem_unlink(name.c_str());
     sem = sem_open(name.c_str(), O_CREAT, 0655, 0);
 #else
@@ -55,6 +56,7 @@ Semaphore::Semaphore(std::string name) {
 Semaphore::~Semaphore() {
 #ifdef __OSX__
     sem_close(sem);
+    sem_unlink(name.c_str());
 #endif
     if(!named) {
         sem_destroy(sem);
