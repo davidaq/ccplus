@@ -21,7 +21,7 @@ float ImageRenderable::getDuration() {
 
 void ImageRenderable::prepare() {
     std::string filepath = parseUri2File(uri);
-    Mat org = cv::imread(filepath);
+    Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
     mat3to4(org);
 
     auto rotateCWRightAngle = [&org] (int angle) {

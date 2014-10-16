@@ -39,12 +39,13 @@ CCPLUS_FILTER(gaussian) {
     }
     int size = (int) parameters[0];
     if (size % 2 == 0) size += 1;
+    size = 7;
     if (size > 99) {
-        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99";
+        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99, got: " << size;
         size = 99;
     }
     if (size < 7) {
-        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99";
+        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99, got: " << size;
         size = 7;
     }
     int direction = (int) parameters[1];
