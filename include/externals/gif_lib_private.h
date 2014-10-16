@@ -8,7 +8,10 @@ gif_lib_private.h - internal giflib routines and structures
 #define _GIF_LIB_PRIVATE_H
 
 #include "gif_lib.h"
-#include "gif_hash.h"
+//#include "gif_hash.h"
+
+struct GifHashTableTypeStruct;
+typedef struct GifHashTableTypeStruct GifHashTableType;
 
 #define EXTENSION_INTRODUCER      0x21
 #define DESCRIPTOR_INTRODUCER     0x2c
