@@ -17,14 +17,17 @@ void Composition::appendLayer(const Layer& layer) {
 }
 
 GPUFrame Composition::getGPUFrame(float time) {
-    // Apply filters
+    // Apply filters & track matte
     GPUFrame* frames = new GPUFrame[layers.size()];
-    for (int i = layers.size() - 1; i >= 0; i--) {
+    for (int i = 0; i < layers.size(); i++) {
         Layer& l = layers[i];
         if(!layers[i + 1].trkMat && (!l.show || !l.visible(time))) {
             frames[i] = GPUFrame();
         } else {
             frames[i] = l.getFilteredFrame(time);
+            if(i > 0 && l.trkMat) {
+                frames[i] = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
+            }
         }
     }
     // Merge & track matte 
@@ -35,9 +38,6 @@ GPUFrame Composition::getGPUFrame(float time) {
             continue;
         if(ret) {
             GPUFrame cframe = frames[i];
-            if(i != 0 && l.trkMat) {
-                cframe = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
-            }
             ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
         } else {
             ret = frames[i];

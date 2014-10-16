@@ -131,7 +131,7 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
         programs[mode + BLEND_MODE_COUNT - 1].name,
         "shaders/fill.v.glsl",
         programs[mode + BLEND_MODE_COUNT - 1].fshader);
-    return blendUsingProgram(program, alpha, color);
+    return blendUsingProgram(program, color, alpha);
 }
 
 void CCPlus::fillSprite() {

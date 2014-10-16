@@ -21,12 +21,14 @@ public:
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
                     Renderable* pitem = c.sortedList[--c.sortedListPtr];
-                    c.finishedTime[index] = pitem->firstAppearTime - 1;
+                    c.finishedTime[index] = pitem->firstAppearTime - 0.1;
                     c.sync.unlock();
-                    log(logINFO) << "prepare" << pitem->getUri();
-                    pitem->prepare();
+                    if(!pitem->usedFragments.empty()) {
+                        log(logINFO) << "prepare begin" << pitem->getUri();
+                        pitem->prepare();
+                        log(logINFO) << "prepare end" << pitem->getUri();
+                    }
                     c.sync.lock();
-                    c.finishedTime[index] = pitem->lastAppearTime;
                 } else {
                     c.finishedTime[index] = c.main->duration + 1;
                     goon = false;
@@ -80,7 +82,11 @@ void FootageCollector::prepare() {
 
 float FootageCollector::finished() {
     sync.lock();
-    float ret = std::min(finishedTime[0], finishedTime[1]);
+    float ret = main->duration + 1;
+    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+        if(finishedTime[i] < ret)
+            ret = finishedTime[i];
+    }
     sync.unlock();
     return ret;
 }

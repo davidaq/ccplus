@@ -14,6 +14,10 @@ Frame::~Frame() {
 }
 
 void Frame::readZimCompressed(const cv::Mat& inData) {
+    if(inData.empty()) {
+        log(logERROR) << "uncompress fail due to empty input";
+        return;
+    }
     unsigned char* fileContent = (unsigned char*)inData.data;
     int sz = inData.total();
     unsigned char* endOfFile = fileContent + sz;
@@ -162,25 +166,49 @@ void Frame::write(const std::string& zimpath, int quality) {
         log(logWARN) << "Zim file should use .zim ext " + zimpath;
     }
     FILE* file = fopen(zimpath.c_str(), "wb");
-    frameCompress([file](void* data, size_t sz, size_t len) {
-        fwrite(data, sz, len, file);
+    if(!file) {
+        log(logERROR) << "can't open file for write" << zimpath;
+        return;
+    }
+    frameCompress([&file, &zimpath](void* _data, size_t sz, size_t len) {
+        unsigned char* data = (unsigned char*)_data;
+        while(len > 0) {
+            size_t wlen = len;
+            if(wlen > 3000)
+                wlen = 3000;
+            size_t wrote = fwrite(data, sz, len, file);
+            if(wrote <= 0) {
+                break;
+            }
+            len -= wrote;
+            data += wrote;
+        }
+        if(len > 0) {
+            log(logERROR) << "failed to write some data to" << zimpath;
+        }
     }, quality);
+    if(ftell(file) <= 0) {
+        log(logWARN) << "wrote empty file:" << zimpath;
+    }
     fclose(file);
 }
 
 void Frame::read(const std::string& zimpath) {
     if (!stringEndsWith(zimpath, ".zim")) {
-        log(logERROR) << "Unrecgnozied file format: " + zimpath;
+        log(logERROR) << "Unrecgnozied file format:" + zimpath;
         return;
     }
     FILE* file = fopen(zimpath.c_str(), "rb");
     if(!file) {
-        log(logERROR) << "File not exists: " << zimpath;
+        log(logERROR) << "File not exists:" << zimpath;
         return;
     }
     fseek(file, 0, SEEK_END);
     int sz = ftell(file);
     fseek(file, 0, SEEK_SET);
+    if(!sz) {
+        log(logWARN) << "Trying to read empty zim file:" << zimpath;
+    }
     cv::Mat fileContent(1, sz, CV_8U);
     fread(fileContent.data, sizeof(unsigned char), sz, file);
     fclose(file);

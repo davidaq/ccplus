@@ -8,12 +8,11 @@
 using namespace CCPlus;
 
 GifRenderable::GifRenderable(const std::string& uri) {
-    path = Context::getContext()->getFootagePath(uri);
+    path = parseUri2File(uri);
 }
 
 void GifRenderable::release() {
     framesCache.clear();
-    gpuFramesCache.clear();
 }
 
 GPUFrame GifRenderable::getGPUFrame(float time) {
@@ -26,12 +25,11 @@ GPUFrame GifRenderable::getGPUFrame(float time) {
         else
             break;
     }
-    if(!gpuFramesCache[index]) {
-        Frame& f = framesCache[index].second;
-        gpuFramesCache[index] = GPUFrameCache::alloc(f.image.cols, f.image.rows);
-        gpuFramesCache[index]->load(f);
-    }
-    return gpuFramesCache[index];
+    Frame f;
+    f.readZimCompressed(framesCache[index].second);
+    GPUFrame ret = GPUFrameCache::alloc(f.image.cols, f.image.rows);
+    ret->load(f);
+    return ret;
 }
 
 float GifRenderable::getDuration() {
@@ -100,20 +98,15 @@ void GifRenderable::prepare() {
         
         const int cols = im.cols;
         cv::Vec4b* dst = im.ptr<cv::Vec4b>(0);
-        auto scan = [dst, &cGifFrame, &pallete, cols, map](int y) {
-            int i = 0;
+        int i = 0;
+        auto scan = [&i, dst, &cGifFrame, &pallete, cols, map](int y) {
             for(int x = 0; x < cGifFrame.ImageDesc.Width; x++) {
                 i++;
                 int colorIndex = cGifFrame.RasterBits[i];
                 if(colorIndex == pallete.transparent) {
                     continue;
                 }
-                GifColorType rgb;
-                if(map) {
-                    rgb = map->Colors[colorIndex];
-                } else {
-                    break;
-                }
+                GifColorType rgb = map->Colors[colorIndex];
                 int px = cGifFrame.ImageDesc.Left + x;
                 int py = cGifFrame.ImageDesc.Top + y;
                 int p = py * cols + px;
@@ -137,8 +130,8 @@ void GifRenderable::prepare() {
             }
         }
         Frame ret;
-        ret.image = im.clone();
-        framesCache.push_back(std::pair<float, Frame>(currentTime, ret));
+        ret.image = im;
+        framesCache.push_back(std::pair<float, cv::Mat>(currentTime, ret.zimCompressed()));
 
         currentTime += pallete.delay;
         // only allow gif less than 10 sec
@@ -158,6 +151,7 @@ void GifRenderable::prepare() {
                 break;
         }
     }
+    duration = currentTime + 0.05;
     DGifCloseFile(ctx, &error);
 }
 
