@@ -162,35 +162,37 @@ cv::Mat Frame::zimCompressed(int quality) {
 }
 
 void Frame::write(const std::string& zimpath, int quality) {
-    if (!stringEndsWith(zimpath, ".zim")) {
-        log(logWARN) << "Zim file should use .zim ext " + zimpath;
-    }
-    FILE* file = fopen(zimpath.c_str(), "wb");
-    if(!file) {
-        log(logERROR) << "can't open file for write" << zimpath;
-        return;
-    }
-    frameCompress([&file, &zimpath](void* _data, size_t sz, size_t len) {
-        unsigned char* data = (unsigned char*)_data;
-        while(len > 0) {
-            size_t wlen = len;
-            if(wlen > 3000)
-                wlen = 3000;
-            size_t wrote = fwrite(data, sz, len, file);
-            if(wrote <= 0) {
-                break;
+    profile(zimWrite) {
+        if (!stringEndsWith(zimpath, ".zim")) {
+            log(logWARN) << "Zim file should use .zim ext " + zimpath;
+        }
+        FILE* file = fopen(zimpath.c_str(), "wb");
+        if(!file) {
+            log(logERROR) << "can't open file for write" << zimpath;
+            return;
+        }
+        frameCompress([&file, &zimpath](void* _data, size_t sz, size_t len) {
+            unsigned char* data = (unsigned char*)_data;
+            while(len > 0) {
+                size_t wlen = len;
+                if(wlen > 3000)
+                    wlen = 3000;
+                size_t wrote = fwrite(data, sz, len, file);
+                if(wrote <= 0) {
+                    break;
+                }
+                len -= wrote;
+                data += wrote;
             }
-            len -= wrote;
-            data += wrote;
+            if(len > 0) {
+                log(logERROR) << "failed to write some data to" << zimpath;
+            }
+        }, quality);
+        if(ftell(file) <= 0) {
+            log(logWARN) << "wrote empty file:" << zimpath;
         }
-        if(len > 0) {
-            log(logERROR) << "failed to write some data to" << zimpath;
-        }
-    }, quality);
-    if(ftell(file) <= 0) {
-        log(logWARN) << "wrote empty file:" << zimpath;
+        fclose(file);
     }
-    fclose(file);
 }
 
 void Frame::read(const std::string& zimpath) {
