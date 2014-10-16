@@ -25,6 +25,7 @@ public:
 private:
     sem_t* sem;
     bool named;
+    std::string name;
 };
 
 class CCPlus::Object {

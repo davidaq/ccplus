@@ -25,6 +25,7 @@ std::string Renderable::parseUri2File(std::string uri) {
 }
 
 GPUFrame Renderable::getGPUFrame(float time) {
+    return GPUFrame();
 }
 
 GPUFrame Renderable::getWrapedGPUFrame(float time) {

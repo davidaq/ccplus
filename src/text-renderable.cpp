@@ -13,9 +13,6 @@ using namespace std;
 static inline int FI(float v) {
     return (int)(v * 1000);
 }
-static inline float IF(int v) {
-    return (float)v * 0.001;
-}
 
 TextRenderable::TextRenderable(const boost::property_tree::ptree& tree) {
     auto each = [&tree] (const std::string& name, 
