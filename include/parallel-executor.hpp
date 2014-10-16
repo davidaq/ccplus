@@ -12,7 +12,7 @@ public:
     ~ParallelExecutor();
     void execute(std::function<void()> job);
     void waitForAll();
-    static void runInNewThread(std::function<void()> job);
+    static pthread_t runInNewThread(std::function<void()> job);
 private:
     pthread_t* extraThreads = 0;
     int extraThreadsCount = 0;

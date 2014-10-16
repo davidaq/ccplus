@@ -15,7 +15,7 @@ public:
         this->index = index;
     }
     void start() {
-        ParallelExecutor::runInNewThread([&]() {
+        thread = ParallelExecutor::runInNewThread([&]() {
             bool goon = true;
             float fStep = 1.0 / Context::getContext()->fps;
             while(Context::getContext()->isActive() && goon) {
@@ -41,9 +41,15 @@ public:
             }
         });
     }
+
+    void stop() {
+        if (thread) 
+            pthread_join(thread, 0);
+    }
 private:
     int index;
     FootageCollector& c;
+    pthread_t thread = 0;
 };
 
 FootageCollector::FootageCollector(Composition* comp) {
@@ -55,6 +61,7 @@ FootageCollector::FootageCollector(Composition* comp) {
 }
 
 FootageCollector::~FootageCollector() {
+    stop();
     for(int i = 0; i < COLLECTOR_THREAD; i++) {
         delete threads[i];
     }
@@ -80,6 +87,13 @@ void FootageCollector::prepare() {
     sortedList[sortedListPtr++] = main;
     for(int i = 0; i < COLLECTOR_THREAD; i++) {
         threads[i]->start();
+    }
+}
+
+void FootageCollector::stop() {
+    for (int i = 0; i < COLLECTOR_THREAD; i++) {
+        if (threads[i])
+            threads[i]->stop();
     }
 }
 

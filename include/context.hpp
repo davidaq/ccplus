@@ -19,12 +19,15 @@ public:
     int fps = 0;
 
     Composition* mainComposition;
-    FootageCollector* collector;
+    FootageCollector* collector = nullptr;
 
     std::set<std::string> flags;
     FT_Face& fontFace();
     bool isActive() {
         return active;
+    }
+    void deActive() {
+        active = false;
     }
 private:
     bool active = false;
