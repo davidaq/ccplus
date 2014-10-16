@@ -18,7 +18,7 @@ public:
         ParallelExecutor::runInNewThread([&]() {
             bool goon = true;
             float fStep = 1.0 / Context::getContext()->fps;
-            while(goon) {
+            while(Context::getContext()->isActive() && goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
                     Renderable* pitem = c.sortedList[--c.sortedListPtr];

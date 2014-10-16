@@ -23,6 +23,9 @@ public:
 
     std::set<std::string> flags;
     FT_Face& fontFace();
+    bool isActive() {
+        return active;
+    }
 private:
     bool active = false;
 };
