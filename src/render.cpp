@@ -71,7 +71,7 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     return ret;
 }
 
-GPUFrame blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFrame& top) {
+GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFrame& top) {
     if (!bottom) return top;
     if (!top) return bottom;
     if ((bottom->width != top->width || bottom->height != top->height)) {

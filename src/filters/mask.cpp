@@ -16,6 +16,7 @@ CCPLUS_FILTER(mask) {
     std::vector<std::pair<float, float>> pnts;
     int kwidth = parameters[0];
     int kheight = parameters[1];
+    int ksize = (kwidth + kheight) / 2;
     int sz = parameters.size() / 2 - 1;
 
     for (int i = 1; i <= sz; i++) {
@@ -26,23 +27,45 @@ CCPLUS_FILTER(mask) {
     pnts = CCPlus::triangulate(pnts);
 
     GLProgramManager* manager = GLProgramManager::getManager();
+
+    if (ksize == 0) {
+        GLuint program = manager->getProgram(
+                "filter_mask",
+                "shaders/fill.v.glsl",
+                "shaders/filters/mask.f.glsl"
+                );
+        glUseProgram(program);
+        GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
+        ret->ext = frame->ext;
+        ret->bindFBO();
+
+        glUniform1i(glGetUniformLocation(program, "tex"), 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, frame->textureID);
+
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        fillTriangles(pnts);
+        return ret;
+    } 
     GLuint program = manager->getProgram(
-        "filter_mask",
-        "shaders/fill.v.glsl",
-        "shaders/filters/mask.f.glsl"
-    );
+            "filter_mask_gen",
+            "shaders/fill.v.glsl",
+            "shaders/filters/mask_gen.f.glsl");
     glUseProgram(program);
 
-    GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
-    ret->ext = frame->ext;
-    ret->bindFBO();
-
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame->textureID);
-
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GPUFrame mask = GPUFrameCache::alloc(frame->width, frame->height);
+    mask->bindFBO();
     fillTriangles(pnts);
-    return ret;
+
+    mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
+
+    //imwrite("tmp/test.jpg", mask->toCPU().image);
+
+    program = manager->getProgram(
+            "filter_mask_merge",
+            "shaders/fill.v.glsl",
+            "shaders/filters/mask_merge.f.glsl");
+
+    return blendUsingProgram(program, frame, mask);
 }

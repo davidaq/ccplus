@@ -22,6 +22,8 @@ namespace CCPlus {
     CCPlus::GPUFrame trackMatte(CCPlus::GPUFrame color,
             CCPlus::GPUFrame alpha, CCPlus::TrackMatteMode);
 
+    CCPlus::GPUFrame blendUsingProgram(GLuint, const GPUFrame&, const GPUFrame& top);
+
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();
 

@@ -8,7 +8,6 @@ uniform sampler2D tex;
 uniform float gWeights[100];
 
 void main() {
-    gl_FragColor = vec4(0, 0, 0, 1);
     //const float gWeights[9] = float[9](
     //    0.10855,
     //    0.13135,
@@ -22,8 +21,8 @@ void main() {
     //);
     //int ksize = int(cnt);
     for (int i = 0; i < cnt; i++) {
-        vec3 col = texture2D(tex, xy + nbs[i]).rgb + texture2D(tex, xy - nbs[i]).rgb;
+        vec4 col = texture2D(tex, xy + nbs[i]).rgba + texture2D(tex, xy - nbs[i]).rgba;
         //vec3 col = texture2D(tex, nbs[i]).rgb + texture2D(tex, nbs[i + ksize]).rgb;
-        gl_FragColor.rgb += gWeights[i] * col;
+        gl_FragColor.rgba += gWeights[i] * col;
     }
 }

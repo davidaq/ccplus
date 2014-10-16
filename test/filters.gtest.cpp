@@ -42,7 +42,7 @@ TEST(Filter, Transform) {
 
 TEST(Filter, Mask) {
     imwrite("tmp/mask.png", testFilter("test/res/test2.jpg", "mask",
-                {0, 0, 100, 100, 125, 100, 150, 50, 175, 100, 200, 100, 150, 300}, 640, 852).image);
+                {50, 50, 300, 100, 325, 100, 350, 50, 375, 100, 400, 100, 350, 300}, 640, 852).image);
 }
 
 TEST(Filter, Gaussian) {
