@@ -23,7 +23,7 @@ public:
 
 protected:
     std::map<int, std::wstring> text;
-    std::map<int, std::wstring> font;
+    std::map<int, std::string> font;
     std::map<int, int> size;
     std::map<int, float > scale_x;
     std::map<int, float > scale_y;
@@ -50,5 +50,4 @@ protected:
     std::vector<int> keyframes;
     std::map<int, Frame> framesCache;
     std::map<int, GPUFrame> gpuFramesCache;
-    std::string uri;
 };

@@ -31,8 +31,9 @@ TextRenderable::TextRenderable(const boost::property_tree::ptree& tree) {
         utf8toWStr(text[t], pc);
     }, "");
     each("font", [&] (int t, const std::string& pc) {
-        utf8toWStr(font[t], pc);
-    }, "Arial.ttf");
+        font[t] = pc + ".ttf";
+        stringToLower(font[t]);
+    }, "Arial");
     each("size", [&] (int t, const std::string& pc) {
         size[t] = std::atoi(pc.c_str());
     }, "20");
@@ -106,6 +107,8 @@ void TextRenderable::prepare() {
 GPUFrame TextRenderable::getGPUFrame(float time) {
     int kTime = findKeyTime(time);
     if(!gpuFramesCache.count(kTime)) {
+        if(!framesCache.count(kTime))
+            return GPUFrame();
         Frame cframe = framesCache[kTime];
         gpuFramesCache[kTime] = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
         gpuFramesCache[kTime]->load(cframe);
@@ -125,8 +128,20 @@ void TextRenderable::prepareFrame(int time) {
     int width = getWidth();
     int height = getHeight();
 
-    FT_Face& face = Context::getContext()->fontFace();
+    std::string fontName = get<std::string>(this->font, time);
+    cv::Mat fontData = readAsset(fontName.c_str());
+    if(fontData.empty())
+        fontData = readAsset(("fonts/" + fontName).c_str());
+    if(fontData.empty())
+        fontData = readAsset("font.ttf");
+    FT_Face face;
     int error;
+    error = FT_New_Memory_Face(Context::getContext()->freetype(),
+            (const unsigned char*) fontData.data, fontData.total(), 0, &face);
+    if(error) {
+        log(logFATAL) << "Can't load font...";
+        return;
+    }
 
     int size = get(this->size, time);
     float sx = get<float>(this->scale_x, time);

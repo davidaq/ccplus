@@ -33,10 +33,13 @@ GLuint GLProgramManager::getProgram(
     int vsz = tmp1.total();
     cv::Mat tmp2 = readAsset(fshaderPath.c_str());
     int fsz = tmp2.total();
+
+    const char* vData = (const char*)tmp1.data;
+    const char* fData = (const char*)tmp2.data;
     glShaderSource(vertex_shader, 1, 
-            (const char**)&tmp1.data, &vsz);
+            (const char**)&vData, &vsz);
     glShaderSource(fragment_shader, 1, 
-            (const char**)&tmp2.data, &fsz);
+            (const char**)&fData, &fsz);
 
     glCompileShader(vertex_shader);
     glCompileShader(fragment_shader);
@@ -57,12 +60,14 @@ GLuint GLProgramManager::getProgram(
     if (!compiled) {
         printCompileError(vertex_shader);
         log(logFATAL) << "Can't compile vertex shader for " << name;
+        exit(0);
     }
 
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
         printCompileError(fragment_shader);
         log(logFATAL) << "Can't compile fragment shader for " << name;
+        exit(0);
     }
 
     program = glCreateProgram();
@@ -83,6 +88,7 @@ GLuint GLProgramManager::getProgram(
         printf("error message: %s\n", logMsg);
         delete[] logMsg;
         log(logFATAL) << "Program linked failed for " << name;
+        exit(0);
     }
 
     programPool[name] = program;

@@ -22,7 +22,7 @@ public:
     FootageCollector* collector = nullptr;
 
     std::set<std::string> flags;
-    FT_Face& fontFace();
+    FT_Library& freetype();
     bool isActive() {
         return active;
     }
@@ -31,5 +31,7 @@ public:
     }
 private:
     bool active = false;
+    FT_Library ft;
+    bool freetypeInited = false;
 };
 

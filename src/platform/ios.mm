@@ -12,15 +12,21 @@ void CCPlus::createGLContext() {
 }
 
 cv::Mat CCPlus::readAsset(const char* name) {
-    NSString* bundlePath = [[NSBundle mainBundle] pathForResource:@"ccplus" 
-                                                           ofType:@"bundle"];
-    NSBundle* bundle = [NSBundle bundleWithPath:bundlePath];
+    NSBundle* bundle = [NSBundle mainBundle];
+    NSString* bundlePath = [bundle pathForResource:@"ccplus"
+                                            ofType:@"bundle"];
+    NSLog(@"Searched ccplus.bundle path %@", bundlePath);
+    if(!bundlePath) {
+        NSLog(@"Assets bundle ccplus.bundle not found");
+        return cv::Mat();
+    }
+    bundle = [NSBundle bundleWithPath:bundlePath];
     NSString* resPath = [NSString stringWithUTF8String:name];
     resPath = [bundle pathForResource:resPath ofType:@"f"];
 
     FILE* fp = fopen([resPath UTF8String], "rb");
     if(!fp) {
-        std::cout << "Asset " << " not found" << std::endl;
+        NSLog(@"Asset %@ not found", resPath);
         return cv::Mat();
     }
     fseek(fp, 0, SEEK_END);

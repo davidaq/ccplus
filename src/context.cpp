@@ -66,23 +66,16 @@ Renderable* Context::getRenderable(const std::string& uri) {
     return renderables[uri];
 }
 
-FT_Face& Context::fontFace() {
-    static FT_Face face;
-    static FT_Library ft;
-    static bool init = true;
-    if(init) {
+FT_Library& Context::freetype() {
+    if(!freetypeInited) {
+        freetypeInited = true;
         int fterror;
         fterror = FT_Init_FreeType(&ft);
         if(fterror) {
             log(logFATAL) << "Can't initialize FreeType";
+        } else {
+            freetypeInited = true;
         }
-        cv::Mat fontData = readAsset("font.ttf");
-        fterror = FT_New_Memory_Face(ft, (const unsigned char*) fontData.data,
-                fontData.total(), 0, &face);
-        if(fterror) {
-            log(logFATAL) << "Can't load font...";
-        }
-        init = true;
     }
-    return face;
+    return ft;
 }

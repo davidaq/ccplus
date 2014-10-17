@@ -85,6 +85,8 @@ ios:
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
 	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
+	rm -r -f /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
+	cp -r -f ./port/iOS/ccplus.bundle /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
 
 test: testbuild
 	./test.sh '*'
