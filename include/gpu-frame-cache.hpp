@@ -5,6 +5,7 @@ class CCPlus::GPUFrameCache : public Object {
 public:
     static GPUFrame alloc(int width, int height);
     static void reuse(GPUFrameImpl*);
+    static void clear();
 
 protected:
     struct Size {

@@ -16,6 +16,7 @@ public:
     ~FootageCollector();
 
     void prepare();
+    void stop();
     // Return the time point before that all preparation was done
     float finished();
 

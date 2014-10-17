@@ -5,7 +5,8 @@ using namespace CCPlus;
 
 Renderable::Renderable() {}
 
-Renderable::~Renderable() {}
+Renderable::~Renderable() {
+}
 
 void Renderable::prepare() {
 }

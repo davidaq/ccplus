@@ -10,6 +10,7 @@ namespace CCPlus {
 class CCPlus::TextRenderable : public CCPlus::Renderable {
 public:
     TextRenderable(const boost::property_tree::ptree& properties);
+    ~TextRenderable() {this->release();};
 
     void prepare();
 

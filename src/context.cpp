@@ -2,7 +2,9 @@
 #include "tmlreader.hpp"
 #include "footage-collector.hpp"
 #include "glprogram-manager.hpp"
+#include "gpu-frame-cache.hpp"
 #include "platform.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 
@@ -34,15 +36,13 @@ void Context::begin(const std::string& tmlPath, const std::string& storagePath, 
 }
 
 void Context::end() {
-    if(!active)
-        return;
+    if (collector) {
+        delete collector;
+        collector = nullptr;
+    }
     renderables.clear();
-    delete collector;
-    collector = nullptr;
     deleteRetained();
-
-    GLProgramManager::getManager()->clean();
-
+    GPUFrameCache::clear();
     active = false;
 }
 

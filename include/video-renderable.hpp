@@ -11,6 +11,7 @@ namespace CCPlus {
 class CCPlus::VideoRenderable : public CCPlus::Renderable {
 public:
     VideoRenderable(const std::string& uri);
+    ~VideoRenderable() {this->release();};
 
     void prepare();
     void release();
