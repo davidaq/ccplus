@@ -57,18 +57,19 @@ void ImageRenderable::prepare() {
     }
 
     int w = org.cols, h = org.rows;
-    if(w > 1024) {
-        h *= 1024.0 / w;
-        w = 1024;
+    float max_size = 1280.0;
+    if(w > max_size) {
+        h *= max_size / w;
+        w = max_size;
     }
-    if(h > 1024) {
-        w *= 1024.0 / h;
-        h = 1024;
+    if(h > max_size) {
+        w *= max_size / h;
+        h = max_size;
     }
     if(w != org.cols) {
         int x = org.cols;
         int y = org.rows;
-        cv::resize(org, org, {w, h});
+        cv::resize(org, org, {w, h}, 0, 0, INTER_AREA);
         image.ext.scaleAdjustX = x * 1.0f / org.cols;
         image.ext.scaleAdjustY = y * 1.0f / org.rows;
     }

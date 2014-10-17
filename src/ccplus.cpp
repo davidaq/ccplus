@@ -11,6 +11,7 @@
 #include "parallel-executor.hpp"
 
 pthread_t render_thread = 0;
+bool continueRunning = false;
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
@@ -26,9 +27,9 @@ void CCPlus::initContext(const std::string& tmlPath, const std::string& outputPa
 }
 
 void CCPlus::releaseContext() {
-    Context* ctx = Context::getContext();
-    ctx->deActive();
+    continueRunning = false;
     waitRender();
+    Context* ctx = Context::getContext();
     ctx->end();
     render_thread = 0;
 }
@@ -42,6 +43,7 @@ void CCPlus::render() {
         log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
         return;
     }
+    continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([] () {
         Context* ctx = Context::getContext();
         createGLContext();
@@ -58,7 +60,7 @@ void CCPlus::render() {
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 0);
         for (float i = 0; i <= duration; i += delta) {
-            if (!ctx->isActive()) {
+            if (!continueRunning) {
                 log(logINFO) << "----Rendering process is terminated!---";
                 return;
             }
