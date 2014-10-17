@@ -37,8 +37,10 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
 
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
-
-        comp->appendLayer(initLayer(t, comp->width, comp->height));
+        L() << comp << name;
+        Layer compLayer = initLayer(t, comp->width, comp->height);
+        comp->appendLayer(compLayer);
+        L() << compLayer.renderableUri;
     }
 
     Context::getContext()->putRenderable("composition://" + name, comp);
@@ -68,12 +70,15 @@ std::vector<std::string> TMLReader::readPropertiesOrder(const boost::property_tr
     return ret;
 }
 
+std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "file://")) {
-            static std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
+            if(!_extMap)
+                _extMap = new std::map<std::string, std::function<Renderable*(const std::string&)> >();
+            std::map<std::string, std::function<Renderable*(const std::string&)> >& extMap = *_extMap;
             if(extMap.empty()) {
                 auto imageExt = [](const std::string& uri) {
                     return new ImageRenderable(uri);
@@ -120,6 +125,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }
         if(renderable) {
+            L() << renderable << uri;
             Context::getContext()->retain(renderable);
             Context::getContext()->putRenderable(uri, renderable);
         }

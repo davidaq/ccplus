@@ -34,6 +34,7 @@ Layer::Layer(
     width(_width),
     height(_height)
 {
+    L() << properties.size();
 }
 
 Renderable* Layer::getRenderObject() {

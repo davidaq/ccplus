@@ -37,7 +37,6 @@ public:
 private:
     void unretain(Object* obj);
     
-    Semaphore semaphore;
     Object* retainer = 0;
     std::set<Object*> retains;
 };

@@ -11,7 +11,8 @@ Object::~Object() {
 
 void Object::deleteRetained() {
     for(Object* obj : retains) {
-        delete obj;
+        if(obj)
+            delete obj;
     }
     retains.clear();
 }
@@ -58,7 +59,7 @@ Semaphore::~Semaphore() {
     sem_close(sem);
     sem_unlink(name.c_str());
 #endif
-    if(!named) {
+    if(!named && sem && sem != ((sem_t*)-1)) {
         sem_destroy(sem);
         delete sem;
     }

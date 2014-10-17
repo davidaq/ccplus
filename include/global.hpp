@@ -49,3 +49,4 @@ namespace CCPlus {
 namespace CCPlus {
     typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
 }
+#include "platform.hpp"

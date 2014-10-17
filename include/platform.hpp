@@ -1,7 +1,6 @@
 #pragma once
 
-#include "global.hpp"
-
-void createGLContext();
-
-cv::Mat readAsset(std::string name);
+namespace CCPlus {
+    void createGLContext();
+    cv::Mat readAsset(const char* name);
+}

@@ -80,9 +80,11 @@ android:android_a android_so
 	@echo "\033[1;32mDone!!\n\033[0m"
 
 ios:
+	./tools/make_ios_assets_bundle.sh
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
+	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
 
 test: testbuild
 	./test.sh '*'

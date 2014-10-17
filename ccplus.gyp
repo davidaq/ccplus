@@ -27,7 +27,14 @@
             },
             'defines': [
                 'IN_CCPLUS_PRIVATE_CONTEXT'
-            ]
+            ],
+            'conditions': [
+                ['OS=="ios"', {
+                    'sources': [
+                        'src/platform/ios.mm',
+                    ]
+                }],
+            ],
         },
         {
             'target_name': 'test',

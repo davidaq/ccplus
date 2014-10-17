@@ -26,7 +26,7 @@
                     'SUPPORTED_PLATFORMS': 'iOS',
                     'OTHER_CFLAGS' : ['-D_RELEASE'],
                 },
-                'cflags': ['-D_RELEASE'],
+                'defines': ['__IOS__'],
             }],
             ['OS=="mac"', {
                 'defines': ['__OSX__'],

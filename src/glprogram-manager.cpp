@@ -29,9 +29,9 @@ GLuint GLProgramManager::getProgram(
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    cv::Mat tmp1 = readAsset(vshaderPath);
+    cv::Mat tmp1 = readAsset(vshaderPath.c_str());
     int vsz = tmp1.total();
-    cv::Mat tmp2 = readAsset(fshaderPath);
+    cv::Mat tmp2 = readAsset(fshaderPath.c_str());
     int fsz = tmp2.total();
     glShaderSource(vertex_shader, 1, 
             (const char**)&tmp1.data, &vsz);

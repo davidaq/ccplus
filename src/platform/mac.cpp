@@ -1,14 +1,13 @@
 #ifdef __OSX__
 
-#include "platform.hpp"
-#include "externals/gl2.h"
+#include "global.hpp"
 #include <OpenGL/OpenGl.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
 
 using namespace CCPlus;
 
-void createGLContext() {
+void CCPlus::createGLContext() {
     /* OpenGL initialization: only for testing */
     CGLContextObj ctx;
     CGLPixelFormatAttribute attributes[4] = {
@@ -29,8 +28,9 @@ void createGLContext() {
     //printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 }
 
-cv::Mat readAsset(std::string name) {
-    name = "assets/" + name;
+cv::Mat CCPlus::readAsset(const char* _name) {
+    std::string name = "assets/";
+    name += _name;
     FILE* fp = fopen(name.c_str(), "rb");
     if(!fp) {
         log(logWARN) << "Asset " + name + " not found";

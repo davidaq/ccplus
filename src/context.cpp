@@ -6,9 +6,12 @@
 
 using namespace CCPlus;
 
+Context* singleton = 0;
+
 Context* Context::getContext() {
-    static Context context;
-    return &context;
+    if(!singleton)
+        singleton = new Context();
+    return singleton;
 }
 
 void Context::begin(const std::string& tmlPath, const std::string& storagePath, int fps) {
@@ -20,6 +23,8 @@ void Context::begin(const std::string& tmlPath, const std::string& storagePath, 
     this->tmlDir = dirName(tmlPath);
     this->storagePath = storagePath;
     this->fps = fps;
+
+    L() << this;
     
     TMLReader reader;
     mainComposition = reader.read(tmlPath);
