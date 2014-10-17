@@ -30,8 +30,8 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, 
                 GL_BGRA_EXT, GL_UNSIGNED_BYTE, 0);
 
@@ -40,6 +40,9 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
                 GL_TEXTURE_2D, frame->textureID, 0);
         glViewport(0, 0, width, height);
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            log(logERROR) << "failed to make complete framebuffer object" << glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return boost::shared_ptr<GPUFrameImpl>(frame); 
     }

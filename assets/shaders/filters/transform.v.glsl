@@ -14,7 +14,7 @@ uniform float dst_height;
 
 void main() {
     xy = (vertex_position.xy + 1.0) / 2.0;
-    vec3 tmp = vec3((vertex_position.xy + 1.0) / 2.0, 1);
+    vec3 tmp = vec3((vertex_position.xy + 1.0) / 2.0, 1.0);
     tmp.x *= src_width;
     tmp.y *= src_height;
     tmp = T * tmp;

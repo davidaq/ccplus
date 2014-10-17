@@ -10,7 +10,7 @@ void main() {
     vec4 cb = texture2D(tex_down, xy);
     ca.rgb *= ca.a;
     cb.rgb *= cb.a;
-    gl_FragColor.rgb = min((1 - ca.a) * cb.rgb + ca.rgb, (1 - cb.a) * ca.rgb + cb.rgb);
+    gl_FragColor.rgb = min((1.0 - ca.a) * cb.rgb + ca.rgb, (1.0 - cb.a) * ca.rgb + cb.rgb);
     gl_FragColor.a = ca.a + cb.a - (ca.a * cb.a);
     gl_FragColor.rgb /= gl_FragColor.a;
 }
