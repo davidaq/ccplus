@@ -25,6 +25,9 @@ void CCPlus::createGLContext() {
     CGLDestroyPixelFormat( pix  );
 
     errorCode = CGLSetCurrentContext( ctx  );
+    if (errorCode) {
+        log(logFATAL) << "OpenGL initializtion failed, code: " << errorCode;
+    }
     //printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 }
 

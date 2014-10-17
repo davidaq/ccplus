@@ -26,9 +26,6 @@ public:
     bool isActive() {
         return active;
     }
-    void deActive() {
-        active = false;
-    }
 private:
     bool active = false;
 };

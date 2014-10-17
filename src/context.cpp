@@ -43,6 +43,7 @@ void Context::end() {
     renderables.clear();
     deleteRetained();
     GPUFrameCache::clear();
+    GLProgramManager::getManager()->clean();
     active = false;
 }
 

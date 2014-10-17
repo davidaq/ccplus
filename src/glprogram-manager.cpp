@@ -9,9 +9,6 @@ GLProgramManager* GLProgramManager::getManager() {
 }
 
 void GLProgramManager::clean() {
-    for (auto& kv : programPool) {
-        glDeleteProgram(kv.second);
-    }
     programPool.clear();
 }
 
