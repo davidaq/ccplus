@@ -1,5 +1,4 @@
-#version 100
-precision mediump float;
+#version 120
 
 attribute vec4 vertex_position;
 

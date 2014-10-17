@@ -1,5 +1,4 @@
-#version 100
-precision lowp float;
+#version 120
 
 varying vec2 xy;
 

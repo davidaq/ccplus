@@ -12,6 +12,37 @@ void GLProgramManager::clean() {
     programPool.clear();
 }
 
+bool compileShader(const std::string& shaderSourcePath, GLuint& shaderId, bool isVertexShader) {
+    cv::Mat tmpData = readAsset(shaderSourcePath.c_str());
+    std::string shaderSource = std::string((char*)tmpData.data, (char*)tmpData.data + tmpData.total());
+#ifdef GLSLES
+    if(isVertexShader)
+        shaderSource = shaderSource.replace(0, 12, "#version 100\nprecision mediump float;\n");
+    else
+        shaderSource = shaderSource.replace(0, 12, "#version 100\nprecision lowp float;\n");
+#endif
+    const char* shaderSourceData = shaderSource.c_str();
+    int sz = shaderSource.size();
+    glShaderSource(shaderId, 1, &shaderSourceData, &sz);
+    glCompileShader(shaderId);
+    GLint compiled;
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &compiled);
+    if (!compiled) {
+        GLint logMaxSize, logLength;
+        glGetShaderiv( shaderId, GL_INFO_LOG_LENGTH, 
+                &logMaxSize );
+        char* logMsg = new char[logMaxSize];
+        glGetShaderInfoLog( shaderId, logMaxSize, 
+                &logLength, logMsg );
+        printf("error message: %s\n", logMsg);
+        delete[] logMsg;
+        log(logFATAL) << "Can't compile shader for " << shaderSourcePath;
+            exit(0);
+        return false;
+    }
+    return true;
+}
+
 GLuint GLProgramManager::getProgram(
         const std::string& name,
         const std::string& vshaderPath,
@@ -24,48 +55,9 @@ GLuint GLProgramManager::getProgram(
     GLuint vertex_shader, fragment_shader, program;
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    compileShader(vshaderPath, vertex_shader, true);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    cv::Mat tmp1 = readAsset(vshaderPath.c_str());
-    int vsz = tmp1.total();
-    cv::Mat tmp2 = readAsset(fshaderPath.c_str());
-    int fsz = tmp2.total();
-
-    const char* vData = (const char*)tmp1.data;
-    const char* fData = (const char*)tmp2.data;
-    glShaderSource(vertex_shader, 1, 
-            (const char**)&vData, &vsz);
-    glShaderSource(fragment_shader, 1, 
-            (const char**)&fData, &fsz);
-
-    glCompileShader(vertex_shader);
-    glCompileShader(fragment_shader);
-
-    auto printCompileError = [] (GLuint shader) {
-        GLint logMaxSize, logLength;
-        glGetShaderiv( shader, GL_INFO_LOG_LENGTH, 
-                &logMaxSize );
-        char* logMsg = new char[logMaxSize];
-        glGetShaderInfoLog( shader, logMaxSize, 
-                &logLength, logMsg );
-        printf("error message: %s\n", logMsg);
-        delete[] logMsg;
-    };
-
-    GLint compiled;
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled) {
-        printCompileError(vertex_shader);
-        log(logFATAL) << "Can't compile vertex shader for " << name;
-        exit(0);
-    }
-
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled) {
-        printCompileError(fragment_shader);
-        log(logFATAL) << "Can't compile fragment shader for " << name;
-        exit(0);
-    }
+    compileShader(fshaderPath, fragment_shader, false);
 
     program = glCreateProgram();
 
@@ -74,11 +66,11 @@ GLuint GLProgramManager::getProgram(
 
     glBindAttribLocation(program, ATTRIB_VERTEX_POSITION, "vertex_position");
     glLinkProgram(program);
+    GLint compiled;
     glGetProgramiv(program, GL_LINK_STATUS, &compiled);
     if (!compiled)  {
         GLint logMaxSize, logLength;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, 
-                &logMaxSize);
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logMaxSize);
         char* logMsg = new char[logMaxSize];
         glGetProgramInfoLog(program, logMaxSize, 
                 &logLength, logMsg);

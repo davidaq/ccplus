@@ -26,7 +26,7 @@
                     'SUPPORTED_PLATFORMS': 'iOS',
                     'OTHER_CFLAGS' : ['-D_RELEASE'],
                 },
-                'defines': ['__IOS__'],
+                'defines': ['__IOS__', 'GLSLES'],
             }],
             ['OS=="mac"', {
                 'defines': ['__OSX__'],
