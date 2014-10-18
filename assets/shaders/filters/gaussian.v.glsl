@@ -5,26 +5,13 @@ varying vec2 nbs[12];
 
 uniform vec2 pixelOffset;
 uniform int ksize;
-uniform float gOffsets[100];
+uniform float gOffsets[12];
 
 void main() {
     gl_Position = vertex_position;
     xy = gl_Position.xy * 0.5 + 0.5;
-    //const float gOffsets[9] = float[9](
-    //    0.66293,
-    //    2.47904,
-    //    4.46232,
-    //    6.44568,
-    //    8.42917,
-    //    10.41281,
-    //    12.39664,
-    //    14.38070,
-    //    16.36501
-    //);
     for(int i = 0; i < ksize; i++) {
         vec2 texCoordOffset = gOffsets[i] * pixelOffset;
         nbs[i] = texCoordOffset;
-        //nbs[i] = xy + texCoordOffset;
-        //nbs[ksize + i] = xy - texCoordOffset;
     }; 
 }

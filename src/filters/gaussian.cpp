@@ -38,19 +38,41 @@ CCPLUS_FILTER(gaussian) {
         return frame;
     }
     int size = (int) parameters[0];
-    if (size % 2 == 0) size += 1;
-    size = 7;
-    if (size > 99) {
-        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99, got: " << size;
-        size = 99;
+    
+    int scale = 1;
+    while (size > 47) {
+        size /= 2;
+        scale *= 2;
     }
+    if (size % 2 == 0) size += 1;
     if (size < 7) {
-        log(logWARN) << "Currently gaussian filter only support kernel size between 7 ~ 99, got: " << size;
         size = 7;
     }
     int direction = (int) parameters[1];
 
     GLProgramManager* manager = GLProgramManager::getManager();
+
+    auto sample = [manager] (GPUFrame frame, float scale) {
+        int width = std::max(1.0f, frame->width * scale);
+        int height = std::max(1.0f, frame->height * scale);
+        GPUFrame ret = GPUFrameCache::alloc(width, height);
+        GLuint program = manager->getProgram(
+                "sample",
+                "shaders/fill.v.glsl",
+                "shaders/filters/transform.f.glsl");
+        glUseProgram(program);
+        glUniform1i(glGetUniformLocation(program, "tex"), 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, frame->textureID);
+
+        ret->bindFBO();
+        fillSprite();
+        return ret;
+    };
+
+    if (scale > 1) {
+        frame = sample(frame, 1.0f / scale);
+    }
     GLuint program = manager->getProgram(
             "filter_gaussian",
             "shaders/filters/gaussian.v.glsl",
@@ -78,7 +100,6 @@ CCPLUS_FILTER(gaussian) {
         offset[i] = i * 2.0f + halfKernel[i * 2 + 1] / kernel[i];
         //std::cout << kernel[i] << std::endl;
     }
-
 
     glUniform1i(glGetUniformLocation(program, "ksize"), ksize);
     glUniform1fv(glGetUniformLocation(program, "gWeights"), ksize, kernel);
@@ -108,9 +129,13 @@ CCPLUS_FILTER(gaussian) {
         }
         fillSprite();
     } else {
+        if (scale > 1)
+            tmp = sample(tmp, scale);
         tmp->ext = frame->ext;
         return tmp;
     }
+    if (scale > 1)
+        ret = sample(ret, scale);
     ret->ext = frame->ext;
     return ret;
 }

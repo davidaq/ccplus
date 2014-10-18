@@ -47,7 +47,7 @@ TEST(Filter, Mask) {
 
 TEST(Filter, Gaussian) {
     imwrite("tmp/gaussian.png", testFilter("test/res/test2.jpg", "gaussian",
-                {7, 1}, 640, 852).image);
+                {47, 1}, 640, 852).image);
 }
 
 TEST(Filter, 4Color) {
