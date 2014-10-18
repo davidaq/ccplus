@@ -92,8 +92,8 @@ CCPLUS_FILTER(gaussian) {
 
     int ksize = halfKernel.size() / 2;
     //TODO: cache
-    float* kernel = new float[ksize];
-    float* offset = new float[ksize];
+    float kernel[15];
+    float offset[15];
     //L() << halfKernel.size() << " " << ksize;
     for (int i = 0; i < ksize; i++) {
         kernel[i] = halfKernel[i * 2] + halfKernel[i * 2 + 1];
@@ -109,8 +109,6 @@ CCPLUS_FILTER(gaussian) {
     glUniform1fv(glGetUniformLocation(program, "gWeights"), 12, kernel);
     glUniform1fv(glGetUniformLocation(program, "gOffsets"), 12, offset);
 
-    delete [] kernel;
-    delete [] offset;
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     GPUFrame tmp = GPUFrameCache::alloc(frame->width, frame->height);
@@ -141,5 +139,6 @@ CCPLUS_FILTER(gaussian) {
     if (scale > 1)
         ret = sample(ret, scale);
     ret->ext = frame->ext;
+
     return ret;
 }

@@ -175,7 +175,7 @@ void testMe() {
     imwrite(P("mask.png"), testFilter("test/res/test2.jpg", "mask",
                 {50, 50, 300, 100, 325, 100, 350, 50, 375, 100, 400, 100, 350, 300}, 640, 852).image);
     imwrite(P("gaussian.png"), testFilter("test/res/test2.jpg", "gaussian",
-                {7, 1}, 640, 852).image);
+                {47, 1}, 640, 852).image);
     imwrite(P("4color.png"), testFilter("test/res/test1.jpg", "4color",
                 { 0, 0, 255, 0, 0, 
                 279, 0, 0, 255, 0, 

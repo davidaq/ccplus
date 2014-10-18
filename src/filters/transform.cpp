@@ -166,9 +166,10 @@ CCPLUS_FILTER(transform) {
     float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
-            tmatrix[i * 3 + j] = H.at<double>(i, j);
+            tmatrix[i * 3 + j] = H.at<double>(j, i);
         }
     }
+
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
@@ -181,8 +182,8 @@ CCPLUS_FILTER(transform) {
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     ret->bindFBO();
 
-    GLuint location = glGetUniformLocation(program, "T");
-    glUniformMatrix3fv(location, 1, GL_TRUE, tmatrix);
+    GLuint location = glGetUniformLocation(program, "trans");
+    glUniformMatrix3fv(location, 1, GL_FALSE, tmatrix);
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glUniform1f(glGetUniformLocation(program, "src_width"), 1.0f * frame->width);
@@ -193,6 +194,7 @@ CCPLUS_FILTER(transform) {
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     fillSprite();
+
     ret->ext = frame->ext;
     ret->ext.anchorAdjustX = ret->ext.anchorAdjustY = 0;
     ret->ext.scaleAdjustX = ret->ext.scaleAdjustY = 1;

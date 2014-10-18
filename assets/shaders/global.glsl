@@ -6,7 +6,7 @@
 #endif
 
 #ifdef IS_FRAGMENT_SHADER
-    precision lowp float;
+    precision mediump float;
     precision mediump int;
 #endif
 
