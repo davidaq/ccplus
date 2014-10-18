@@ -26,6 +26,7 @@ cv::Mat CCPlus::readAsset(const char* name) {
 
     FILE* fp = fopen([resPath UTF8String], "rb");
     if(!fp) {
+        printf("------FILE: %s\n", name);
         NSLog(@"Asset %@ not found", resPath);
         return cv::Mat();
     }

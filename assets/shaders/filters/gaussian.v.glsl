@@ -1,10 +1,7 @@
-#version 120
-
 attribute vec4 vertex_position;
 
 varying vec2 xy;
-varying vec2 nbs[25];
-varying float cnt;
+varying vec2 nbs[12];
 
 uniform vec2 pixelOffset;
 uniform int ksize;
@@ -24,8 +21,7 @@ void main() {
     //    14.38070,
     //    16.36501
     //);
-    cnt = ksize;
-    for(int i = 0; i < cnt; i++) {
+    for(int i = 0; i < ksize; i++) {
         vec2 texCoordOffset = gOffsets[i] * pixelOffset;
         nbs[i] = texCoordOffset;
         //nbs[i] = xy + texCoordOffset;

@@ -1,9 +1,7 @@
-#version 120
-
 varying vec2 xy;
-varying vec2 nbs[25];
-varying float cnt;
+varying vec2 nbs[12];
 
+uniform int ksize;
 uniform sampler2D tex;
 uniform float gWeights[100];
 
@@ -19,8 +17,7 @@ void main() {
     //    0.00441,
     //    0.00157
     //);
-    //int ksize = int(cnt);
-    for (int i = 0; i < cnt; i++) {
+    for (int i = 0; i < ksize; i++) {
         vec4 col = texture2D(tex, xy + nbs[i]).rgba + texture2D(tex, xy - nbs[i]).rgba;
         //vec3 col = texture2D(tex, nbs[i]).rgb + texture2D(tex, nbs[i + ksize]).rgb;
         gl_FragColor.rgba += gWeights[i] * col;

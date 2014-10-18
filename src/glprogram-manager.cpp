@@ -13,14 +13,24 @@ void GLProgramManager::clean() {
 }
 
 bool compileShader(const std::string& shaderSourcePath, GLuint& shaderId, bool isVertexShader) {
-    cv::Mat tmpData = readAsset(shaderSourcePath.c_str());
-    std::string shaderSource = std::string((char*)tmpData.data, (char*)tmpData.data + tmpData.total());
+    std::string shaderSource = readTextAsset(shaderSourcePath);
 #ifdef GLSLES
-    if(isVertexShader)
-        shaderSource = shaderSource.replace(0, 12, "#version 100\nprecision mediump float;\n");
-    else
-        shaderSource = shaderSource.replace(0, 12, "#version 100\nprecision lowp float;\n");
+#define GLSLVERSION "#version 100\n#define VERSION_100\n"
+#else
+#define GLSLVERSION "#version 120\n#define VERSION_120\n"
 #endif
+    if(isVertexShader)
+        shaderSource = GLSLVERSION "#define IS_VERTEX_SHADER\n#include <global.glsl>\n" + shaderSource;
+    else
+        shaderSource = GLSLVERSION "#define IS_FRAGMENT_SHADER\n#include <global.glsl>\n" + shaderSource;
+    // process includes
+    size_t pos;
+    while(std::string::npos != (pos = shaderSource.find("#include"))) {
+        size_t f = shaderSource.find('<', pos);
+        size_t l = shaderSource.find('>', pos);
+        std::string includeFile = shaderSource.substr(f + 1, l - f - 1);
+        shaderSource.replace(pos, l - pos + 1, readTextAsset("shaders/" + includeFile));
+    }
     const char* shaderSourceData = shaderSource.c_str();
     int sz = shaderSource.size();
     glShaderSource(shaderId, 1, &shaderSourceData, &sz);
@@ -36,8 +46,9 @@ bool compileShader(const std::string& shaderSourcePath, GLuint& shaderId, bool i
                 &logLength, logMsg );
         printf("error message: %s\n", logMsg);
         delete[] logMsg;
-        log(logFATAL) << "Can't compile shader for " << shaderSourcePath;
-            exit(0);
+        log(logERROR) << "Can't compile shader for " << shaderSourcePath;
+        log(logFATAL) << shaderSource;
+        exit(0);
         return false;
     }
     return true;

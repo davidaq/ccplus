@@ -12,6 +12,7 @@
 #include <iomanip>
 
 #include "logger.hpp"
+#include "platform.hpp"
 
 static inline double getSystemTime() { 
     // Might not work at multicore situation
@@ -188,4 +189,10 @@ static inline void mat3to4(cv::Mat& org) {
         mixChannels(&org, 1, &newimg, 1, from_to, 3);
         org = newimg;
     } 
+}
+
+static inline std::string readTextAsset(const std::string& path) {
+    cv::Mat raw = CCPlus::readAsset(path.c_str());
+    const char* ptr = (const char*)raw.data;
+    return std::string(ptr, ptr + raw.total());
 }
