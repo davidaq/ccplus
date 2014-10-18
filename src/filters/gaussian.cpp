@@ -100,10 +100,14 @@ CCPLUS_FILTER(gaussian) {
         offset[i] = i * 2.0f + halfKernel[i * 2 + 1] / kernel[i];
         //std::cout << kernel[i] << std::endl;
     }
+    for (int i = ksize; i < 12; i++) {
+        kernel[i] = 0;
+        offset[i] = 0;
+    }
 
     glUniform1i(glGetUniformLocation(program, "ksize"), ksize);
-    glUniform1fv(glGetUniformLocation(program, "gWeights"), ksize, kernel);
-    glUniform1fv(glGetUniformLocation(program, "gOffsets"), ksize, offset);
+    glUniform1fv(glGetUniformLocation(program, "gWeights"), 12, kernel);
+    glUniform1fv(glGetUniformLocation(program, "gOffsets"), 12, offset);
 
     delete [] kernel;
     delete [] offset;
