@@ -170,9 +170,6 @@ CCPLUS_FILTER(transform) {
         }
     }
 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
-    ret->bindFBO();
-
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
         "filter_transform",
@@ -180,6 +177,9 @@ CCPLUS_FILTER(transform) {
         "shaders/filters/transform.f.glsl"
     );
     glUseProgram(program);
+
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
 
     GLuint location = glGetUniformLocation(program, "T");
     glUniformMatrix3fv(location, 1, GL_TRUE, tmatrix);

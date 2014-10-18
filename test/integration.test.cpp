@@ -8,6 +8,13 @@ TEST(Integration, Basic) {
     CCPlus::go("test/res/basic.tml", "tmp", 18);
 }
 
+extern "C" {
+    void CCPLUS_TEST(const char* _opos);
+}
+TEST(Integration, Shaders) {
+    CCPLUS_TEST("tmp/");
+}
+
 TEST(Integration, Stop) {
     CCPlus::initContext("test/res/test2.tml", "tmp", 18);
     CCPlus::render();

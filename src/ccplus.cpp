@@ -34,10 +34,106 @@ void CCPlus::releaseContext() {
     render_thread = 0;
 }
 
+void CCPlus::render() {
+    if (render_thread) {
+        log(logERROR) << "Another render context is currently in use! Aborted.";
+        return;
+    }
+    if (!Context::getContext()->isActive()) {
+        log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
+        return;
+    }
+    continueRunning = true;
+    render_thread = ParallelExecutor::runInNewThread([] () {
+        Context* ctx = Context::getContext();
+        createGLContext();
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        ctx->collector->limit = 10;
+        ctx->collector->prepare();
+        float delta = 1.0f / ctx->fps;
+        float duration = ctx->mainComposition->getDuration();
+        int fn = 0;
+        GPUFrame blackBackground = GPUFrameCache::alloc(
+                ctx->mainComposition->width, 
+                ctx->mainComposition->height);
+        blackBackground->bindFBO();
+        glClearColor(0, 0, 0, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0, 0, 0, 0);
+
+        for (float i = 0; i <= duration; i += delta) {
+            if (!continueRunning) {
+                log(logINFO) << "----Rendering process is terminated!---";
+                return;
+            }
+            while(ctx->collector->finished() < i) {
+                log(logINFO) << "wait --" << ctx->collector->finished();
+                ctx->collector->signal.wait();
+            }
+            ctx->collector->limit = i + 10;
+            log(logINFO) << "render frame --" << i;
+            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
+            frame = mergeFrame(blackBackground, frame, DEFAULT);
+            char buf[20];
+            sprintf(buf, "%07d.zim", fn++);
+            frame->toCPU().write(generatePath(ctx->storagePath, buf));
+            for(auto item = ctx->renderables.begin();
+                    item != ctx->renderables.end(); ) {
+                Renderable* r = item->second;
+                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                    log(logINFO) << "release" << item->first;
+                    r->release();
+                    ctx->renderables.erase(item++);
+                } else {
+                    item++;
+                }
+            }
+        }
+    });
+}
+
+void CCPlus::waitRender() {
+    if (!render_thread) return;
+    pthread_join(render_thread, 0);
+}
+
+void CCPlus::encode() {
+    CCPlus::waitRender();
+    Context* ctx = Context::getContext();
+    if (!ctx->isActive()) {
+        log(logERROR) << "Context hasn't been initialized! Aborted encoding.";
+        return;
+    }
+    VideoEncoder encoder(
+            ctx->getStoragePath("result.mp4"),
+            ctx->fps);
+    float delta = 1.0 / ctx->fps;
+    float duration = ctx->mainComposition->getDuration();
+    int fn = 0;
+    for (float i = 0; i <= duration; i += delta) {
+        Frame f;
+        char buf[64];
+        sprintf(buf, "%07d.zim", fn);
+        f.read(generatePath(ctx->storagePath, buf));
+        encoder.appendFrame(f);
+        fn++;
+    }
+    encoder.finish();
+}
+
+int CCPlus::numberOfFrames() {
+    Context* ctx = Context::getContext();
+    float d = 1.0 / ctx->fps;
+    return ctx->mainComposition->getDuration() / d;
+}
+
 // test
 #include "filter.hpp"
 #include "platform.hpp"
 using namespace CCPlus;
+std::string opos;
 GPUFrame imreadAsset(const std::string& path) {
     cv::Mat mat = readAsset(path.c_str());
     mat = cv::imdecode(mat, CV_LOAD_IMAGE_UNCHANGED);
@@ -60,7 +156,7 @@ static inline Frame testFilter(const std::string srcFile, const std::string filt
 }
 
 static inline std::string P(const std::string& p) {
-    return Context::getContext()->getStoragePath(p);
+    return opos + "/" + p;
 }
 
 static inline Frame testMerge(GPUFrame a, GPUFrame b, BlendMode mode) {
@@ -71,9 +167,7 @@ static inline Frame testTrkMat(GPUFrame a, GPUFrame b, TrackMatteMode mode) {
     return trackMatte(a, b, mode)->toCPU();
 }
 
-void testME() {
-    L() << "TEST HERE!!!!!!";
-    Context* ctx = Context::getContext();
+void testMe() {
     imwrite(P("load.png"), imreadAsset("test/res/test1.jpg")->toCPU().image);
 
     imwrite(P("transform.png"), testFilter("test/res/test1.jpg", "transform",
@@ -115,102 +209,13 @@ void testME() {
     imwrite(P("t-luma_inv.png"), testTrkMat(a, b, TRKMTE_LUMA_INV).image);
     exit(0);
 }
+extern "C" {
+    void CCPLUS_TEST(const char* _opos) {
+        opos = _opos;
+        pthread_join(ParallelExecutor::runInNewThread([] () {
+            createGLContext();
+            testMe();
+        }), 0);
+    }
+}
 // ----
-void CCPlus::render() {
-    if (render_thread) {
-        log(logERROR) << "Another render context is currently in use! Aborted.";
-        return;
-    }
-    if (!Context::getContext()->isActive()) {
-        log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
-        return;
-    }
-    continueRunning = true;
-    render_thread = ParallelExecutor::runInNewThread([] () {
-        Context* ctx = Context::getContext();
-        createGLContext();
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
-        ctx->collector->limit = 10;
-        //ctx->collector->prepare();
-        float delta = 1.0f / ctx->fps;
-        float duration = ctx->mainComposition->getDuration();
-        int fn = 0;
-        GPUFrame blackBackground = GPUFrameCache::alloc(
-                ctx->mainComposition->width, 
-                ctx->mainComposition->height);
-        blackBackground->bindFBO();
-        glClearColor(0, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0, 0, 0, 0);
-        // test 
-        testME();
-        // ---- 
-
-        //for (float i = 0; i <= duration; i += delta) {
-        //    if (!continueRunning) {
-        //        log(logINFO) << "----Rendering process is terminated!---";
-        //        return;
-        //    }
-        //    while(ctx->collector->finished() < i) {
-        //        log(logINFO) << "wait --" << ctx->collector->finished();
-        //        ctx->collector->signal.wait();
-        //    }
-        //    ctx->collector->limit = i + 10;
-        //    log(logINFO) << "render frame --" << i;
-        //    GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-        //    frame = mergeFrame(blackBackground, frame, DEFAULT);
-        //    char buf[20];
-        //    sprintf(buf, "%07d.zim", fn++);
-        //    frame->toCPU().write(generatePath(ctx->storagePath, buf));
-        //    for(auto item = ctx->renderables.begin();
-        //            item != ctx->renderables.end(); ) {
-        //        Renderable* r = item->second;
-        //        if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-        //            log(logINFO) << "release" << item->first;
-        //            r->release();
-        //            ctx->renderables.erase(item++);
-        //        } else {
-        //            item++;
-        //        }
-        //    }
-        //}
-    });
-}
-
-void CCPlus::waitRender() {
-    if (!render_thread) return;
-    pthread_join(render_thread, 0);
-}
-
-void CCPlus::encode() {
-    CCPlus::waitRender();
-    Context* ctx = Context::getContext();
-    if (!ctx->isActive()) {
-        log(logERROR) << "Context hasn't been initialized! Aborted encoding.";
-        return;
-    }
-    VideoEncoder encoder(
-            ctx->getStoragePath("result.mp4"),
-            ctx->fps);
-    float delta = 1.0 / ctx->fps;
-    float duration = ctx->mainComposition->getDuration();
-    int fn = 0;
-    for (float i = 0; i <= duration; i += delta) {
-        Frame f;
-        char buf[64];
-        sprintf(buf, "%07d.zim", fn);
-        f.read(generatePath(ctx->storagePath, buf));
-        encoder.appendFrame(f);
-        fn++;
-    }
-    encoder.finish();
-}
-
-int CCPlus::numberOfFrames() {
-    Context* ctx = Context::getContext();
-    float d = 1.0 / ctx->fps;
-    return ctx->mainComposition->getDuration() / d;
-}
-
