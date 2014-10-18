@@ -78,10 +78,10 @@ void testME() {
 
     imwrite(P("transform.png"), testFilter("test/res/test1.jpg", "transform",
                 {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500).image);
-    //imwrite(P("mask.png"), testFilter("test/res/test2.jpg", "mask",
-    //            {50, 50, 300, 100, 325, 100, 350, 50, 375, 100, 400, 100, 350, 300}, 640, 852).image);
-    //imwrite(P("gaussian.png"), testFilter("test/res/test2.jpg", "gaussian",
-    //            {7, 1}, 640, 852).image);
+    imwrite(P("mask.png"), testFilter("test/res/test2.jpg", "mask",
+                {50, 50, 300, 100, 325, 100, 350, 50, 375, 100, 400, 100, 350, 300}, 640, 852).image);
+    imwrite(P("gaussian.png"), testFilter("test/res/test2.jpg", "gaussian",
+                {7, 1}, 640, 852).image);
     imwrite(P("4color.png"), testFilter("test/res/test1.jpg", "4color",
                 { 0, 0, 255, 0, 0, 
                 279, 0, 0, 255, 0, 
