@@ -25,8 +25,6 @@ void Context::begin(const std::string& tmlPath, const std::string& storagePath, 
     this->tmlDir = dirName(tmlPath);
     this->storagePath = storagePath;
     this->fps = fps;
-
-    L() << this;
     
     TMLReader reader;
     mainComposition = reader.read(tmlPath);

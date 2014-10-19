@@ -37,10 +37,8 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
 
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
-        L() << comp << name;
         Layer compLayer = initLayer(t, comp->width, comp->height);
         comp->appendLayer(compLayer);
-        L() << compLayer.renderableUri;
     }
 
     Context::getContext()->putRenderable("composition://" + name, comp);
@@ -125,7 +123,6 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }
         if(renderable) {
-            L() << renderable << uri;
             Context::getContext()->retain(renderable);
             Context::getContext()->putRenderable(uri, renderable);
         }

@@ -7,9 +7,10 @@
 
 using namespace CCPlus;
 
-void CCPlus::createGLContext() {
+void* CCPlus::createGLContext() {
     /* OpenGL initialization: only for testing */
-    CGLContextObj ctx;
+    CGLContextObj* ret = new CGLContextObj;
+    CGLContextObj& ctx = *ret;
     CGLPixelFormatAttribute attributes[4] = {
         kCGLPFAAccelerated,   
         kCGLPFAOpenGLProfile, 
@@ -20,15 +21,20 @@ void CCPlus::createGLContext() {
     CGLPixelFormatObj pix;
     CGLError errorCode;
     GLint num; // stores the number of possible pixel formats
-    errorCode = CGLChoosePixelFormat( attributes, &pix, &num  );
-    errorCode = CGLCreateContext( pix, nullptr, &ctx  ); // second parameter can be another context for object sharing
-    CGLDestroyPixelFormat( pix  );
+    errorCode = CGLChoosePixelFormat(attributes, &pix, &num);
+    errorCode = CGLCreateContext(pix, nullptr, &ctx); // second parameter can be another context for object sharing
+    CGLDestroyPixelFormat(pix);
 
-    errorCode = CGLSetCurrentContext( ctx  );
+    errorCode = CGLSetCurrentContext(ctx);
     if (errorCode) {
         log(logFATAL) << "OpenGL initializtion failed, code: " << errorCode;
     }
-    //printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+    return ret;
+}
+
+void CCPlus::destroyGLContext(void* ctx) {
+    CGLSetCurrentContext(0);
+    CGLDestroyContext(*((CGLContextObj*)ctx));
 }
 
 cv::Mat CCPlus::readAsset(const char* _name) {

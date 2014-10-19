@@ -22,7 +22,7 @@ inline std::vector<float> GenerateSeparableGaussKernel(int kernelSize) {
     float sum      = 0.0;
     for (int x = 0; x < kernelSize; ++x) 
     {
-        kernel[x] = (float)sqrt( exp( -0.5 * (pow((x-mean)/sigma, 2.0) + pow((mean)/sigma,2.0)) )
+        kernel[x] = (float)sqrt( exp( -0.5 * (pow((x-mean)/sigma, 2.0) + pow((mean)/sigma, 2.0)) )
             / (2 * cPI * sigma * sigma) );
         sum += kernel[x];
     }

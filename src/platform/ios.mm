@@ -6,9 +6,13 @@
 #import <GLKit/GLKit.h>
 #include "platform.hpp"
 
-void CCPlus::createGLContext() {
+void* CCPlus::createGLContext() {
     EAGLContext* glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
     [EAGLContext setCurrentContext:glContext];
+}
+
+void CCPlus::destroyGLContext(void*) {
+    [EAGLContext setCurrentContext:nil];
 }
 
 cv::Mat CCPlus::readAsset(const char* name) {

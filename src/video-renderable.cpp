@@ -23,7 +23,12 @@ VideoRenderable::VideoRenderable(const std::string& _uri) :
     }
 }
 
+VideoRenderable::~VideoRenderable() {
+    release();
+}
+
 void VideoRenderable::release() {
+    framesCache.clear();
     if(decoder) {
         delete decoder;
         decoder = 0;
@@ -155,6 +160,20 @@ int VideoRenderable::time2frame(float time) {
 }
 
 float VideoRenderable::getDuration() {
+    if(duration > 0)
+        return duration;
+    if(!framesCache.empty()) {
+        int max = 0;
+        for(const auto& item : framesCache) {
+            if(item.first > max)
+                max = item.first;
+        }
+        max++;
+        duration = max * 1.0f / Context::getContext()->fps;
+        float oduration = decoder->getVideoInfo().duration;
+        if(duration < oduration && oduration - duration < oduration * 0.1)
+            duration = oduration;
+    }
     return decoder->getVideoInfo().duration;
 }
 

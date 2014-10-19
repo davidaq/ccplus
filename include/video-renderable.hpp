@@ -11,7 +11,7 @@ namespace CCPlus {
 class CCPlus::VideoRenderable : public CCPlus::Renderable {
 public:
     VideoRenderable(const std::string& uri);
-    ~VideoRenderable() {this->release();};
+    ~VideoRenderable();
 
     void prepare();
     void release();
@@ -20,6 +20,7 @@ public:
     CCPlus::GPUFrame getGPUFrame(float time);
 
 private:
+    float duration = -1;
     void preparePart(float start, float duration);
     int time2frame(float time);
 

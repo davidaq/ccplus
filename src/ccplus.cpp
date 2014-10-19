@@ -46,7 +46,7 @@ void CCPlus::render() {
     continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([] () {
         Context* ctx = Context::getContext();
-        createGLContext();
+        void* glCtx = createGLContext();
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -91,6 +91,7 @@ void CCPlus::render() {
                 }
             }
         }
+        destroyGLContext(glCtx);
     });
 }
 
@@ -129,7 +130,14 @@ int CCPlus::numberOfFrames() {
     return ctx->mainComposition->getDuration() / d;
 }
 
-// test
+
+
+
+/**************************************************************************
+ * The following are test utilities which are not parts of the ccplus api.
+ * This used to examine problems when porting to a target platform.
+ * Just call CCPLUS_TEST(); in a C environment to run the tests
+ **************************************************************************/
 #include "filter.hpp"
 #include "platform.hpp"
 using namespace CCPlus;
@@ -213,8 +221,9 @@ extern "C" {
     void CCPLUS_TEST(const char* _opos) {
         opos = _opos;
         pthread_join(ParallelExecutor::runInNewThread([] () {
-            createGLContext();
+            void* ctx = createGLContext();
             testMe();
+            destroyGLContext(ctx);
         }), 0);
     }
 }

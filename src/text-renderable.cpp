@@ -80,6 +80,24 @@ float TextRenderable::getDuration() {
     return 0xffffff;
 }
 
+GPUFrame TextRenderable::getGPUFrame(float time) {
+    int kTime = findKeyTime(time);
+    if(!gpuFramesCache.count(kTime)) {
+        if(!framesCache.count(kTime))
+            return GPUFrame();
+        Frame cframe = framesCache[kTime];
+        gpuFramesCache[kTime] = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
+        gpuFramesCache[kTime]->load(cframe);
+    }
+    return gpuFramesCache[kTime];
+}
+
+void TextRenderable::release() {
+    framesCache.clear();
+    keyframes.clear();
+    gpuFramesCache.clear();
+}
+
 void TextRenderable::prepare() {
     // Generate key frame list
     auto f = [&] (int t) {
@@ -102,24 +120,6 @@ void TextRenderable::prepare() {
     for(int f : keyframes) {
         prepareFrame(f);
     }
-}
-
-GPUFrame TextRenderable::getGPUFrame(float time) {
-    int kTime = findKeyTime(time);
-    if(!gpuFramesCache.count(kTime)) {
-        if(!framesCache.count(kTime))
-            return GPUFrame();
-        Frame cframe = framesCache[kTime];
-        gpuFramesCache[kTime] = GPUFrameCache::alloc(cframe.image.cols, cframe.image.rows);
-        gpuFramesCache[kTime]->load(cframe);
-    }
-    return gpuFramesCache[kTime];
-}
-
-void TextRenderable::release() {
-    framesCache.clear();
-    keyframes.clear();
-    gpuFramesCache.clear();
 }
 
 void TextRenderable::prepareFrame(int time) {
@@ -214,6 +214,7 @@ void TextRenderable::prepareFrame(int time) {
             break;
     };
     framesCache[time] = retFrame;
+    FT_Done_Face(face);
 }
 
 int TextRenderable::findKeyTime(float time) {
