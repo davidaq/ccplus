@@ -8,6 +8,10 @@ TEST(Integration, Basic) {
     CCPlus::go("test/res/basic.tml", "tmp", 18);
 }
 
+TEST(Integration, Simple) {
+    CCPlus::go("test/res/test2.tml", "tmp", 18);
+}
+
 extern "C" {
     void CCPLUS_TEST(const char* _opos);
 }

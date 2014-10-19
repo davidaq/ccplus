@@ -25,7 +25,8 @@
                     "time" : 1,
                     "duration" : 10,
                     "start" : 2,
-                    "last" : 11
+                    "last" : 11,
+                    "blend": 4
                 }
             ]
         },

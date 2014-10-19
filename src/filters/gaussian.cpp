@@ -92,8 +92,8 @@ CCPLUS_FILTER(gaussian) {
 
     int ksize = halfKernel.size() / 2;
     //TODO: cache
-    float kernel[15];
-    float offset[15];
+    float kernel[12];
+    float offset[12];
     //L() << halfKernel.size() << " " << ksize;
     for (int i = 0; i < ksize; i++) {
         kernel[i] = halfKernel[i * 2] + halfKernel[i * 2 + 1];

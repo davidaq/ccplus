@@ -31,17 +31,15 @@ GPUFrame Composition::getGPUFrame(float time) {
         }
     }
     // Merge & track matte 
-    GPUFrame ret;
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    // make sure clean
+    ret->bindFBO();
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
         if(!l.show || !l.visible(time))
             continue;
-        if(ret) {
-            GPUFrame cframe = frames[i];
-            ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
-        } else {
-            ret = frames[i];
-        }
+        GPUFrame cframe = frames[i];
+        ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
     }
     delete[] frames;
     return ret;

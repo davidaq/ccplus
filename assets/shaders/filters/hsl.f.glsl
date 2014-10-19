@@ -110,12 +110,12 @@ void main() {
         hsl.r -= 1.0;
     if (hsl.r < 0.0)
         hsl.r += 1.0;
-    //// Sat
+    // Sat
     hsl.g += (sat - 1.0) * (sat > 1.0 ? (1.0 - hsl.g) : hsl.g);
-    hsl.g = max(0.0, min(1.0, hsl.g));
-    //// Lit
+    hsl.g = clamp(hsl.g, 0.0, 1.0);
+    // Lit
     hsl.b += (lit - 1.0) * (lit > 1.0 ? (1.0 - hsl.b) : hsl.b);
-    hsl.b = max(0.0, min(1.0, hsl.b));
+    hsl.b = clamp(hsl.b, 0.0, 1.0);
 
     gl_FragColor = convertHSLtoRGB(hsl);
 }
