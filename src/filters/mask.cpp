@@ -66,12 +66,9 @@ CCPLUS_FILTER(mask) {
 
     mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
 
-    //imwrite("tmp/test.jpg", mask->toCPU().image);
-
     program = manager->getProgram(
             "filter_mask_merge",
             "shaders/fill.v.glsl",
             "shaders/filters/mask_merge.f.glsl");
-
     return blendUsingProgram(program, frame, mask);
 }
