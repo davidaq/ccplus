@@ -7,7 +7,6 @@ from math import ceil
 import string
 import os
 import sys
-import rgb_video
 
 class Resizer():
     def __init__(self, tmlfile):
@@ -47,7 +46,7 @@ class Resizer():
                 os.system('ffmpeg -i "' + src_file + '" -c:v copy -c:a copy -n "' + out_file + '"')
             elif out_file[-4:].lower() == '.mov':
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
-                rgb_video.export(out_file)
+                rgb_video_export(out_file)
                 os.remove(out_file)
             elif out_file[-4:].lower() == '.png':
                 os.system('ffmpeg -i "' + src_file + '" -s ' + str(fsz[0]) + 'x' + str(fsz[1]) + ' -n -c:v png -pix_fmt rgba "' + out_file + '"')
@@ -206,6 +205,57 @@ def cleandir(dirname):
     return ret
 def scandir(l, dirname, items):
     l.append(dirname)
+
+'''
+Utility to be used with ffmpeg to extract the alpha part from a video
+'''
+
+def rgb_video_export(videofile):
+    extract_video(videofile)
+    filter_alpha(videofile)
+    fps = merge_alpha(videofile)
+    extract_rgb(videofile, fps)
+    clean(videofile)
+
+
+def extract_video(videofile):
+    tmpdir = videofile + '__frames/'
+    rmdir(tmpdir)
+    os.mkdir(tmpdir)
+    os.system('ffmpeg -n -i "' + videofile + '" -f image2 -c:v rawvideo -pix_fmt argb -y "' + tmpdir + '%09d.argb"')
+
+def filter_alpha(videofile):
+    tmpdir = videofile + '__frames/'
+    for frame in os.listdir(tmpdir):
+        fp = open(tmpdir + frame, 'rb')
+        data = fp.read()
+        fp.close()
+        alpha = bytearray()
+        for i in range(0, len(data) / 4):
+            alpha.append(data[i * 4])
+        fp = open(tmpdir + frame, 'wb')
+        fp.write(alpha)
+        fp.close()
+
+def merge_alpha(videofile):
+    tmpdir = videofile + '__frames/'
+    fmt = os.popen('ffprobe "' + videofile + '" -show_streams -print_format json -loglevel fatal').read()
+    fmt = JSONDecoder().decode(fmt)
+    for stream in fmt['streams']:
+        if 'width' in stream and 'height' in stream:
+            width = stream['width']
+            height = stream['height']
+            fps = stream['r_frame_rate']
+    scale = str(width) + 'x' + str(height)
+    os.system('ffmpeg -r ' + fps + ' -s ' + scale + ' -f image2 -c:v rawvideo -pix_fmt gray -i "' + tmpdir + '%09d.argb" -r ' + fps + ' -c:v libx264 -pix_fmt yuv420p -y "' + videofile + '.opacity.mp4"')
+    return fps
+
+def extract_rgb(videofile, fps):
+    os.system('ffmpeg -i "' + videofile + '" -c:v libx264 -pix_fmt yuv420p -c:a aac -strict -2 -ac 1 -r ' + fps + ' -y "' + videofile + '.mp4"')
+
+def clean(videofile):
+    tmpdir = videofile + '__frames/'
+    rmdir(tmpdir)
 
 if __name__ == '__main__':
     main()
