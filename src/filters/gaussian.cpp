@@ -40,7 +40,7 @@ CCPLUS_FILTER(gaussian) {
     int size = (int) parameters[0];
     
     int scale = 1;
-    while (size > 47) {
+    while (size > 31) {
         size /= 2;
         scale *= 2;
     }
@@ -92,22 +92,22 @@ CCPLUS_FILTER(gaussian) {
 
     int ksize = halfKernel.size() / 2;
     //TODO: cache
-    float kernel[12];
-    float offset[12];
+    float kernel[8];
+    float offset[8];
     //L() << halfKernel.size() << " " << ksize;
     for (int i = 0; i < ksize; i++) {
         kernel[i] = halfKernel[i * 2] + halfKernel[i * 2 + 1];
         offset[i] = i * 2.0f + halfKernel[i * 2 + 1] / kernel[i];
         //std::cout << kernel[i] << std::endl;
     }
-    for (int i = ksize; i < 12; i++) {
+    for (int i = ksize; i < 8; i++) {
         kernel[i] = 0;
         offset[i] = 0;
     }
 
     glUniform1i(glGetUniformLocation(program, "ksize"), ksize);
-    glUniform1fv(glGetUniformLocation(program, "gWeights"), 12, kernel);
-    glUniform1fv(glGetUniformLocation(program, "gOffsets"), 12, offset);
+    glUniform1fv(glGetUniformLocation(program, "gWeights"), 8, kernel);
+    glUniform1fv(glGetUniformLocation(program, "gOffsets"), 8, offset);
 
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
