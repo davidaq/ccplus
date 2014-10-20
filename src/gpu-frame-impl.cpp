@@ -25,8 +25,8 @@ Frame GPUFrameImpl::toCPU() {
         glBindTexture(GL_TEXTURE_2D, textureID);
         ret.image = cv::Mat::zeros(height, width, CV_8UC4);
         bindFBO(false);
-        glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
         glFinish();
+        glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
     }
     return ret;
 }
