@@ -151,7 +151,7 @@ void CCPlus::fillSprite() {
 
 void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
     if (pnts.size() % 3 != 0 || pnts.size() == 0) {
-        log(logERROR) << "Invalid fillTriangles parameters number";
+        log(logERROR) << "Invalid fillTriangles parameters number: " << pnts.size();
         return;
     } 
 
