@@ -9,7 +9,7 @@ using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(mask) {
-    if (parameters.size() <= 0) {
+    if (parameters.size() < 2) {
         log(logERROR) << "Not enough parameters for mask";
         return frame;
     }
@@ -20,9 +20,13 @@ CCPLUS_FILTER(mask) {
     int sz = parameters.size() / 2 - 1;
 
     for (int i = 1; i <= sz; i++) {
+        if (i > 1 && 
+            parameters[i * 2] == parameters[i * 2 - 2] && 
+            parameters[i * 2 + 1] == parameters[i * 2 - 1])
+            continue;
         pnts.push_back({
-                parameters[i * 2] / width * 2.0 - 1.0, 
-                parameters[i * 2 + 1] / height * 2.0 - 1.0});
+                parameters[i * 2 + 1] / width * 2.0 - 1.0, 
+                parameters[i * 2] / height * 2.0 - 1.0});
     }
     pnts = CCPlus::triangulate(pnts);
 
@@ -45,6 +49,8 @@ CCPLUS_FILTER(mask) {
 
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
+        if (pnts.size() == 0)
+            return ret;
         fillTriangles(pnts);
         return ret;
     } 
