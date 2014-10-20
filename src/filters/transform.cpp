@@ -160,7 +160,6 @@ CCPLUS_FILTER(transform) {
     H.push_back(1.0);
     H = H.reshape(0, 3);
     invert(H, H);
-    L() << H;
     float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
