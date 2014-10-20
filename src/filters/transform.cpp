@@ -20,9 +20,6 @@ CCPLUS_FILTER(transform) {
             0, 0, 0, 1);
 
     for (int set = 0; set < parameters.size(); set += 12) {
-        if(set >= 12) {
-            L();
-        }
         int pos_x = (int)parameters[0 + set];
         int pos_y = (int)parameters[1 + set];
         int pos_z = (int)parameters[2 + set];

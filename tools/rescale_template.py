@@ -36,9 +36,11 @@ class Resizer():
         self.preparedir()
         files = self.usedfiles()
         sizes = self.tml['usedfiles']
+        self.favor_rescale = {};
         for f in files:
             sz = (sizes[f]['width'], sizes[f]['height'])
             fsz = self.favoredsize(sz)
+            self.favor_rescale["file://" + f] = (sz[0] * self.scale / fsz[0], sz[1] * self.scale / fsz[1])
             src_file = self.dirname + f
             out_file = self.dirname + '(resized)' + os.path.sep + f
             if out_file[-4:].lower() in ['.mp3','.aac','.wma','.rm','.wav','.flac','.ogg']:
@@ -81,6 +83,11 @@ class Resizer():
                         for i in range(0, 6):
                             ji = i + j * 12
                             trans[ji] *= self.scale
+                    if layer['uri'] in self.favor_rescale:
+                        scale = self.favor_rescale[layer['uri']]
+                        adjust = [0, 0, 0, 0, 0, 0, 1 / scale[0], 1 / scale[1], 1, 0, 0, 0]
+                        adjust.extend(trans)
+                        transform[time] = adjust
                 if 'mask' in layer['properties']:
                     mask = layer['properties']['mask']
                     for time in mask:
@@ -130,7 +137,7 @@ class Resizer():
             scale = maxheight * 1.0 / h
             h = maxheight
             w *= scale
-        self.scale = scale
+        self.scale = scale * 1.0
         self.resizefiles()
         self.resizetml()
 

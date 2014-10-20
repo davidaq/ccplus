@@ -99,7 +99,9 @@ void TextRenderable::release() {
 }
 
 void TextRenderable::prepare() {
+    static Lock lock;
     // Generate key frame list
+    lock.lock();
     auto f = [&] (int t) {
         keyframes.push_back(t);
     };
@@ -120,6 +122,7 @@ void TextRenderable::prepare() {
     for(int f : keyframes) {
         prepareFrame(f);
     }
+    lock.unlock();
 }
 
 void TextRenderable::prepareFrame(int time) {
@@ -134,6 +137,10 @@ void TextRenderable::prepareFrame(int time) {
         fontData = readAsset(("fonts/" + fontName).c_str());
     if(fontData.empty())
         fontData = readAsset("font.ttf");
+    if(fontData.empty()) {
+        log(logFATAL) << "Can't find font nor a default one...";
+        return;
+    }
     FT_Face face;
     int error;
     error = FT_New_Memory_Face(Context::getContext()->freetype(),
