@@ -61,6 +61,8 @@ FootageCollector::FootageCollector(Composition* comp) {
 }
 
 FootageCollector::~FootageCollector() {
+    // Prevent dead-lock of footage collector
+    limit = 0x7fffffff;
     stop();
     for(int i = 0; i < COLLECTOR_THREAD; i++) {
         delete threads[i];
