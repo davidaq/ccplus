@@ -85,7 +85,7 @@ class Resizer():
                             trans[ji] *= self.scale
                     if layer['uri'] in self.favor_rescale:
                         scale = self.favor_rescale[layer['uri']]
-                        adjust = [0, 0, 0, 0, 0, 0, 1 / scale[0], 1 / scale[1], 1, 0, 0, 0]
+                        adjust = [0, 0, 0, 0, 0, 0, scale[0], scale[1], 1, 0, 0, 0]
                         adjust.extend(trans)
                         transform[time] = adjust
                 if 'mask' in layer['properties']:

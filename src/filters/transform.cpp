@@ -20,16 +20,16 @@ CCPLUS_FILTER(transform) {
             0, 0, 0, 1);
 
     for (int set = 0; set < parameters.size(); set += 12) {
-        int pos_x = (int)parameters[0 + set];
-        int pos_y = (int)parameters[1 + set];
-        int pos_z = (int)parameters[2 + set];
-        int anchor_x = (int)parameters[3 + set];
-        int anchor_y = (int)parameters[4 + set];
+        float pos_x = parameters[0 + set];
+        float pos_y = parameters[1 + set];
+        float pos_z = parameters[2 + set];
+        float anchor_x = parameters[3 + set];
+        float anchor_y = parameters[4 + set];
         if(set == 0) {
             anchor_x += frame->ext.anchorAdjustX;
             anchor_y += frame->ext.anchorAdjustY;
         }
-        int anchor_z = (int)parameters[5 + set];
+        float anchor_z = parameters[5 + set];
         if (anchor_z != 0) {
             log(CCPlus::logWARN) << "Anchor z is not supported";
         }
@@ -160,6 +160,7 @@ CCPLUS_FILTER(transform) {
     H.push_back(1.0);
     H = H.reshape(0, 3);
     invert(H, H);
+    L() << H;
     float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
