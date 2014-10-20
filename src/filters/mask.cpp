@@ -25,13 +25,10 @@ CCPLUS_FILTER(mask) {
             parameters[i * 2 + 1] == parameters[i * 2 - 1])
             continue;
         pnts.push_back({
-                parameters[i * 2] / width * 2.0 - 1.0, 
-                parameters[i * 2 + 1] / height * 2.0 - 1.0});
+                parameters[i * 2 + 1] / width * 2.0 - 1.0, 
+                parameters[i * 2] / height * 2.0 - 1.0});
     }
     pnts = CCPlus::triangulate(pnts);
-    if (pnts.size() == 0) {
-        return frame;
-    }
 
     GLProgramManager* manager = GLProgramManager::getManager();
 
@@ -52,6 +49,8 @@ CCPLUS_FILTER(mask) {
 
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
+        if (pnts.size() == 0)
+            return ret;
         fillTriangles(pnts);
         return ret;
     } 
