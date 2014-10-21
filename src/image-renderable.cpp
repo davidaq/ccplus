@@ -75,6 +75,9 @@ void ImageRenderable::prepare() {
     }
 
     image.image = org;
+#ifdef __ANDROID__
+    cv::cvtColor(image.image, image.image, CV_BGRA2RGBA);
+#endif
 }
 
 void ImageRenderable::release() {

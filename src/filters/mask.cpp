@@ -14,8 +14,8 @@ CCPLUS_FILTER(mask) {
         return frame;
     }
     std::vector<std::pair<float, float>> pnts;
-    int kwidth = parameters[0];
-    int kheight = parameters[1];
+    int kwidth = parameters[1];
+    int kheight = parameters[0];
     int ksize = (kwidth + kheight) / 2;
     int sz = parameters.size() / 2 - 1;
 

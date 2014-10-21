@@ -4,7 +4,7 @@ ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
 	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
-	-std=c99 -D__ANDROID__ \
+	-std=c99 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
@@ -13,7 +13,7 @@ NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 	-I{$NDK_PATH}/sources/cxx-stl/llvm-libc++/libcxx/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include \
-	-std=c++11 -D__ANDROID__ \
+	-std=c++11 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 

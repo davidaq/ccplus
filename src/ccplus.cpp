@@ -49,6 +49,8 @@ void CCPlus::render() {
         void* glCtx = createGLContext();
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_STENCIL_TEST);
         glDisable(GL_CULL_FACE);
         ctx->collector->limit = 10;
         ctx->collector->prepare();

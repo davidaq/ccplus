@@ -138,6 +138,10 @@ void GifRenderable::prepareGif() {
         }
         Frame ret;
         ret.image = im;
+#ifdef __ANDROID__
+        if(!ret.image.empty())
+            cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
+#endif
         framesCache.push_back(std::pair<float, cv::Mat>(currentTime, ret.zimCompressed()));
 
         currentTime += pallete.delay;

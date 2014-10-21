@@ -211,11 +211,14 @@ Utility to be used with ffmpeg to extract the alpha part from a video
 '''
 
 def rgb_video_export(videofile):
-    extract_video(videofile)
-    filter_alpha(videofile)
-    fps = merge_alpha(videofile)
-    extract_rgb(videofile, fps)
-    clean(videofile)
+    try:
+        extract_video(videofile)
+        filter_alpha(videofile)
+        fps = merge_alpha(videofile)
+        extract_rgb(videofile, fps)
+        clean(videofile)
+    except:
+        pass
 
 
 def extract_video(videofile):

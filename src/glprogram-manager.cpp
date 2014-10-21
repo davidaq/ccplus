@@ -44,9 +44,8 @@ bool compileShader(const std::string& shaderSourcePath, GLuint& shaderId, bool i
         char* logMsg = new char[logMaxSize];
         glGetShaderInfoLog( shaderId, logMaxSize, 
                 &logLength, logMsg );
-        printf("error message: %s\n", logMsg);
+        log(logERROR) << "Can't compile shader for " << shaderSourcePath << ':' << logMsg;
         delete[] logMsg;
-        log(logERROR) << "Can't compile shader for " << shaderSourcePath;
         log(logFATAL) << shaderSource;
         exit(0);
         return false;
