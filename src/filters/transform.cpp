@@ -111,8 +111,6 @@ CCPLUS_FILTER(transform) {
         return Vec3f(nx, ny, nz);
     };
 
-    float xMax = 0, xMin = width - 1, yMax = 0, yMin = height - 1;
-
     Mat A = Mat::zeros(8, 8, CV_64F);
     Mat C = Mat::zeros(8, 1, CV_64F);
     int idx = 0;
@@ -126,10 +124,6 @@ CCPLUS_FILTER(transform) {
             float x2 = tmp[0] / ratio;
             float y2 = tmp[1] / ratio;
             //L() << x1 << " " << y1 << " " << x2 << " " << y2;
-            xMax = max(xMax, x2);
-            xMin = min(xMin, x2);
-            yMax = max(yMax, y2);
-            yMin = min(yMin, y2);
 
             A.at<double>(idx * 2, 0) = -x2;
             A.at<double>(idx * 2, 1) = -y2;
@@ -147,11 +141,6 @@ CCPLUS_FILTER(transform) {
             idx++;
         }
 
-    xMin = std::max<float>(xMin, 0);
-    xMax = std::min<float>(xMax, width);
-    yMin = std::max<float>(yMin, 0);
-    yMax = std::min<float>(yMax, height);
-
     /* 
      * Calculate the homography 
      **/
@@ -166,7 +155,6 @@ CCPLUS_FILTER(transform) {
             tmatrix[i * 3 + j] = H.at<double>(j, i);
         }
     }
-
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
