@@ -14,4 +14,7 @@ public:
     float duration;
     float width;
     float height;
+
+    float lastQuery = -1;
+    GPUFrame lastFrame = GPUFrame();
 };
