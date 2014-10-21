@@ -38,7 +38,7 @@ CCPLUS_FILTER(4color) {
     glUniform1f(glGetUniformLocation(program, "opacity"), opacity);
 
     GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
-    tmp_frame->bindFBO();
+    tmp_frame->bindFBO(false);
 
     for (int ch = 0; ch < 3; ch++) {
         // A * x = C

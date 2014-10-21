@@ -91,7 +91,7 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     glUseProgram(program);
 
     GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
-    frame->bindFBO();
+    frame->bindFBO(false);
 
     frame->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
 

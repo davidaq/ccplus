@@ -20,7 +20,7 @@ CCPLUS_FILTER(opacity) {
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     ret->ext = frame->ext;
-    ret->bindFBO();
+    ret->bindFBO(false);
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(

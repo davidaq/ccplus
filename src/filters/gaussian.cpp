@@ -20,7 +20,7 @@ GPUFrame sampleToSize(GPUFrame& frame, int width, int height) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-    ret->bindFBO();
+    ret->bindFBO(false);
     fillSprite();
     return ret;
 };
@@ -122,7 +122,7 @@ CCPLUS_FILTER(gaussian) {
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     GPUFrame tmp = GPUFrameCache::alloc(frame->width, frame->height);
     if (direction != 2) { // With X
-        tmp->bindFBO();
+        tmp->bindFBO(false);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
         glUniform2f(glGetUniformLocation(program, "pixelOffset"), 1.0f / frame->width, 0);
@@ -130,7 +130,7 @@ CCPLUS_FILTER(gaussian) {
     } 
     if (direction != 3) { // With Y
         glUniform2f(glGetUniformLocation(program, "pixelOffset"), 0, 1.0f / frame->width);
-        ret->bindFBO();
+        ret->bindFBO(false);
         if (direction == 2) { // never go x
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, frame->textureID);
