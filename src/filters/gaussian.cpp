@@ -8,6 +8,30 @@
 using namespace cv;
 using namespace CCPlus;
 
+GPUFrame sampleToSize(GPUFrame& frame, int width, int height) {
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint program = manager->getProgram(
+            "sample",
+            "shaders/fill.v.glsl",
+            "shaders/filters/transform.f.glsl");
+    glUseProgram(program);
+    glUniform1i(glGetUniformLocation(program, "tex"), 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
+
+    ret->bindFBO();
+    fillSprite();
+    return ret;
+};
+
+GPUFrame sample(GPUFrame& frame, float scale) {
+    int width = std::max(1.0f, frame->width * scale);
+    int height = std::max(1.0f, frame->height * scale);
+    return sampleToSize(frame, width, height);
+};
+
+
 inline std::vector<float> GenerateSeparableGaussKernel(int kernelSize) {
     int halfKernelSize = kernelSize / 2;
 
@@ -51,29 +75,13 @@ CCPLUS_FILTER(gaussian) {
     }
     int direction = (int) parameters[1];
 
-    GLProgramManager* manager = GLProgramManager::getManager();
-
-    auto sample = [manager] (GPUFrame frame, float scale) {
-        int width = std::max(1.0f, frame->width * scale);
-        int height = std::max(1.0f, frame->height * scale);
-        GPUFrame ret = GPUFrameCache::alloc(width, height);
-        GLuint program = manager->getProgram(
-                "sample",
-                "shaders/fill.v.glsl",
-                "shaders/filters/transform.f.glsl");
-        glUseProgram(program);
-        glUniform1i(glGetUniformLocation(program, "tex"), 0);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, frame->textureID);
-
-        ret->bindFBO();
-        fillSprite();
-        return ret;
-    };
+    int org_width = frame->width;
+    int org_height = frame->height;
 
     if (scale > 1) {
         frame = sample(frame, 1.0f / scale);
     }
+    GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(
             "filter_gaussian",
             "shaders/filters/gaussian.v.glsl",
@@ -133,12 +141,12 @@ CCPLUS_FILTER(gaussian) {
         fillSprite();
     } else {
         if (scale > 1)
-            tmp = sample(tmp, scale);
+            tmp = sampleToSize(tmp, org_width, org_height);
         tmp->ext = frame->ext;
         return tmp;
     }
     if (scale > 1)
-        ret = sample(ret, scale);
+        ret = sampleToSize(ret, org_width, org_height);
     ret->ext = frame->ext;
 
     return ret;
