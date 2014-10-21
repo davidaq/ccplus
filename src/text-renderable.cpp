@@ -137,6 +137,8 @@ void TextRenderable::prepareFrame(int time) {
         fontData = readAsset(("fonts/" + fontName).c_str());
     if(fontData.empty())
         fontData = readAsset("font.ttf");
+    if(fontData.empty())
+        fontData = readAsset("default.ttf");
     if(fontData.empty()) {
         log(logFATAL) << "Can't find font nor a default one...";
         return;
