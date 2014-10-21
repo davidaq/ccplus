@@ -183,10 +183,9 @@ CCPLUS_FILTER(transform) {
     glUniformMatrix3fv(location, 1, GL_FALSE, tmatrix);
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    glUniform1f(glGetUniformLocation(program, "src_width"), 1.0f * frame->width);
-    glUniform1f(glGetUniformLocation(program, "src_height"), 1.0f * frame->height);
-    glUniform1f(glGetUniformLocation(program, "dst_width"), 1.0f * width);
-    glUniform1f(glGetUniformLocation(program, "dst_height"), 1.0f * height);
+    glUniform4f(glGetUniformLocation(program, "src_dst_size"), 
+            frame->width, frame->height,
+            width, height);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
