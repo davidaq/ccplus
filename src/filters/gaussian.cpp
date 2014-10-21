@@ -38,6 +38,7 @@ CCPLUS_FILTER(gaussian) {
         return frame;
     }
     int size = (int) parameters[0];
+    if (size <= 2) return frame;
     
     int scale = 1;
     while (size > 31) {

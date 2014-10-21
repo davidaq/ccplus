@@ -64,7 +64,9 @@ CCPLUS_FILTER(mask) {
     mask->bindFBO();
     fillTriangles(pnts);
 
-    mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
+    //mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
+    mask = Filter("gaussian").apply(mask, {(float)kwidth, 3}, mask->width, mask->height);
+    mask = Filter("gaussian").apply(mask, {(float)kheight, 2}, mask->width, mask->height);
 
     program = manager->getProgram(
             "filter_mask_merge",
