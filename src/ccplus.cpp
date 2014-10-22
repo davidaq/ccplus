@@ -36,7 +36,7 @@ void CCPlus::releaseContext() {
     render_thread[0] = render_thread[1] = 0;
 }
 
-float renderedTime[0];
+float renderedTime[2];
 void releaseExpiredRenderables(float time) {
     int ctid = currentRenderThread();
     renderedTime[ctid] = time;
@@ -75,7 +75,7 @@ void renderThreadExec() {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
 
-    for (float i = currentRenderThread() * delta; i <= duration; i += delta * 2) {
+    for (float i = currentRenderThread() * delta; i <= duration; i += delta) {
         if (!continueRunning) {
             log(logINFO) << "----Rendering process is terminated!---";
             return;
@@ -90,7 +90,7 @@ void renderThreadExec() {
         frame = mergeFrame(blackBackground, frame, DEFAULT);
         char buf[20];
         sprintf(buf, "%07d.zim", fn);
-        fn += 2;
+        fn += 1;
         frame->toCPU().write(ctx->getStoragePath(buf));
         releaseExpiredRenderables(i);
     }
@@ -117,10 +117,10 @@ void CCPlus::render() {
             render_thread[0] = 0;
         })
     );
-    render_thread[1] = ParallelExecutor::runInNewThread([] () {
-        renderThreadExec();
-        render_thread[1] = 0;
-    });
+    //render_thread[1] = ParallelExecutor::runInNewThread([] () {
+    //    renderThreadExec();
+    //    render_thread[1] = 0;
+    //});
 }
 
 void CCPlus::waitRender() {
