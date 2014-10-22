@@ -35,10 +35,14 @@ void Composition::prepare() {
     isStill();
 }
 
+void Composition::release() {
+    lastFrame = GPUFrame();
+}
+
 GPUFrame Composition::getGPUFrame(float time) {
     if (std::abs(time - lastQuery) < 0.0001)
         return lastFrame;
-    if (lastQuery != -1 && still) 
+    if (lastFrame && still)
         return lastFrame;
     // Apply filters & track matte
     GPUFrame* frames = new GPUFrame[layers.size()];
