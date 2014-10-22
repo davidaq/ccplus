@@ -1,6 +1,5 @@
 #include "glprogram-manager.hpp"
 #include "platform.hpp"
-#include "render.hpp"
 
 using namespace CCPlus;
 
@@ -10,8 +9,7 @@ GLProgramManager* GLProgramManager::getManager() {
 }
 
 void GLProgramManager::clean() {
-    programPool[0].clear();
-    programPool[1].clear();
+    programPool.clear();
 }
 
 bool compileShader(const std::string& shaderSourcePath, GLuint& shaderId, bool isVertexShader) {
@@ -59,8 +57,6 @@ GLuint GLProgramManager::getProgram(
         const std::string& name,
         const std::string& vshaderPath,
         const std::string& fshaderPath) {
-    
-    auto& programPool = this->programPool[currentRenderThread()];
 
     if (programPool.count(name)) {
         return programPool[name];

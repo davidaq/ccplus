@@ -49,5 +49,5 @@ protected:
     int findKeyTime(float time);
     std::vector<int> keyframes;
     std::map<int, Frame> framesCache;
-    std::map<int, GPUFrame> gpuFramesCache[2];
+    std::map<int, GPUFrame> gpuFramesCache;
 };

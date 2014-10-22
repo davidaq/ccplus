@@ -1,7 +1,6 @@
 #include "image-renderable.hpp"
 #include "gpu-frame-impl.hpp"
 #include "gpu-frame-cache.hpp"
-#include "render.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -11,12 +10,11 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 }
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
-    int ctid = currentRenderThread();
-    if(!gpuCache[ctid]) {
-        gpuCache[ctid] = GPUFrameCache::alloc(image.image.cols, image.image.rows);
-        gpuCache[ctid]->load(image);
+    if(!gpuCache) {
+        gpuCache = GPUFrameCache::alloc(image.image.cols, image.image.rows);
+        gpuCache->load(image);
     }
-    return gpuCache[ctid];
+    return gpuCache;
 }
 
 float ImageRenderable::getDuration() {
@@ -84,8 +82,7 @@ void ImageRenderable::prepare() {
 
 void ImageRenderable::release() {
     image.image = cv::Mat();
-    gpuCache[0] = GPUFrame();
-    gpuCache[1] = GPUFrame();
+    gpuCache = GPUFrame();
 }
 
 int ImageRenderable::getWidth() const {

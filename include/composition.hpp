@@ -10,14 +10,13 @@ public:
     void appendLayer(const Layer&);
     float getDuration();
     GPUFrame getGPUFrame(float time);
-    void release();
 
     std::vector<Layer> layers;
     float duration;
     float width;
     float height;
 
-    float lastQuery[2] = {-1,-1};
-    GPUFrame lastFrame[2];
+    float lastQuery = -1;
+    GPUFrame lastFrame = GPUFrame();
     bool still = false;
 };
