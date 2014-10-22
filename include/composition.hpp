@@ -19,4 +19,5 @@ public:
     float lastQuery = -1;
     GPUFrame lastFrame = GPUFrame();
     bool still = false;
+    bool isStill();
 };

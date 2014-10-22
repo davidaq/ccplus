@@ -16,15 +16,17 @@ void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
-void Composition::prepare() {
+bool Composition::isStill() {
     for (auto& l : layers) {
         if (!l.still()) {
-            still = false;
-            return;
+            return false;
         }
     }
-    //L() << "still composition!";
-    still = true;
+    return true;
+}
+
+void Composition::prepare() {
+    still = isStill();
 }
 
 GPUFrame Composition::getGPUFrame(float time) {

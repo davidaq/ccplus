@@ -3,6 +3,7 @@
 #include "context.hpp"
 #include "gpu-frame.hpp"
 #include "renderable.hpp"
+#include "composition.hpp"
 #include "render.hpp"
 #include "filter.hpp"
 
@@ -125,7 +126,10 @@ float Layer::mapInnerTime(float t) const {
 }
 
 bool Layer::still() {
-    if (!dynamic_cast<ImageRenderable*>(this->getRenderObject())) {
+    Composition* comp = dynamic_cast<Composition*>(getRenderObject());
+    if(comp && !comp->isStill())
+        return false;
+    if (!comp && !dynamic_cast<ImageRenderable*>(this->getRenderObject())) {
         return false;
     }
     for (auto& kv : properties) {
@@ -147,7 +151,5 @@ bool Layer::still() {
             }
         }
     } 
-
-    //Composition* comp = dynamic_cast<Composition*>(l.getRenderObject());
     return true;
 }
