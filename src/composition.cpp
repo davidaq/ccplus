@@ -3,6 +3,7 @@
 #include "render.hpp"
 #include "gpu-frame.hpp"
 #include "context.hpp"
+#include "render.hpp"
 
 using namespace CCPlus;
 
@@ -17,6 +18,9 @@ void Composition::appendLayer(const Layer& layer) {
 }
 
 GPUFrame Composition::getGPUFrame(float time) {
+    int ctid = currentRenderThread();
+    float& lastQuery = this->lastQuery[ctid];
+    GPUFrame& lastFrame = this->lastFrame[ctid];
     if (std::abs(time - lastQuery) < 0.0001)
         return lastFrame;
     // Apply filters & track matte
@@ -47,6 +51,11 @@ GPUFrame Composition::getGPUFrame(float time) {
     lastQuery = time;
     lastFrame = ret;
     return ret;
+}
+
+void Composition::release() {
+    lastQuery[0] = lastQuery[1] = -1;
+    lastFrame[0] = lastFrame[1] = GPUFrame();
 }
 
 float Composition::getDuration() {

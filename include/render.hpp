@@ -34,4 +34,9 @@ namespace CCPlus {
     // Useful when generating masks
     // size of pnts must satisfy pnts.size() % 3 = 0
     void fillTriangles(const std::vector<std::pair<float, float>>& pnts);
+
+
+    // Get current render thread index
+    int currentRenderThread();
+    extern uint64_t primRenderThread;
 }

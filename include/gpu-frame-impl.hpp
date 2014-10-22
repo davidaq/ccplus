@@ -17,4 +17,6 @@ public:
     GLuint textureID = 0, fboID = 0;
 
     CCPlus::FrameExt ext;
+
+    int hostThread;
 };

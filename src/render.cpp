@@ -2,6 +2,7 @@
 #include "context.hpp"
 #include "gpu-frame.hpp"
 #include "glprogram-manager.hpp"
+#include <pthread.h>
 
 using namespace CCPlus;
 
@@ -173,3 +174,10 @@ void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
     glDrawArrays(GL_TRIANGLES, 0, sz / 2);
     delete [] fv;
 }
+
+uint64_t CCPlus::primRenderThread = 0;
+int CCPlus::currentRenderThread() {
+    uint64_t cthread = (uint64_t)(pthread_self());
+    return cthread == primRenderThread ? 0 : 1;
+}
+
