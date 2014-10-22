@@ -91,7 +91,7 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     glUseProgram(program);
 
     GPUFrame frame = GPUFrameCache::alloc(top->width, top->height);
-    frame->bindFBO();
+    frame->bindFBO(false);
 
     frame->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
 
@@ -136,11 +136,11 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
 
 void CCPlus::fillSprite() {
     initGlobalVars();
-    if(!Context::getContext()->flags.count("init fill sprite")) {
+    if(!Context::getContext()->flags.count("fill_sprite")) {
         glGenBuffers(1, &squareVBO);
         glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(squareCoord), squareCoord, GL_STATIC_DRAW);
-        Context::getContext()->flags.insert("init fill sprite");
+        Context::getContext()->flags.insert("fill_sprite");
     } else {
         glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
     }

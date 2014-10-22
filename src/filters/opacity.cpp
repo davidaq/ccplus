@@ -14,10 +14,13 @@ CCPLUS_FILTER(opacity) {
     }
 
     float opa = parameters[0];
+    if (std::abs(opa - 1.0f) < 0.001) {
+        return frame;
+    }
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     ret->ext = frame->ext;
-    ret->bindFBO();
+    ret->bindFBO(false);
 
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(

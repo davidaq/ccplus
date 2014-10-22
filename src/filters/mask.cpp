@@ -47,8 +47,6 @@ CCPLUS_FILTER(mask) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
         if (pnts.size() == 0)
             return ret;
         fillTriangles(pnts);
@@ -65,8 +63,12 @@ CCPLUS_FILTER(mask) {
     fillTriangles(pnts);
 
     //mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
-    mask = Filter("gaussian").apply(mask, {(float)kwidth, 3}, mask->width, mask->height);
-    mask = Filter("gaussian").apply(mask, {(float)kheight, 2}, mask->width, mask->height);
+    if (kwidth == kheight) {
+        mask = Filter("gaussian").apply(mask, {(float)kwidth, 1}, mask->width, mask->height);
+    } else {
+        mask = Filter("gaussian").apply(mask, {(float)kwidth, 3}, mask->width, mask->height);
+        mask = Filter("gaussian").apply(mask, {(float)kheight, 2}, mask->width, mask->height);
+    }
 
     program = manager->getProgram(
             "filter_mask_merge",

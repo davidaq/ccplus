@@ -45,6 +45,7 @@ namespace CCPlus {
 #include "object.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
+#include "profile.hpp"
 
 namespace CCPlus {
     typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;

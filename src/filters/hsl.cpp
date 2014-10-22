@@ -21,8 +21,7 @@ CCPLUS_FILTER(hsl) {
     glUseProgram(program);
 
     GPUFrame ret = GPUFrameCache::alloc(width, height);
-    ret->bindFBO();
-    glClear(GL_COLOR_BUFFER_BIT);
+    ret->bindFBO(false);
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);

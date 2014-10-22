@@ -17,6 +17,8 @@ void Composition::appendLayer(const Layer& layer) {
 }
 
 GPUFrame Composition::getGPUFrame(float time) {
+    if (std::abs(time - lastQuery) < 0.0001)
+        return lastFrame;
     // Apply filters & track matte
     GPUFrame* frames = new GPUFrame[layers.size()];
     for (int i = 0; i < layers.size(); i++) {
@@ -42,6 +44,8 @@ GPUFrame Composition::getGPUFrame(float time) {
         ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
     }
     delete[] frames;
+    lastQuery = time;
+    lastFrame = ret;
     return ret;
 }
 

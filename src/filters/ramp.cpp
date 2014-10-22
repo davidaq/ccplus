@@ -45,7 +45,7 @@ CCPLUS_FILTER(ramp) {
     glUseProgram(program);
 
     GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
-    tmp_frame->bindFBO();
+    tmp_frame->bindFBO(false);
 
     float dx = start_x - end_x;
     float dy = start_y - end_y;
