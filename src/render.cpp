@@ -48,6 +48,21 @@ void initGlobalVars() {
 #undef SET_PROGRAM
 }
 
+void CCPlus::initGL() {
+    initGlobalVars();
+
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_CULL_FACE);
+
+    glGenBuffers(1, &squareVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(squareCoord), squareCoord, GL_STATIC_DRAW);
+    Context::getContext()->flags.insert("fill_sprite");
+}
+
 cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     if(in.empty()) {
         return base.clone();
@@ -111,7 +126,6 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
 }
 
 GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
-    initGlobalVars();
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
         manager->getProgram(
@@ -126,7 +140,6 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
-    initGlobalVars();
     GLuint program = GLProgramManager::getManager()->getProgram(
         programs[mode + BLEND_MODE_COUNT - 1].name,
         "shaders/fill.v.glsl",
@@ -135,15 +148,7 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
 }
 
 void CCPlus::fillSprite() {
-    initGlobalVars();
-    if(!Context::getContext()->flags.count("fill_sprite")) {
-        glGenBuffers(1, &squareVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(squareCoord), squareCoord, GL_STATIC_DRAW);
-        Context::getContext()->flags.insert("fill_sprite");
-    } else {
-        glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
-    }
+    glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
     glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
     glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

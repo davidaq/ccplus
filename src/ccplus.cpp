@@ -10,6 +10,8 @@
 #include "profile.hpp"
 #include "parallel-executor.hpp"
 
+using namespace CCPlus;
+
 pthread_t render_thread = 0;
 bool continueRunning = false;
 
@@ -34,6 +36,54 @@ void CCPlus::releaseContext() {
     render_thread = 0;
 }
 
+void renderThreadExec() {
+    Context* ctx = Context::getContext();
+    void* glCtx = createGLContext();
+    initGL();
+    ctx->collector->limit = 10;
+    ctx->collector->prepare();
+    float delta = 1.0f / ctx->fps;
+    float duration = ctx->mainComposition->getDuration();
+    int fn = 0;
+    GPUFrame blackBackground = GPUFrameCache::alloc(
+            ctx->mainComposition->width, 
+            ctx->mainComposition->height);
+    blackBackground->bindFBO();
+    glClearColor(0, 0, 0, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0, 0, 0, 0);
+
+    for (float i = 0; i <= duration; i += delta) {
+        if (!continueRunning) {
+            log(logINFO) << "----Rendering process is terminated!---";
+            return;
+        }
+        while(ctx->collector->finished() < i) {
+            log(logINFO) << "wait --" << ctx->collector->finished();
+            ctx->collector->signal.wait();
+        }
+        ctx->collector->limit = i + 10;
+        log(logINFO) << "render frame --" << i;
+        GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
+        frame = mergeFrame(blackBackground, frame, DEFAULT);
+        char buf[20];
+        sprintf(buf, "%07d.zim", fn++);
+        frame->toCPU().write(generatePath(ctx->storagePath, buf));
+        for(auto item = ctx->renderables.begin();
+                item != ctx->renderables.end(); ) {
+            Renderable* r = item->second;
+            if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                log(logINFO) << "release" << item->first;
+                r->release();
+                ctx->renderables.erase(item++);
+            } else {
+                item++;
+            }
+        }
+    }
+    destroyGLContext(glCtx);
+}
+
 void CCPlus::render() {
     if (render_thread) {
         log(logERROR) << "Another render context is currently in use! Aborted.";
@@ -45,55 +95,7 @@ void CCPlus::render() {
     }
     continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([] () {
-        Context* ctx = Context::getContext();
-        void* glCtx = createGLContext();
-        glEnable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_STENCIL_TEST);
-        glDisable(GL_CULL_FACE);
-        ctx->collector->limit = 10;
-        ctx->collector->prepare();
-        float delta = 1.0f / ctx->fps;
-        float duration = ctx->mainComposition->getDuration();
-        int fn = 0;
-        GPUFrame blackBackground = GPUFrameCache::alloc(
-                ctx->mainComposition->width, 
-                ctx->mainComposition->height);
-        blackBackground->bindFBO();
-        glClearColor(0, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0, 0, 0, 0);
-
-        for (float i = 0; i <= duration; i += delta) {
-            if (!continueRunning) {
-                log(logINFO) << "----Rendering process is terminated!---";
-                return;
-            }
-            while(ctx->collector->finished() < i) {
-                log(logINFO) << "wait --" << ctx->collector->finished();
-                ctx->collector->signal.wait();
-            }
-            ctx->collector->limit = i + 10;
-            log(logINFO) << "render frame --" << i;
-            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-            frame = mergeFrame(blackBackground, frame, DEFAULT);
-            char buf[20];
-            sprintf(buf, "%07d.zim", fn++);
-            frame->toCPU().write(generatePath(ctx->storagePath, buf));
-            for(auto item = ctx->renderables.begin();
-                    item != ctx->renderables.end(); ) {
-                Renderable* r = item->second;
-                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                    log(logINFO) << "release" << item->first;
-                    r->release();
-                    ctx->renderables.erase(item++);
-                } else {
-                    item++;
-                }
-            }
-        }
-        destroyGLContext(glCtx);
+        renderThreadExec();
     });
 }
 

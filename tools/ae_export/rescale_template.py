@@ -167,7 +167,7 @@ def main():
     if len(sys.argv) > 2:
         scale = sys.argv[2]
     else:
-        scale = '640x360'
+        scale = '480x270'
     scale = scale.split('x')
     w = int(scale[0])
     h = w
