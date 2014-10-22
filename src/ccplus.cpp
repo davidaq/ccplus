@@ -58,6 +58,8 @@ void releaseExpiredRenderables(float time) {
     lock.unlock();
 }
 
+std::atomic<int> currentFramePosition;
+
 void renderThreadExec() {
     void* glCtx = createGLContext();
     initGL();
@@ -65,8 +67,6 @@ void renderThreadExec() {
     Context* ctx = Context::getContext();
     float delta = 1.0f / ctx->fps;
     float duration = ctx->mainComposition->getDuration();
-    int fn = currentRenderThread();
-
     GPUFrame blackBackground = GPUFrameCache::alloc(
             ctx->mainComposition->width, 
             ctx->mainComposition->height);
@@ -75,7 +75,11 @@ void renderThreadExec() {
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
 
-    for (float i = currentRenderThread() * delta; i <= duration; i += delta) {
+    for (;;) {
+        int fn = currentFramePosition++;
+        float i = fn * delta;
+        if(i > duration)
+            break;
         if (!continueRunning) {
             log(logINFO) << "----Rendering process is terminated!---";
             return;
@@ -85,12 +89,19 @@ void renderThreadExec() {
             ctx->collector->signal.wait();
         }
         ctx->collector->limit = i + 10;
+
+        static Lock renderThreadLock;
+        renderThreadLock.lock();
         log(logINFO) << "render frame --" << i;
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         frame = mergeFrame(blackBackground, frame, DEFAULT);
+        glFinish();
+        renderThreadLock.unlock();
+
+
         char buf[20];
         sprintf(buf, "%07d.zim", fn);
-        fn += 1;
+        std::string frameFile = ctx->getStoragePath(buf);
         frame->toCPU().write(ctx->getStoragePath(buf));
         releaseExpiredRenderables(i);
     }
@@ -111,16 +122,17 @@ void CCPlus::render() {
     ctx->collector->prepare();
     continueRunning = true;
     renderedTime[0] = renderedTime[1] = 0;
+    currentFramePosition = 0;
     primRenderThread = (uint64_t)(
         render_thread[0] = ParallelExecutor::runInNewThread([] () {
             renderThreadExec();
             render_thread[0] = 0;
         })
     );
-    //render_thread[1] = ParallelExecutor::runInNewThread([] () {
-    //    renderThreadExec();
-    //    render_thread[1] = 0;
-    //});
+    render_thread[1] = ParallelExecutor::runInNewThread([] () {
+        renderThreadExec();
+        render_thread[1] = 0;
+    });
 }
 
 void CCPlus::waitRender() {
