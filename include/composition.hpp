@@ -6,6 +6,7 @@ class CCPlus::Composition: public CCPlus::Renderable {
 public:
     Composition(float duration, int width, int height);
 
+    void prepare();
     void appendLayer(const Layer&);
     float getDuration();
     GPUFrame getGPUFrame(float time);
@@ -18,4 +19,5 @@ public:
 
     float lastQuery[2] = {-1,-1};
     GPUFrame lastFrame[2];
+    bool still = false;
 };

@@ -17,6 +17,15 @@ void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
+void Composition::prepare() {
+    for (auto& l : layers) {
+        if (!l.still()) {
+            still = false;
+            return;
+        }
+    }
+}
+
 GPUFrame Composition::getGPUFrame(float time) {
     int ctid = currentRenderThread();
     float& lastQuery = this->lastQuery[ctid];

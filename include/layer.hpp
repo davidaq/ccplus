@@ -70,6 +70,8 @@ public:
 
     std::vector<float> interpolate(const std::string&, float) const;
 
+    bool still() const;
+
     std::string renderableUri;
 private:
     CCPlus::Renderable* renderObject = 0;

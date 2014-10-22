@@ -121,3 +121,29 @@ GPUFrame Layer::getFilteredFrame(float t) {
 float Layer::mapInnerTime(float t) const {
     return start + last / duration * (t - time);   
 }
+
+bool Layer::still() const {
+    if (!dynamic_cast<ImageRenderable*>(l.getRenderObject())) {
+        return false;
+    }
+    for (auto& p : properties) {
+        if (p.size() <= 1) continue; 
+        bool first = true;
+        std::vector<float> ref;
+        for (auto& v : p) {
+            if (first) {
+                first = false;
+                ref = v;
+            } else {
+                if (v.size() != ref.size()) return false;
+                for (int i = 0; i < v.size(); i++) {
+                    if (v[i] != ref[i])
+                        return false;
+                }
+            }
+        }
+    } 
+
+    //Composition* comp = dynamic_cast<Composition*>(l.getRenderObject());
+    return true;
+}
