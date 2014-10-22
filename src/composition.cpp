@@ -17,16 +17,22 @@ void Composition::appendLayer(const Layer& layer) {
 }
 
 bool Composition::isStill() {
+    if(stillCached)
+        return still;
     for (auto& l : layers) {
         if (!l.still()) {
+            stillCached = true;
+            still = false;
             return false;
         }
     }
+    stillCached = true;
+    still = true;
     return true;
 }
 
 void Composition::prepare() {
-    still = isStill();
+    isStill();
 }
 
 GPUFrame Composition::getGPUFrame(float time) {
