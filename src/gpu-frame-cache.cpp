@@ -1,16 +1,13 @@
 #include "gpu-frame-cache.hpp"
 #include "gpu-frame-impl.hpp"
-#include "render.hpp"
 
 using namespace cv;
 using namespace CCPlus;
 using namespace boost;
 
-std::map<CCPlus::GPUFrameCache::Size, std::vector<std::pair<GLuint, GLuint>>> GPUFrameCache::cache[2];
+std::map<CCPlus::GPUFrameCache::Size, std::vector<std::pair<GLuint, GLuint>>> GPUFrameCache::cache;
 
 GPUFrame GPUFrameCache::alloc(int width, int height) {
-    int ctid = currentRenderThread();
-    auto& cache = GPUFrameCache::cache[ctid];
     if (width == 0 && height == 0) {
         return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
     }
@@ -23,7 +20,6 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         frame->textureID = (*p)[sz - 1].first;
         frame->fboID = (*p)[sz - 1].second;
         p->pop_back();
-        frame->hostThread = ctid;
         return boost::shared_ptr<GPUFrameImpl>(frame); 
     } else {
         GPUFrameImpl* frame = new GPUFrameImpl();
@@ -54,16 +50,14 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
             log(logERROR) << "failed to make complete framebuffer object" << glCheckFramebufferStatus(GL_FRAMEBUFFER);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        frame->hostThread = ctid;
         return boost::shared_ptr<GPUFrameImpl>(frame); 
     }
 }
 
 void GPUFrameCache::reuse(GPUFrameImpl* frame) {
-    cache[frame->hostThread][Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
+    cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
 }
 
 void GPUFrameCache::clear() {
-    cache[0].clear();
-    cache[1].clear();
+    cache.clear();
 }

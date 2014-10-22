@@ -3,7 +3,6 @@
 #include "render.hpp"
 #include "gpu-frame.hpp"
 #include "context.hpp"
-#include "render.hpp"
 
 using namespace CCPlus;
 
@@ -18,22 +17,22 @@ void Composition::appendLayer(const Layer& layer) {
 }
 
 GPUFrame Composition::getGPUFrame(float time) {
-    int ctid = currentRenderThread();
-    float& lastQuery = this->lastQuery[ctid];
-    GPUFrame& lastFrame = this->lastFrame[ctid];
     if (std::abs(time - lastQuery) < 0.0001)
         return lastFrame;
     // Apply filters & track matte
     GPUFrame* frames = new GPUFrame[layers.size()];
     for (int i = 0; i < layers.size(); i++) {
         Layer& l = layers[i];
-        if(!layers[i + 1].trkMat && (!l.show || !l.visible(time))) {
-            frames[i] = GPUFrame();
-        } else {
-            frames[i] = l.getFilteredFrame(time);
-            if(i > 0 && l.trkMat) {
-                frames[i] = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
-            }
+        if(!l.visible(time))
+            continue;
+        if(i < layers.size() - 1) {
+            if(!l.show && layers[i + 1].trkMat == 0)
+                continue;
+        } else if(!l.show)
+            continue;
+        frames[i] = l.getFilteredFrame(time);
+        if(i > 0 && l.trkMat) {
+            frames[i] = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
         }
     }
     // Merge & track matte 
@@ -51,11 +50,6 @@ GPUFrame Composition::getGPUFrame(float time) {
     lastQuery = time;
     lastFrame = ret;
     return ret;
-}
-
-void Composition::release() {
-    lastQuery[0] = lastQuery[1] = -1;
-    lastFrame[0] = lastFrame[1] = GPUFrame();
 }
 
 float Composition::getDuration() {

@@ -3,7 +3,6 @@
 #include "gpu-frame.hpp"
 #include "logger.hpp"
 #include "context.hpp"
-#include "render.hpp"
 #include <algorithm>
 #include <locale>
 
@@ -83,7 +82,6 @@ float TextRenderable::getDuration() {
 
 GPUFrame TextRenderable::getGPUFrame(float time) {
     int kTime = findKeyTime(time);
-    auto& gpuFramesCache = this->gpuFramesCache[currentRenderThread()];
     if(!gpuFramesCache.count(kTime)) {
         if(!framesCache.count(kTime))
             return GPUFrame();
@@ -97,8 +95,7 @@ GPUFrame TextRenderable::getGPUFrame(float time) {
 void TextRenderable::release() {
     framesCache.clear();
     keyframes.clear();
-    gpuFramesCache[0].clear();
-    gpuFramesCache[1].clear();
+    gpuFramesCache.clear();
 }
 
 void TextRenderable::prepare() {

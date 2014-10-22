@@ -17,5 +17,5 @@ public:
             const std::string& fshader);
 
 private: 
-    std::map<std::string, GLuint> programPool[2];
+    std::map<std::string, GLuint> programPool;
 };
