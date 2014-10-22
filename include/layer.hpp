@@ -70,7 +70,7 @@ public:
 
     std::vector<float> interpolate(const std::string&, float) const;
 
-    bool still() const;
+    bool still();
 
     std::string renderableUri;
 private:

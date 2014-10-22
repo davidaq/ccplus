@@ -6,6 +6,8 @@
 #include "render.hpp"
 #include "filter.hpp"
 
+#include "image-renderable.hpp"
+
 using namespace CCPlus;
 
 Layer::Layer() {}
@@ -122,15 +124,17 @@ float Layer::mapInnerTime(float t) const {
     return start + last / duration * (t - time);   
 }
 
-bool Layer::still() const {
-    if (!dynamic_cast<ImageRenderable*>(l.getRenderObject())) {
+bool Layer::still() {
+    if (!dynamic_cast<ImageRenderable*>(this->getRenderObject())) {
         return false;
     }
-    for (auto& p : properties) {
+    for (auto& kv : properties) {
+        auto& p = kv.second;
         if (p.size() <= 1) continue; 
         bool first = true;
         std::vector<float> ref;
-        for (auto& v : p) {
+        for (auto& kv2 : p) {
+            auto& v = kv2.second;
             if (first) {
                 first = false;
                 ref = v;

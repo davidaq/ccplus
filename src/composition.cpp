@@ -23,7 +23,7 @@ void Composition::prepare() {
             return;
         }
     }
-    L() << "still composition!";
+    //L() << "still composition!";
     still = true;
 }
 
