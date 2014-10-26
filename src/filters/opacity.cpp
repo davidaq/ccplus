@@ -23,17 +23,12 @@ CCPLUS_FILTER(opacity) {
     ret->bindFBO(false);
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-        "filter_opacity",
-        "shaders/fill.v.glsl",
-        "shaders/filters/opacity.f.glsl"
-    );
+    GLuint opaU;
+    GLuint program = manager->getProgram(filter_opacity, &opaU);
     glUseProgram(program);
 
-    GLuint location = glGetUniformLocation(program, "opa");
-    glUniform1f(location, opa);
+    glUniform1f(opaU, opa);
 
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 

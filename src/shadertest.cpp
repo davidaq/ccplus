@@ -94,6 +94,7 @@ extern "C" {
         opos = _opos;
         pthread_join(ParallelExecutor::runInNewThread([] () {
             void* ctx = createGLContext();
+            initGL();
             testMe();
             destroyGLContext(ctx);
         }), 0);
