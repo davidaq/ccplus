@@ -28,14 +28,11 @@ CCPLUS_FILTER(4color) {
     int mode = parameters[22];
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_4color",
-            "shaders/fill.v.glsl",
-            "shaders/filters/4color.f.glsl"
-            );
+    GLuint opacityU, params_b, params_g, params_r;
+    GLuint program = manager->getProgram(filter_4color, &opacityU, &params_b, &params_g, &params_r);
     glUseProgram(program);
 
-    glUniform1f(glGetUniformLocation(program, "opacity"), opacity);
+    glUniform1f(opacityU, opacity);
 
     GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
     tmp_frame->bindFBO(false);
@@ -82,13 +79,13 @@ CCPLUS_FILTER(4color) {
 
         switch (ch) {
             case 0:
-                glUniform1fv(glGetUniformLocation(program, "params_b"), 6, prms);
+                glUniform1fv(params_b, 6, prms);
                 break;
             case 1:
-                glUniform1fv(glGetUniformLocation(program, "params_g"), 6, prms);
+                glUniform1fv(params_g, 6, prms);
                 break;
             case 2:
-                glUniform1fv(glGetUniformLocation(program, "params_r"), 6, prms);
+                glUniform1fv(params_r, 6, prms);
                 break;
             default:
                 break;

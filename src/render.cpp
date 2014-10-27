@@ -14,43 +14,7 @@ float squareCoord[8] = {
     -1.0, -1.0 
 };
 
-struct {
-    const char* name;
-    const char* fshader;
-} programs[BLEND_MODE_COUNT + TRKMTE_MODE_COUNT];
-
-void initGlobalVars() {
-    static bool inited = false;
-    if(inited)
-        return;
-    inited = true;
-
-#define SET_PROGRAM(ID, NAME) programs[ID] = { \
-        .name = "blend " #NAME, \
-        .fshader = "shaders/blenders/" #NAME ".f.glsl" };
-    SET_PROGRAM(DEFAULT, default);
-    SET_PROGRAM(ADD, add);
-    SET_PROGRAM(MULTIPLY, multiply);
-    SET_PROGRAM(SCREEN, screen);
-    SET_PROGRAM(DISOLVE, disolve);
-    SET_PROGRAM(DARKEN, darken);
-    SET_PROGRAM(LIGHTEN, lighten);
-    SET_PROGRAM(OVERLAY, overlay);
-    SET_PROGRAM(DIFFERENCE, difference);
-#undef SET_PROGRAM
-#define SET_PROGRAM(ID, NAME) programs[TRKMTE_ ## ID + BLEND_MODE_COUNT - 1] = { \
-        .name = "trkMat " #NAME, \
-        .fshader = "shaders/trkmat/" #NAME ".f.glsl" };
-    SET_PROGRAM(ALPHA, alpha);
-    SET_PROGRAM(ALPHA_INV, alpha_inv);
-    SET_PROGRAM(LUMA, luma);
-    SET_PROGRAM(LUMA_INV, luma_inv);
-#undef SET_PROGRAM
-}
-
 void CCPlus::initGL() {
-    initGlobalVars();
-
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -59,7 +23,8 @@ void CCPlus::initGL() {
     glGenBuffers(1, &squareVBO);
     glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(squareCoord), squareCoord, GL_STATIC_DRAW);
-    Context::getContext()->flags.insert("fill_sprite");
+
+    GLProgramManager::getManager()->init();
 }
 
 cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
@@ -109,9 +74,6 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
 
     frame->ext.audio = mergeAudio(bottom->ext.audio, top->ext.audio);
 
-    glUniform1i(glGetUniformLocation(program, "tex_up"), 1);
-    glUniform1i(glGetUniformLocation(program, "tex_down"), 2);
-
     // UP
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, top->textureID);
@@ -127,22 +89,13 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
 GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
-        manager->getProgram(
-            programs[blendmode].name,
-            "shaders/fill.v.glsl",
-            programs[blendmode].fshader) :
-        manager->getProgram(
-                "blend none",
-                "shaders/fill.v.glsl",
-                "shaders/blenders/none.f.glsl");
+        manager->getProgram((GLProgram)(blend_default + blendmode - DEFAULT))
+        : manager->getProgram(blend_none);
     return blendUsingProgram(program, bottom, top);
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
-    GLuint program = GLProgramManager::getManager()->getProgram(
-        programs[mode + BLEND_MODE_COUNT - 1].name,
-        "shaders/fill.v.glsl",
-        programs[mode + BLEND_MODE_COUNT - 1].fshader);
+    GLuint program = GLProgramManager::getManager()->getProgram((GLProgram)(trkmte_alpha + mode - TRKMTE_ALPHA));
     return blendUsingProgram(program, color, alpha);
 }
 

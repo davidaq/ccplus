@@ -157,22 +157,16 @@ CCPLUS_FILTER(transform) {
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-        "filter_transform",
-        "shaders/filters/transform.v.glsl",
-        "shaders/filters/transform.f.glsl"
-    );
+    GLuint trans, src_dst_size;
+    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size);
     glUseProgram(program);
 
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     ret->bindFBO();
 
-    GLuint location = glGetUniformLocation(program, "trans");
-    glUniformMatrix3fv(location, 1, GL_FALSE, tmatrix);
+    glUniformMatrix3fv(trans, 1, GL_FALSE, tmatrix);
 
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    glUniform4f(glGetUniformLocation(program, "src_dst_size"), 
-            frame->width, frame->height, width, height);
+    glUniform4f(src_dst_size, frame->width, frame->height, width, height);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 

@@ -11,11 +11,8 @@ CCPLUS_FILTER(grayscale) {
         return frame;
     }
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_grayscale",
-            "shaders/fill.v.glsl",
-            "shaders/filters/grayscale.f.glsl"
-            );
+    GLuint weightsU, hue_satU;
+    GLuint program = manager->getProgram(filter_grayscale, &weightsU, &hue_satU);
     glUseProgram(program);
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
@@ -25,10 +22,8 @@ CCPLUS_FILTER(grayscale) {
     for (int i = 0; i < 6; i++) 
         weights[i] = parameters[i] / 100.0;
 
-    glUniform1fv(glGetUniformLocation(program, "weights"), 6, weights);
-    glUniform2f(glGetUniformLocation(program, "hue_sat"), 
-            parameters[6] / 360.0f, parameters[7]);
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
+    glUniform1fv(weightsU, 6, weights);
+    glUniform2f(hue_satU, parameters[6] / 360.0f, parameters[7]);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
