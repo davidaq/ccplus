@@ -34,10 +34,10 @@ Frame GPUFrameImpl::toCPU() {
         bindFBO(false);
         glFinish();
         glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
-//#ifdef __ANDROID__
-//        if(!ret.image.empty())
-//            cv::cvtColor(ret.image, ret.image, CV_RGBA2BGRA);
-//#endif
+#ifdef __ANDROID__
+        if(!ret.image.empty())
+            cv::cvtColor(ret.image, ret.image, CV_RGBA2BGRA);
+#endif
     }
     return ret;
 }

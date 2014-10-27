@@ -172,8 +172,7 @@ CCPLUS_FILTER(transform) {
 
     glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glUniform4f(glGetUniformLocation(program, "src_dst_size"), 
-            frame->width, frame->height,
-            width, height);
+            frame->width, frame->height, width, height);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
