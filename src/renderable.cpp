@@ -33,9 +33,9 @@ GPUFrame Renderable::getWrapedGPUFrame(float time) {
     if(usedFragments.empty())
         return GPUFrame();
     float duration = getDuration();
-    while(time <= 0)
+    while(time < 0)
         time += duration;
-    while(time > duration)
+    while(time >= duration)
         time -= duration;
     return getGPUFrame(time);
 }

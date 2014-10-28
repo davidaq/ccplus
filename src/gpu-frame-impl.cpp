@@ -18,6 +18,13 @@ void GPUFrameImpl::bindFBO(bool clear) {
     }
 }
 
+#ifdef __ANDROID__
+#ifdef GL_BGRA_EXT
+#undef GL_BGRA_EXT
+#endif
+#define GL_BGRA_EXT GL_RGBA
+#endif
+
 Frame GPUFrameImpl::toCPU() {
     Frame ret;
     ret.ext = ext;
@@ -27,6 +34,10 @@ Frame GPUFrameImpl::toCPU() {
         bindFBO(false);
         glFinish();
         glReadPixels(0, 0, width, height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ret.image.data);
+#ifdef __ANDROID__
+        if(!ret.image.empty())
+            cv::cvtColor(ret.image, ret.image, CV_RGBA2BGRA);
+#endif
     }
     return ret;
 }

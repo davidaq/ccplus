@@ -14,8 +14,8 @@ CCPLUS_FILTER(mask) {
         return frame;
     }
     std::vector<std::pair<float, float>> pnts;
-    int kwidth = parameters[0];
-    int kheight = parameters[1];
+    int kwidth = parameters[1];
+    int kheight = parameters[0];
     int ksize = (kwidth + kheight) / 2;
     int sz = parameters.size() / 2 - 1;
 
@@ -33,17 +33,12 @@ CCPLUS_FILTER(mask) {
     GLProgramManager* manager = GLProgramManager::getManager();
 
     if (ksize == 0) {
-        GLuint program = manager->getProgram(
-                "filter_mask",
-                "shaders/fill.v.glsl",
-                "shaders/filters/mask.f.glsl"
-                );
+        GLuint program = manager->getProgram(filter_mask);
         glUseProgram(program);
         GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
         ret->ext = frame->ext;
         ret->bindFBO();
 
-        glUniform1i(glGetUniformLocation(program, "tex"), 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
@@ -52,10 +47,7 @@ CCPLUS_FILTER(mask) {
         fillTriangles(pnts);
         return ret;
     } 
-    GLuint program = manager->getProgram(
-            "filter_mask_gen",
-            "shaders/fill.v.glsl",
-            "shaders/filters/mask_gen.f.glsl");
+    GLuint program = manager->getProgram(filter_mask_gen);
     glUseProgram(program);
 
     GPUFrame mask = GPUFrameCache::alloc(frame->width, frame->height);
@@ -70,9 +62,6 @@ CCPLUS_FILTER(mask) {
         mask = Filter("gaussian").apply(mask, {(float)kheight, 2}, mask->width, mask->height);
     }
 
-    program = manager->getProgram(
-            "filter_mask_merge",
-            "shaders/fill.v.glsl",
-            "shaders/filters/mask_merge.f.glsl");
+    program = manager->getProgram(filter_mask_merge);
     return blendUsingProgram(program, frame, mask);
 }

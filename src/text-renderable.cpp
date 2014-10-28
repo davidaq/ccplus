@@ -208,6 +208,10 @@ void TextRenderable::prepareFrame(int time) {
             prevAdvance = (1 + tracking) * advance;
         }
     }
+#ifdef __ANDROID__
+    if(!ret.empty())
+        cv::cvtColor(ret, ret, CV_BGRA2RGBA);
+#endif
     Frame retFrame;
     retFrame.image = ret;
     retFrame.ext.anchorAdjustY = size;

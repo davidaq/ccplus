@@ -2,6 +2,9 @@
 #include "global.hpp"
 
 namespace CCPlus {
+    // The first thing to execute right after context create 
+    void initGL();
+
     enum BlendMode {
         NONE = -1, DEFAULT = 0,
         ADD, MULTIPLY, SCREEN, DISOLVE, DARKEN = 5,

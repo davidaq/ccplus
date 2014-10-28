@@ -2,11 +2,13 @@
 
 namespace CCPlus {
 
-    const int AUDIO_SAMPLE_RATE = 24000;
-
-    const int CONCURRENT_THREAD = 4;
+    const int AUDIO_SAMPLE_RATE = 32000;
 
     const int COLLECTOR_THREAD = 2;
-    
-    const bool COMPRESS_AUDIO = false;
 }
+
+#ifndef GLSLES
+#if defined(__ANDROID__) || defined(__IOS__)
+#define GLSLES
+#endif
+#endif

@@ -10,6 +10,7 @@
 #include "platform.hpp"
 #include "filter.hpp"
 #include "profile.hpp"
+#include "render.hpp"
 
 using namespace std;
 using namespace CCPlus;
@@ -19,6 +20,7 @@ static inline Frame testFilter(const std::string srcFile, const std::string filt
     static bool needContext = true;
     if(needContext) {
         createGLContext();
+        initGL();
         needContext = false;
     }
 
@@ -76,4 +78,14 @@ TEST(Filter, RampRadial) {
 TEST(Filter, HSL) {
     imwrite("tmp/hsl.png", testFilter("test/res/test2.jpg", "hsl",
                 {135, 1.1, 1.5}, 640, 852).image);
+}
+
+TEST(Filter, Fill) {
+    imwrite("tmp/fill.png", testFilter("test/res/test2.jpg", "fill",
+                {255, 255, 0}, 640, 852).image);
+}
+
+TEST(Filter, Grayscale) {
+    imwrite("tmp/grayscale.png", testFilter("test/res/test2.jpg", "grayscale",
+                {40, 60, 40, 60, 20, 80, 0, 0}, 640, 852).image);
 }

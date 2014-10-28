@@ -6,6 +6,8 @@ class CCPlus::Composition: public CCPlus::Renderable {
 public:
     Composition(float duration, int width, int height);
 
+    void prepare();
+    void release();
     void appendLayer(const Layer&);
     float getDuration();
     GPUFrame getGPUFrame(float time);
@@ -16,5 +18,8 @@ public:
     float height;
 
     float lastQuery = -1;
-    GPUFrame lastFrame = GPUFrame();
+    GPUFrame lastFrame;
+    bool stillCached = false;
+    bool still = false;
+    bool isStill();
 };

@@ -134,11 +134,14 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     }
 
     /*
-     * Compress audio data
+     * Write audio data
      */
-    len = ext.audio.total();
+
+    // write legacy compressed audio length
     uint32_t wlen = 0;
     write(&wlen, sizeof(wlen), 1);
+
+    len = ext.audio.total();
     wlen = len * 2;
     write(&wlen, sizeof(wlen), 1);
     write(ext.audio.data, sizeof(int16_t), len);

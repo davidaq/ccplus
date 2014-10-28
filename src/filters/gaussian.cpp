@@ -11,13 +11,10 @@ using namespace CCPlus;
 GPUFrame sampleToSize(GPUFrame& frame, int width, int height) {
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "sample",
-            "shaders/fill.v.glsl",
-            "shaders/filters/transform.f.glsl");
+    GLuint program = manager->getProgram(blend_none);
+
     glUseProgram(program);
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
     ret->bindFBO(false);
@@ -82,13 +79,9 @@ CCPLUS_FILTER(gaussian) {
         frame = sample(frame, 1.0f / scale);
     }
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_gaussian",
-            "shaders/filters/gaussian.v.glsl",
-            "shaders/filters/gaussian.f.glsl"
-            );
+    GLuint ksizeU, gWeightsU, gOffsetsU, pixelOffsetU;
+    GLuint program = manager->getProgram(filter_gaussian, &ksizeU, &gWeightsU, &gOffsetsU, &pixelOffsetU);
     glUseProgram(program);
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
     // Divide by 4 for acceleration
 
@@ -114,9 +107,9 @@ CCPLUS_FILTER(gaussian) {
         offset[i] = 0;
     }
 
-    glUniform1i(glGetUniformLocation(program, "ksize"), ksize);
-    glUniform1fv(glGetUniformLocation(program, "gWeights"), 8, kernel);
-    glUniform1fv(glGetUniformLocation(program, "gOffsets"), 8, offset);
+    glUniform1i(ksizeU, ksize);
+    glUniform1fv(gWeightsU, 8, kernel);
+    glUniform1fv(gOffsetsU, 8, offset);
 
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
@@ -125,11 +118,11 @@ CCPLUS_FILTER(gaussian) {
         tmp->bindFBO(false);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, frame->textureID);
-        glUniform2f(glGetUniformLocation(program, "pixelOffset"), 1.0f / frame->width, 0);
+        glUniform2f(pixelOffsetU, 1.0f / frame->width, 0);
         fillSprite(); // Draw on tmp
     } 
     if (direction != 3) { // With Y
-        glUniform2f(glGetUniformLocation(program, "pixelOffset"), 0, 1.0f / frame->width);
+        glUniform2f(pixelOffsetU, 0, 1.0f / frame->width);
         ret->bindFBO(false);
         if (direction == 2) { // never go x
             glActiveTexture(GL_TEXTURE0);

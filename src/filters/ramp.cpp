@@ -28,6 +28,7 @@ CCPLUS_FILTER(ramp) {
 
     std::string fshader = "";
     std::string name = "";
+    GLProgram programName = (type < 0) ? filter_ramp_linear : filter_ramp_radial;
     if (type < 0) {
         name = "filter_ramp_linear";
         fshader = "shaders/filters/ramp_linear.f.glsl";
@@ -37,11 +38,8 @@ CCPLUS_FILTER(ramp) {
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            name,
-            "shaders/fill.v.glsl",
-            fshader
-            );
+    GLuint alphaU, disU, startU, endU, s_rgbU, e_rgbU;
+    GLuint program = manager->getProgram(programName, &alphaU, &disU, &startU, &endU, &s_rgbU, &e_rgbU);
     glUseProgram(program);
 
     GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
@@ -50,12 +48,12 @@ CCPLUS_FILTER(ramp) {
     float dx = start_x - end_x;
     float dy = start_y - end_y;
     float dis = sqrt(dx * dx + dy * dy);
-    glUniform1f(glGetUniformLocation(program, "alpha"), alpha);
-    glUniform1f(glGetUniformLocation(program, "dis"), dis);
-    glUniform2f(glGetUniformLocation(program, "start"), start_x, start_y);
-    glUniform2f(glGetUniformLocation(program, "end"), end_x, end_y);
-    glUniform3f(glGetUniformLocation(program, "s_rgb"), sr, sg, sb);
-    glUniform3f(glGetUniformLocation(program, "e_rgb"), er, eg, eb);
+    glUniform1f(alphaU, alpha);
+    glUniform1f(disU, dis);
+    glUniform2f(startU, start_x, start_y);
+    glUniform2f(endU, end_x, end_y);
+    glUniform3f(s_rgbU, sr, sg, sb);
+    glUniform3f(e_rgbU, er, eg, eb);
 
     fillSprite();
 

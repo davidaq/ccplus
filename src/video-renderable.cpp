@@ -125,6 +125,10 @@ void VideoRenderable::preparePart(float start, float duration) {
                     }
                 }
                 ret.ext.audio = subAudio(audios, f);
+#ifdef __ANDROID__
+                if(!ret.image.empty())
+                    cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
+#endif
                 framesCache[f] = ret.zimCompressed();
                 lastFrame = f;
             }

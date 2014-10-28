@@ -4,7 +4,7 @@ ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
 	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
-	-std=c99 -D__ANDROID__ \
+	-std=c99 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
@@ -13,7 +13,7 @@ NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 	-I{$NDK_PATH}/sources/cxx-stl/llvm-libc++/libcxx/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include \
-	-std=c++11 -D__ANDROID__ \
+	-std=c++11 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 
@@ -65,6 +65,7 @@ android_a:build/android/_
 	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
 	chmod a+x .tmp.sh
 	find src -type d -exec mkdir -p build/android/{} \;
+	#find src -name \*.cpp -exec "./.tmp.sh" "if [`stat -f %m {}` -gt `stat -f %m build/android/{}.o`];then ${NDK_CXX} {} -c -o build/android/{}.o; fi" \;
 	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
 	find src -name \*.c -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
 	rm -f .tmp.sh

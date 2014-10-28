@@ -16,20 +16,48 @@ void Composition::appendLayer(const Layer& layer) {
     layers.push_back(layer);
 }
 
+bool Composition::isStill() {
+    if(stillCached)
+        return still;
+    for (auto& l : layers) {
+        if (!l.still()) {
+            stillCached = true;
+            still = false;
+            return false;
+        }
+    }
+    stillCached = true;
+    still = true;
+    return true;
+}
+
+void Composition::prepare() {
+    isStill();
+}
+
+void Composition::release() {
+    lastFrame = GPUFrame();
+}
+
 GPUFrame Composition::getGPUFrame(float time) {
     if (std::abs(time - lastQuery) < 0.0001)
+        return lastFrame;
+    if (lastFrame && still)
         return lastFrame;
     // Apply filters & track matte
     GPUFrame* frames = new GPUFrame[layers.size()];
     for (int i = 0; i < layers.size(); i++) {
         Layer& l = layers[i];
-        if(!layers[i + 1].trkMat && (!l.show || !l.visible(time))) {
-            frames[i] = GPUFrame();
-        } else {
-            frames[i] = l.getFilteredFrame(time);
-            if(i > 0 && l.trkMat) {
-                frames[i] = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
-            }
+        if(!l.visible(time))
+            continue;
+        if(i < layers.size() - 1) {
+            if(!l.show && layers[i + 1].trkMat == 0)
+                continue;
+        } else if(!l.show)
+            continue;
+        frames[i] = l.getFilteredFrame(time);
+        if(i > 0 && l.trkMat) {
+            frames[i] = trackMatte(frames[i], frames[i - 1], (TrackMatteMode)l.trkMat);
         }
     }
     // Merge & track matte 

@@ -3,8 +3,11 @@
 #include "context.hpp"
 #include "gpu-frame.hpp"
 #include "renderable.hpp"
+#include "composition.hpp"
 #include "render.hpp"
 #include "filter.hpp"
+
+#include "image-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -120,4 +123,33 @@ GPUFrame Layer::getFilteredFrame(float t) {
 
 float Layer::mapInnerTime(float t) const {
     return start + last / duration * (t - time);   
+}
+
+bool Layer::still() {
+    Composition* comp = dynamic_cast<Composition*>(getRenderObject());
+    if(comp && !comp->isStill())
+        return false;
+    if (!comp && !dynamic_cast<ImageRenderable*>(this->getRenderObject())) {
+        return false;
+    }
+    for (auto& kv : properties) {
+        auto& p = kv.second;
+        if (p.size() <= 1) continue; 
+        bool first = true;
+        std::vector<float> ref;
+        for (auto& kv2 : p) {
+            auto& v = kv2.second;
+            if (first) {
+                first = false;
+                ref = v;
+            } else {
+                if (v.size() != ref.size()) return false;
+                for (int i = 0; i < v.size(); i++) {
+                    if (v[i] != ref[i])
+                        return false;
+                }
+            }
+        }
+    } 
+    return true;
 }
