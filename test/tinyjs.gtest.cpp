@@ -9,48 +9,29 @@
 using namespace std;
 using namespace CCPlus;
 
-TEST(TinyJS, ForEach) {
-    CTinyJS js;
+CTinyJS js;
+#define EVAL(x) try{js.execute(x);}catch(CScriptException *e){L()<<e->text;}
+
+TEST(TinyJS, For) {
     std::string code;
 
-    code = "var sum=0;for(var k=1;k<5;k++) {sum += k;}";
-    try {
-        js.execute(code);
-        L() << js.evaluate("sum");
-    } catch(CScriptException* e) {
-        L() << e->text;
-    }
+    EVAL("var sum=0;for(var k=1;k<5;k++) {sum += k;}");
+    EXPECT_EQ("10", js.evaluate("sum"));
     
-    code = "var v={a:1,b:2,c:3};var sum=0;for(k in v) {sum += v[k];}";
-    try {
-        js.execute(code);
-        L() << js.evaluate("sum");
-    } catch(CScriptException* e) {
-        L() << e->text;
-    }
+    EVAL("var v={a:5,b:1,c:3};c='';var sum=0;for(var k in v) {sum+=v[k];c+=k}");
+    EXPECT_EQ("9", js.evaluate("sum"));
+    EXPECT_EQ("abc", js.evaluate("c"));
 }
 
 TEST(TinyJS, Basic) {
-    const std::string code = "var result = 100;";
-    CTinyJS js;
-
-    js.execute(code);
-
-    // Can only return a simple string
-    L() << js.evaluate("result");
+    EVAL("result = 100");
+    EXPECT_EQ("100", js.evaluate("result"));
 }
 
 TEST(TinyJS, ReturnJSON) {
-    const std::string code = "var tmlObj = {hello: 'hello world'}; var ret = JSON.stringify(tmlObj, null);";
     CTinyJS js;
     registerFunctions(&js);
-
-    try {
-        js.execute(code);
-        L() << js.evaluate("ret");
-    } catch(CScriptException* e) {
-        L() << e->text;
-    }
+    EVAL("var tmlObj = {hello: 'hello world'}; var ret = JSON.stringify(tmlObj, null);");
 }
 
 TEST(TinyJS, LoadJSON) {

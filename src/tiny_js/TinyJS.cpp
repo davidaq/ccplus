@@ -327,6 +327,10 @@ void CScriptLex::reset() {
 }
 
 void CScriptLex::match(int expected_tk) {
+    if(expected_tk == ';') {
+        if(tk == LEX_EOF || tk == '}')
+            return;
+    }
     if (tk!=expected_tk) {
         ostringstream errorString;
         errorString << "Got " << getTokenStr(tk) << " expected " << getTokenStr(expected_tk)
@@ -1389,13 +1393,13 @@ string CTinyJS::evaluate(const string &code) {
 }
 
 void CTinyJS::parseFunctionArguments(CScriptVar *funcVar) {
-  l->match('(');
-  while (l->tk!=')') {
-      funcVar->addChildNoDup(l->tkStr);
-      l->match(LEX_ID);
-      if (l->tk!=')') l->match(',');
-  }
-  l->match(')');
+     l->match('(');
+     while (l->tk!=')') {
+         funcVar->addChildNoDup(l->tkStr);
+         l->match(LEX_ID);
+         if (l->tk!=')') l->match(',');
+     }
+     l->match(')');
 }
 
 void CTinyJS::addNative(const string &funcDesc, JSCallback ptr, void *userdata) {
@@ -2039,27 +2043,48 @@ void CTinyJS::statement(bool &execute) {
         int forStmtStart = l->tokenStart;
         CScriptLex* forStmt = new CScriptLex(l, forStmtStart, l->dataEnd);
         if(forStmt->tk == LEX_R_VAR)
-            forStmt->getNextToken();
+            forStmt->match(LEX_R_VAR);
         forStmt->getNextToken();
         bool isForeach = forStmt->tk == LEX_R_IN;
         delete forStmt;
         if(isForeach) {
+            if(l->tk == LEX_R_VAR) {
+                l->match(LEX_R_VAR);
+                CScriptLex* oldLex = l;
+                l = new CScriptLex("var " + l->tkStr + ";");
+                statement(execute);
+                delete l;
+                l = oldLex;
+            }
             CScriptVarLink* indexVar = base(execute);
             l->match(LEX_R_IN);
             CScriptVarLink* vals = base(execute);
             l->match(')');
 
-            printf("%s : %s", indexVar->name.c_str(), vals->name.c_str());
-            
+            if(!vals->var) {
+                TRACE("Invalid data supplied for foreach loop at %s\n", l->getPosition().c_str());
+                throw new CScriptException("LOOP_ERROR");
+            }
+
+            bool noexecute = false;
+            int forBodyStart = l->tokenStart;
+            statement(noexecute);
+            CScriptLex *forBody = l->getSubLex(forBodyStart);
             CScriptLex *oldLex = l;
+            CScriptVarLink* iter = vals->var->firstChild;
+            
+            while(iter) {
+                indexVar->var->setString(iter->name);
+                forBody->reset();
+                l = forBody;
+                statement(execute);
+                iter = iter->nextSibling;
+            }
 
-            indexVar->var->setInt(7);
-            CScriptLex *forBody = l->getSubLex(l->tokenStart);
-            forBody->reset();
-            l = forBody;
-            statement(execute);
-
+            
             l = oldLex;
+            CLEAN(indexVar);
+            CLEAN(vals);
             delete forBody;
         } else {
             statement(execute); // initialisation
