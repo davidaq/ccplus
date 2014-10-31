@@ -45,7 +45,12 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     int16_t* inPtr = o.ptr<int16_t>(0);
     int16_t* retPtr = ret.ptr<int16_t>(0);
     for(int i = 0; i < base.total(); i++) {
-        retPtr[i] = basePtr[i] + inPtr[i];
+        int res = basePtr[i] + inPtr[i];
+        if(res > 32767)
+            res = 32767;
+        if(res < -32768)
+            res = -32768;
+        retPtr[i] = res;
     }
     return ret;
 }
