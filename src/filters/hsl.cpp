@@ -14,22 +14,19 @@ CCPLUS_FILTER(hsl) {
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint program = manager->getProgram(
-            "filter_hsl",
-            "shaders/fill.v.glsl",
-            "shaders/filters/hsl.f.glsl");
+    GLuint hue, sat, lit;
+    GLuint program = manager->getProgram(filter_hsl, &hue, &sat, &lit);
     glUseProgram(program);
 
     GPUFrame ret = GPUFrameCache::alloc(width, height);
     ret->bindFBO(false);
 
-    glUniform1i(glGetUniformLocation(program, "tex"), 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-    glUniform1f(glGetUniformLocation(program, "hue"), parameters[0] / 180.0);
-    glUniform1f(glGetUniformLocation(program, "sat"), parameters[1]);
-    glUniform1f(glGetUniformLocation(program, "lit"), parameters[2]);
+    glUniform1f(hue, parameters[0] / 180.0);
+    glUniform1f(sat, parameters[1]);
+    glUniform1f(lit, parameters[2]);
 
     fillSprite();
     ret->ext = frame->ext;

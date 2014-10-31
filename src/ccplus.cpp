@@ -49,12 +49,12 @@ void CCPlus::render() {
     render_thread = ParallelExecutor::runInNewThread([] () {
         Context* ctx = Context::getContext();
         void* glCtx = createGLContext();
-        initGL();
         ctx->collector->limit = 10;
         ctx->collector->prepare();
         float delta = 1.0f / ctx->fps;
         float duration = ctx->mainComposition->getDuration();
         int fn = 0;
+        initGL();
         GPUFrame blackBackground = GPUFrameCache::alloc(
                 ctx->mainComposition->width, 
                 ctx->mainComposition->height);

@@ -113,10 +113,10 @@ class Resizer():
     
     def favoredsize(self, size):
         w, h = size
-        w = int(round(self.scale * w))
+        w = int(ceil(self.scale * w))
         if (w & 1) > 0:
             w += 1
-        h = int(round(self.scale * h))
+        h = int(ceil(self.scale * h))
         if (h & 1) > 0:
             h += 1
         return (w, h)

@@ -65,6 +65,7 @@ android_a:build/android/_
 	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
 	chmod a+x .tmp.sh
 	find src -type d -exec mkdir -p build/android/{} \;
+	#find src -name \*.cpp -exec "./.tmp.sh" "if [`stat -f %m {}` -gt `stat -f %m build/android/{}.o`];then ${NDK_CXX} {} -c -o build/android/{}.o; fi" \;
 	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
 	find src -name \*.c -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
 	rm -f .tmp.sh
