@@ -93,6 +93,7 @@ enum LEX_TYPES {
     LEX_R_NULL,
     LEX_R_UNDEFINED,
     LEX_R_NEW,
+    LEX_R_IN,
 
 	LEX_R_LIST_END /* always the last entry */
 };
@@ -158,7 +159,7 @@ public:
 
     std::string getPosition(int pos=-1); ///< Return a string representing the position in lines and columns of the character pos given
 
-protected:
+//protected:
     /* When we go into a loop, we use getSubLex to get a lexer for just the sub-part of the
        relevant string. This doesn't re-allocate and copy the string, but instead copies
        the data pointer and sets dataOwned to false, and dataStart/dataEnd to the relevant things. */

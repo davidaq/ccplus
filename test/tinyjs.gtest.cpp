@@ -9,6 +9,26 @@
 using namespace std;
 using namespace CCPlus;
 
+TEST(TinyJS, ForEach) {
+    CTinyJS js;
+    std::string code;
+
+    code = "var sum=0;for(var k=1;k<5;k++) {sum += k;}";
+    try {
+        js.execute(code);
+        L() << js.evaluate("sum");
+    } catch(CScriptException* e) {
+        L() << e->text;
+    }
+    
+    code = "var v={a:1,b:2,c:3};var sum=0;for(k in v) {sum += v[k];}";
+    try {
+        js.execute(code);
+        L() << js.evaluate("sum");
+    } catch(CScriptException* e) {
+        L() << e->text;
+    }
+}
 
 TEST(TinyJS, Basic) {
     const std::string code = "var result = 100;";

@@ -374,6 +374,7 @@ string CScriptLex::getTokenStr(int token) {
         case LEX_R_DO : return "do";
         case LEX_R_WHILE : return "while";
         case LEX_R_FOR : return "for";
+        case LEX_R_IN : return "in";
         case LEX_R_BREAK : return "break";
         case LEX_R_CONTINUE : return "continue";
         case LEX_R_FUNCTION : return "function";
@@ -433,6 +434,7 @@ void CScriptLex::getNextToken() {
         else if (tkStr=="do") tk = LEX_R_DO;
         else if (tkStr=="while") tk = LEX_R_WHILE;
         else if (tkStr=="for") tk = LEX_R_FOR;
+        else if (tkStr=="in") tk = LEX_R_IN;
         else if (tkStr=="break") tk = LEX_R_BREAK;
         else if (tkStr=="continue") tk = LEX_R_CONTINUE;
         else if (tkStr=="function") tk = LEX_R_FUNCTION;
@@ -2034,54 +2036,81 @@ void CTinyJS::statement(bool &execute) {
     } else if (l->tk==LEX_R_FOR) {
         l->match(LEX_R_FOR);
         l->match('(');
-        statement(execute); // initialisation
-        //l->match(';');
-        int forCondStart = l->tokenStart;
-        bool noexecute = false;
-        CScriptVarLink *cond = base(execute); // condition
-        bool loopCond = execute && cond->var->getBool();
-        CLEAN(cond);
-        CScriptLex *forCond = l->getSubLex(forCondStart);
-        l->match(';');
-        int forIterStart = l->tokenStart;
-        CLEAN(base(noexecute)); // iterator
-        CScriptLex *forIter = l->getSubLex(forIterStart);
-        l->match(')');
-        int forBodyStart = l->tokenStart;
-        statement(loopCond ? execute : noexecute);
-        CScriptLex *forBody = l->getSubLex(forBodyStart);
-        CScriptLex *oldLex = l;
-        if (loopCond) {
-            forIter->reset();
-            l = forIter;
-            CLEAN(base(execute));
-        }
-        int loopCount = TINYJS_LOOP_MAX_ITERATIONS;
-        while (execute && loopCond && loopCount-->0) {
-            forCond->reset();
-            l = forCond;
-            cond = base(execute);
-            loopCond = cond->var->getBool();
+        int forStmtStart = l->tokenStart;
+        CScriptLex* forStmt = new CScriptLex(l, forStmtStart, l->dataEnd);
+        if(forStmt->tk == LEX_R_VAR)
+            forStmt->getNextToken();
+        forStmt->getNextToken();
+        bool isForeach = forStmt->tk == LEX_R_IN;
+        delete forStmt;
+        if(isForeach) {
+            CScriptVarLink* indexVar = base(execute);
+            l->match(LEX_R_IN);
+            CScriptVarLink* vals = base(execute);
+            l->match(')');
+
+            printf("%s : %s", indexVar->name.c_str(), vals->name.c_str());
+            
+            CScriptLex *oldLex = l;
+
+            indexVar->var->setInt(7);
+            CScriptLex *forBody = l->getSubLex(l->tokenStart);
+            forBody->reset();
+            l = forBody;
+            statement(execute);
+
+            l = oldLex;
+            delete forBody;
+        } else {
+            statement(execute); // initialisation
+            //l->match(';');
+            int forCondStart = l->tokenStart;
+            bool noexecute = false;
+            CScriptVarLink *cond = base(execute); // condition
+            bool loopCond = execute && cond->var->getBool();
             CLEAN(cond);
-            if (execute && loopCond) {
-                forBody->reset();
-                l = forBody;
-                statement(execute);
-            }
-            if (execute && loopCond) {
+            CScriptLex *forCond = l->getSubLex(forCondStart);
+            l->match(';');
+            int forIterStart = l->tokenStart;
+            CLEAN(base(noexecute)); // iterator
+            CScriptLex *forIter = l->getSubLex(forIterStart);
+            l->match(')');
+            int forBodyStart = l->tokenStart;
+            statement(loopCond ? execute : noexecute);
+            CScriptLex *forBody = l->getSubLex(forBodyStart);
+            CScriptLex *oldLex = l;
+            if (loopCond) {
                 forIter->reset();
                 l = forIter;
                 CLEAN(base(execute));
             }
-        }
-        l = oldLex;
-        delete forCond;
-        delete forIter;
-        delete forBody;
-        if (loopCount<=0) {
-            root->trace();
-            TRACE("FOR Loop exceeded %d iterations at %s\n", TINYJS_LOOP_MAX_ITERATIONS, l->getPosition().c_str());
-            throw new CScriptException("LOOP_ERROR");
+            int loopCount = TINYJS_LOOP_MAX_ITERATIONS;
+            while (execute && loopCond && loopCount-->0) {
+                forCond->reset();
+                l = forCond;
+                cond = base(execute);
+                loopCond = cond->var->getBool();
+                CLEAN(cond);
+                if (execute && loopCond) {
+                    forBody->reset();
+                    l = forBody;
+                    statement(execute);
+                }
+                if (execute && loopCond) {
+                    forIter->reset();
+                    l = forIter;
+                    CLEAN(base(execute));
+                }
+            }
+            l = oldLex;
+            delete forCond;
+            delete forIter;
+            delete forBody;
+            if (loopCount<=0) {
+                root->trace();
+                TRACE("FOR Loop exceeded %d iterations at %s\n", TINYJS_LOOP_MAX_ITERATIONS, l->getPosition().c_str());
+                throw new CScriptException("LOOP_ERROR");
+            }
         }
     } else if (l->tk==LEX_R_RETURN) {
         l->match(LEX_R_RETURN);
