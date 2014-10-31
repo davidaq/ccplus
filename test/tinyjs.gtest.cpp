@@ -49,3 +49,29 @@ TEST(TinyJS, LoadJSON) {
         L() << e->text;
     }
 }
+
+TEST(TinyJS, Loop) {
+    const std::string code = "var obj = [1, 2, 3]; for (var i = 0; i < 3; i++) obj[i]++;";
+    CTinyJS js;
+    registerFunctions(&js);
+
+    try {
+        js.execute(code);
+        L() << js.evaluate("obj[0]");
+    } catch(CScriptException* e) {
+        L() << e->text;
+    }
+}
+
+TEST(TinyJS, TEST) {
+    const std::string code = "var obj = {x: 1, y: 2};";
+    CTinyJS js;
+    registerFunctions(&js);
+
+    try {
+        js.execute(code);
+        L() << js.evaluate("keys(obj)");
+    } catch(CScriptException* e) {
+        L() << e->text;
+    }
+}
