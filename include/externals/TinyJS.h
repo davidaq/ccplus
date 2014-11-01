@@ -298,6 +298,9 @@ public:
      * 'undefined' */
     std::string evaluate(const std::string &code);
 
+    /** Invoke a function */
+    CScriptVarLink *invoke(CScriptVar* function, CScriptVar* args, CScriptVar *parent);
+
     /// add a native function to be called from TinyJS
     /** example:
        \code

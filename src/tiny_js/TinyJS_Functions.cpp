@@ -236,6 +236,68 @@ void scConsoleLog(CScriptVar *c, void *data) {
     }
 }
 
+void scUnderscoreMap(CScriptVar *c, void *data) {
+    CTinyJS* tinyJS = (CTinyJS*)data;
+    CScriptVar* list = c->getParameter("list");
+    CScriptVar* iteratee = c->getParameter("iteratee");
+    CScriptVar* context = c->getParameter("context");
+
+    CScriptVar* ret = c->getReturnVar();
+    ret->setArray();
+    int i = 0;
+
+    CScriptVarLink* ptr = list->firstChild;
+    CScriptVar* args = new CScriptVar();
+    args->setArray();
+    args->ref();
+    while(ptr) {
+        args->setArrayIndex(0, ptr->var);
+        args->setArrayIndex(1, new CScriptVar(i));
+        args->setArrayIndex(2, list);
+        ret->setArrayIndex(i++, tinyJS->invoke(iteratee, args, context)->var);
+        ptr = ptr->nextSibling;
+    }
+    args->unref();
+}
+
+void scUnderscoreReduce(CScriptVar *c, void *data) {
+    CTinyJS* tinyJS = (CTinyJS*)data;
+    CScriptVar* list = c->getParameter("list");
+    CScriptVar* iteratee = c->getParameter("iteratee");
+    CScriptVar* memo = c->getParameter("memo");
+    CScriptVar* context = c->getParameter("context");
+
+    c->setReturnVar(memo);
+    int i = 0;
+
+    CScriptVarLink* ptr = list->firstChild;
+    if(!ptr)
+        return;
+    if(memo->isUndefined()) {
+        memo = ptr->var->deepCopy();
+        ptr = ptr->nextSibling;
+    }
+    memo->ref();
+    CScriptVar* args = new CScriptVar();
+    args->setArray();
+    args->ref();
+    while(ptr) {
+        args->setArrayIndex(0, memo);
+        args->setArrayIndex(1, ptr->var);
+        args->setArrayIndex(2, new CScriptVar(i));
+        args->setArrayIndex(3, list);
+        CScriptVar* res = tinyJS->invoke(iteratee, args, context)->var;
+        memo->unref();
+        memo = res;
+        memo->ref();
+        ptr = ptr->nextSibling;
+    }
+    args->unref();
+
+    c->setReturnVar(memo);
+    memo->unref();
+}
+
 // ----------------------------------------------- Register Functions
 void registerFunctions(CTinyJS *tinyJS) {
     tinyJS->addNative("function exec(jsCode)", scExec, tinyJS); // execute the given code
@@ -262,5 +324,8 @@ void registerFunctions(CTinyJS *tinyJS) {
     tinyJS->addNative("function Array.join(separator)", scArrayJoin, 0);
     tinyJS->addNative("function console.log()", scConsoleLog, 0);
     tinyJS->addNative("function console.debug()", scConsoleLog, 0);
+    tinyJS->addNative("function console.debug()", scConsoleLog, 0);
+    tinyJS->addNative("function _.map(list, iteratee, context)", scUnderscoreMap, tinyJS);
+    tinyJS->addNative("function _.reduce(list, iteratee, memo, context)", scUnderscoreReduce, tinyJS);
 }
 

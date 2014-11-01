@@ -122,6 +122,7 @@
           Allow the last statement line in a block not terminated by ;
           Implemented prefix increment/decrement operator
           Variable argument length on function calls
+          Add invoke function to call JS function from native code, usefull to invoke callback
  */
 
 #include "externals/TinyJS.h"
@@ -1452,6 +1453,58 @@ CScriptVarLink *CTinyJS::parseFunctionDefinition() {
   block(noexecute);
   funcVar->var->data = l->getSubString(funcBegin);
   return funcVar;
+}
+
+CScriptVarLink *CTinyJS::invoke(CScriptVar* function, CScriptVar* args, CScriptVar *parent) {
+    CScriptVar *functionRoot = new CScriptVar(TINYJS_BLANK_DATA, SCRIPTVAR_FUNCTION);
+    if(parent)
+        functionRoot->addChild("this", parent);
+    CScriptVarLink *v = function->firstChild;
+    CScriptVarLink *val = args->firstChild;
+    while(v) {
+        functionRoot->addChild(v->name, val ? val->var : new CScriptVar());
+        v = v->nextSibling;
+        if(val)
+            val = val->nextSibling;
+    }
+    functionRoot->addChild("arguments", args);
+    // setup a return variable
+    CScriptVarLink *returnVar = NULL;
+    // execute function!
+    // add the function's execute space to the symbol table so we can recurse
+    CScriptVarLink *returnVarLink = functionRoot->addChild(TINYJS_RETURN_VAR);
+    scopes.push_back(functionRoot);
+#ifdef TINYJS_CALL_STACK
+    call_stack.push_back("Native call");
+#endif
+    CScriptException *exception = 0;
+    CScriptLex *oldLex = l;
+    CScriptLex *newLex = new CScriptLex(function->getString());
+    l = newLex;
+    try {
+      bool execute = true;
+      block(execute);
+      execute = true;
+    } catch (CScriptException *e) {
+      exception = e;
+    }
+    delete newLex;
+    l = oldLex;
+
+    if (exception)
+      throw exception;
+#ifdef TINYJS_CALL_STACK
+    if (!call_stack.empty()) call_stack.pop_back();
+#endif
+    scopes.pop_back();
+    /* get the real return var before we remove it from our function */
+    returnVar = new CScriptVarLink(returnVarLink->var);
+    functionRoot->removeLink(returnVarLink);
+    delete functionRoot;
+    if (returnVar)
+      return returnVar;
+    else
+      return new CScriptVarLink(new CScriptVar());
 }
 
 /** Handle a function call (assumes we've parsed the function name and we're

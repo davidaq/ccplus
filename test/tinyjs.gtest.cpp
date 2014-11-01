@@ -69,3 +69,15 @@ TEST(TinyJS, LoadJSON) {
     EXPECT_EQ("value", js.evaluate("tmlObj.key"));
 }
 
+TEST(TinyJS, MapReduce) {
+    CTinyJS js;
+    registerFunctions(&js);
+
+    EVAL("a=_.map([1,2,3],function(a){return a+1})");
+    EXPECT_EQ("2", js.evaluate("a[0]"));
+    EXPECT_EQ("3", js.evaluate("a[1]"));
+    EXPECT_EQ("4", js.evaluate("a[2]"));
+
+    EVAL("a=_.reduce([1,2,3],function(a,b){return a+b},11)");
+    EXPECT_EQ("17", js.evaluate("a"));
+}
