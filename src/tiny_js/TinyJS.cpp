@@ -108,7 +108,7 @@
           Constructing an array with an initial length 'Array(5)' doesn't work
           Recursive loops of data such as a.foo = a; fail to be garbage collected
           length variable cannot be set
-          The postfix increment operator returns the current value, not the previous as it should.
+          (Fixed in 0.31)The postfix increment operator returns the current value, not the previous as it should.
           There is no prefix increment operator
           Arrays are implemented as a linked list - hence a lookup time is O(n)
 
@@ -117,6 +117,11 @@
           Merge the parsing of expressions/statements so eval("statement") works like we'd expect.
           Move 'shift' implementation into mathsOp
 
+    AQ Fixed Version:
+          Add for ... in ... loop support
+          Allow the last statement line in a block not terminated by ;
+          Implemented prefix increment/decrement operator
+          Variable argument length on function calls
  */
 
 #include "externals/TinyJS.h"
@@ -1467,22 +1472,35 @@ CScriptVarLink *CTinyJS::functionCall(bool &execute, CScriptVarLink *function, C
       functionRoot->addChildNoDup("this", parent);
     // grab in all parameters
     CScriptVarLink *v = function->var->firstChild;
-    while (v) {
+    CScriptVar* arguments = new CScriptVar;
+    arguments->setArray();
+    for (int i = 0; i < 100; i++) {
         CScriptVarLink *value = base(execute);
         if (execute) {
-            if (value->var->isBasic()) {
-              // pass by value
-              functionRoot->addChild(v->name, value->var->deepCopy());
-            } else {
-              // pass by reference
-              functionRoot->addChild(v->name, value->var);
+            // defauts to pass by reference
+            CScriptVar* arg = value->var;
+            if(v) {
+                if (value->var->isBasic()) {
+                    // pass basic types by value
+                    arg = arg->deepCopy();
+                }
+                functionRoot->addChild(v->name, arg);
+                v = v->nextSibling;
             }
+            arguments->setArrayIndex(i, arg);
         }
         CLEAN(value);
-        if (l->tk!=')') l->match(',');
-        v = v->nextSibling;
+        if (l->tk==')') break;
+        l->match(',');
     }
     l->match(')');
+    functionRoot->addChild("arguments", arguments);
+    // fill undefined to unset arguments
+    while(v) {
+        functionRoot->addChild(v->name, new CScriptVar);
+        v = v->nextSibling;
+    }
+
     // setup a return variable
     CScriptVarLink *returnVar = NULL;
     // execute function!
@@ -1728,6 +1746,28 @@ CScriptVarLink *CTinyJS::unary(bool &execute) {
             CScriptVar *res = a->var->mathsOp(&zero, LEX_EQUAL);
             CREATE_LINK(a, res);
         }
+    } else if(l->tk==LEX_PLUSPLUS) { //precedence increment
+        l->match(LEX_PLUSPLUS);
+        a = factor(execute);
+        if(execute) {
+            CScriptVar one(1);
+            CScriptVar* res = a->var->mathsOp(&one, '+');
+            CScriptVar* rep = new CScriptVar;
+            *rep = *res;
+            a->replaceWith(rep);
+            CREATE_LINK(a, res);
+        }
+    } else if(l->tk==LEX_MINUSMINUS) { //precedence decrement
+        l->match(LEX_MINUSMINUS);
+        a = factor(execute);
+        if(execute) {
+            CScriptVar one(1);
+            CScriptVar* res = a->var->mathsOp(&one, '-');
+            CScriptVar* rep = new CScriptVar;
+            *rep = *res;
+            a->replaceWith(rep);
+            CREATE_LINK(a, res);
+        }
     } else
         a = factor(execute);
     return a;
@@ -1945,7 +1985,11 @@ void CTinyJS::statement(bool &execute) {
         l->tk==LEX_INT ||
         l->tk==LEX_FLOAT ||
         l->tk==LEX_STR ||
-        l->tk=='-') {
+        l->tk==LEX_PLUSPLUS ||
+        l->tk==LEX_MINUSMINUS ||
+        l->tk=='!' ||
+        l->tk=='-' ||
+        l->tk=='+') {
         /* Execute a simple statement that only contains basic arithmetic... */
         CLEAN(base(execute));
         l->match(';');
@@ -2072,9 +2116,13 @@ void CTinyJS::statement(bool &execute) {
             CScriptLex *forBody = l->getSubLex(forBodyStart);
             CScriptLex *oldLex = l;
             CScriptVarLink* iter = vals->var->firstChild;
+            bool isArray = vals->var->isArray();
             
             while(iter) {
-                indexVar->var->setString(iter->name);
+                if(isArray)
+                    indexVar->var->setInt(iter->getIntName());
+                else
+                    indexVar->var->setString(iter->name);
                 forBody->reset();
                 l = forBody;
                 statement(execute);

@@ -146,6 +146,12 @@ void scIntegerValueOf(CScriptVar *c, void *) {
     c->getReturnVar()->setInt(val);
 }
 
+void scJSONParse(CScriptVar *c, void *data) {
+    CTinyJS *tinyJS = (CTinyJS *)data;
+    std::string str = c->getParameter("json")->getString();
+    c->setReturnVar(tinyJS->evaluateComplex(str).var);
+}
+
 void scJSONStringify(CScriptVar *c, void *) {
     std::ostringstream result;
     c->getParameter("obj")->getJSON(result);
@@ -220,6 +226,16 @@ void scArrayJoin(CScriptVar *c, void *data) {
   c->getReturnVar()->setString(sstr.str());
 }
 
+void scConsoleLog(CScriptVar *c, void *data) {
+    CScriptVarLink *arg = c->findChild("arguments")->var->firstChild;
+    while(arg) {
+        std::ostringstream result;
+        arg->var->getJSON(result);
+        printf(">> %s\n", result.str().c_str());
+        arg = arg->nextSibling;
+    }
+}
+
 // ----------------------------------------------- Register Functions
 void registerFunctions(CTinyJS *tinyJS) {
     tinyJS->addNative("function exec(jsCode)", scExec, tinyJS); // execute the given code
@@ -238,10 +254,13 @@ void registerFunctions(CTinyJS *tinyJS) {
     tinyJS->addNative("function String.split(separator)", scStringSplit, 0);
     tinyJS->addNative("function Integer.parseInt(str)", scIntegerParseInt, 0); // string to int
     tinyJS->addNative("function Integer.valueOf(str)", scIntegerValueOf, 0); // value of a single character
+    tinyJS->addNative("function JSON.parse(json)", scJSONParse, tinyJS); // parse JSON. Same as eval at the moment
     tinyJS->addNative("function JSON.stringify(obj, replacer)", scJSONStringify, 0); // convert to JSON. replacer is ignored at the moment
-    // JSON.parse is left out as you can (unsafely!) use eval instead
+    // (Aliased to eval by AQ)JSON.parse is left out as you can (unsafely!) use eval instead
     tinyJS->addNative("function Array.contains(obj)", scArrayContains, 0);
     tinyJS->addNative("function Array.remove(obj)", scArrayRemove, 0);
     tinyJS->addNative("function Array.join(separator)", scArrayJoin, 0);
+    tinyJS->addNative("function console.log()", scConsoleLog, 0);
+    tinyJS->addNative("function console.debug()", scConsoleLog, 0);
 }
 
