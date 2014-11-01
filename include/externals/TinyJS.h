@@ -158,8 +158,11 @@ public:
     CScriptLex *getSubLex(int lastPosition); ///< Return a sub-lexer from the given position up until right now
 
     std::string getPosition(int pos=-1); ///< Return a string representing the position in lines and columns of the character pos given
+    void getNextToken(); ///< Get the text token from our text string
+    int getDataStart() const {return dataStart;}
+    int getDataEnd() const {return dataEnd;}
 
-//protected:
+protected:
     /* When we go into a loop, we use getSubLex to get a lexer for just the sub-part of the
        relevant string. This doesn't re-allocate and copy the string, but instead copies
        the data pointer and sets dataOwned to false, and dataStart/dataEnd to the relevant things. */
@@ -170,7 +173,6 @@ public:
     int dataPos; ///< Position in data (we CAN go past the end of the string here)
 
     void getNextCh();
-    void getNextToken(); ///< Get the text token from our text string
 };
 
 class CScriptVar;

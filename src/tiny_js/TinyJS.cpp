@@ -2138,7 +2138,7 @@ void CTinyJS::statement(bool &execute) {
         l->match(LEX_R_FOR);
         l->match('(');
         int forStmtStart = l->tokenStart;
-        CScriptLex* forStmt = new CScriptLex(l, forStmtStart, l->dataEnd);
+        CScriptLex* forStmt = new CScriptLex(l, forStmtStart, l->getDataEnd());
         if(forStmt->tk == LEX_R_VAR)
             forStmt->match(LEX_R_VAR);
         forStmt->getNextToken();
