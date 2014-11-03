@@ -100,13 +100,36 @@ static inline std::string dirName(const std::string& path) {
                 getSeperator()).base() - path.begin());
 }
 
+// Used to convert logical unix like path to system specific path
 static inline std::string generatePath(const std::string& dir, const std::string& fn) {
-    if (dir == "") return fn;
-    //if (!boost::filesystem::exists(dir))
-    //    boost::filesystem::create_directory(dir);
-    if (dir[dir.length() - 1] != getSeperator())
-        return dir + getSeperator() + fn;
-    return dir + fn;
+    std::string ret;
+    if (dir == "" || fn[0] == '/') {
+        ret = fn;
+    } else {
+        ret = dir + "/" + fn;
+    }
+    std::string::iterator r = ret.begin(), w = ret.begin();
+    int sz = 0;
+    for(; r != ret.end(); r++) {
+        if(*r == '/') {
+            *(w++) = getSeperator();
+            sz++;
+            while(*r == '/' && r != ret.end())
+                r++;
+            if(r == ret.end())
+                break;
+        }
+        *(w++) = *r;
+        sz++;
+    }
+    ret.resize(sz);
+#ifdef _WIN32
+    if(ret[0] == '\\' && ret[2] == ':' && ret[3] == '\\') {
+        // convert \C:\Program Files to C:\Program Files
+        return ret.substr(1);
+    }
+#endif
+    return ret;
 }
 
 static inline std::string slurp(const std::string& file) {
