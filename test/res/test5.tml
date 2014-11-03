@@ -2,35 +2,74 @@
     "version" : 0.01,
     "main" : "MAIN",
     "compositions" : {
-        "MAIN" : {
+        "#1" : {
             "resolution" : {
                 "width" : 500,
                 "height" : 500
             },
-            "duration" : 10,
+            "duration" : 3,
             "layers" : [
                 {
-                    "uri" : "composition://@1",
+                    "uri" : "composition://@",
                     "properties" : {
                         "transform" : {
                             "0" : [0, 0, 0, 0, 1, 1, 0],
-                            "10" : [0, 0, 0, 0, 0.1, 0.1, 0]
+                            "10" : [0, 0, 0, 0, 1, 1, 0]
                         }
                     },
                     "time": 0,
-                    "duration" : 10,
+                    "duration" : 3,
                     "start" : 0,
-                    "last" : 10
+                    "last" : 3
+                },
+                {
+                    "uri" : "composition://#+1",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [0, 0, 0, 0, 1, 1, 0],
+                            "10" : [0, 0, 0, 0, 1, 1, 0]
+                        }
+                    },
+                    "time": 2.5,
+                    "duration" : 0.5,
+                    "start" : 0,
+                    "last" : 0.5
                 }
             ]
         },
-        "@1" : {
+        "#2" : {
             "resolution" : {
                 "width" : 500,
                 "height" : 500
             },
-            "duration" : 10000,
+            "duration" : 3,
             "layers" : [
+                {
+                    "uri" : "composition://@",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [0, 0, 0, 0, 1, 1, 0],
+                            "10" : [0, 0, 0, 0, 1, 1, 0]
+                        }
+                    },
+                    "time": 0,
+                    "duration" : 3,
+                    "start" : 0,
+                    "last" : 3
+                }, 
+                {
+                    "uri" : "composition://#+1",
+                    "properties" : {
+                        "transform" : {
+                            "0" : [0, 0, 0, 0, 1, 1, 0],
+                            "10" : [0, 0, 0, 0, 1, 1, 0]
+                        }
+                    },
+                    "time": 2.7,
+                    "duration" : 0.3,
+                    "start" : 0,
+                    "last" : 0.3
+                }
             ]
         }
     }
