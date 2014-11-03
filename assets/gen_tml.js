@@ -11,28 +11,70 @@
  * @result = ret tml json;
  */
 
-// Some constants
-
-var SIZE = [640, 640];
-
 /* 
  * Parse tpl tml and return scenes list
- * [senes, duration, num_ele]
+ * [scene_name, duration, num_ele]
  */
 function getScenes(tpl) {
-
+    var ret = [];
+    var comps = tpl["compositions"];
+    var cnt = 0;
+    for (var name in comps) {
+        if (name[0] == '#') {
+            var cmp = comps[name];
+            var layers = cmp.layers;
+            var num_ele = 0;
+            for (var ln in layers) {
+                if (ln.uri[14] == '@')
+            }
+            // Thanks to tiny js -- ugly linked list implementeation
+            ret[cnt] = [name, cmp.duration, num_ele];
+            cnt++;
+        }
+    }
+    return ret;
 }
 
 /*
  * Parse config JSON and return users resources list 
  * [name, comp]
  */
-function genResourcesComp(js) {
+function genResourcesComp(js, width, height) {
+    var medias = js.medias;
+    var idx = 0;
+    var ret = [];
+    for (var m in medias) {
+        var comp = {};
+        var name = "@" + idx;
+        comp.duration = 5.0;
+        if (m.duration)
+            comp.duration = m.duration;
+        comp.resolution.width = width;
+        comp.resolution.height = height;
+        comp.layers = [];
 
+        var l = {};
+        l.uri = "file://" + m.filename;
+        l.time = 0;
+        l.start = 0;
+        l.duration = comp.duration;
+        l.last = comp.duration;
+        l.tranform = {};
+        l.tranform["0"] = [
+            width / 2.0, height / 2.0, 0, 
+            m.x + m.w / 2.0, m.y + m.h / 2.0, 0, 
+            width / m.w, height / m.h, 1,
+            0, 0, 0
+        ];
+        comp.layers[0] = l;
+
+        ret[idx] = [name, comp];
+        idx++;
+    }
 }
 
 /*
- * return [scene, comp_name1, comp_name2...] in order
+ * return [scene_name, comp_name1, comp_name2...] in order
  */
 function fit(comps, scenes) {
 
@@ -48,13 +90,19 @@ function fillTML(tplJS, fitted) {
 var tplJS = eval(tpljs); // Template json
 var userJS = eval(userjs);
 
-var comps = genResourcesComp(userJS);
+var scenes = getScenes(tplJS);
+var width = tplJS.compositions[scenes[0][0]].resolution.width;
+var height = tplJS.compositions[scenes[0][0]].resolution.height;
+var comps = genResourcesComp(userJS, width, height);
 
-var len = comps.length;
-for (var i = 0; i < len; i++) {
-    tplJS[comps[i]] = comps[i];
-}
+console.log(scenes);
+console.log("-----------------");
+console.log(comps);
 
-fillTML(tplJS, fit(comps, getScenes(tpl)));
+//for (var comp in comps) {
+//    tplJS.compositions[comps[0]] = comp[1];
+//}
+
+//fillTML(tplJS, fit(comps, getScenes(tpl)));
 
 var result = {hello: "world"};
