@@ -9,6 +9,9 @@
 #include "utils.hpp"
 #include "ccplus.hpp"
 
+#include "externals/TinyJS.h"
+#include "externals/TinyJS_Functions.h"
+
 namespace boost { namespace property_tree { namespace json_parser
 {
     // Create necessary escape sequences from illegal characters
@@ -183,4 +186,34 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     log(logINFO) << "---Successfully fill tml file! ---";
 }
 
+void CCPlus::generateTML(const std::string& configFile, const std::string& outputPath) {
+    ptree jsont;
+    try {
+        read_json(configFile, jsont);
+    } catch (...) { 
+        log(logFATAL) << "Couldn't parse or load file: " << configFile;
+    }
+    std::string tmlPath = jsont.get<std::string>("templateURL");
+    
+    std::string script = jsont.get<std::string>("script", "");
+    if (script == "") {
+        script = readTextAsset("gen_tml.js");
+    }
 
+    CTinyJS js;
+    registerFunctions(&js);
+
+    js.root->addChild("tpljs", new CScriptVar(slurp(tmlPath)));
+    js.root->addChild("userjs", new CScriptVar(slurp(configFile)));
+
+    std::string result;
+    try {
+        js.execute(script);
+        result = js.evaluate("JSON.stringify(result)");
+    } catch (CScriptException* e) {
+        L() << e->text;
+        log(logFATAL) << "Failed executing script";
+        return;
+    }
+    spit(outputPath, result);
+}
