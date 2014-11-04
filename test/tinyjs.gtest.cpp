@@ -71,6 +71,12 @@ TEST(TinyJS, DynamicFunctionArgs) {
 
     EVAL("function a(l){return l+1};function b(f) {return f(1)};ret=b(a)");
     EXPECT_EQ("2", js->evaluate("ret"));
+
+    EVAL("function b(f) {return f(1)};ret=b(function(l) {return l;})");
+    EXPECT_EQ("1", js->evaluate("ret"));
+
+    EVAL("(function (f) {ret = f})(1)");
+    EXPECT_EQ("1", js->evaluate("ret"));
 }
 
 //TEST(TinyJS, MapReduce) {

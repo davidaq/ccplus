@@ -3567,7 +3567,13 @@ string CScriptVarObject::getParsableString(const string &indentString, const str
 		for(SCRIPTVAR_CHILDS_it it = Childs.begin(); it != Childs.end(); ++it) {
 			if((*it)->isEnumerable()) {
 				destination.append(comma); comma=",";
-				destination.append(nl).append(new_indentString).append("\"").append(getIDString((*it)->getName())).append("\"");
+				destination.append(nl).append(new_indentString);
+                string p = getIDString((*it)->getName());
+                if(p[0] == '"') {
+                    destination.append(getIDString((*it)->getName()));
+                } else {
+                    destination.append("\"").append(getIDString((*it)->getName())).append("\"");
+                }
 				destination.append(" : ");
 				destination.append((*it)->getVarPtr()->getParsableString(new_indentString, indent, uniqueID, hasRecursion));
 			}
