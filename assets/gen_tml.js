@@ -93,7 +93,7 @@ function fillTML(tplJS, fitted) {
 var tplJS = JSON.parse(tpljs); // Template json
 var userJS = JSON.parse(userjs);
 
-console.log(tplJS);
+console.log(tplJS, "hello");
 var scenes = getScenes(tplJS);
 //var width = tplJS.compositions[scenes[0][0]].resolution.width;
 //var height = tplJS.compositions[scenes[0][0]].resolution.height;
