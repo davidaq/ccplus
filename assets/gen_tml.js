@@ -25,10 +25,13 @@ function getScenes(tpl) {
             var layers = cmp.layers;
             var num_ele = 0;
             for (var ln in layers) {
-                if (ln.uri[14] == '@')
+                if (ln.uri[14] == '@') {
+                    num_ele++;
+                }
             }
             // Thanks to tiny js -- ugly linked list implementeation
-            ret[cnt] = [name, cmp.duration, num_ele];
+            console.log(cnt, name);
+            //ret[cnt] = [name, cmp.duration, num_ele];
             cnt++;
         }
     }
@@ -91,13 +94,14 @@ var tplJS = eval(tpljs); // Template json
 var userJS = eval(userjs);
 
 var scenes = getScenes(tplJS);
-var width = tplJS.compositions[scenes[0][0]].resolution.width;
-var height = tplJS.compositions[scenes[0][0]].resolution.height;
-var comps = genResourcesComp(userJS, width, height);
+//var width = tplJS.compositions[scenes[0][0]].resolution.width;
+//var height = tplJS.compositions[scenes[0][0]].resolution.height;
+//var comps = genResourcesComp(userJS, width, height);
 
+console.log("--------SCENES---------");
 console.log(scenes);
-console.log("-----------------");
-console.log(comps);
+//console.log("-----------------");
+//console.log(comps);
 
 //for (var comp in comps) {
 //    tplJS.compositions[comps[0]] = comp[1];

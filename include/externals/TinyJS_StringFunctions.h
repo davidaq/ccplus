@@ -1,18 +1,9 @@
 /*
- * TinyJS
- *
- * A single-file Javascript-alike engine
- *
- * Authored By Gordon Williams <gw@pur3.co.uk>
- *
- * Copyright (C) 2009 Pur3 Ltd
- *
-
  * 42TinyJS
  *
  * A fork of TinyJS with the goal to makes a more JavaScript/ECMA compliant engine
  *
- * Authored / Changed By Armin Diedering <armin@diedering.de>
+ * Authored By Armin Diedering <armin@diedering.de>
  *
  * Copyright (C) 2010-2014 ardisoft
  *
@@ -36,14 +27,14 @@
  * SOFTWARE.
  */
 
-#pragma message("The include "__FILE__" is deprecated - Functions now registered by default")
+#pragma message("The include "__FILE__" is deprecated - StringFunctions now registered by default")
 
-#ifndef TINYJS_FUNCTIONS_H
-#define TINYJS_FUNCTIONS_H
+#ifndef TINYJS_STRINGFUNCTIONS_H
+#define TINYJS_STRINGFUNCTIONS_H
 
 #include "externals/TinyJS.h"
 
 /// Register useful functions with the TinyJS interpreter
-extern void DEPRECATED("is deprecated - Functions now registered by default") registerFunctions(CTinyJS *tinyJS);
+extern void DEPRECATED("is deprecated - StringFunctions now registered by default") registerStringFunctions(CTinyJS *tinyJS);
 
 #endif

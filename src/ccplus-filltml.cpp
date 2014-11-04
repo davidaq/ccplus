@@ -10,7 +10,7 @@
 #include "ccplus.hpp"
 
 #include "externals/TinyJS.h"
-#include "externals/TinyJS_Functions.h"
+//#include "externals/TinyJS_Functions.h"
 
 namespace boost { namespace property_tree { namespace json_parser
 {
@@ -201,17 +201,18 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
     }
 
     CTinyJS js;
-    registerFunctions(&js);
+    const auto& root = js.getRoot();
 
-    js.root->addChild("tpljs", new CScriptVar(slurp(tmlPath)));
-    js.root->addChild("userjs", new CScriptVar(slurp(configFile)));
+    newScriptVar(&js, CNumber(0));
+    root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
+    root->addChild("userjs", js.newScriptVar(slurp(configFile)));
 
     std::string result;
     try {
         js.execute(script);
         result = js.evaluate("JSON.stringify(result)");
     } catch (CScriptException* e) {
-        L() << e->text;
+        L() << e->toString().c_str();
         log(logFATAL) << "Failed executing script";
         return;
     }
