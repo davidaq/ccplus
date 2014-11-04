@@ -149,7 +149,7 @@ void scConsoleLog(const CFunctionsScopePtr &c, void *data) {
     int l = c->getArgumentsLength();
     for (int i = 0; i < l; i++) {
         CScriptVarPtr v = c->getArgument(i);
-        printf(">> %s\n", v->getString().c_str());
+        printf(">> %s\n", v->getParsableString().c_str());
     }
 }
 

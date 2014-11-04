@@ -7,24 +7,24 @@
 using namespace std;
 using namespace CCPlus;
 
-CTinyJS js;
-#define EVAL(x) try{js.execute(x);}catch(CScriptException *e){L()<<e->toString().c_str();}
+CTinyJS* js = new CTinyJS;
+#define EVAL(x) try{js->execute(x);}catch(CScriptException *e){L()<<e->toString().c_str();}
 
 TEST(TinyJS, Basic) {
     EVAL("result = 100");
-    EXPECT_EQ("100", js.evaluate("result"));
+    EXPECT_EQ("100", js->evaluate("result"));
 }
 
 TEST(TinyJS, Increment) {
     EVAL("a = 5; b = a++; c = ++a")
-    EXPECT_EQ("7", js.evaluate("a"));
-    EXPECT_EQ("5", js.evaluate("b"));
-    EXPECT_EQ("7", js.evaluate("c"));
+    EXPECT_EQ("7", js->evaluate("a"));
+    EXPECT_EQ("5", js->evaluate("b"));
+    EXPECT_EQ("7", js->evaluate("c"));
 
     EVAL("a = 5; b = a--; c = --a");
-    EXPECT_EQ("3", js.evaluate("a"));
-    EXPECT_EQ("5", js.evaluate("b"));
-    EXPECT_EQ("3", js.evaluate("c"));
+    EXPECT_EQ("3", js->evaluate("a"));
+    EXPECT_EQ("5", js->evaluate("b"));
+    EXPECT_EQ("3", js->evaluate("c"));
 }
 
 TEST(TinyJS, Log) {
@@ -34,31 +34,43 @@ TEST(TinyJS, Log) {
 
 TEST(TinyJS, For) {
     EVAL("var sum=0;for(var k=1;k<5;k++) {sum += k;}");
-    EXPECT_EQ("10", js.evaluate("sum"));
+    EXPECT_EQ("10", js->evaluate("sum"));
 
     EVAL("var sum=0;for(k in [1,3,5,7,9]) {sum += k;}");
-    EXPECT_EQ("001234", js.evaluate("sum"));
+    EXPECT_EQ("001234", js->evaluate("sum"));
 
     EVAL("var sum=0;a=[1,3,5,7,9];for(k in a) {sum += a[k];}");
-    EXPECT_EQ("25", js.evaluate("sum"));
+    EXPECT_EQ("25", js->evaluate("sum"));
     
     EVAL("var v={a:5,b:1,c:3};c='';var sum=0;for(var k in v) {sum+=v[k];c+=k}");
-    EXPECT_EQ("9", js.evaluate("sum"));
-    EXPECT_EQ("abc", js.evaluate("c"));
+    EXPECT_EQ("9", js->evaluate("sum"));
+    EXPECT_EQ("abc", js->evaluate("c"));
 }
 
 TEST(TinyJS, ReturnJSON) {
     EVAL("var tmlObj = {hello: 'hello world'}; var ret = JSON.stringify(tmlObj);");
-    EXPECT_EQ("{\n  \"hello\" :   \"hello world\"\n}", js.evaluate("ret"));
+    EXPECT_EQ("{\n  \"hello\" :   \"hello world\"\n}", js->evaluate("ret"));
 }
 
 TEST(TinyJS, LoadJSON) {
     const std::string json = "{\"key\" : \"value\"}";
 
-    js.getRoot()->addChild("json", js.newScriptVar(json));
+    js->getRoot()->addChild("json", js->newScriptVar(json));
 
     EVAL("var tmlObj = JSON.parse(json);");
-    EXPECT_EQ("value", js.evaluate("tmlObj.key"));
+    EXPECT_EQ("value", js->evaluate("tmlObj.key"));
+}
+
+TEST(TinyJS, DynamicFunctionArgs) {
+    EVAL("function o(a,b) {l=arguments}o(1,2,3);");
+    EXPECT_EQ("3", js->evaluate("l[2]"));
+
+    EVAL("function o(a,b) {s=a;t=b}o(1);");
+    EXPECT_EQ("1", js->evaluate("s"));
+    EXPECT_EQ("undefined", js->evaluate("t"));
+
+    EVAL("function a(l){return l+1};function b(f) {return f(1)};ret=b(a)");
+    EXPECT_EQ("2", js->evaluate("ret"));
 }
 
 //TEST(TinyJS, MapReduce) {
