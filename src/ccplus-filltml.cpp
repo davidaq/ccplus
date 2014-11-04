@@ -203,7 +203,6 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
     CTinyJS js;
     const auto& root = js.getRoot();
 
-    newScriptVar(&js, CNumber(0));
     root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
     root->addChild("userjs", js.newScriptVar(slurp(configFile)));
 
