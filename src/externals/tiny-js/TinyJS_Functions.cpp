@@ -145,7 +145,17 @@ static void scArrayJoin(const CFunctionsScopePtr &c, void *data) {
 	c->setReturnVar(c->newScriptVar(sstr.str()));
 }
 
-void scConsoleLog(const CFunctionsScopePtr &c, void *data) {
+static void scArrayPush(const CFunctionsScopePtr &c, void *data) {
+	CScriptVarPtr val = c->getArgument("obj");
+	CScriptVarPtr arr = c->getArgument("this");
+
+	int l = arr->getArrayLength();
+    arr->setArrayIndex(l, val);
+
+	c->setReturnVar(arr);
+}
+
+static void scConsoleLog(const CFunctionsScopePtr &c, void *data) {
     int l = c->getArgumentsLength();
     for (int i = 0; i < l; i++) {
         CScriptVarPtr v = c->getArgument(i);
@@ -166,6 +176,7 @@ extern "C" void _registerFunctions(CTinyJS *tinyJS) {
 	tinyJS->addNative("function Array.prototype.contains(obj)", scArrayContains, 0, SCRIPTVARLINK_BUILDINDEFAULT);
 	tinyJS->addNative("function Array.prototype.remove(obj)", scArrayRemove, 0, SCRIPTVARLINK_BUILDINDEFAULT);
 	tinyJS->addNative("function Array.prototype.join(separator)", scArrayJoin, 0, SCRIPTVARLINK_BUILDINDEFAULT);
+	tinyJS->addNative("function Array.prototype.push(obj)", scArrayPush, 0, SCRIPTVARLINK_BUILDINDEFAULT);
 
     tinyJS->addNative("function console.log()", scConsoleLog, 0, SCRIPTVARLINK_BUILDINDEFAULT);
     tinyJS->addNative("function console.debug()", scConsoleLog, 0, SCRIPTVARLINK_BUILDINDEFAULT);
