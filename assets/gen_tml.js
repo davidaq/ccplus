@@ -25,13 +25,12 @@ function getScenes(tpl) {
             var layers = cmp.layers;
             var num_ele = 0;
             for (var ln in layers) {
-                if (ln.uri[14] == '@') {
+                if (layers[ln].uri[14] == '@') {
                     num_ele++;
                 }
             }
             // Thanks to tiny js -- ugly linked list implementeation
-            console.log(cnt, name);
-            //ret[cnt] = [name, cmp.duration, num_ele];
+            ret.push([name, cmp.duration, num_ele]);
             cnt++;
         }
     }
