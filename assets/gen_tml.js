@@ -46,11 +46,13 @@ function genResourcesComp(js, width, height) {
     var idx = 0;
     var ret = [];
     for (var m in medias) {
+        var md = medias[m];
         var comp = {};
         var name = "@" + idx;
         comp.duration = 5.0;
-        if (m.duration)
-            comp.duration = m.duration;
+        if (md.duration)
+            comp.duration = md.duration;
+        comp.resolution = {};
         comp.resolution.width = width;
         comp.resolution.height = height;
         comp.layers = [];
@@ -64,8 +66,8 @@ function genResourcesComp(js, width, height) {
         l.tranform = {};
         l.tranform["0"] = [
             width / 2.0, height / 2.0, 0, 
-            m.x + m.w / 2.0, m.y + m.h / 2.0, 0, 
-            width / m.w, height / m.h, 1,
+            md.x + md.w / 2.0, md.y + md.h / 2.0, 0, 
+            width / md.w, height / md.h, 1,
             0, 0, 0
         ];
         comp.layers[0] = l;
@@ -73,6 +75,7 @@ function genResourcesComp(js, width, height) {
         ret[idx] = [name, comp];
         idx++;
     }
+    return ret;
 }
 
 /*
@@ -92,16 +95,16 @@ function fillTML(tplJS, fitted) {
 var tplJS = JSON.parse(tpljs); // Template json
 var userJS = JSON.parse(userjs);
 
-console.log(tplJS, "hello");
+console.log(tplJS);
 var scenes = getScenes(tplJS);
-//var width = tplJS.compositions[scenes[0][0]].resolution.width;
-//var height = tplJS.compositions[scenes[0][0]].resolution.height;
-//var comps = genResourcesComp(userJS, width, height);
+var width = tplJS.compositions[scenes[0][0]].resolution.width;
+var height = tplJS.compositions[scenes[0][0]].resolution.height;
+var comps = genResourcesComp(userJS, width, height);
 
 console.log("--------SCENES---------");
 console.log(scenes);
-//console.log("-----------------");
-//console.log(comps);
+console.log("---------Resources Comp--------");
+console.log(comps);
 
 //for (var comp in comps) {
 //    tplJS.compositions[comps[0]] = comp[1];
