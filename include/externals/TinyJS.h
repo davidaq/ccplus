@@ -745,7 +745,7 @@ public:
 
 //	virtual std::string getParsableString(const std::string &indentString, const std::string &indent, bool &hasRecursion); ///< get Data as a parsable javascript string
 #define getParsableStringRecursionsCheck() do{		\
-		if(uniqueID) { \
+		if(false&&uniqueID) { \
 			if(uniqueID==getTemporaryMark()) { hasRecursion=true; return "recursion"; } \
 			setTemporaryMark(uniqueID); \
 		} \
