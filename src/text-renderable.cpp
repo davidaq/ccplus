@@ -190,7 +190,7 @@ void TextRenderable::prepareFrame(int time) {
 
     wstring s = get<wstring>(this->text, time);
     int x = 0;
-    int y = height * sy;
+    int y = height * sy * 1.2;
     int prevAdvance = 0;
     for (int j = 0; j < s.length(); j++) {
         error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
@@ -214,7 +214,7 @@ void TextRenderable::prepareFrame(int time) {
 #endif
     Frame retFrame;
     retFrame.image = ret;
-    retFrame.ext.anchorAdjustY = size;
+    retFrame.ext.anchorAdjustY = y / 1.2;
     switch(get(this->justification, time)) {
         case 0: // left
             retFrame.ext.anchorAdjustX = 0;

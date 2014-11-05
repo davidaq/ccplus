@@ -124,6 +124,7 @@ class Resizer():
     def downsize(self, maxwidth, maxheight):
         topsize = self.tml['compositions'][self.tml['main']]['resolution']
         w, h = topsize['width'], topsize['height']
+        scale = 1
         if (maxwidth & 1) > 0:
             maxwidth += 1
         if (maxheight & 1) > 0:
