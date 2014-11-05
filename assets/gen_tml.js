@@ -13,7 +13,11 @@
 
 /* 
  * Parse tpl tml and return scenes list
- * [scene_name, duration, num_ele]
+ * {
+ *  name: ~,
+ *  duration: ~,
+ *  num_ele: ~
+ * }
  */
 function getScenes(tpl) {
     var ret = [];
@@ -29,8 +33,11 @@ function getScenes(tpl) {
                     num_ele++;
                 }
             }
-            // Thanks to tiny js -- ugly linked list implementeation
-            ret.push([name, cmp.duration, num_ele]);
+            ret.push({
+                name: name,
+                duration: cmp.duration,
+                num_ele: num_ele
+            });
             cnt++;
         }
     }
@@ -39,12 +46,15 @@ function getScenes(tpl) {
 
 /*
  * Parse config JSON and return users resources list 
- * [name, comp]
+ * {
+ *  name: ~, 
+ *  comp: ~
+ * }
  */
 function genResourcesComp(js, width, height) {
     var medias = js.medias;
-    var idx = 0;
     var ret = [];
+    var idx = 0;
     for (var m in medias) {
         var md = medias[m];
         var comp = {};
@@ -58,7 +68,7 @@ function genResourcesComp(js, width, height) {
         comp.layers = [];
 
         var l = {};
-        l.uri = "file://" + m.filename;
+        l.uri = "file://" + md.filename;
         l.time = 0;
         l.start = 0;
         l.duration = comp.duration;
@@ -72,33 +82,172 @@ function genResourcesComp(js, width, height) {
         ];
         comp.layers[0] = l;
 
-        ret[idx] = [name, comp];
+        ret.push({
+            name: name, 
+            type: md.title,
+            comp: comp
+        });
         idx++;
     }
     return ret;
 }
 
 /*
- * return [scene_name, comp_name1, comp_name2...] in order
+ * return [scene_name, [comp_name1, comp_name2, ...]] in order
+ * NOTE: scene_name can be duplicated
  */
 function fit(comps, scenes) {
-
+    var cnt = comps.length;
+    var used = {};
+    var ret = [];
+    /*
+    * Simple version
+    */
+    for (var k in scenes) {
+        var scene = scenes[k];
+        var num_ele = scene.num_ele;
+        if (num_ele > cnt) continue;
+        var tmp_ret = [scene.name, []];
+        for (var y in comps) {
+            var comp = comps[y];
+            if (used[comp.name]) continue;
+            tmp_ret[1].push(comp.name); 
+            used[comp.name] = true;
+            cnt--;
+            num_ele--;
+            if (num_ele == 0)
+                break;
+        }
+        ret.push(tmp_ret);
+    }
+    return ret;
 }
 
 /*
  * Generate result tml file based on fitted data
  */
-function fillTML(tplJS, fitted) {
+function fillTML(tplJS, fitted, userJS, wrapJS) {
+    var candidates = [];
+    var len = fitted.length;
+    for (var i = 0; i < len; i++) {
+        var fit = fitted[i];
+        // Ugly clone!
+        var cname = fit[0];
+        var comp = JSON.parse(JSON.stringify(tplJS.compositions[cname]));
+        var layers = comp.layers;
+        var idx = 0;
+        var overlap = 0;
+        for (var l in layers) {
+            var layer = layers[l];
+            if (layer.uri[14] == '@') {
+                layer.uri = "compositions://" + fit[1][idx];
+                idx++;
+            }
+            if (layer.uri == 'composition://#+1') {
+                if (i < len - 1) {
+                    layer.uri = 'composition://$' + (i + 1);
+                } else {
+                    layer.uri = "compositions://End";
+                }
+                overlap = layer.duration;
+            }
+        }
+        var tmp = ["$"+i, comp, overlap];
+        candidates.push(tmp);
+        tplJS.compositions[tmp[0]] = comp;
+    }
 
+    var comps_in_wrap = wrapJS.compositions;
+    for (var cname in comps_in_wrap) {
+        if (cname != "MAIN") {
+            tplJS.compositions[cname] = comps_in_wrap[cname];
+        }
+    }
+    // Generate main composition
+    var main_name = tplJS.main;
+    var ret = {};
+    tplJS.compositions[main_name] = ret;
+    ret.resolution = {};
+    ret.resolution.width = width;
+    ret.resolution.height = height;
+    ret.layers = [];
+    var currentTime = 0;
+    var overlap = 0;
+    function appendScene(name, comp) {
+        var layer = {};
+        layer.uri = "composition://" + name;
+        layer.duration = comp.duration - overlap;
+        if (layer.duration < 0) 
+            return;
+        layer.start = overlap;
+        layer.last = comp.duration - overlap;
+        layer.time = currentTime;
+        layer.properties = {
+            tranform : {
+                0 : [
+                    0, 0, 0,
+                    0, 0, 0,
+                    1, 1, 1,
+                    0, 0, 0
+                ]
+            }
+        };
+        currentTime += layer.duration;
+        ret.layers.push(layer);
+    }
+
+    // Append start
+    var startComp = tplJS.compositions['Caption'];
+    var startLayer = {
+        start: 0,
+        time: 0,
+        last: startComp.duration,
+        duration: startComp.duration,
+        uri: "compositions://Caption",
+        properties: {
+            tranform: {
+                0: [
+                    0, 0, 0,
+                    0, 0, 0,
+                    1, 1, 1,
+                    0, 0, 0
+                ]
+            }
+        }
+    };
+    ret.layers.push(startLayer);
+
+    // Append scenes
+    for (var i in candidates) {
+        appendScene(candidates[i][0], candidates[i][1]);
+
+        overlap = candidates[i][2];
+    }
+
+    // Append end scenes
+    appendScene("End", tplJS.compositions["End"]);
+
+    // Append background music
+    ret.duration = currentTime;
+    var music = {
+        start: 0,
+        time: 0,
+        duration: ret.duration,
+        last: ret.duration,
+        properties: {},
+        uri: "file://" + userJS.musicURL,
+    };
+    ret.layers.push(music);
 }
 
 var tplJS = JSON.parse(tpljs); // Template json
 var userJS = JSON.parse(userjs);
+var wrapJS = JSON.parse(wrapjs);
 
-console.log(tplJS);
+//console.log(tplJS);
 var scenes = getScenes(tplJS);
-var width = tplJS.compositions[scenes[0][0]].resolution.width;
-var height = tplJS.compositions[scenes[0][0]].resolution.height;
+var width = tplJS.compositions[scenes[0].name].resolution.width;
+var height = tplJS.compositions[scenes[0].name].resolution.height;
 var comps = genResourcesComp(userJS, width, height);
 
 console.log("--------SCENES---------");
@@ -106,10 +255,16 @@ console.log(scenes);
 console.log("---------Resources Comp--------");
 console.log(comps);
 
-//for (var comp in comps) {
-//    tplJS.compositions[comps[0]] = comp[1];
-//}
+for (var k in comps) {
+    var comp = comps[k];
+    tplJS.compositions[comp.name] = comp.comp;
+}
+//console.log("---------Temp result--------");
+//console.log(tplJS);
 
-//fillTML(tplJS, fit(comps, getScenes(tpl)));
+fillTML(tplJS, fit(comps, scenes), userJS, wrapJS);
 
-var result = {hello: "world"};
+var result = tplJS;
+
+console.log("---------Final result--------");
+console.log(result);

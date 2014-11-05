@@ -205,6 +205,7 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
 
     root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
     root->addChild("userjs", js.newScriptVar(slurp(configFile)));
+    root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
 
     std::string result;
     try {
