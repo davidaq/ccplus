@@ -29,7 +29,7 @@ namespace CCPlus {
     // @ generate a timeline from a configuration file
     void fillTML(const std::string& configFile, const std::string& output);
     // @ Generate a timeline dynamically
-    void generateTML(const std::string& configFile, const std::string& output);
+    void generateTML(const std::string& configFile, const std::string& output, const std::string& assetPath = "../../assets/");
 
     // @ Wait for render
     void waitRender();
