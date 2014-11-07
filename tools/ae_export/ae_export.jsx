@@ -1,5 +1,5 @@
 /*******
- * ae_export/define.js
+ * src/define.js
  *******/
 /*
  * Definitions
@@ -33,7 +33,7 @@ var blendingModes = {
 };
 
 /*******
- * ae_export/export.js
+ * src/export.js
  *******/
 /*
  * Export logic
@@ -58,12 +58,18 @@ Export.prototype.exportTo = function(filePath) {
     this.files = {};
     this.colors = {};
     try {
-        if(!this.comp.MAIN) {
-            throw "Main composition doesn't exist";
+        this.exportList = [];
+        if(this.comp.MAIN)
+            this.exportList = ['MAIN'];
+        for(var k in this.comp) {
+            if(k[0] == '#')
+                this.exportList.push(k);
+        }
+        if(this.exportList.length <= 0) {
+            throw "Main or scene compositions doesn't exist";
         }
         this.exported = {};
         this.compsCount = this.getCompsCount(this.comp.MAIN);
-        this.exportList = ['MAIN'];
         this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
@@ -384,7 +390,7 @@ function mapProperty(options) {
 }
 
 /*******
- * ae_export/main.js
+ * src/main.js
  *******/
 ﻿function main() {
     showProgressWindow();
@@ -422,7 +428,7 @@ var NULL;
 
 
 /*******
- * ae_export/progress.js
+ * src/progress.js
  *******/
 function progressWindow() {
     var windowName = 'CCPlus Export Util';
@@ -479,7 +485,7 @@ function isProgressWindowVisible() {
 
 
 /*******
- * ae_export/propertymap/4color.js
+ * src/propertymap/4color.js
  *******/
 mapProperty({
     name: '4color',
@@ -520,7 +526,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/gaussian.js
+ * src/propertymap/gaussian.js
  *******/
 mapProperty({
     name: 'gaussian',
@@ -535,7 +541,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/grayscale.js
+ * src/propertymap/grayscale.js
  *******/
 mapProperty({
     name: 'grayscale',
@@ -562,7 +568,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/hsl.js
+ * src/propertymap/hsl.js
  *******/
 mapProperty({
     name: 'hsl',
@@ -586,7 +592,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/mask.js
+ * src/propertymap/mask.js
  *******/
 mapProperty({
     name: 'mask',
@@ -626,7 +632,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/opacity.js
+ * src/propertymap/opacity.js
  *******/
 mapProperty({
     name: 'opacity',
@@ -638,7 +644,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/ramp.js
+ * src/propertymap/ramp.js
  *******/
 mapProperty({
     name: 'ramp',
@@ -667,7 +673,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/transform.js
+ * src/propertymap/transform.js
  *******/
 mapProperty({
     name: 'transform',
@@ -691,7 +697,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/volume.js
+ * src/propertymap/volume.js
  *******/
 mapProperty({
     name: 'volume',
@@ -716,7 +722,7 @@ mapProperty({
 })
 
 /*******
- * ae_export/util.js
+ * src/util.js
  *******/
 /* 
  * Utilities

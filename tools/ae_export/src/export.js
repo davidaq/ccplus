@@ -21,12 +21,18 @@ Export.prototype.exportTo = function(filePath) {
     this.files = {};
     this.colors = {};
     try {
-        if(!this.comp.MAIN) {
-            throw "Main composition doesn't exist";
+        this.exportList = [];
+        if(this.comp.MAIN)
+            this.exportList = ['MAIN'];
+        for(var k in this.comp) {
+            if(k[0] == '#')
+                this.exportList.push(k);
+        }
+        if(this.exportList.length <= 0) {
+            throw "Main or scene compositions doesn't exist";
         }
         this.exported = {};
         this.compsCount = this.getCompsCount(this.comp.MAIN);
-        this.exportList = ['MAIN'];
         this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
