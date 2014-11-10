@@ -6,6 +6,7 @@
 #include "video-renderable.hpp"
 #include "text-renderable.hpp"
 #include "gif-renderable.hpp"
+#include "color-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -119,6 +120,8 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             renderable = extMap[ext](uri);
         } else if (stringStartsWith(uri, "text://")) {
             renderable = new TextRenderable(pt);
+        } else if (stringStartsWith(uri, "color://")) {
+            renderable = new ColorRenderable(uri);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }

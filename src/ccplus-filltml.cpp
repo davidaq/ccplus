@@ -201,6 +201,14 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     if (script == "") {
         script = readTextAsset("gen_tml.js");
     }
+    //try {
+    //    read_json(tmlPath, jsont);
+    //    std::ofstream fileStream;
+    //    fileStream.open("tmp/tpl.tml");
+    //    write_json(fileStream, jsont, true);
+    //} catch (...) { 
+    //    log(logFATAL) << "Couldn't parse or load file: " << configFile;
+    //}
 
     CTinyJS js;
     const auto& root = js.getRoot();
