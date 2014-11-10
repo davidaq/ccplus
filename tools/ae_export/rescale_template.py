@@ -32,6 +32,7 @@ class Resizer():
         return files
 
     def resizefiles(self):
+        return
         self.preparedir()
         files = self.usedfiles()
         sizes = self.tml['usedfiles']
@@ -67,42 +68,42 @@ class Resizer():
 
     def resizetml(self):
         comps = self.tml['compositions']
-        for comp in comps:
-            comps[comp]['resolution']['width'] *= self.scale
-            comps[comp]['resolution']['height'] *= self.scale
-            for layer in comps[comp]['layers']:
-                if layer['uri'][0:7] == 'text://':
-                    txtProp = layer['text-properties']
-                    for t in txtProp['size']:
-                        txtProp['size'][t] = int(ceil(txtProp['size'][t] * self.scale))
-                transform = layer['properties']['transform']
-                for time in transform:
-                    trans = transform[time]
-                    for j in range(0, len(trans) / 12):
-                        for i in range(0, 6):
-                            ji = i + j * 12
-                            trans[ji] *= self.scale
-                    if layer['uri'] in self.favor_rescale:
-                        scale = self.favor_rescale[layer['uri']]
-                        adjust = [0, 0, 0, 0, 0, 0, scale[0], scale[1], 1, 0, 0, 0]
-                        adjust.extend(trans)
-                        transform[time] = adjust
-                if 'mask' in layer['properties']:
-                    mask = layer['properties']['mask']
-                    for time in mask:
-                        shape = mask[time]
-                        for i in range(0, len(shape)):
-                            shape[i] *= self.scale
-                if 'ramp' in layer['properties']:
-                    prop = layer['properties']['ramp']
-                    for time in prop:
-                        for index in (1, 2):
-                            prop[time][index] *= self.scale
-                if '4color' in layer['properties']:
-                    prop = layer['properties']['4color']
-                    for time in prop:
-                        for index in (0, 1, 5, 6, 10, 11):
-                            prop[time][index] *= self.scale
+        #for comp in comps:
+        #    comps[comp]['resolution']['width'] *= self.scale
+        #    comps[comp]['resolution']['height'] *= self.scale
+        #    for layer in comps[comp]['layers']:
+        #        if layer['uri'][0:7] == 'text://':
+        #            txtProp = layer['text-properties']
+        #            for t in txtProp['size']:
+        #                txtProp['size'][t] = int(ceil(txtProp['size'][t] * self.scale))
+        #        transform = layer['properties']['transform']
+        #        for time in transform:
+        #            trans = transform[time]
+        #            for j in range(0, len(trans) / 12):
+        #                for i in range(0, 6):
+        #                    ji = i + j * 12
+        #                    trans[ji] *= self.scale
+        #            if layer['uri'] in self.favor_rescale:
+        #                scale = self.favor_rescale[layer['uri']]
+        #                adjust = [0, 0, 0, 0, 0, 0, scale[0], scale[1], 1, 0, 0, 0]
+        #                adjust.extend(trans)
+        #                transform[time] = adjust
+        #        if 'mask' in layer['properties']:
+        #            mask = layer['properties']['mask']
+        #            for time in mask:
+        #                shape = mask[time]
+        #                for i in range(0, len(shape)):
+        #                    shape[i] *= self.scale
+        #        if 'ramp' in layer['properties']:
+        #            prop = layer['properties']['ramp']
+        #            for time in prop:
+        #                for index in (1, 2):
+        #                    prop[time][index] *= self.scale
+        #        if '4color' in layer['properties']:
+        #            prop = layer['properties']['4color']
+        #            for time in prop:
+        #                for index in (0, 1, 5, 6, 10, 11):
+        #                    prop[time][index] *= self.scale
         del self.tml['usedfiles']
         del self.tml['usedcolors']
         json = JSONEncoder().encode(self.tml)
@@ -122,7 +123,8 @@ class Resizer():
         return (w, h)
     
     def downsize(self, maxwidth, maxheight):
-        topsize = self.tml['compositions'][self.tml['main']]['resolution']
+        #topsize = self.tml['compositions'][self.tml['main']]['resolution']
+        topsize = {"width":640,"height":640}
         w, h = topsize['width'], topsize['height']
         scale = 1
         if (maxwidth & 1) > 0:

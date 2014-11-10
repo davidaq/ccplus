@@ -107,16 +107,20 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
+#include "video-renderable.hpp"
+
 GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
         return GPUFrame();
     float local_t = mapInnerTime(t);
     GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
-    for (auto& k : orderedKey) {
-        profileBegin(PropertyInterpolation);
-        const auto& params = interpolate(k, t);
-        profileEnd(PropertyInterpolation);
-        frame = Filter(k).apply(frame, params, width, height);
+    if(frame) {
+        for (auto& k : orderedKey) {
+            profileBegin(PropertyInterpolation);
+            const auto& params = interpolate(k, t);
+            profileEnd(PropertyInterpolation);
+            frame = Filter(k).apply(frame, params, width, height);
+        }
     }
     return frame;
 }

@@ -6,7 +6,7 @@ var Export = function() {
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name]) {
+            if(this.comp[item.name] && item.name[0] != '@') {
                 throw "Duplicate composition name: " + item.name;
             }
             this.comp[item.name] = item;
@@ -32,7 +32,10 @@ Export.prototype.exportTo = function(filePath) {
             throw "Main or scene compositions doesn't exist";
         }
         this.exported = {};
-        this.compsCount = this.getCompsCount(this.comp.MAIN);
+        this.compsCount = 0;
+        for(var k in this.exportList) {
+            this.compsCount += this.getCompsCount(this.comp[this.exportList[k]]);
+        }
         this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');

@@ -56,12 +56,14 @@ VideoDecoder::~VideoDecoder() {
 
 VideoInfo VideoDecoder::getVideoInfo() {
     initContext();
+    if(invalid) return VideoInfo();
     return decodeContext->info;
 }
 
 void VideoDecoder::seekTo(float time) {
     if (decoderFlag & DECODE_VIDEO) {
         initContext();
+        if(invalid) return;
         cursorTime = time;
         time -= 1;
         if(time < 1) {
@@ -73,6 +75,7 @@ void VideoDecoder::seekTo(float time) {
 
 bool VideoDecoder::readNextFrameIfNeeded() {
     initContext();
+    if(invalid) return false;
     if(decodeContext->haveCurrentPkt)
         return true;
     if(av_read_frame(decodeContext->fmt_ctx, &(decodeContext->pkt)) >= 0) {
@@ -237,6 +240,7 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
         return;
     }
     initContext();
+    if(invalid) return;
     FILE* destFile = fopen(outputFile.c_str(), "wb");
     if(!destFile)
         return;
@@ -367,9 +371,11 @@ void VideoDecoder::initContext() {
     av_init_packet(&(decodeContext->pkt));
     decodeContext->pkt.data = NULL;
     decodeContext->pkt.size = 0;
+    invalid = false;
 }
 
 void VideoDecoder::releaseContext() {
+    invalid = true;
     if(!decodeContext)
         return;
     if(decodeContext->video_dec_ctx)

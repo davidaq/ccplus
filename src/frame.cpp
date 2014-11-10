@@ -33,6 +33,9 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
      */
     uint32_t jpgLen = NEXT(uint32_t);
     if (jpgLen >= 125) {
+        //image = cv::Mat(height, width, CV_8UC4);
+        //memcpy(image.data, ptr, jpgLen);
+
         vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
         profile(DecodeImage) {
             image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
@@ -94,6 +97,7 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     vector<unsigned char> buff;
     if (!image.empty()) {
         profile(EncodeImage) {
+            //buff = vector<unsigned char>(image.data, image.data + image.total() * 4);
             imencode(".jpg", image, buff, 
                     vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
         }

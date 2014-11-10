@@ -26,6 +26,7 @@ private:
 
     std::string uri;
     VideoDecoder *decoder, *alpha_decoder;
-    std::map<int, cv::Mat> framesCache;
+    //std::map<int, cv::Mat> framesCache;
+    std::map<int, Frame> framesCache;
 };
 
