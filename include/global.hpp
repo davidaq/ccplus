@@ -25,6 +25,7 @@ namespace CCPlus {
     class Composition;
     class ImageRenderable;
     class VideoRenderable;
+    class ColorRenderable;
 };
 
 #include <cstdio>
