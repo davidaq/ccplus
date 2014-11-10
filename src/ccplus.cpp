@@ -130,3 +130,7 @@ int CCPlus::numberOfFrames() {
     return ctx->mainComposition->getDuration() / d;
 }
 
+std::string assetPath;
+void CCPlus::setAssetsPath(const std::string& path) {
+    assetPath = path;
+}

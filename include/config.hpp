@@ -12,3 +12,5 @@ namespace CCPlus {
 #define GLSLES
 #endif
 #endif
+
+extern std::string assetPath;

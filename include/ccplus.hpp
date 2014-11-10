@@ -7,7 +7,10 @@
  ***********************************************************************************/
 
 #pragma once
+
 namespace CCPlus {
+    const bool HALF_SIZE = true;
+    const bool FULL_SIZE = false;
     // @ easy one shot render shortcut
     void go(const std::string& tmlPath, const std::string& outputPath, int fps);
 
@@ -29,7 +32,10 @@ namespace CCPlus {
     // @ generate a timeline from a configuration file
     void fillTML(const std::string& configFile, const std::string& output);
     // @ Generate a timeline dynamically
-    void generateTML(const std::string& configFile, const std::string& output, const std::string& assetPath = "../../assets/");
+    std::string generateTML(const std::string& configFile, bool halfSize=false);
+
+    // @ Configure assets path
+    void setAssetsPath(const std::string& path);
 
     // @ Wait for render
     void waitRender();

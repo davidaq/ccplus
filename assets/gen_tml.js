@@ -305,3 +305,7 @@ var result = tplJS;
 
 //console.log("---------Final result--------");
 //console.log(result);
+
+function toHalf(tml) {
+    return tml;
+}

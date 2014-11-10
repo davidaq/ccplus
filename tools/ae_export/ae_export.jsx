@@ -87,13 +87,14 @@ Export.prototype.exportTo = function(filePath) {
             var expComp = this.exportComp(this.comp[compName]);
             this.tmlFile.write('"' + compName +'":');
             this.tmlFile.write(obj2str(expComp));
+            this.tmlFile.write("\n");
             log('  Write comp');
         }
-        this.tmlFile.write('},"usedfiles":');
-        this.tmlFile.write(obj2str(this.files));
-        this.tmlFile.write(',"usedcolors":');
-        this.tmlFile.write(obj2str(this.colors));
-        this.tmlFile.write('}');
+        //this.tmlFile.write('},"usedfiles":');
+        //this.tmlFile.write(obj2str(this.files));
+        //this.tmlFile.write(',"usedcolors":');
+        //this.tmlFile.write(obj2str(this.colors));
+        this.tmlFile.write('}}');
     } finally {
         this.tmlFile.close();
     }
@@ -157,22 +158,22 @@ Export.prototype.exportLayer = function(layer) {
         if(!source.file) {
             // color source
             var color = source.mainSource.color;
-            path = source.width + 'x' + source.height + '#' 
-                + color[0] + '_' + color[1] + '_' + color[2];
-            path = '(colors)/' + path + '.png';
-            this.colors[path] = {
-                color: color,
-                width: source.width,
-                height: source.height
-            };
+            path = source.width + ',' + source.height + ',' 
+                + color[0] + ',' + color[1] + ',' + color[2];
+            ret.uri = 'color://' + path;
+            //this.colors[path] = {
+            //    color: color,
+            //    width: source.width,
+            //    height: source.height
+            //};
         } else {
             path = relPath(source.file.fullName);
+            ret.uri = 'file://' + path;
         }
-        ret.uri = 'file://' + path;
-        this.files[path] = {
-            width: source.width,
-            height: source.height
-        };
+        //this.files[path] = {
+        //    width: source.width,
+        //    height: source.height
+        //};
         log('    Export Footage: ' + path);
     } else if('[object TextLayer]' == type) {
         if(!this.textCounter)
@@ -181,7 +182,7 @@ Export.prototype.exportLayer = function(layer) {
         var txtProp = {};
         var txtExport = function (key, aeKey, correction) {
             var proced = false;
-            var prevVal = NULL;
+            var prevVal = -314.159;
             var prop = {};
             for(var t = layer.inPoint; ; t += 0.1) {
                 if(t > layer.outPoint) {

@@ -186,7 +186,7 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     log(logINFO) << "---Successfully fill tml file! ---";
 }
 
-void CCPlus::generateTML(const std::string& configFile, const std::string& outputPath, const std::string& assetPath) {
+std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     ptree jsont;
     try {
         read_json(configFile, jsont);
@@ -197,7 +197,6 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
     if (tmlPath[0] != '/') { // Relative to templateURL
         tmlPath = generatePath(dirName(configFile), tmlPath);
     }
-    
     std::string script = jsont.get<std::string>("script", "");
     if (script == "") {
         script = readTextAsset("gen_tml.js");
@@ -214,11 +213,16 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
     std::string result;
     try {
         js.execute(script);
-        result = js.evaluate("JSON.stringify(result)");
+        if(halfSize)
+            result = js.evaluate("JSON.stringify(toHalf(result))");
+        else
+            result = js.evaluate("JSON.stringify(result)");
     } catch (CScriptException* e) {
         L() << e->toString().c_str();
         log(logFATAL) << "Failed executing script";
-        return;
+        return "";
     }
+    std::string outputPath = generatePath(dirName(configFile), "render.tml");
     spit(outputPath, result);
+    return outputPath;
 }
