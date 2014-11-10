@@ -24,7 +24,7 @@ function getScenes(tpl) {
     var comps = tpl["compositions"];
     var cnt = 0;
     for (var name in comps) {
-        if (name[0] == '#') {
+        if (name[0] == '#' && name != "#+1") {
             var cmp = comps[name];
             var layers = cmp.layers;
             var num_ele = 0;
@@ -89,7 +89,7 @@ function genResourcesComp(js, width, height) {
 
         ret.push({
             name: name, 
-            type: md.title,
+            type: md.type,
             comp: comp
         });
         idx++;
@@ -154,7 +154,7 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
                 } else {
                     layer.uri = "composition://End";
                 }
-                overlap = layer.duration;
+                overlap = comp.duration - layer.time;
             }
         }
         var tmp = ["$"+i, comp, overlap];
@@ -290,9 +290,7 @@ for (var k in comps) {
     var comp = comps[k];
     tplJS.compositions[comp.name] = comp.comp;
 }
-//console.log("---------Temp result--------");
-//console.log(tplJS);
-
+//console.log(fit(comps, scenes));
 fillTML(tplJS, fit(comps, scenes), userJS, wrapJS);
 
 var result = tplJS;
