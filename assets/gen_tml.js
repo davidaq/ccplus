@@ -62,24 +62,29 @@ function genResourcesComp(js, width, height) {
         comp.duration = 5.0;
         if (md.duration)
             comp.duration = md.duration;
-        comp.resolution = {};
-        comp.resolution.width = width;
-        comp.resolution.height = height;
+        comp.resolution = {
+            width: width,
+            height: height
+        };
         comp.layers = [];
 
-        var l = {};
-        l.uri = "file://" + md.filename;
-        l.time = 0;
-        l.start = 0;
-        l.duration = comp.duration;
-        l.last = comp.duration;
-        l.tranform = {};
-        l.tranform["0"] = [
-            width / 2.0, height / 2.0, 0, 
-            md.x + md.w / 2.0, md.y + md.h / 2.0, 0, 
-            width / md.w, height / md.h, 1,
-            0, 0, 0
-        ];
+        var l = {
+            uri: "file://" + md.filename,
+            time: 0,
+            duration: comp.duration,
+            start: 0,
+            last: comp.duration,
+            properties: {
+                transform : {
+                    0 : [
+                        width / 2.0, height / 2.0, 0, 
+                        md.x + md.w / 2.0, md.y + md.h / 2.0, 0, 
+                        width / md.w, height / md.h, 1,
+                        0, 0, 0
+                    ]
+                }
+            }
+        };
         comp.layers[0] = l;
 
         ret.push({
@@ -140,14 +145,14 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
         for (var l in layers) {
             var layer = layers[l];
             if (layer.uri[14] == '@') {
-                layer.uri = "compositions://" + fit[1][idx];
+                layer.uri = "composition://" + fit[1][idx];
                 idx++;
             }
             if (layer.uri == 'composition://#+1') {
                 if (i < len - 1) {
                     layer.uri = 'composition://$' + (i + 1);
                 } else {
-                    layer.uri = "compositions://End";
+                    layer.uri = "composition://End";
                 }
                 overlap = layer.duration;
             }
@@ -165,33 +170,34 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     }
     // Generate main composition
     var main_name = tplJS.main;
-    var ret = {};
+    var ret = {
+        resolution: {
+            width: width,
+            height: height
+        },
+        layers: []
+    };
     tplJS.compositions[main_name] = ret;
-    ret.resolution = {};
-    ret.resolution.width = width;
-    ret.resolution.height = height;
-    ret.layers = [];
     var currentTime = 0;
     var overlap = 0;
     function appendScene(name, comp) {
-        var layer = {};
-        layer.uri = "composition://" + name;
-        layer.duration = comp.duration - overlap;
+        var layer = {
+            uri: "composition://" + name,
+            time: currentTime,
+            duration: comp.duration - overlap,
+            start: overlap,
+            last: comp.duration - overlap,
+            properties: {
+                transform: {
+                    0 : [
+                        0, 0, 0, 0, 0, 0,
+                        1, 1, 1, 0, 0, 0
+                    ]
+                }
+            }   
+        };
         if (layer.duration < 0) 
             return;
-        layer.start = overlap;
-        layer.last = comp.duration - overlap;
-        layer.time = currentTime;
-        layer.properties = {
-            tranform : {
-                0 : [
-                    0, 0, 0,
-                    0, 0, 0,
-                    1, 1, 1,
-                    0, 0, 0
-                ]
-            }
-        };
         currentTime += layer.duration;
         ret.layers.push(layer);
     }
@@ -203,9 +209,9 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
         time: 0,
         last: startComp.duration,
         duration: startComp.duration,
-        uri: "compositions://Caption",
+        uri: "composition://Caption",
         properties: {
-            tranform: {
+            transform: {
                 0: [
                     0, 0, 0,
                     0, 0, 0,
@@ -240,20 +246,45 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     ret.layers.push(music);
 }
 
+function uriToGlobal(js, globalPath) {
+    for (var cname in js.compositions) {
+        var comp = js.compositions[cname];
+        for (var lid in comp.layers) {
+            var layer = comp.layers[lid];
+            if (globalPath != "" && 
+                layer.uri.indexOf("file://") == 0 &&
+                layer.uri[7] != '/') {
+                if (globalPath[globalPath.length - 1] != '/')
+                    globalPath = globalPath + '/';
+                layer.uri = layer.uri.replace("file://", "file://" + globalPath);
+            }
+        }
+    }
+}
+
 var tplJS = JSON.parse(tpljs); // Template json
 var userJS = JSON.parse(userjs);
+var templateDir = userJS.templateURL;
+if (templateDir.lastIndexOf("/") != -1) {
+    templateDir = templateDir.substr(0, templateDir.lastIndexOf("/"));
+} else {
+    templateDir = "";
+}
+uriToGlobal(tplJS, templateDir);
 var wrapJS = JSON.parse(wrapjs);
+if (assetPath.length > 0 && assetPath[assetPath.length - 1] != "/") 
+    assetPath = assetPath + "/";
+uriToGlobal(wrapJS, assetPath + "wrap");
 
-//console.log(tplJS);
 var scenes = getScenes(tplJS);
 var width = tplJS.compositions[scenes[0].name].resolution.width;
 var height = tplJS.compositions[scenes[0].name].resolution.height;
 var comps = genResourcesComp(userJS, width, height);
 
-console.log("--------SCENES---------");
-console.log(scenes);
-console.log("---------Resources Comp--------");
-console.log(comps);
+//console.log("--------SCENES---------");
+//console.log(scenes);
+//console.log("---------Resources Comp--------");
+//console.log(comps);
 
 for (var k in comps) {
     var comp = comps[k];
@@ -266,5 +297,5 @@ fillTML(tplJS, fit(comps, scenes), userJS, wrapJS);
 
 var result = tplJS;
 
-console.log("---------Final result--------");
-console.log(result);
+//console.log("---------Final result--------");
+//console.log(result);

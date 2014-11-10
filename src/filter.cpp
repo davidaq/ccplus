@@ -10,6 +10,7 @@ std::map<std::string, CCPLUS_FILTER_FUNC> *filterMap = 0;
 
 Filter::Filter(const std::string& name) {
     if(!filterMap || !filterMap->count(name)) {
+        log(logWARN) << "Couldn't find filter: " << name;
         this->profiler = 0;
         func = 0;
     } else {

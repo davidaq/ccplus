@@ -60,7 +60,9 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     if (!top) return bottom;
     if ((bottom->width != top->width || bottom->height != top->height)) {
         if (bottom->textureID && top->textureID) {
-            log(logWARN) << "Merge frame requires frames to have equal sizes";
+            log(logWARN) << "Merge frame requires frames to have equal sizes: " << 
+                bottom->width << "*" << bottom->height << " -- " <<
+                top->width << "*" << top->height;
             return bottom;
         }
         if (bottom->textureID) {

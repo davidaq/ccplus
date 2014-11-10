@@ -249,8 +249,8 @@ std::string getJSString(const std::string &str);
 //std::string int2string(int32_t intData);
 //std::string int2string(uint32_t intData);
 std::string int2string(int intData);
-inline static int ptr2int(void* ptr) {
-    return *(int*)ptr;
+inline static size_t ptr2int(void* ptr) {
+    return (size_t) ptr;
 }
 /// convert the given double into a string
 std::string float2string(const double &floatData);

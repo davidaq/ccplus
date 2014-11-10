@@ -24,6 +24,10 @@ float ImageRenderable::getDuration() {
 void ImageRenderable::prepare() {
     std::string filepath = parseUri2File(uri);
     Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
+    if (!org.data) {
+        log(logERROR) << "Could not open or find the image: " << filepath;
+        return;
+    }
 
     mat3to4(org);
 

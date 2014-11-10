@@ -186,7 +186,7 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     log(logINFO) << "---Successfully fill tml file! ---";
 }
 
-void CCPlus::generateTML(const std::string& configFile, const std::string& outputPath) {
+void CCPlus::generateTML(const std::string& configFile, const std::string& outputPath, const std::string& assetPath) {
     ptree jsont;
     try {
         read_json(configFile, jsont);
@@ -194,6 +194,9 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
         log(logFATAL) << "Couldn't parse or load file: " << configFile;
     }
     std::string tmlPath = jsont.get<std::string>("templateURL");
+    if (tmlPath[0] != '/') { // Relative to templateURL
+        tmlPath = generatePath(dirName(configFile), tmlPath);
+    }
     
     std::string script = jsont.get<std::string>("script", "");
     if (script == "") {
@@ -206,6 +209,7 @@ void CCPlus::generateTML(const std::string& configFile, const std::string& outpu
     root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
     root->addChild("userjs", js.newScriptVar(slurp(configFile)));
     root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
+    root->addChild("assetPath", js.newScriptVar(assetPath));
 
     std::string result;
     try {
