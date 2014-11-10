@@ -14,6 +14,7 @@ using namespace CCPlus;
 
 pthread_t render_thread = 0;
 bool continueRunning = false;
+int renderProgress = 0;
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
     initContext(tmlPath, outputPath, fps);
@@ -26,6 +27,7 @@ void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int f
 
 void CCPlus::initContext(const std::string& tmlPath, const std::string& outputPath, int fps) {
     Context::getContext()->begin(tmlPath, outputPath, fps);
+    renderProgress = 0;
 }
 
 void CCPlus::releaseContext() {
@@ -64,7 +66,9 @@ void CCPlus::render() {
         glClearColor(0, 0, 0, 0);
 
         for (float i = 0; i <= duration; i += delta) {
+            renderProgress = (i * 98 / duration) + 1;
             if (!continueRunning) {
+                renderProgress = 0;
                 log(logINFO) << "----Rendering process is terminated!---";
                 return;
             }
@@ -73,7 +77,7 @@ void CCPlus::render() {
                 ctx->collector->signal.wait();
             }
             ctx->collector->limit = i + 10;
-            log(logINFO) << "render frame --" << i;
+            log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             frame = mergeFrame(blackBackground, frame, DEFAULT);
             char buf[20];
@@ -93,6 +97,10 @@ void CCPlus::render() {
         }
         destroyGLContext(glCtx);
     });
+}
+
+int getRenderProgress() {
+    return renderProgress;
 }
 
 void CCPlus::waitRender() {
@@ -122,6 +130,7 @@ void CCPlus::encode() {
         fn++;
     }
     encoder.finish();
+    renderProgress = 100;
 }
 
 int CCPlus::numberOfFrames() {

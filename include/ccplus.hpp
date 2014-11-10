@@ -23,6 +23,11 @@ namespace CCPlus {
     // @ start the render
     void render();
 
+    // @ get the render progress in percentage
+    // 100 means done or there is no render activity
+    // 99 means in encoding procces
+    int getRenderProgress();
+
     // @ start the encode
     void encode();
 
