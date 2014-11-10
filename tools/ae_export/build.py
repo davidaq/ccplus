@@ -2,7 +2,7 @@
 import os
 
 def main():
-    jslist = scandir('ae_export/', filterjs)
+    jslist = scandir('src/', filterjs)
     content = ''
     for item in jslist:
         content += "/*******\n * " + item + "\n *******/\n"
