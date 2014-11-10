@@ -108,7 +108,11 @@ function fit(comps, scenes) {
     /*
     * Simple version
     */
-    for (var k in scenes) {
+    var len = scenes.length;
+    var k = 0;
+    while (cnt > 0) {
+        k++;
+        k = k % len;
         var scene = scenes[k];
         var num_ele = scene.num_ele;
         if (num_ele > cnt) continue;
@@ -116,6 +120,8 @@ function fit(comps, scenes) {
         for (var y in comps) {
             var comp = comps[y];
             if (used[comp.name]) continue;
+            if (Math.abs(comp.duration - scene.duration) > 0.1) 
+                continue;
             tmp_ret[1].push(comp.name); 
             used[comp.name] = true;
             cnt--;
@@ -235,15 +241,17 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
 
     // Append background music
     ret.duration = currentTime;
-    var music = {
-        start: 0,
-        time: 0,
-        duration: ret.duration,
-        last: ret.duration,
-        properties: {},
-        uri: "file://" + userJS.musicURL,
-    };
-    ret.layers.push(music);
+    if (userJS.musicURL != "") {
+        var music = {
+            start: 0,
+            time: 0,
+            duration: ret.duration,
+            last: ret.duration,
+            properties: {},
+            uri: "file://" + userJS.musicURL,
+        };
+        ret.layers.push(music);
+    }
 }
 
 function uriToGlobal(js, globalPath) {
