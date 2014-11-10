@@ -307,5 +307,63 @@ var result = tplJS;
 //console.log(result);
 
 function toHalf(tml) {
+    var resizer = {
+        transform: function(len) {
+            var ret = [];
+            var j = 0;
+            for(var j = 0; j < len; j += 12) {
+                for(var i = 0; i < 6; i++) {
+                    ret.push(i + j);
+                }
+            }
+            return ret;
+        },
+        mask: function(len) {
+            var ret = [];
+            for(var i = 0; i < len; i++)
+                ret.push(i);
+            return ret;
+        },
+        ramp: function() {
+            return [0,1];
+        },
+        '4color': function() {
+            return [0, 1, 5, 6, 10, 11, 15, 16];
+        }
+    };
+    var scaleDownResizer = function() {
+        return [6, 7, 8];
+    };
+    var resize = function(props, resizer) {
+        for(var time in props) {
+            var prop = props[time];
+            var ikeys = resizer(prop.length);
+            for(var ik in ikeys) {
+                prop[ikeys[ik]] *= 0.5;
+            }
+        }
+    };
+    for(var k in tml.compositions) {
+        var comp = tml.compositions[k];
+        comp.resolution.width /= 2;
+        comp.resolution.height /= 2;
+        for(var lk in comp.layers) {
+            layer = comp.layers[lk];
+            for(var k in resizer) {
+                resize(layer.properties[k], resizer[k]);
+            }
+            if(layer.uri.substr(0, 14) != 'composition://') {
+                var temp = layer.properties.transform;
+                for(var pk in layer.properties.transform) {
+                    var prop = layer.properties.transform[pk];
+                    var temp = [0, 0, 0, 0, 0, 0, 0.5, 0.5, 1, 0, 0, 0];
+                    for(var ak = 0; ak < prop.length; ak++) {
+                        temp.push(prop[ak]);
+                    }
+                    layer.properties.transform[pk] = temp;
+                }
+            }
+        }
+    }
     return tml;
 }
