@@ -9,6 +9,8 @@
 #include "render.hpp"
 #include "profile.hpp"
 #include "parallel-executor.hpp"
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 using namespace CCPlus;
 
@@ -151,4 +153,42 @@ int CCPlus::numberOfFrames() {
 std::string assetPath;
 void CCPlus::setAssetsPath(const std::string& path) {
     assetPath = path;
+}
+
+void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& outputPath) {
+    using boost::property_tree::ptree;
+    ptree pt;
+    read_json(tmlPath, pt);
+    int size = 0;
+    for (auto& child : pt.get_child("compositions")) {
+        const std::string& s = child.first.data();
+        if (s[0] == '@' && s.length() > 1) {
+            size++;
+        }
+    }
+
+    std::string dir = dirName(tmlPath);
+
+    for (int i = 0; i < size; i++) {
+        auto& layers = pt.get_child("compositions.#COVER.layers");
+        for (auto& kv : layers) {
+            if (stringStartsWith(kv.second.get("uri", ""), "composition://@")) {
+                kv.second.put("uri", "composition://@" + toString(i));
+            }
+        }
+        pt.put("main", "#COVER");
+        std::ofstream fileStream;
+        fileStream.open(generatePath(dir, "COVER" + toString(i) + ".tml"));
+        write_json(fileStream, pt, true);
+    }
+
+    for (int i = 0; i < size; i++) {
+        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"), outputPath, 18);
+        render();
+        waitRender();
+        releaseContext();
+        Frame f;
+        f.read(generatePath(outputPath, "0000000.zim"));
+        imwrite(generatePath(outputPath, toString(i) + ".jpg"), f.image);
+    }
 }
