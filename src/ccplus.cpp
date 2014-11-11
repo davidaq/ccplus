@@ -110,7 +110,7 @@ void CCPlus::render() {
     });
 }
 
-int getRenderProgress() {
+int CCPlus::getRenderProgress() {
     return renderProgress;
 }
 
