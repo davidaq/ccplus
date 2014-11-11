@@ -216,10 +216,10 @@ string getJSString(const string &str) {
 			default: {
 					int nCh = ((unsigned char)*i) & 0xff;
 					if(nCh<32 || nCh>127) {
-						static char hex[] = "0123456789ABCDEF";
-						buffer[2] = hex[(nCh>>4)&0x0f];
-						buffer[3] = hex[nCh&0x0f];
-						replaceWith = buffer;
+						//static char hex[] = "0123456789ABCDEF";
+						//buffer[2] = hex[(nCh>>4)&0x0f];
+						//buffer[3] = hex[nCh&0x0f];
+						//replaceWith = buffer;
 					};
 				}
 		}

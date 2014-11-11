@@ -68,6 +68,10 @@ function genResourcesComp(js, width, height) {
         };
         comp.layers = [];
 
+        if (typeof(md.x) == "string") md.x = md.x * 1.0;
+        if (typeof(md.y) == "string") md.y = md.y * 1.0;
+        if (typeof(md.w) == "string") md.w = md.w * 1.0;
+        if (typeof(md.h) == "string") md.h = md.h * 1.0;
         var l = {
             uri: "file://" + md.filename,
             time: 0,
@@ -208,6 +212,10 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
         ret.layers.push(layer);
     }
 
+    // Fill text
+    var textComp = tplJS.compositions['TitleText'];
+    console.log(userJS.videoTitle);
+    textComp.layers[0]["text-properties"]["text"]["0"] = userJS.videoTitle;
     // Append start
     var startComp = tplJS.compositions['Caption'];
     var startLayer = {
