@@ -16,9 +16,8 @@ public:
     }
     void start() {
         thread = ParallelExecutor::runInNewThread([&]() {
-            bool goon = true;
             float fStep = 1.0 / Context::getContext()->fps;
-            while(Context::getContext()->isActive() && goon) {
+            while(goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
                     Renderable* pitem = c.sortedList[--c.sortedListPtr];
@@ -29,7 +28,7 @@ public:
                         pitem->prepare();
                         log(logINFO) << "prepare end" << pitem->getUri();
                     }
-                    while(t > c.limit)
+                    while(t > c.limit && goon)
                         sleep(1);
                     c.sync.lock();
                 } else {
@@ -43,10 +42,12 @@ public:
     }
 
     void stop() {
+        goon = false;
         if (thread) 
             pthread_join(thread, 0);
     }
 private:
+    bool goon = true;
     int index;
     FootageCollector& c;
     pthread_t thread = 0;
@@ -61,8 +62,6 @@ FootageCollector::FootageCollector(Composition* comp) {
 }
 
 FootageCollector::~FootageCollector() {
-    // Prevent dead-lock of footage collector
-    limit = 0x7fffffff;
     stop();
     for(int i = 0; i < COLLECTOR_THREAD; i++) {
         delete threads[i];
