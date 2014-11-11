@@ -38,6 +38,15 @@ void CCPlus::releaseContext() {
     render_thread = 0;
 }
 
+void CCPlus::deepReleaseContext() {
+    releaseContext();
+    Context* ctx = Context::getContext();
+    for (auto& kv : ctx->preservedRenderable) {
+        delete kv.second;
+    }
+    ctx->preservedRenderable.clear();
+}
+
 void CCPlus::render() {
     if (render_thread) {
         log(logERROR) << "Another render context is currently in use! Aborted.";

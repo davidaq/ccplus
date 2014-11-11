@@ -20,6 +20,9 @@ namespace CCPlus {
     // @ release the rendering context
     void releaseContext();
 
+    // @ release the rendering context
+    void deepReleaseContext();
+
     // @ start the render
     void render();
 

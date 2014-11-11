@@ -22,6 +22,10 @@ float ImageRenderable::getDuration() {
 }
 
 void ImageRenderable::prepare() {
+    if (prepared) {
+        return;
+    }
+    prepared = true;
     std::string filepath = parseUri2File(uri);
     Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
     if (!org.data) {
@@ -86,6 +90,10 @@ void ImageRenderable::prepare() {
 
 void ImageRenderable::release() {
     image.image = cv::Mat();
+    gpuCache = GPUFrame();
+}
+
+void ImageRenderable::releaseGPUCache() {
     gpuCache = GPUFrame();
 }
 

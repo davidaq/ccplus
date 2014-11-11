@@ -10,6 +10,7 @@ public:
     GPUFrame getGPUFrame(float time);
     void prepare();
     void release();
+    void releaseGPUCache();
     float getDuration();
     
     int getWidth() const;

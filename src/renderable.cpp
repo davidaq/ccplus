@@ -45,7 +45,13 @@ std::string Renderable::getUri() {
         for(const auto & item : Context::getContext()->renderables) {
             if(item.second == this) {
                 uri = item.first;
-                break;
+                return uri;
+            }
+        }
+        for(const auto & item : Context::getContext()->preservedRenderable) {
+            if(item.second == this) {
+                uri = item.first;
+                return uri;
             }
         }
     }
