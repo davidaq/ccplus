@@ -40,6 +40,10 @@ void VideoRenderable::release() {
 }
 
 void VideoRenderable::prepare() {
+    if (prepared) {
+        return;
+    }
+    prepared = true;
     for(const auto& part : usedFragments)
         preparePart((int)(part.first - 0.5), (int)(part.second - part.first + 1));
 }

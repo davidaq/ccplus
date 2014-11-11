@@ -5,6 +5,7 @@
 #include "gpu-frame-cache.hpp"
 #include "platform.hpp"
 #include "ccplus.hpp"
+#include "image-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -39,6 +40,12 @@ void Context::end() {
         collector = nullptr;
     }
     renderables.clear();
+    for (auto& kv : preservedRenderable) {
+        ImageRenderable* image = dynamic_cast<ImageRenderable*>(kv.second);
+        if (image) {
+            image->releaseGPUCache();
+        }
+    }
     deleteRetained();
     GPUFrameCache::clear();
     GLProgramManager::getManager()->clean();
@@ -54,7 +61,11 @@ std::string Context::getFootagePath(const std::string& relativePath) {
 }
 
 bool Context::hasRenderable(const std::string& uri) {
-    return renderables.count(uri);
+    return renderables.count(uri) || preservedRenderable.count(uri);
+}
+
+void Context::putPreservedRenderable(const std::string& uri, Renderable* renderable) {
+    preservedRenderable[uri] = renderable;
 }
 
 void Context::putRenderable(const std::string& uri, Renderable* renderable) {
@@ -62,6 +73,8 @@ void Context::putRenderable(const std::string& uri, Renderable* renderable) {
 }
 
 Renderable* Context::getRenderable(const std::string& uri) {
+    if (preservedRenderable.count(uri))
+        return preservedRenderable[uri];
     return renderables[uri];
 }
 
