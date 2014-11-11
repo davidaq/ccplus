@@ -2,7 +2,7 @@
     "medias": [
         {
             "filename": "test2.jpg",
-            "title": "image",
+            "type": "image",
             "h": 820,
             "w": 640,
             "x": 0,
@@ -10,7 +10,7 @@
         },
         {
             "filename": "test1.jpg",
-            "title": "image",
+            "type": "image",
             "h": 243,
             "w": 280,
             "x": 0,
@@ -18,7 +18,7 @@
         },
         {
             "filename": "blend_bg.jpg",
-            "title": "image",
+            "type": "image",
             "h": 150,
             "w": 200,
             "x": 0,

@@ -26,6 +26,10 @@ namespace CCPlus {
     // @ start the render
     void render();
 
+    // @ Get cover images
+    // Results will be save to @outputPath
+    void generateCoverImages(const std::string& tmlPath, const std::string& outputPath);
+
     // @ get the render progress in percentage
     // 100 means done or there is no render activity
     // 99 means in encoding procces

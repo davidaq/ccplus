@@ -214,7 +214,6 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
 
     // Fill text
     var textComp = tplJS.compositions['TitleText'];
-    console.log(userJS.videoTitle);
     textComp.layers[0]["text-properties"]["text"]["0"] = userJS.videoTitle;
     // Append start
     var startComp = tplJS.compositions['Caption'];
