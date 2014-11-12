@@ -51,6 +51,14 @@ void VideoRenderable::prepare() {
 GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
     if(framesCache.count(frameNum)) {
+        for(;;) {
+            const FrameCache& ref = framesCache[frameNum];
+            if(ref.refer > -1) {
+                frameNum = ref.refer;
+            } else {
+                break;
+            }
+        }
         const FrameCache& cache = framesCache[frameNum];
         Frame frame;
         if(cache.compressed.empty()) {
@@ -86,7 +94,7 @@ void VideoRenderable::preparePart(float start, float duration) {
             for (int j = 1; j + last_f < f; j++) {
                 int insf = j + last_f;
                 if(!framesCache.count(insf)) {
-                    framesCache[insf] = framesCache[last_f];
+                    framesCache[insf].refer = last_f;
                 }
             }
         };

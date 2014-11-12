@@ -8,6 +8,7 @@ namespace CCPlus {
     struct FrameCache {
         cv::Mat compressed;
         CCPlus::Frame normal;
+        int refer = -1;
     };
 }
 
