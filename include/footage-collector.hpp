@@ -22,7 +22,7 @@ public:
 
     CCPlus::Semaphore signal;
     float finishedTime[COLLECTOR_THREAD];
-    CollectorThread* threads[COLLECTOR_THREAD] = {0};
+    CollectorThread* threads[COLLECTOR_THREAD];
     CCPlus::Composition* main = 0;
     Renderable** sortedList = 0;
     int sortedListPtr;

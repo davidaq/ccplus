@@ -16,6 +16,7 @@ using namespace CCPlus;
 
 pthread_t render_thread = 0;
 bool continueRunning = false;
+bool releasingContext = false;
 int renderProgress = 0;
 
 void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
@@ -28,16 +29,27 @@ void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int f
 }
 
 void CCPlus::initContext(const std::string& tmlPath, const std::string& outputPath, int fps) {
+    releaseContext();
     Context::getContext()->begin(tmlPath, outputPath, fps);
     renderProgress = 0;
 }
 
 void CCPlus::releaseContext() {
+    if(releasingContext) {
+        // Don't do any thing if someone else is calling release
+        // just wait for end instead 
+        while(releasingContext)
+            sleep(1);
+        return;
+    }
+    releasingContext = true;
     continueRunning = false;
     waitRender();
     Context* ctx = Context::getContext();
     ctx->end();
     render_thread = 0;
+    renderProgress = 0;
+    releasingContext = false;
 }
 
 void CCPlus::deepReleaseContext() {

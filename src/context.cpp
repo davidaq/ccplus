@@ -66,6 +66,7 @@ bool Context::hasRenderable(const std::string& uri) {
 
 void Context::putPreservedRenderable(const std::string& uri, Renderable* renderable) {
     preservedRenderable[uri] = renderable;
+    renderable->isPreserved = true;
 }
 
 void Context::putRenderable(const std::string& uri, Renderable* renderable) {
