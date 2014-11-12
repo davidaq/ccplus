@@ -24,7 +24,7 @@ function getScenes(tpl) {
     var comps = tpl["compositions"];
     var cnt = 0;
     for (var name in comps) {
-        if (name[0] == '#' && name != "#+1") {
+        if (name[0] == '#' && name != "#+1" && name != "#COVER") {
             var cmp = comps[name];
             var layers = cmp.layers;
             var num_ele = 0;
@@ -62,6 +62,11 @@ function genResourcesComp(js, width, height) {
         comp.duration = 5.0;
         if (md.duration)
             comp.duration = md.duration;
+        if (md.type == "image") {
+            comp.duration = 3.0;
+        } else if (md.type == "video") {
+            comp.duration = 5.0;
+        }
         comp.resolution = {
             width: width,
             height: height
@@ -114,17 +119,18 @@ function fit(comps, scenes) {
     */
     var len = scenes.length;
     var k = 0;
-    while (cnt > 0) {
-        k++;
+    for (var k= 0; cnt > 0; k++) {
         k = k % len;
         var scene = scenes[k];
         var num_ele = scene.num_ele;
-        if (num_ele > cnt) continue;
+        if (num_ele > cnt) {
+            continue;
+        }
         var tmp_ret = [scene.name, []];
         for (var y in comps) {
             var comp = comps[y];
             if (used[comp.name]) continue;
-            if (Math.abs(comp.duration - scene.duration) > 0.1) 
+            if (Math.abs(comp.comp.duration - scene.duration) > 1.0) 
                 continue;
             tmp_ret[1].push(comp.name); 
             used[comp.name] = true;
@@ -133,8 +139,11 @@ function fit(comps, scenes) {
             if (num_ele == 0)
                 break;
         }
-        ret.push(tmp_ret);
+        if (tmp_ret[1].length > 0) {
+            ret.push(tmp_ret);
+        }
     }
+    //console.log(ret);
     return ret;
 }
 
@@ -144,6 +153,7 @@ function fit(comps, scenes) {
 function fillTML(tplJS, fitted, userJS, wrapJS) {
     var candidates = [];
     var len = fitted.length;
+    //len = 1;
     for (var i = 0; i < len; i++) {
         var fit = fitted[i];
         // Ugly clone!
@@ -152,7 +162,8 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
         var layers = comp.layers;
         var idx = 0;
         var overlap = 0;
-        for (var l in layers) {
+        var cnt_layers = layers.length;
+        for (var l = 0; l < cnt_layers; l++) {
             var layer = layers[l];
             if (layer.uri[14] == '@') {
                 layer.uri = "composition://" + fit[1][idx];
@@ -237,7 +248,7 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     ret.layers.push(startLayer);
 
     // Append scenes
-    for (var i in candidates) {
+    for (var i = 0; i < candidates.length; i++) {
         appendScene(candidates[i][0], candidates[i][1]);
 
         overlap = candidates[i][2];
