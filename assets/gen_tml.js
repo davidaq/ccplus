@@ -153,7 +153,6 @@ function fit(comps, scenes) {
 function fillTML(tplJS, fitted, userJS, wrapJS) {
     var candidates = [];
     var len = fitted.length;
-    //len = 1;
     for (var i = 0; i < len; i++) {
         var fit = fitted[i];
         // Ugly clone!
