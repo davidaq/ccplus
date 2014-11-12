@@ -34,7 +34,7 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     if(base.empty()) {
         return in.clone();
     }
-    cv::Mat ret = cv::Mat(1, AUDIO_SAMPLE_RATE / Context::getContext()->fps, CV_16S, cv::Scalar(0));
+    cv::Mat ret = cv::Mat(1, audioSampleRate / frameRate, CV_16S, cv::Scalar(0));
     cv::Mat o;
     if(base.total() != in.total()) {
         cv::resize(in, o, base.size(), CV_INTER_LINEAR);

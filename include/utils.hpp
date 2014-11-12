@@ -43,7 +43,10 @@ static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
 }
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
-    return content.rfind(suffix) == (content.length() - suffix.length());
+    int pos = content.rfind(suffix);
+    if(pos < 0)
+        return false;
+    return pos == (content.length() - suffix.length());
 }
 
 static inline bool stringStartsWith(std::string content, std::string prefix) {

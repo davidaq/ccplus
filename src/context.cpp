@@ -17,15 +17,12 @@ Context* Context::getContext() {
     return singleton;
 }
 
-void Context::begin(const std::string& tmlPath, const std::string& storagePath, int fps) {
+void Context::begin(const std::string& tmlPath) {
     if(active) {
         log(logFATAL) << "Previous context still active, context begin failed";
         return;
     }
-    end();
     this->tmlDir = dirName(tmlPath);
-    this->storagePath = storagePath;
-    this->fps = fps;
     
     TMLReader reader;
     mainComposition = reader.read(tmlPath);
@@ -53,7 +50,7 @@ void Context::end() {
 }
 
 std::string Context::getStoragePath(const std::string& relativePath) {
-    return generatePath(this->storagePath, relativePath);
+    return generatePath(outputPath, relativePath);
 }
 
 std::string Context::getFootagePath(const std::string& relativePath) {

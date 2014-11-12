@@ -87,7 +87,7 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
     }
 }
 
-void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) {
+void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) const {
     uint16_t metric; 
     // write size first
     metric = (uint16_t) image.cols;
@@ -160,11 +160,13 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&val, sizeof(int16_t), 1);
     val = ext.anchorAdjustY;
     write(&val, sizeof(int16_t), 1);
-    write(&ext.scaleAdjustX, sizeof(float), 1);
-    write(&ext.scaleAdjustY, sizeof(float), 1);
+    float fval = ext.scaleAdjustX;
+    write(&fval, sizeof(float), 1);
+    fval = ext.scaleAdjustY;
+    write(&fval, sizeof(float), 1);
 }
 
-cv::Mat Frame::zimCompressed(int quality) {
+cv::Mat Frame::zimCompressed(int quality) const {
     std::vector<uint8_t> ret;
     ret.reserve(20);
     frameCompress([&ret](void* data, size_t sz, size_t len) {
@@ -174,7 +176,7 @@ cv::Mat Frame::zimCompressed(int quality) {
     return cv::Mat(ret, true);
 }
 
-void Frame::write(const std::string& zimpath, int quality) {
+void Frame::write(const std::string& zimpath, int quality) const {
     profile(zimWrite) {
         if (!stringEndsWith(zimpath, ".zim")) {
             log(logWARN) << "Zim file should use .zim ext " + zimpath;

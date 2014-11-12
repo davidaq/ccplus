@@ -104,7 +104,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 const std::vector<int16_t>& apart, 
                 int f) {
             int rela = f - startFrameNumber;
-            int nsig = AUDIO_SAMPLE_RATE / Context::getContext()->fps;
+            int nsig = audioSampleRate / frameRate;
             int pos = nsig * rela;
             int size = std::min<int>(nsig, apart.size() - pos);
             if(size > 0) {
@@ -180,7 +180,7 @@ void VideoRenderable::preparePart(float start, float duration) {
 
         if (lastFrame == -1) {
             // Audio only
-            float inter = 1.0 / Context::getContext()->fps;
+            float inter = 1.0 / frameRate;
             for (float i = start; i <= start + duration + inter; i += inter) {
                 int f = time2frame(i);
                 makeup_frames(f, lastFrame);
@@ -196,7 +196,7 @@ void VideoRenderable::preparePart(float start, float duration) {
 }
 
 int VideoRenderable::time2frame(float time) {
-    return (int)(time * Context::getContext()->fps);
+    return (int)(time * frameRate);
 }
 
 float VideoRenderable::getDuration() {
@@ -209,7 +209,7 @@ float VideoRenderable::getDuration() {
                 max = item.first;
         }
         max++;
-        duration = max * 1.0f / Context::getContext()->fps;
+        duration = max * 1.0f / frameRate;
         float oduration = decoder->getVideoInfo().duration;
         if(duration < oduration && oduration - duration < oduration * 0.1)
             duration = oduration;

@@ -1,5 +1,4 @@
 #include "global.hpp"
-#include "platform.hpp"
 #include "ccplus.hpp"
 #include "context.hpp"
 #include "footage-collector.hpp"
@@ -16,52 +15,55 @@ using namespace CCPlus;
 
 pthread_t render_thread = 0;
 bool continueRunning = false;
-bool releasingContext = false;
 int renderProgress = 0;
 
-void CCPlus::go(const std::string& tmlPath, const std::string& outputPath, int fps) {
-    initContext(tmlPath, outputPath, fps);
+void CCPlus::go(const std::string& tmlPath) {
+    initContext(tmlPath);
     render();
     waitRender();
-    encode();
     releaseContext();
     profileFlush;
 }
 
-void CCPlus::initContext(const std::string& tmlPath, const std::string& outputPath, int fps) {
+void CCPlus::initContext(const std::string& tmlPath) {
     releaseContext();
-    Context::getContext()->begin(tmlPath, outputPath, fps);
+    Context::getContext()->begin(tmlPath);
     renderProgress = 0;
 }
 
-void CCPlus::releaseContext() {
+void CCPlus::releaseContext(bool forceClearCache) {
+    static bool releasingContext = false;
+    Context* ctx = Context::getContext();
     if(releasingContext) {
         // Don't do any thing if someone else is calling release
         // just wait for end instead 
         while(releasingContext)
             sleep(1);
-        return;
+    } else {
+        releasingContext = true;
+        continueRunning = false;
+        waitRender();
+        ctx->end();
+        render_thread = 0;
+        renderProgress = 0;
+        releasingContext = false;
     }
-    releasingContext = true;
-    continueRunning = false;
-    waitRender();
-    Context* ctx = Context::getContext();
-    ctx->end();
-    render_thread = 0;
-    renderProgress = 0;
-    releasingContext = false;
+    if(forceClearCache || renderMode != PREVIEW_MODE) {
+        if(releasingContext) {
+            while(releasingContext)
+                sleep(1);
+        } else {
+            releasingContext = true;
+            for (auto& kv : ctx->preservedRenderable) {
+                delete kv.second;
+            }
+            ctx->preservedRenderable.clear();
+            releasingContext = false;
+        }
+    }
 }
 
-void CCPlus::deepReleaseContext() {
-    releaseContext();
-    Context* ctx = Context::getContext();
-    for (auto& kv : ctx->preservedRenderable) {
-        delete kv.second;
-    }
-    ctx->preservedRenderable.clear();
-}
-
-void CCPlus::render() {
+void renderAs(std::function<void(const Frame&)> writeFuc) {
     if (render_thread) {
         log(logERROR) << "Another render context is currently in use! Aborted.";
         return;
@@ -71,14 +73,13 @@ void CCPlus::render() {
         return;
     }
     continueRunning = true;
-    render_thread = ParallelExecutor::runInNewThread([] () {
+    render_thread = ParallelExecutor::runInNewThread([&writeFuc] () {
         Context* ctx = Context::getContext();
         void* glCtx = createGLContext();
         ctx->collector->limit = 10;
         ctx->collector->prepare();
-        float delta = 1.0f / ctx->fps;
+        float delta = 1.0f / frameRate;
         float duration = ctx->mainComposition->getDuration();
-        int fn = 0;
         initGL();
         GPUFrame blackBackground = GPUFrameCache::alloc(
                 ctx->mainComposition->width, 
@@ -103,9 +104,7 @@ void CCPlus::render() {
             log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             frame = mergeFrame(blackBackground, frame, DEFAULT);
-            char buf[20];
-            sprintf(buf, "%07d.zim", fn++);
-            frame->toCPU().write(ctx->getStoragePath(buf));
+            writeFuc(frame->toCPU());
             for(auto item = ctx->renderables.begin();
                     item != ctx->renderables.end(); ) {
                 Renderable* r = item->second;
@@ -119,7 +118,32 @@ void CCPlus::render() {
             }
         }
         destroyGLContext(glCtx);
+        renderProgress = 100;
     });
+}
+
+void CCPlus::render() {
+    if(renderMode == FINAL_MODE) {
+        std::string outfile = outputPath;
+        if(!stringEndsWith(outfile, ".mp4")) {
+            outfile = Context::getContext()->getStoragePath("result.mp4");
+        }
+        VideoEncoder encoder(outfile, frameRate);
+        renderAs([&encoder](const Frame& frame) {
+            encoder.appendFrame(frame);
+        });
+        waitRender();
+        encoder.finish();
+    } else {
+        int fn = 0;
+        renderAs([&fn](const Frame& frame) {
+            char buf[20];
+            sprintf(buf, "%07d.zim", fn++);
+            frame.write(Context::getContext()->getStoragePath(buf));
+        });
+        waitRender();
+    }
+    renderProgress = 100;
 }
 
 int CCPlus::getRenderProgress() {
@@ -131,40 +155,10 @@ void CCPlus::waitRender() {
     pthread_join(render_thread, 0);
 }
 
-void CCPlus::encode() {
-    CCPlus::waitRender();
-    Context* ctx = Context::getContext();
-    if (!ctx->isActive()) {
-        log(logERROR) << "Context hasn't been initialized! Aborted encoding.";
-        return;
-    }
-    VideoEncoder encoder(
-            ctx->getStoragePath("result.mp4"),
-            ctx->fps);
-    float delta = 1.0 / ctx->fps;
-    float duration = ctx->mainComposition->getDuration();
-    int fn = 0;
-    for (float i = 0; i <= duration; i += delta) {
-        Frame f;
-        char buf[64];
-        sprintf(buf, "%07d.zim", fn);
-        f.read(generatePath(ctx->storagePath, buf));
-        encoder.appendFrame(f);
-        fn++;
-    }
-    encoder.finish();
-    renderProgress = 100;
-}
-
 int CCPlus::numberOfFrames() {
     Context* ctx = Context::getContext();
-    float d = 1.0 / ctx->fps;
+    float d = 1.0 / frameRate;
     return ctx->mainComposition->getDuration() / d;
-}
-
-std::string assetPath;
-void CCPlus::setAssetsPath(const std::string& path) {
-    assetPath = path;
 }
 
 void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& outputPath) {
@@ -194,8 +188,10 @@ void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& 
         write_json(fileStream, pt, true);
     }
 
+    setOutputPath(outputPath);
     for (int i = 0; i < size; i++) {
-        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"), outputPath, 18);
+        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"));
+        //, outputPath, 18);
         render();
         waitRender();
         releaseContext();

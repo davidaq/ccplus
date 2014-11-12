@@ -23,11 +23,11 @@ public:
     cv::Mat image;
     CCPlus::FrameExt ext;
 
-    cv::Mat zimCompressed(int quality = 85);
+    cv::Mat zimCompressed(int quality = 85) const;
     void readZimCompressed(const cv::Mat&);
 
-    void write(const std::string& zim, int quality = 90);
+    void write(const std::string& zim, int quality = 90) const;
     void read(const std::string& zim);
 private:
-    void frameCompress(std::function<void(void*, size_t, size_t)>, int quality);
+    void frameCompress(std::function<void(void*, size_t, size_t)>, int quality) const;
 };

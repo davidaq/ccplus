@@ -6,5 +6,5 @@ using namespace CCPlus;
 
 TEST(FillTML, GenTML) {
     generateTML("test/res/testfilltml.json", "test/res/render.tml");
-    CCPlus::go("test/res/render.tml", "tmp", 18);
+    CCPlus::go("test/res/render.tml");
 }

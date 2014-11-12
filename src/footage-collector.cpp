@@ -16,7 +16,7 @@ public:
     }
     void start() {
         thread = ParallelExecutor::runInNewThread([&]() {
-            float fStep = 1.0 / Context::getContext()->fps;
+            float fStep = frameRate;
             while(goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
@@ -55,7 +55,9 @@ private:
 
 FootageCollector::FootageCollector(Composition* comp) {
     main = comp;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    threads = new CollectorThread*[collectorThreadsNumber];
+    finishedTime = new float[collectorThreadsNumber];
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         finishedTime[i] = 0;
         threads[i] = new CollectorThread(i, this);
     }
@@ -63,11 +65,13 @@ FootageCollector::FootageCollector(Composition* comp) {
 
 FootageCollector::~FootageCollector() {
     stop();
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         delete threads[i];
     }
+    delete[] threads;
     if(sortedList)
         delete[] sortedList;
+    delete[] finishedTime;
 }
 
 void FootageCollector::prepare() {
@@ -91,13 +95,13 @@ void FootageCollector::prepare() {
         return a->firstAppearTime > b->firstAppearTime;
     });
     sortedList[sortedListPtr++] = main;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         threads[i]->start();
     }
 }
 
 void FootageCollector::stop() {
-    for (int i = 0; i < COLLECTOR_THREAD; i++) {
+    for (int i = 0; i < collectorThreadsNumber; i++) {
         if (threads[i])
             threads[i]->stop();
     }
@@ -106,7 +110,7 @@ void FootageCollector::stop() {
 float FootageCollector::finished() {
     sync.lock();
     float ret = main->duration + 1;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         if(finishedTime[i] < ret)
             ret = finishedTime[i];
     }
