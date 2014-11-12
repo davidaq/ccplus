@@ -7,6 +7,7 @@
 #include "text-renderable.hpp"
 #include "gif-renderable.hpp"
 #include "color-renderable.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 
@@ -132,7 +133,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
         if(renderable) {
             //Context::getContext()->retain(renderable);
             //Context::getContext()->putRenderable(uri, renderable);
-            if (preserved) {
+            if (preserved && renderMode == PREVIEW_MODE) {
                 Context::getContext()->putPreservedRenderable(uri, renderable);
             } else {
                 Context::getContext()->retain(renderable);
