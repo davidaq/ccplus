@@ -70,7 +70,7 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         img = frame.image;
     writeVideoFrame(img);
     cv::Mat mat = frame.ext.audio;
-    int sz = AUDIO_SAMPLE_RATE / Context::getContext()->fps;
+    int sz = audioSampleRate / frameRate;
     if(mat.empty()) {
         mat = cv::Mat(1, sz, CV_16S, cv::Scalar(0));
     } else if(mat.total() != sz) {
@@ -228,7 +228,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             else
                 codecCtx->bit_rate    = 16000;
 
-            codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
+            codecCtx->sample_rate = CCPlus::audioSampleRate;
             codecCtx->channels        = 1;
             codecCtx->channel_layout  = AV_CH_LAYOUT_MONO;
             break;
@@ -320,11 +320,11 @@ void VideoEncoder::initContext() {
     // init swr context
     ctx->swr = swr_alloc();
     av_opt_set_int(ctx->swr, "in_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "in_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
+    av_opt_set_int(ctx->swr, "in_sample_rate", CCPlus::audioSampleRate, 0);
     av_opt_set_sample_fmt(ctx->swr, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
     av_opt_set_int(ctx->swr, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "out_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
+    av_opt_set_int(ctx->swr, "out_sample_rate", CCPlus::audioSampleRate, 0);
     av_opt_set_sample_fmt(ctx->swr, "out_sample_fmt", AV_SAMPLE_FMT_FLTP, 0);
     if(0 > swr_init(ctx->swr)) {
         fprintf(stderr, "Unable to init swr context\n");

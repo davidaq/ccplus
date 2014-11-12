@@ -207,7 +207,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
     root->addChild("userjs", js.newScriptVar(slurp(configFile)));
     root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
-    root->addChild("assetPath", js.newScriptVar(assetPath));
+    root->addChild("assetPath", js.newScriptVar(assetsPath));
 
     std::string result;
     try {

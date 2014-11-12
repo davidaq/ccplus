@@ -5,11 +5,11 @@
 using namespace CCPlus;
 
 TEST(Integration, Basic) {
-    CCPlus::go("test/res/basic.tml", "tmp", 18);
+    CCPlus::go("test/res/basic.tml");
 }
 
 TEST(Integration, Simple) {
-    CCPlus::go("test/res/test2.tml", "tmp", 18);
+    CCPlus::go("test/res/test2.tml");
 }
 
 extern "C" {
@@ -20,7 +20,7 @@ TEST(Integration, Shaders) {
 }
 
 TEST(Integration, Stop) {
-    CCPlus::initContext("test/res/test2.tml", "tmp", 18);
+    CCPlus::initContext("test/res/test2.tml");
     CCPlus::render();
     CCPlus::render();
 
@@ -29,9 +29,7 @@ TEST(Integration, Stop) {
     CCPlus::releaseContext();
 
     CCPlus::render();
-    CCPlus::encode();
 
-    CCPlus::initContext("test/res/test2.tml", "tmp", 18);
+    CCPlus::initContext("test/res/test2.tml");
     CCPlus::render();
-    CCPlus::encode();
 }
