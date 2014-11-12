@@ -78,23 +78,29 @@ bool VideoDecoder::readNextFrameIfNeeded() {
     if(invalid) return false;
     if(decodeContext->haveCurrentPkt)
         return true;
-    if(av_read_frame(decodeContext->fmt_ctx, &(decodeContext->pkt)) >= 0) {
-        decodeContext->currentPkt = decodeContext->pkt;
-        decodeContext->haveCurrentPkt = true;
-        return true;
+    int avRet = av_read_frame(decodeContext->fmt_ctx, &(decodeContext->pkt));
+    if(avRet == AVERROR(EAGAIN)) {
+        usleep(10000);
+        return readNextFrameIfNeeded();
+    } else if(avRet < 0) {
+        return false;
     }
-    return false;
+    decodeContext->currentPkt = decodeContext->pkt;
+    decodeContext->haveCurrentPkt = true;
+    return true;
 }
 
 float VideoDecoder::decodeImage() {
+    bool prevHaveDecodedeImageState = haveDecodedImage;
     haveDecodedImage = false;
     if(decodedImage)
         delete decodedImage;
     decodedImage = 0;
     float retTime = -1;
-    while(!haveDecodedImage) {
+    int brutal = 10;
+    while(!haveDecodedImage && brutal > 0) {
         if(!readNextFrameIfNeeded())
-            return -1;
+            brutal--;
         if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
             int gotFrame = 0;
             int ret = avcodec_decode_video2(decodeContext->video_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
@@ -120,6 +126,9 @@ float VideoDecoder::decodeImage() {
             av_free_packet(&(decodeContext->currentPkt));
             decodeContext->haveCurrentPkt = false;
         }
+    }
+    if(brutal <= 0) {
+        return -1;
     }
     cursorTime = retTime;
     return retTime;
