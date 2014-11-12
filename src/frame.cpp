@@ -81,6 +81,10 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
         ext.anchorAdjustX = NEXT(int16_t);
         ext.anchorAdjustY = NEXT(int16_t);
     }
+    if(ptr != endOfFile) {
+        ext.scaleAdjustX = NEXT(float);
+        ext.scaleAdjustY = NEXT(float);
+    }
 }
 
 void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) {
@@ -150,12 +154,14 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&wlen, sizeof(wlen), 1);
     write(ext.audio.data, sizeof(int16_t), len);
     /*
-     * write anchor adjust
+     * write extra
      */
     int16_t val = ext.anchorAdjustX;
     write(&val, sizeof(int16_t), 1);
     val = ext.anchorAdjustY;
     write(&val, sizeof(int16_t), 1);
+    write(&ext.scaleAdjustX, sizeof(float), 1);
+    write(&ext.scaleAdjustY, sizeof(float), 1);
 }
 
 cv::Mat Frame::zimCompressed(int quality) {

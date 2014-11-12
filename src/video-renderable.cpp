@@ -51,7 +51,13 @@ void VideoRenderable::prepare() {
 GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
     if(framesCache.count(frameNum)) {
-        const Frame& frame = framesCache[frameNum];
+        const FrameCache& cache = framesCache[frameNum];
+        Frame frame;
+        if(cache.compressed.empty()) {
+            frame = cache.normal;
+        } else {
+            frame.readZimCompressed(cache.compressed);
+        }
         GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
         ret->load(frame);
         return ret;
@@ -132,10 +138,26 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if(!ret.image.empty())
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-                cv::resize(ret.image, ret.image, cv::Size(ret.image.cols / 2, ret.image.rows / 2));
-                ret.ext.scaleAdjustX = 2;
-                ret.ext.scaleAdjustY = 2;
-                framesCache[f] = ret;
+                int w = ret.image.cols, h = ret.image.rows;
+                bool resize = false;
+                if(w > 320) {
+                    w = 320;
+                    resize = true;
+                }
+                if(h > 320) {
+                    h = 320;
+                    resize = true;
+                }
+                if(resize) {
+                    ret.ext.scaleAdjustX = ret.image.cols * 1.0 / w;
+                    ret.ext.scaleAdjustY = ret.image.rows * 1.0 / h;
+                    cv::resize(ret.image, ret.image, cv::Size(w, h));
+                }
+                if(isPreserved) {
+                    framesCache[f].compressed = ret.zimCompressed();
+                } else {
+                    framesCache[f].normal = ret;
+                }
                 lastFrame = f;
             }
 
@@ -157,7 +179,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if (!framesCache.count(f)) {
                     Frame ret;
                     ret.ext.audio = subAudio(audios, f);
-                    framesCache[f] = ret;
+                    framesCache[f].normal = ret;
                     lastFrame = f;
                 }
             }    

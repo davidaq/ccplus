@@ -225,3 +225,4 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     spit(outputPath, result);
     return outputPath;
 }
+
