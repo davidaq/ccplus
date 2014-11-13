@@ -55,7 +55,7 @@ function genResourcesComp(js, width, height) {
     var medias = js.medias;
     var ret = [];
     var idx = 0;
-    for (var m in medias) {
+    for (var m = 0; m < medias.length; m++) {
         var md = medias[m];
         var comp = {};
         var name = "@" + idx;
