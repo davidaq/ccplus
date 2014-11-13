@@ -1,5 +1,5 @@
 /*******
- * ae_export/define.js
+ * src/define.js
  *******/
 /*
  * Definitions
@@ -33,7 +33,7 @@ var blendingModes = {
 };
 
 /*******
- * ae_export/export.js
+ * src/export.js
  *******/
 /*
  * Export logic
@@ -43,7 +43,7 @@ var Export = function() {
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name]) {
+            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
                 throw "Duplicate composition name: " + item.name;
             }
             this.comp[item.name] = item;
@@ -58,12 +58,21 @@ Export.prototype.exportTo = function(filePath) {
     this.files = {};
     this.colors = {};
     try {
-        if(!this.comp.MAIN) {
-            throw "Main composition doesn't exist";
+        this.exportList = [];
+        if(this.comp.MAIN)
+            this.exportList = ['MAIN'];
+        for(var k in this.comp) {
+            if(k[0] == '#')
+                this.exportList.push(k);
+        }
+        if(this.exportList.length <= 0) {
+            throw "Main or scene compositions doesn't exist";
         }
         this.exported = {};
-        this.compsCount = this.getCompsCount(this.comp.MAIN);
-        this.exportList = ['MAIN'];
+        this.compsCount = 0;
+        for(var k in this.exportList) {
+            this.compsCount += this.getCompsCount(this.comp[this.exportList[k]]);
+        }
         this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
@@ -80,11 +89,11 @@ Export.prototype.exportTo = function(filePath) {
             this.tmlFile.write(obj2str(expComp));
             log('  Write comp');
         }
-        this.tmlFile.write('},"usedfiles":');
-        this.tmlFile.write(obj2str(this.files));
-        this.tmlFile.write(',"usedcolors":');
-        this.tmlFile.write(obj2str(this.colors));
-        this.tmlFile.write('}');
+        //this.tmlFile.write('},"usedfiles":');
+        //this.tmlFile.write(obj2str(this.files));
+        //this.tmlFile.write(',"usedcolors":');
+        //this.tmlFile.write(obj2str(this.colors));
+        this.tmlFile.write('}}');
     } finally {
         this.tmlFile.close();
     }
@@ -148,31 +157,31 @@ Export.prototype.exportLayer = function(layer) {
         if(!source.file) {
             // color source
             var color = source.mainSource.color;
-            path = source.width + 'x' + source.height + '#' 
-                + color[0] + '_' + color[1] + '_' + color[2];
-            path = '(colors)/' + path + '.png';
-            this.colors[path] = {
-                color: color,
-                width: source.width,
-                height: source.height
-            };
+            path = source.width + ',' + source.height + ',' 
+                + color[0] + ',' + color[1] + ',' + color[2];
+            ret.uri = 'color://' + path;
+            //this.colors[path] = {
+            //    color: color,
+            //    width: source.width,
+            //    height: source.height
+            //};
         } else {
             path = relPath(source.file.fullName);
+            ret.uri = 'file://' + path;
         }
-        ret.uri = 'file://' + path;
-        this.files[path] = {
-            width: source.width,
-            height: source.height
-        };
+        //this.files[path] = {
+        //    width: source.width,
+        //    height: source.height
+        //};
         log('    Export Footage: ' + path);
     } else if('[object TextLayer]' == type) {
         if(!this.textCounter)
             this.textCounter = 0;
-        ret.uri = 'text://' + layer("Source Text").value.text + '@' + (this.textCounter++);
+        ret.uri = 'text://' + layer("Source Text").value.text.replace(/[\n\r]/, '') + '@' + (this.textCounter++);
         var txtProp = {};
         var txtExport = function (key, aeKey, correction) {
             var proced = false;
-            var prevVal = NULL;
+            var prevVal = -314.159;
             var prop = {};
             for(var t = layer.inPoint; ; t += 0.1) {
                 if(t > layer.outPoint) {
@@ -192,7 +201,9 @@ Export.prototype.exportLayer = function(layer) {
             }
             txtProp[key] = prop;
         };
-        txtExport('text', 'text');
+        txtExport('text', 'text', function(val) {
+            return val.replace(/[\n\r]/, '');
+        });
         txtExport('size', 'fontSize');
         txtExport('justification', 'justification', function (val) {
             var preset = {
@@ -384,7 +395,7 @@ function mapProperty(options) {
 }
 
 /*******
- * ae_export/main.js
+ * src/main.js
  *******/
 ﻿function main() {
     showProgressWindow();
@@ -422,7 +433,7 @@ var NULL;
 
 
 /*******
- * ae_export/progress.js
+ * src/progress.js
  *******/
 function progressWindow() {
     var windowName = 'CCPlus Export Util';
@@ -479,7 +490,7 @@ function isProgressWindowVisible() {
 
 
 /*******
- * ae_export/propertymap/4color.js
+ * src/propertymap/4color.js
  *******/
 mapProperty({
     name: '4color',
@@ -520,7 +531,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/gaussian.js
+ * src/propertymap/gaussian.js
  *******/
 mapProperty({
     name: 'gaussian',
@@ -535,7 +546,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/grayscale.js
+ * src/propertymap/grayscale.js
  *******/
 mapProperty({
     name: 'grayscale',
@@ -562,7 +573,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/hsl.js
+ * src/propertymap/hsl.js
  *******/
 mapProperty({
     name: 'hsl',
@@ -586,7 +597,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/mask.js
+ * src/propertymap/mask.js
  *******/
 mapProperty({
     name: 'mask',
@@ -626,7 +637,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/opacity.js
+ * src/propertymap/opacity.js
  *******/
 mapProperty({
     name: 'opacity',
@@ -638,7 +649,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/ramp.js
+ * src/propertymap/ramp.js
  *******/
 mapProperty({
     name: 'ramp',
@@ -667,7 +678,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/transform.js
+ * src/propertymap/transform.js
  *******/
 mapProperty({
     name: 'transform',
@@ -691,7 +702,7 @@ mapProperty({
 });
 
 /*******
- * ae_export/propertymap/volume.js
+ * src/propertymap/volume.js
  *******/
 mapProperty({
     name: 'volume',
@@ -716,7 +727,7 @@ mapProperty({
 })
 
 /*******
- * ae_export/util.js
+ * src/util.js
  *******/
 /* 
  * Utilities
@@ -766,7 +777,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += _obj2str(obj[k]);
                 }
-                return '[' + ret + ']';
+                return '[' + ret + "]\n";
             } else if('[object Object]' == obj.toString()) {
                 var cma = true;
                 for(k in obj) {
@@ -775,7 +786,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += '"' + k + '":' + _obj2str(obj[k]);
                 }
-                return '{' + ret + '}';
+                return '{' + ret + "}\n";
             }
         }
     }

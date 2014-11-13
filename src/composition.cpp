@@ -6,10 +6,14 @@
 
 using namespace CCPlus;
 
-Composition::Composition(float duration, int width, int height) {
+Composition::Composition(float duration, float width, float height) {
     this->duration = duration;
     this->width = width;
     this->height = height;
+    potWidth = nearestPOT(width);
+    potHeight = nearestPOT(height);
+    scaleAdjustX = width / potWidth;
+    scaleAdjustY = width / potHeight;
 }
 
 void Composition::appendLayer(const Layer& layer) {
@@ -61,7 +65,7 @@ GPUFrame Composition::getGPUFrame(float time) {
         }
     }
     // Merge & track matte 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
     // make sure clean
     ret->bindFBO();
     for (int i = layers.size() - 1; i >= 0; i--) {
@@ -72,6 +76,8 @@ GPUFrame Composition::getGPUFrame(float time) {
         ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
     }
     delete[] frames;
+    ret->ext.scaleAdjustX = scaleAdjustX;
+    ret->ext.scaleAdjustY = scaleAdjustY;
     lastQuery = time;
     lastFrame = ret;
     return ret;

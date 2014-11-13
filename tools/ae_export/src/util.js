@@ -46,7 +46,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += _obj2str(obj[k]);
                 }
-                return '[' + ret + ']';
+                return '[' + ret + "]\n";
             } else if('[object Object]' == obj.toString()) {
                 var cma = true;
                 for(k in obj) {
@@ -55,7 +55,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += '"' + k + '":' + _obj2str(obj[k]);
                 }
-                return '{' + ret + '}';
+                return '{' + ret + "}\n";
             }
         }
     }

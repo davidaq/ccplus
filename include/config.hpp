@@ -1,14 +1,17 @@
 #pragma once
 
-namespace CCPlus {
-
-    const int AUDIO_SAMPLE_RATE = 32000;
-
-    const int COLLECTOR_THREAD = 2;
-}
-
 #ifndef GLSLES
 #if defined(__ANDROID__) || defined(__IOS__)
 #define GLSLES
 #endif
 #endif
+
+namespace CCPlus {
+    extern std::string assetsPath;
+    extern std::string outputPath;
+    extern int audioSampleRate;
+    extern int collectorThreadsNumber;
+    extern int frameRate;
+    extern int renderMode;
+}
+

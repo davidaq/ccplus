@@ -14,8 +14,8 @@ CCPLUS_FILTER(mask) {
         return frame;
     }
     std::vector<std::pair<float, float>> pnts;
-    int kwidth = parameters[1];
-    int kheight = parameters[0];
+    int kwidth = parameters[1] / frame->ext.scaleAdjustX;
+    int kheight = parameters[0] / frame->ext.scaleAdjustY;
     int ksize = (kwidth + kheight) / 2;
     int sz = parameters.size() / 2 - 1;
 
@@ -25,8 +25,8 @@ CCPLUS_FILTER(mask) {
             parameters[i * 2 + 1] == parameters[i * 2 - 1])
             continue;
         pnts.push_back({
-                parameters[i * 2 + 1] / width * 2.0 - 1.0, 
-                parameters[i * 2] / height * 2.0 - 1.0});
+                parameters[i * 2 + 1] / frame->ext.scaleAdjustX / width * 2.0 - 1.0, 
+                parameters[i * 2] / frame->ext.scaleAdjustY / height * 2.0 - 1.0});
     }
     pnts = CCPlus::triangulate(pnts);
 

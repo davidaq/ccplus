@@ -42,6 +42,10 @@ protected:
             if (kv.first > t)
                 break;
         }
+        if (!m.count(ret)) {
+            for (auto& kv : m)
+                return kv.second;
+        }
         return m.at(ret);
     }
 

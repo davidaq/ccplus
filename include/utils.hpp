@@ -43,7 +43,10 @@ static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
 }
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
-    return content.rfind(suffix) == (content.length() - suffix.length());
+    int pos = content.rfind(suffix);
+    if(pos < 0)
+        return false;
+    return pos == (content.length() - suffix.length());
 }
 
 static inline bool stringStartsWith(std::string content, std::string prefix) {
@@ -100,13 +103,36 @@ static inline std::string dirName(const std::string& path) {
                 getSeperator()).base() - path.begin());
 }
 
+// Used to convert logical unix like path to system specific path
 static inline std::string generatePath(const std::string& dir, const std::string& fn) {
-    if (dir == "") return fn;
-    //if (!boost::filesystem::exists(dir))
-    //    boost::filesystem::create_directory(dir);
-    if (dir[dir.length() - 1] != getSeperator())
-        return dir + getSeperator() + fn;
-    return dir + fn;
+    std::string ret;
+    if (dir == "" || fn[0] == '/') {
+        ret = fn;
+    } else {
+        ret = dir + "/" + fn;
+    }
+    std::string::iterator r = ret.begin(), w = ret.begin();
+    int sz = 0;
+    for(; r != ret.end(); r++) {
+        if(*r == '/') {
+            *(w++) = getSeperator();
+            sz++;
+            while(*r == '/' && r != ret.end())
+                r++;
+            if(r == ret.end())
+                break;
+        }
+        *(w++) = *r;
+        sz++;
+    }
+    ret.resize(sz);
+#ifdef _WIN32
+    if(ret[0] == '\\' && ret[2] == ':' && ret[3] == '\\') {
+        // convert \C:\Program Files to C:\Program Files
+        return ret.substr(1);
+    }
+#endif
+    return ret;
 }
 
 static inline std::string slurp(const std::string& file) {
@@ -199,4 +225,25 @@ static inline std::string readTextAsset(const std::string& path) {
     cv::Mat raw = CCPlus::readAsset(path.c_str());
     const char* ptr = (const char*)raw.data;
     return std::string(ptr, ptr + raw.total());
+}
+
+// get nearest power of two
+static inline int nearestPOT(int n) {
+    const static int pots[] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
+    const static int potsN = 11;
+    int pd = 0xffff;
+    int ret = 512;
+    for(int i = 0; i < potsN; i++) {
+        int d = pots[i] - n;
+        if(d < 0) d = -d;
+        if(d < pd) {
+            ret = pots[i];
+            pd = d;
+        }
+    }
+    return ret;
+}
+
+static inline bool isPOT(int x) {
+    return ((x != 0) && ((x & (~x + 1)) == x));
 }

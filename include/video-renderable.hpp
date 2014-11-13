@@ -5,12 +5,17 @@
 namespace CCPlus {
     class VideoRenderable;
     class VideoDecoder;
+    struct FrameCache {
+        cv::Mat compressed;
+        CCPlus::Frame normal;
+        int refer = -1;
+    };
 }
 
 // @ handle videos, make'm to preprocessed image
 class CCPlus::VideoRenderable : public CCPlus::Renderable {
 public:
-    VideoRenderable(const std::string& uri);
+    VideoRenderable(const std::string& uri, bool audioOnly);
     ~VideoRenderable();
 
     void prepare();
@@ -26,6 +31,5 @@ private:
 
     std::string uri;
     VideoDecoder *decoder, *alpha_decoder;
-    std::map<int, cv::Mat> framesCache;
+    std::map<int, CCPlus::FrameCache> framesCache;
 };
-

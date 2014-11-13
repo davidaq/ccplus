@@ -5,6 +5,7 @@
 #include "gpu-frame-cache.hpp"
 #include "platform.hpp"
 #include "ccplus.hpp"
+#include "image-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -16,15 +17,12 @@ Context* Context::getContext() {
     return singleton;
 }
 
-void Context::begin(const std::string& tmlPath, const std::string& storagePath, int fps) {
+void Context::begin(const std::string& tmlPath) {
     if(active) {
         log(logFATAL) << "Previous context still active, context begin failed";
         return;
     }
-    end();
     this->tmlDir = dirName(tmlPath);
-    this->storagePath = storagePath;
-    this->fps = fps;
     
     TMLReader reader;
     mainComposition = reader.read(tmlPath);
@@ -39,6 +37,12 @@ void Context::end() {
         collector = nullptr;
     }
     renderables.clear();
+    for (auto& kv : preservedRenderable) {
+        ImageRenderable* image = dynamic_cast<ImageRenderable*>(kv.second);
+        if (image) {
+            image->releaseGPUCache();
+        }
+    }
     deleteRetained();
     GPUFrameCache::clear();
     GLProgramManager::getManager()->clean();
@@ -46,7 +50,7 @@ void Context::end() {
 }
 
 std::string Context::getStoragePath(const std::string& relativePath) {
-    return generatePath(this->storagePath, relativePath);
+    return generatePath(outputPath, relativePath);
 }
 
 std::string Context::getFootagePath(const std::string& relativePath) {
@@ -54,7 +58,12 @@ std::string Context::getFootagePath(const std::string& relativePath) {
 }
 
 bool Context::hasRenderable(const std::string& uri) {
-    return renderables.count(uri);
+    return renderables.count(uri) || preservedRenderable.count(uri);
+}
+
+void Context::putPreservedRenderable(const std::string& uri, Renderable* renderable) {
+    preservedRenderable[uri] = renderable;
+    renderable->isPreserved = true;
 }
 
 void Context::putRenderable(const std::string& uri, Renderable* renderable) {
@@ -62,6 +71,8 @@ void Context::putRenderable(const std::string& uri, Renderable* renderable) {
 }
 
 Renderable* Context::getRenderable(const std::string& uri) {
+    if (preservedRenderable.count(uri))
+        return preservedRenderable[uri];
     return renderables[uri];
 }
 

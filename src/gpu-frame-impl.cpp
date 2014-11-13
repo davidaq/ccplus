@@ -6,6 +6,7 @@
 using namespace CCPlus;
 
 GPUFrameImpl::~GPUFrameImpl() {
+    ext = FrameExt();
     GPUFrameCache::reuse(this);
 }
 

@@ -11,6 +11,8 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {
         return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
     }
+    if(!isPOT(width) || !isPOT(height))
+        L() << "NOT POT";
     auto* p = &cache[Size(width, height)];
     int sz = p->size();
     if (sz > 0) {

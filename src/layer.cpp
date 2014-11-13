@@ -20,8 +20,8 @@ Layer::Layer(
     float _duration, 
     float _start, 
     float _last,
-    int _width,
-    int _height,
+    float _width,
+    float _height,
     int _blendMode,
     int _trkMat,
     bool _showup
@@ -112,11 +112,11 @@ GPUFrame Layer::getFilteredFrame(float t) {
         return GPUFrame();
     float local_t = mapInnerTime(t);
     GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
-    for (auto& k : orderedKey) {
-        profileBegin(PropertyInterpolation);
-        const auto& params = interpolate(k, t);
-        profileEnd(PropertyInterpolation);
-        frame = Filter(k).apply(frame, params, width, height);
+    if(frame) {
+        for (auto& k : orderedKey) {
+            const auto& params = interpolate(k, t);
+            frame = Filter(k).apply(frame, params, width, height);
+        }
     }
     return frame;
 }

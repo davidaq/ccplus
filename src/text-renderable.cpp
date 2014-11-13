@@ -190,7 +190,7 @@ void TextRenderable::prepareFrame(int time) {
 
     wstring s = get<wstring>(this->text, time);
     int x = 0;
-    int y = height * sy;
+    int y = height * sy * 1.2;
     int prevAdvance = 0;
     for (int j = 0; j < s.length(); j++) {
         error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
@@ -208,13 +208,9 @@ void TextRenderable::prepareFrame(int time) {
             prevAdvance = (1 + tracking) * advance;
         }
     }
-#ifdef __ANDROID__
-    if(!ret.empty())
-        cv::cvtColor(ret, ret, CV_BGRA2RGBA);
-#endif
     Frame retFrame;
     retFrame.image = ret;
-    retFrame.ext.anchorAdjustY = size;
+    retFrame.ext.anchorAdjustY = y / 1.5;
     switch(get(this->justification, time)) {
         case 0: // left
             retFrame.ext.anchorAdjustX = 0;
@@ -226,6 +222,11 @@ void TextRenderable::prepareFrame(int time) {
             retFrame.ext.anchorAdjustX = x;
             break;
     };
+    retFrame.toNearestPOT(1024);
+#ifdef __ANDROID__
+    if(!retFrame.image.empty())
+        cv::cvtColor(retFrame.image, retFrame.image, CV_BGRA2RGBA);
+#endif
     framesCache[time] = retFrame;
     FT_Done_Face(face);
 }

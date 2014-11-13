@@ -22,6 +22,10 @@ public:
     // chunks of used fragments of this renderable as <start,end>
     std::vector<std::pair<float,float> > usedFragments;
     std::string getUri();
+
+    bool isPreserved = false;
+protected:
+    bool prepared = false;
 private:
     std::map<int, Frame> frames;
     std::string uri;

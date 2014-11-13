@@ -17,8 +17,8 @@ CCPLUS_FILTER(4color) {
     std::vector<float> xs, ys; 
     
     for (int i = 0; i < 20; i+=5) {
-        xs.push_back(parameters[i + 0] / frame->width);
-        ys.push_back(parameters[i + 1] / frame->height);
+        xs.push_back(parameters[i + 0] / frame->width / frame->ext.scaleAdjustX);
+        ys.push_back(parameters[i + 1] / frame->height / frame->ext.scaleAdjustY);
         rgbs.push_back(parameters[i + 2] / 255.0f);
         rgbs.push_back(parameters[i + 3] / 255.0f);
         rgbs.push_back(parameters[i + 4] / 255.0f);

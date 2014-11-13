@@ -1,6 +1,7 @@
 #include "image-renderable.hpp"
 #include "gpu-frame-impl.hpp"
 #include "gpu-frame-cache.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 using namespace cv;
@@ -22,8 +23,16 @@ float ImageRenderable::getDuration() {
 }
 
 void ImageRenderable::prepare() {
+    if (prepared) {
+        return;
+    }
+    prepared = true;
     std::string filepath = parseUri2File(uri);
     Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
+    if (!org.data) {
+        log(logERROR) << "Could not open or find the image: " << filepath;
+        return;
+    }
 
     mat3to4(org);
 
@@ -55,26 +64,10 @@ void ImageRenderable::prepare() {
             log(logWARN) << "Failed getting image rotationg angle";
         }
     }
-
-    int w = org.cols, h = org.rows;
-    float max_size = 1280.0;
-    if(w > max_size) {
-        h *= max_size / w;
-        w = max_size;
-    }
-    if(h > max_size) {
-        w *= max_size / h;
-        h = max_size;
-    }
-    if(w != org.cols) {
-        int x = org.cols;
-        int y = org.rows;
-        cv::resize(org, org, {w, h}, 0, 0, INTER_AREA);
-        image.ext.scaleAdjustX = x * 1.0f / org.cols;
-        image.ext.scaleAdjustY = y * 1.0f / org.rows;
-    }
-
     image.image = org;
+
+    image.toNearestPOT(renderMode == PREVIEW_MODE ? 512 : 1024);
+
 #ifdef __ANDROID__
     cv::cvtColor(image.image, image.image, CV_BGRA2RGBA);
 #endif
@@ -82,6 +75,10 @@ void ImageRenderable::prepare() {
 
 void ImageRenderable::release() {
     image.image = cv::Mat();
+    gpuCache = GPUFrame();
+}
+
+void ImageRenderable::releaseGPUCache() {
     gpuCache = GPUFrame();
 }
 

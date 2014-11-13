@@ -10,6 +10,7 @@ using namespace CCPlus;
 
 GPUFrame sampleToSize(GPUFrame& frame, int width, int height) {
     GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->ext = frame->ext;
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = manager->getProgram(blend_none);
 

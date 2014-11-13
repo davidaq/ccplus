@@ -4,7 +4,7 @@
 
 class CCPlus::Composition: public CCPlus::Renderable {
 public:
-    Composition(float duration, int width, int height);
+    Composition(float duration, float width, float height);
 
     void prepare();
     void release();
@@ -16,6 +16,10 @@ public:
     float duration;
     float width;
     float height;
+    int potWidth;
+    int potHeight;
+    float scaleAdjustX;
+    float scaleAdjustY;
 
     float lastQuery = -1;
     GPUFrame lastFrame;

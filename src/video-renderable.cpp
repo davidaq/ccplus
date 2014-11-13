@@ -4,22 +4,27 @@
 #include "utils.hpp"
 #include "gpu-frame.hpp"
 #include "profile.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(const std::string& _uri) :
+VideoRenderable::VideoRenderable(const std::string& _uri, bool audioOnly) :
     uri(_uri)
 {
     std::string path = parseUri2File(uri);
-    std::string alpha_file = path + ".opacity.mp4";
-    FILE* testFp = fopen(alpha_file.c_str(), "r");
-    if(testFp) {
-        fclose(testFp);
-        alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
-        decoder = new VideoDecoder(path + ".mp4");
-    } else {
-        alpha_decoder = 0;
+    alpha_decoder = 0;
+    if(audioOnly) {
         decoder = new VideoDecoder(path);
+    } else {
+        std::string alpha_file = path + ".opacity.mp4";
+        FILE* testFp = fopen(alpha_file.c_str(), "r");
+        if(testFp) {
+            fclose(testFp);
+            alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
+            decoder = new VideoDecoder(path + ".mp4");
+        } else {
+            decoder = new VideoDecoder(path, VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+        }
     }
 }
 
@@ -40,6 +45,10 @@ void VideoRenderable::release() {
 }
 
 void VideoRenderable::prepare() {
+    if (prepared) {
+        return;
+    }
+    prepared = true;
     for(const auto& part : usedFragments)
         preparePart((int)(part.first - 0.5), (int)(part.second - part.first + 1));
 }
@@ -47,8 +56,21 @@ void VideoRenderable::prepare() {
 GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
     if(framesCache.count(frameNum)) {
+        for(;;) {
+            const FrameCache& ref = framesCache[frameNum];
+            if(ref.refer > -1) {
+                frameNum = ref.refer;
+            } else {
+                break;
+            }
+        }
+        const FrameCache& cache = framesCache[frameNum];
         Frame frame;
-        frame.readZimCompressed(framesCache[frameNum]);
+        if(cache.compressed.empty()) {
+            frame = cache.normal;
+        } else {
+            frame.readZimCompressed(cache.compressed);
+        }
         GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
         ret->load(frame);
         return ret;
@@ -77,7 +99,7 @@ void VideoRenderable::preparePart(float start, float duration) {
             for (int j = 1; j + last_f < f; j++) {
                 int insf = j + last_f;
                 if(!framesCache.count(insf)) {
-                    framesCache[insf] = framesCache[last_f];
+                    framesCache[insf].refer = last_f;
                 }
             }
         };
@@ -87,7 +109,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 const std::vector<int16_t>& apart, 
                 int f) {
             int rela = f - startFrameNumber;
-            int nsig = AUDIO_SAMPLE_RATE / Context::getContext()->fps;
+            int nsig = audioSampleRate / frameRate;
             int pos = nsig * rela;
             int size = std::min<int>(nsig, apart.size() - pos);
             if(size > 0) {
@@ -129,7 +151,12 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if(!ret.image.empty())
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-                framesCache[f] = ret.zimCompressed();
+                ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
+                if(isPreserved) {
+                    framesCache[f].compressed = ret.zimCompressed();
+                } else {
+                    framesCache[f].normal = ret;
+                }
                 lastFrame = f;
             }
 
@@ -144,14 +171,14 @@ void VideoRenderable::preparePart(float start, float duration) {
 
         if (lastFrame == -1) {
             // Audio only
-            float inter = 1.0 / Context::getContext()->fps;
+            float inter = 1.0 / frameRate;
             for (float i = start; i <= start + duration + inter; i += inter) {
                 int f = time2frame(i);
                 makeup_frames(f, lastFrame);
                 if (!framesCache.count(f)) {
                     Frame ret;
                     ret.ext.audio = subAudio(audios, f);
-                    framesCache[f] = ret.zimCompressed();
+                    framesCache[f].normal = ret;
                     lastFrame = f;
                 }
             }    
@@ -160,7 +187,7 @@ void VideoRenderable::preparePart(float start, float duration) {
 }
 
 int VideoRenderable::time2frame(float time) {
-    return (int)(time * Context::getContext()->fps);
+    return (int)(time * frameRate);
 }
 
 float VideoRenderable::getDuration() {
@@ -173,7 +200,7 @@ float VideoRenderable::getDuration() {
                 max = item.first;
         }
         max++;
-        duration = max * 1.0f / Context::getContext()->fps;
+        duration = max * 1.0f / frameRate;
         float oduration = decoder->getVideoInfo().duration;
         if(duration < oduration && oduration - duration < oduration * 0.1)
             duration = oduration;

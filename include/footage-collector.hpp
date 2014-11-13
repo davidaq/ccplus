@@ -21,8 +21,8 @@ public:
     float finished();
 
     CCPlus::Semaphore signal;
-    float finishedTime[COLLECTOR_THREAD];
-    CollectorThread* threads[COLLECTOR_THREAD] = {0};
+    float* finishedTime;
+    CollectorThread** threads;
     CCPlus::Composition* main = 0;
     Renderable** sortedList = 0;
     int sortedListPtr;

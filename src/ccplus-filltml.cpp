@@ -9,6 +9,8 @@
 #include "utils.hpp"
 #include "ccplus.hpp"
 
+#include "externals/TinyJS.h"
+
 namespace boost { namespace property_tree { namespace json_parser
 {
     // Create necessary escape sequences from illegal characters
@@ -183,4 +185,44 @@ void CCPlus::fillTML(const std::string& jsonPath, const std::string& outputPath)
     log(logINFO) << "---Successfully fill tml file! ---";
 }
 
+std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
+    ptree jsont;
+    try {
+        read_json(configFile, jsont);
+    } catch (...) { 
+        log(logFATAL) << "Couldn't parse or load file: " << configFile;
+    }
+    std::string tmlPath = jsont.get<std::string>("templateURL");
+    if (tmlPath[0] != '/') { // Relative to templateURL
+        tmlPath = generatePath(dirName(configFile), tmlPath);
+    }
+    std::string script = jsont.get<std::string>("script", "");
+    if (script == "") {
+        script = readTextAsset("gen_tml.js");
+    }
+
+    CTinyJS js;
+    const auto& root = js.getRoot();
+
+    root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
+    root->addChild("userjs", js.newScriptVar(slurp(configFile)));
+    root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
+    root->addChild("assetPath", js.newScriptVar(assetsPath));
+
+    std::string result;
+    try {
+        js.execute(script);
+        if(halfSize)
+            result = js.evaluate("JSON.stringify(toHalf(result))");
+        else
+            result = js.evaluate("JSON.stringify(result)");
+    } catch (CScriptException* e) {
+        L() << e->toString().c_str();
+        log(logFATAL) << "Failed executing script";
+        return "";
+    }
+    std::string outputPath = generatePath(dirName(configFile), "render.tml");
+    spit(outputPath, result);
+    return outputPath;
+}
 

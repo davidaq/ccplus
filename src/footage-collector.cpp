@@ -16,9 +16,8 @@ public:
     }
     void start() {
         thread = ParallelExecutor::runInNewThread([&]() {
-            bool goon = true;
-            float fStep = 1.0 / Context::getContext()->fps;
-            while(Context::getContext()->isActive() && goon) {
+            float fStep = frameRate;
+            while(goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {
                     Renderable* pitem = c.sortedList[--c.sortedListPtr];
@@ -29,7 +28,7 @@ public:
                         pitem->prepare();
                         log(logINFO) << "prepare end" << pitem->getUri();
                     }
-                    while(t > c.limit)
+                    while(t > c.limit && goon)
                         sleep(1);
                     c.sync.lock();
                 } else {
@@ -43,10 +42,12 @@ public:
     }
 
     void stop() {
+        goon = false;
         if (thread) 
             pthread_join(thread, 0);
     }
 private:
+    bool goon = true;
     int index;
     FootageCollector& c;
     pthread_t thread = 0;
@@ -54,21 +55,23 @@ private:
 
 FootageCollector::FootageCollector(Composition* comp) {
     main = comp;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    threads = new CollectorThread*[collectorThreadsNumber];
+    finishedTime = new float[collectorThreadsNumber];
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         finishedTime[i] = 0;
         threads[i] = new CollectorThread(i, this);
     }
 }
 
 FootageCollector::~FootageCollector() {
-    // Prevent dead-lock of footage collector
-    limit = 0x7fffffff;
     stop();
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         delete threads[i];
     }
+    delete[] threads;
     if(sortedList)
         delete[] sortedList;
+    delete[] finishedTime;
 }
 
 void FootageCollector::prepare() {
@@ -76,9 +79,14 @@ void FootageCollector::prepare() {
     dep.walkThrough();
 
     auto& renderables = Context::getContext()->renderables;
-    sortedList = new Renderable*[renderables.size() + 2];
+    auto& preservedRenderable = Context::getContext()->preservedRenderable;
+    sortedList = new Renderable*[renderables.size() + preservedRenderable.size() + 2];
     sortedListPtr = 0;
     for(auto ite : renderables) {
+        if(ite.second && ite.second != main)
+            sortedList[sortedListPtr++] = ite.second;
+    }
+    for(auto ite : preservedRenderable) {
         if(ite.second && ite.second != main)
             sortedList[sortedListPtr++] = ite.second;
     }
@@ -87,13 +95,13 @@ void FootageCollector::prepare() {
         return a->firstAppearTime > b->firstAppearTime;
     });
     sortedList[sortedListPtr++] = main;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         threads[i]->start();
     }
 }
 
 void FootageCollector::stop() {
-    for (int i = 0; i < COLLECTOR_THREAD; i++) {
+    for (int i = 0; i < collectorThreadsNumber; i++) {
         if (threads[i])
             threads[i]->stop();
     }
@@ -102,7 +110,7 @@ void FootageCollector::stop() {
 float FootageCollector::finished() {
     sync.lock();
     float ret = main->duration + 1;
-    for(int i = 0; i < COLLECTOR_THREAD; i++) {
+    for(int i = 0; i < collectorThreadsNumber; i++) {
         if(finishedTime[i] < ret)
             ret = finishedTime[i];
     }

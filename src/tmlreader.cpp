@@ -6,6 +6,8 @@
 #include "video-renderable.hpp"
 #include "text-renderable.hpp"
 #include "gif-renderable.hpp"
+#include "color-renderable.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 
@@ -37,7 +39,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
 
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
-        Layer compLayer = initLayer(t, comp->width, comp->height);
+        Layer compLayer = initLayer(t, comp->width, comp->height, name[0] == '@');
         comp->appendLayer(compLayer);
     }
 
@@ -69,7 +71,7 @@ std::vector<std::string> TMLReader::readPropertiesOrder(const boost::property_tr
 }
 
 std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
-Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
+Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height, bool preserved) const {
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
@@ -88,11 +90,23 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                     return new GifRenderable(uri);
                 };
                 extMap["gif"]       = gifExt;
-                // Just treat everything else as Audio/Video
-                auto avExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri);
+                auto audioExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri, true);
                 };
-                extMap["default"]   = avExt;
+                extMap["mp3"]       = audioExt;
+                extMap["aac"]       = audioExt;
+                extMap["flac"]       = audioExt;
+                extMap["wav"]       = audioExt;
+                extMap["asf"]       = audioExt;
+                extMap["wma"]       = audioExt;
+                extMap["ogg"]       = audioExt;
+                extMap["rm"]       = audioExt;
+                extMap["caf"]       = audioExt;
+                // Just treat everything else as video
+                auto videoExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri, false);
+                };
+                extMap["default"]   = videoExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
@@ -116,15 +130,27 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                     }
                 }
             }
-            renderable = extMap[ext](uri);
+            if (!Context::getContext()->hasRenderable(uri)) {
+                renderable = extMap[ext](uri);
+            } else {
+                renderable = Context::getContext()->getRenderable(uri);
+            }
         } else if (stringStartsWith(uri, "text://")) {
             renderable = new TextRenderable(pt);
+        } else if (stringStartsWith(uri, "color://")) {
+            renderable = new ColorRenderable(uri);
         } else if (!stringStartsWith(uri, "composition://")) {
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }
         if(renderable) {
-            Context::getContext()->retain(renderable);
-            Context::getContext()->putRenderable(uri, renderable);
+            //Context::getContext()->retain(renderable);
+            //Context::getContext()->putRenderable(uri, renderable);
+            if (preserved && renderMode == PREVIEW_MODE) {
+                Context::getContext()->putPreservedRenderable(uri, renderable);
+            } else {
+                Context::getContext()->retain(renderable);
+                Context::getContext()->putRenderable(uri, renderable);
+            }
         }
     }
     int blendMode = pt.get("blend", 0);

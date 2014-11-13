@@ -33,6 +33,9 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
      */
     uint32_t jpgLen = NEXT(uint32_t);
     if (jpgLen >= 125) {
+        //image = cv::Mat(height, width, CV_8UC4);
+        //memcpy(image.data, ptr, jpgLen);
+
         vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
         profile(DecodeImage) {
             image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
@@ -78,9 +81,13 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
         ext.anchorAdjustX = NEXT(int16_t);
         ext.anchorAdjustY = NEXT(int16_t);
     }
+    if(ptr != endOfFile) {
+        ext.scaleAdjustX = NEXT(float);
+        ext.scaleAdjustY = NEXT(float);
+    }
 }
 
-void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) {
+void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) const {
     uint16_t metric; 
     // write size first
     metric = (uint16_t) image.cols;
@@ -94,6 +101,7 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     vector<unsigned char> buff;
     if (!image.empty()) {
         profile(EncodeImage) {
+            //buff = vector<unsigned char>(image.data, image.data + image.total() * 4);
             imencode(".jpg", image, buff, 
                     vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
         }
@@ -146,15 +154,19 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&wlen, sizeof(wlen), 1);
     write(ext.audio.data, sizeof(int16_t), len);
     /*
-     * write anchor adjust
+     * write extra
      */
     int16_t val = ext.anchorAdjustX;
     write(&val, sizeof(int16_t), 1);
     val = ext.anchorAdjustY;
     write(&val, sizeof(int16_t), 1);
+    float fval = ext.scaleAdjustX;
+    write(&fval, sizeof(float), 1);
+    fval = ext.scaleAdjustY;
+    write(&fval, sizeof(float), 1);
 }
 
-cv::Mat Frame::zimCompressed(int quality) {
+cv::Mat Frame::zimCompressed(int quality) const {
     std::vector<uint8_t> ret;
     ret.reserve(20);
     frameCompress([&ret](void* data, size_t sz, size_t len) {
@@ -164,7 +176,7 @@ cv::Mat Frame::zimCompressed(int quality) {
     return cv::Mat(ret, true);
 }
 
-void Frame::write(const std::string& zimpath, int quality) {
+void Frame::write(const std::string& zimpath, int quality) const {
     profile(zimWrite) {
         if (!stringEndsWith(zimpath, ".zim")) {
             log(logWARN) << "Zim file should use .zim ext " + zimpath;
@@ -219,3 +231,23 @@ void Frame::read(const std::string& zimpath) {
     fclose(file);
     readZimCompressed(fileContent);
 }
+
+void Frame::toNearestPOT(int max_size) {
+    if(image.empty())
+        return;
+    int w = image.cols, h = image.rows;
+    if(w > max_size) {
+        w = max_size;
+    }
+    if(h > max_size) {
+        h = max_size;
+    }
+    w = nearestPOT(w);
+    h = nearestPOT(h);
+    if(w != image.cols || h != image.rows) {
+        ext.scaleAdjustX *= image.cols * 1.0f / w;
+        ext.scaleAdjustY *= image.rows * 1.0f / h;
+        cv::resize(image, image, {w, h});
+    }
+}
+

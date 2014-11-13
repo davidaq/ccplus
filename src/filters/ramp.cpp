@@ -14,14 +14,14 @@ CCPLUS_FILTER(ramp) {
     }
     float alpha = 1 - parameters[11];
     int type = parameters[0];
-    float start_x = parameters[1] / frame->width;
-    float start_y = parameters[2] / frame->height;
+    float start_x = parameters[1] / frame->width / frame->ext.scaleAdjustX;
+    float start_y = parameters[2] / frame->height / frame->ext.scaleAdjustY;
     float sr = parameters[3] / 255.0;
     float sg = parameters[4] / 255.0;
     float sb = parameters[5] / 255.0;
 
-    float end_x = parameters[6] / frame->width;
-    float end_y = parameters[7] / frame->height;
+    float end_x = parameters[6] / frame->width / frame->ext.scaleAdjustX;
+    float end_y = parameters[7] / frame->height / frame->ext.scaleAdjustY;
     float er = parameters[8] / 255.0;
     float eg = parameters[9] / 255.0;
     float eb = parameters[10] / 255.0;
