@@ -4,22 +4,27 @@
 #include "utils.hpp"
 #include "gpu-frame.hpp"
 #include "profile.hpp"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(const std::string& _uri) :
+VideoRenderable::VideoRenderable(const std::string& _uri, bool audioOnly) :
     uri(_uri)
 {
     std::string path = parseUri2File(uri);
-    std::string alpha_file = path + ".opacity.mp4";
-    FILE* testFp = fopen(alpha_file.c_str(), "r");
-    if(testFp) {
-        fclose(testFp);
-        alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
-        decoder = new VideoDecoder(path + ".mp4");
-    } else {
-        alpha_decoder = 0;
+    alpha_decoder = 0;
+    if(audioOnly) {
         decoder = new VideoDecoder(path);
+    } else {
+        std::string alpha_file = path + ".opacity.mp4";
+        FILE* testFp = fopen(alpha_file.c_str(), "r");
+        if(testFp) {
+            fclose(testFp);
+            alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
+            decoder = new VideoDecoder(path + ".mp4");
+        } else {
+            decoder = new VideoDecoder(path, VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+        }
     }
 }
 
@@ -146,14 +151,15 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if(!ret.image.empty())
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
+                int szLimit = renderMode == PREVIEW_MODE ? 320 : 400;
                 int w = ret.image.cols, h = ret.image.rows;
                 bool resize = false;
-                if(w > 320) {
-                    w = 320;
+                if(w > szLimit) {
+                    w = szLimit;
                     resize = true;
                 }
-                if(h > 320) {
-                    h = 320;
+                if(h > szLimit) {
+                    h = szLimit;
                     resize = true;
                 }
                 if(resize) {

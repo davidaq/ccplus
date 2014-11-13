@@ -43,7 +43,7 @@ var Export = function() {
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name] && item.name[0] != '@') {
+            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
                 throw "Duplicate composition name: " + item.name;
             }
             this.comp[item.name] = item;
@@ -87,7 +87,6 @@ Export.prototype.exportTo = function(filePath) {
             var expComp = this.exportComp(this.comp[compName]);
             this.tmlFile.write('"' + compName +'":');
             this.tmlFile.write(obj2str(expComp));
-            this.tmlFile.write("\n");
             log('  Write comp');
         }
         //this.tmlFile.write('},"usedfiles":');
@@ -178,7 +177,7 @@ Export.prototype.exportLayer = function(layer) {
     } else if('[object TextLayer]' == type) {
         if(!this.textCounter)
             this.textCounter = 0;
-        ret.uri = 'text://' + layer("Source Text").value.text + '@' + (this.textCounter++);
+        ret.uri = 'text://' + layer("Source Text").value.text.replace(/[\n\r]/, '') + '@' + (this.textCounter++);
         var txtProp = {};
         var txtExport = function (key, aeKey, correction) {
             var proced = false;
@@ -202,7 +201,9 @@ Export.prototype.exportLayer = function(layer) {
             }
             txtProp[key] = prop;
         };
-        txtExport('text', 'text');
+        txtExport('text', 'text', function(val) {
+            return val.replace(/[\n\r]/, '');
+        });
         txtExport('size', 'fontSize');
         txtExport('justification', 'justification', function (val) {
             var preset = {
@@ -776,7 +777,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += _obj2str(obj[k]);
                 }
-                return '[' + ret + ']';
+                return '[' + ret + "]\n";
             } else if('[object Object]' == obj.toString()) {
                 var cma = true;
                 for(k in obj) {
@@ -785,7 +786,7 @@ function obj2str(obj) {
                     cma = false;
                     ret += '"' + k + '":' + _obj2str(obj[k]);
                 }
-                return '{' + ret + '}';
+                return '{' + ret + "}\n";
             }
         }
     }

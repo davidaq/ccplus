@@ -90,11 +90,23 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                     return new GifRenderable(uri);
                 };
                 extMap["gif"]       = gifExt;
-                // Just treat everything else as Audio/Video
-                auto avExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri);
+                auto audioExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri, true);
                 };
-                extMap["default"]   = avExt;
+                extMap["mp3"]       = audioExt;
+                extMap["aac"]       = audioExt;
+                extMap["flac"]       = audioExt;
+                extMap["wav"]       = audioExt;
+                extMap["asf"]       = audioExt;
+                extMap["wma"]       = audioExt;
+                extMap["ogg"]       = audioExt;
+                extMap["rm"]       = audioExt;
+                extMap["caf"]       = audioExt;
+                // Just treat everything else as video
+                auto videoExt = [](const std::string& uri) {
+                    return new VideoRenderable(uri, false);
+                };
+                extMap["default"]   = videoExt;
             }
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
