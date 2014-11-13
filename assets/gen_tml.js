@@ -119,6 +119,7 @@ function fit(comps, scenes) {
     */
     var len = scenes.length;
     var k = 0;
+    var preferredDuration = 5.0;
     for (var k= 0; cnt > 0; k++) {
         k = k % len;
         var scene = scenes[k];
@@ -127,11 +128,18 @@ function fit(comps, scenes) {
             continue;
         }
         var tmp_ret = [scene.name, []];
-        for (var y in comps) {
+        for (var y = 0; y < comps.length; y++) {
             var comp = comps[y];
             if (used[comp.name]) continue;
-            if (Math.abs(comp.comp.duration - scene.duration) > 1.0) 
-                continue;
+            if (preferredDuration) {
+                if (Math.abs(preferredDuration - scene.duration) > 1.0) {
+                    continue;
+                }
+            } else {
+                if (Math.abs(comp.comp.duration - scene.duration) > 1.0) {
+                    continue;
+                }
+            }
             tmp_ret[1].push(comp.name); 
             used[comp.name] = true;
             cnt--;
@@ -140,6 +148,11 @@ function fit(comps, scenes) {
                 break;
         }
         if (tmp_ret[1].length > 0) {
+            if (preferredDuration == 5.0) {
+                preferredDuration = 3.0;
+            } else if (preferredDuration == 3.0) {
+                preferredDuration = 5.0;
+            }
             ret.push(tmp_ret);
         }
     }
