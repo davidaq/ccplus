@@ -292,13 +292,23 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
 
     // Append background music
     ret.duration = currentTime;
-    if (userJS.musicURL != "") {
+    if (userJS.musicURL && userJS.musicURL != "") {
         var music = {
             start: 0,
             time: 0,
             duration: ret.duration,
             last: ret.duration,
-            properties: {},
+            properties: {
+                volume: (function() {
+                    // fade in & fade out
+                    ret = {};
+                    ret['0'] = 0;
+                    ret['0.5'] = 1;
+                    ret[''+(ret.duration-1.5)] = 1;
+                    ret[''+ret.duration] = 0;
+                    return ret;
+                })(),
+            },
             uri: "file://" + userJS.musicURL,
         };
         ret.layers.push(music);
