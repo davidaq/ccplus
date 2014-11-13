@@ -15,7 +15,7 @@ namespace CCPlus {
 // @ handle videos, make'm to preprocessed image
 class CCPlus::VideoRenderable : public CCPlus::Renderable {
 public:
-    VideoRenderable(const std::string& uri);
+    VideoRenderable(const std::string& uri, bool audioOnly);
     ~VideoRenderable();
 
     void prepare();
