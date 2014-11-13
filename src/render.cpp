@@ -102,6 +102,11 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
+    if (!alpha) {
+        alpha = GPUFrameCache::alloc(color->width, color->height);
+        glClearColor(0, 0, 0, 0);
+        alpha->bindFBO();
+    }
     GLuint program = GLProgramManager::getManager()->getProgram((GLProgram)(trkmte_alpha + mode - TRKMTE_ALPHA));
     return blendUsingProgram(program, color, alpha);
 }

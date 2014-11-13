@@ -9,7 +9,6 @@ using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(mask) {
-        return frame;
     if (parameters.size() < 2) {
         log(logERROR) << "Not enough parameters for mask";
         return frame;
