@@ -33,10 +33,12 @@ function getScenes(tpl) {
                     num_ele++;
                 }
             }
+            if (num_ele == 0) continue;
             ret.push({
                 name: name,
                 duration: cmp.duration,
-                num_ele: num_ele
+                num_ele: num_ele,
+                used: 0
             });
             cnt++;
         }
@@ -114,13 +116,29 @@ function fit(comps, scenes) {
     var cnt = comps.length;
     var used = {};
     var ret = [];
+    function sortScenes(scenes) {
+        var len = scenes.length;
+        for (var i = 0; i < len; i++) {
+            for (var j = i + 1; j < len; j++) {
+                if (scenes[i].used > scenes[j].used) {
+                    var tmp = scenes[i];
+                    scenes[i] = scenes[j];
+                    scenes[j] = tmp;
+                }
+            }
+        }
+    }
     /*
     * Simple version
     */
     var len = scenes.length;
     var k = 0;
     var preferredDuration = 5.0;
-    for (var k= 0; cnt > 0; k++) {
+    var brutal = 0;
+    for (var k= 0; cnt > 0 && brutal <= len; k++) {
+        sortScenes(scenes);
+        //console.log("----sorted", scenes);
+        brutal++;
         k = k % len;
         var scene = scenes[k];
         var num_ele = scene.num_ele;
@@ -153,6 +171,9 @@ function fit(comps, scenes) {
             } else if (preferredDuration == 3.0) {
                 preferredDuration = 5.0;
             }
+            brutal = 0;
+            k = 0;
+            scene.used++;
             ret.push(tmp_ret);
         }
     }
