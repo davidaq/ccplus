@@ -190,7 +190,7 @@ Export.prototype.exportLayer = function(layer) {
                     t = layer.outPoint;
                     proced = true;
                 }
-                var st = layer("Source Text").valueAtTime(t, false).replace(/[\n\r]/, '');
+                var st = layer("Source Text").valueAtTime(t, false);
                 var val = st[aeKey];
                 if(correction)
                     val = correction(val);
@@ -201,7 +201,9 @@ Export.prototype.exportLayer = function(layer) {
             }
             txtProp[key] = prop;
         };
-        txtExport('text', 'text');
+        txtExport('text', 'text', function(val) {
+            return val.replace(/[\n\r]/, '');
+        });
         txtExport('size', 'fontSize');
         txtExport('justification', 'justification', function (val) {
             var preset = {
