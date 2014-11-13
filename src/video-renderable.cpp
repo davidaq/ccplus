@@ -151,22 +151,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if(!ret.image.empty())
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-                int szLimit = renderMode == PREVIEW_MODE ? 320 : 400;
-                int w = ret.image.cols, h = ret.image.rows;
-                bool resize = false;
-                if(w > szLimit) {
-                    w = szLimit;
-                    resize = true;
-                }
-                if(h > szLimit) {
-                    h = szLimit;
-                    resize = true;
-                }
-                if(resize) {
-                    ret.ext.scaleAdjustX = ret.image.cols * 1.0 / w;
-                    ret.ext.scaleAdjustY = ret.image.rows * 1.0 / h;
-                    cv::resize(ret.image, ret.image, cv::Size(w, h));
-                }
+                ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
                 if(isPreserved) {
                     framesCache[f].compressed = ret.zimCompressed();
                 } else {

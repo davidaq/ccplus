@@ -2,9 +2,7 @@
 #include "global.hpp"
 
 struct DoubleLess {
-    bool operator() (float left, float right) const
-    {
-        //return left < right;
+    bool operator() (float left, float right) const {
         return (std::abs(left - right) > 0.00001) && (left < right);
     }
 }; 
@@ -21,8 +19,8 @@ public:
         float duration,  // total appearance time of this layer in parent scale
         float start,     // the begining time of the refered renderable
         float last,      // total cliped length of the refered renderable
-        int width,
-        int height,
+        float width,
+        float height,
         int blendMode = 0,
         int trkMat = 0,
         bool showup = true

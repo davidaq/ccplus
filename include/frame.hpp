@@ -28,6 +28,10 @@ public:
 
     void write(const std::string& zim, int quality = 90) const;
     void read(const std::string& zim);
+
+    // get a resized image that has dimensions power of 2
+    void toNearestPOT(int max_size);
+
 private:
     void frameCompress(std::function<void(void*, size_t, size_t)>, int quality) const;
 };

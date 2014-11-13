@@ -20,8 +20,8 @@ Layer::Layer(
     float _duration, 
     float _start, 
     float _last,
-    int _width,
-    int _height,
+    float _width,
+    float _height,
     int _blendMode,
     int _trkMat,
     bool _showup
@@ -107,8 +107,6 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-#include "video-renderable.hpp"
-
 GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
         return GPUFrame();
@@ -116,9 +114,7 @@ GPUFrame Layer::getFilteredFrame(float t) {
     GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
     if(frame) {
         for (auto& k : orderedKey) {
-            profileBegin(PropertyInterpolation);
             const auto& params = interpolate(k, t);
-            profileEnd(PropertyInterpolation);
             frame = Filter(k).apply(frame, params, width, height);
         }
     }

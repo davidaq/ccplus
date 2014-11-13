@@ -94,6 +94,14 @@ CCPLUS_FILTER(transform) {
 
         finalTrans = trans * finalTrans;
     }
+    int potWidth = nearestPOT(width);
+    int potHeight = nearestPOT(height);
+    Mat tmp = (Mat_<double>(4, 4) << 
+            potWidth * 1.0f / width, 0, 0, 0,
+            0, potHeight * 1.0f / height, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+    finalTrans = tmp * finalTrans;
 
     auto apply = [](Mat trans, float x, float y, float z) {
         double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
@@ -156,17 +164,18 @@ CCPLUS_FILTER(transform) {
         }
     }
 
+
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint trans, src_dst_size;
     GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size);
     glUseProgram(program);
 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
     ret->bindFBO();
 
     glUniformMatrix3fv(trans, 1, GL_FALSE, tmatrix);
 
-    glUniform4f(src_dst_size, frame->width, frame->height, width, height);
+    glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 

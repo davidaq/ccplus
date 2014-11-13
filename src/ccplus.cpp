@@ -82,8 +82,8 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
         float duration = ctx->mainComposition->getDuration();
         initGL();
         GPUFrame blackBackground = GPUFrameCache::alloc(
-                ctx->mainComposition->width, 
-                ctx->mainComposition->height);
+                nearestPOT(ctx->mainComposition->width),
+                nearestPOT(ctx->mainComposition->height));
         blackBackground->bindFBO();
         glClearColor(0, 0, 0, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);

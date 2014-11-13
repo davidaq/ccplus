@@ -138,6 +138,7 @@ void GifRenderable::prepareGif() {
         }
         Frame ret;
         ret.image = im;
+        ret.toNearestPOT(256);
 #ifdef __ANDROID__
         if(!ret.image.empty())
             cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);

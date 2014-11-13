@@ -226,3 +226,24 @@ static inline std::string readTextAsset(const std::string& path) {
     const char* ptr = (const char*)raw.data;
     return std::string(ptr, ptr + raw.total());
 }
+
+// get nearest power of two
+static inline int nearestPOT(int n) {
+    const static int pots[] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
+    const static int potsN = 11;
+    int pd = 0xffff;
+    int ret = 512;
+    for(int i = 0; i < potsN; i++) {
+        int d = pots[i] - n;
+        if(d < 0) d = -d;
+        if(d < pd) {
+            ret = pots[i];
+            pd = d;
+        }
+    }
+    return ret;
+}
+
+static inline bool isPOT(int x) {
+    return ((x != 0) && ((x & (~x + 1)) == x));
+}
