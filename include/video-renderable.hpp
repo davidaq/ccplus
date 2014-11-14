@@ -32,4 +32,6 @@ private:
     std::string uri;
     VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::FrameCache> framesCache;
+    std::map<int, int> framesUsage;
+    int decompressedCache = 0;
 };

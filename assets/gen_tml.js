@@ -299,15 +299,15 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
             duration: ret.duration,
             last: ret.duration,
             properties: {
-                volume: (function() {
+                volume: (function(duration) {
                     // fade in & fade out
-                    ret = {};
-                    ret['0'] = 0;
-                    ret['0.5'] = 1;
-                    ret[''+(ret.duration-1.5)] = 1;
-                    ret[''+ret.duration] = 0;
+                    var ret = {};
+                    ret['0']                = [0];
+                    ret['0.5']              = [1];
+                    ret[''+(duration-1.5)]  = [1];
+                    ret[''+duration]        = [0];
                     return ret;
-                })(),
+                })(ret.duration),
             },
             uri: "file://" + userJS.musicURL,
         };

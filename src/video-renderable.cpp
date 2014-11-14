@@ -64,12 +64,24 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
                 break;
             }
         }
-        const FrameCache& cache = framesCache[frameNum];
+        FrameCache& cache = framesCache[frameNum];
         Frame frame;
         if(cache.compressed.empty()) {
             frame = cache.normal;
         } else {
             frame.readZimCompressed(cache.compressed);
+            if(decompressedCache < 15) {
+                if(!framesUsage.count(frameNum)) {
+                    framesUsage[frameNum] = 1;
+                } else {
+                    int count = framesUsage[frameNum]++;
+                    if(count > 3) {
+                        decompressedCache++;
+                        cache.compressed = cv::Mat();
+                        cache.normal = frame;
+                    }
+                }
+            }
         }
         GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
         ret->load(frame);
@@ -152,7 +164,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
                 ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
-                if(isPreserved) {
+                if(isPreserved || renderMode == FINAL_MODE) {
                     framesCache[f].compressed = ret.zimCompressed();
                 } else {
                     framesCache[f].normal = ret;
@@ -166,7 +178,7 @@ void VideoRenderable::preparePart(float start, float duration) {
         }
 
         // Make up some missed frame :
-        // Used while rendering low fps video
+        // Used while decoding low fps video
         makeup_frames(time2frame(start + duration), lastFrame);
 
         if (lastFrame == -1) {

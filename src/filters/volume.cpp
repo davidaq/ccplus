@@ -11,15 +11,23 @@ CCPLUS_FILTER(volume) {
         return frame;
     }
     // No audio
-    if (frame->ext.audio.total() == 0) 
+    if (frame->ext.audio.empty())
         return frame;
 
     float perct = (float) parameters[0]; 
-    if (perct > 1.01 || perct < 0) return frame;
+    if(10 == (int)(perct * 10)) return frame;
+    if(perct > 2)
+        perct = 2;
+    if(perct < 0)
+        perct = 0;
 
     for (int i = 0; i < frame->ext.audio.total(); i++) {
-        short tmp = frame->ext.audio.at<short>(i);
-        tmp = (short) tmp * perct;
+        int tmp = frame->ext.audio.at<short>(i);
+        tmp = (int) tmp * perct;
+        if(tmp > 32767)
+            tmp = 32767;
+        if(tmp < -32768)
+            tmp = -32768;
         frame->ext.audio.at<short>(i) = tmp;
     }
     return frame;

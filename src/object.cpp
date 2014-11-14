@@ -66,8 +66,8 @@ Semaphore::~Semaphore() {
 }
 
 void Semaphore::wait() {
+    usleep(100000);
     sem_wait(sem);
-    usleep(10000);
 }
 
 void Semaphore::notify() {

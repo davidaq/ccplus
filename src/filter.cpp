@@ -27,8 +27,7 @@ Filter::~Filter() {
 GPUFrame Filter::apply(GPUFrame frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
         profileBegin(Filters);
-        if(frame && frame->width > 0 && frame->height > 0)
-            frame = func(frame, parameters, width, height);
+        frame = func(frame, parameters, width, height);
         profileEnd(Filters);
     }
     return frame;
