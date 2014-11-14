@@ -177,7 +177,7 @@ function fit(comps, scenes) {
             ret.push(tmp_ret);
         }
     }
-    //console.log(ret);
+    console.log(ret);
     return ret;
 }
 
