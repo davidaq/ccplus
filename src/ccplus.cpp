@@ -16,6 +16,7 @@ using namespace CCPlus;
 pthread_t render_thread = 0;
 bool continueRunning = false;
 int renderProgress = 0;
+bool initing = false;
 
 void CCPlus::go(const std::string& tmlPath) {
     initContext(tmlPath);
@@ -27,11 +28,16 @@ void CCPlus::go(const std::string& tmlPath) {
 
 void CCPlus::initContext(const std::string& tmlPath) {
     releaseContext();
+    initing = true;
     Context::getContext()->begin(tmlPath);
     renderProgress = 0;
+    initing = false;
 }
 
 void CCPlus::releaseContext(bool forceClearCache) {
+    while(initing) {
+        sleep(1);
+    }
     static bool releasingContext = false;
     Context* ctx = Context::getContext();
     if(releasingContext) {
