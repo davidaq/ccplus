@@ -12,8 +12,9 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
     if(!gpuCache) {
-        gpuCache = GPUFrameCache::alloc(image.image.cols, image.image.rows);
-        gpuCache->load(image);
+        Frame im = image.decompressed();
+        gpuCache = GPUFrameCache::alloc(im.image.cols, im.image.rows);
+        gpuCache->load(im);
     }
     return gpuCache;
 }
@@ -71,6 +72,7 @@ void ImageRenderable::prepare() {
 #ifdef __ANDROID__
     cv::cvtColor(image.image, image.image, CV_BGRA2RGBA);
 #endif
+    image = image.compressed();
 }
 
 void ImageRenderable::release() {
