@@ -38,7 +38,11 @@ void ColorRenderable::prepare() {
 
 GPUFrame ColorRenderable::getGPUFrame(float) {
     if (cache) return cache;
-    cache = GPUFrameCache::alloc(width, height);
+    int pw = nearestPOT(width);
+    int ph = nearestPOT(height);
+    cache = GPUFrameCache::alloc(pw, ph);
+    cache->ext.scaleAdjustX = width  * 1.0f / pw;
+    cache->ext.scaleAdjustY = height * 1.0f / ph;
     cache->bindFBO(false);
     glClearColor(r, g, b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);

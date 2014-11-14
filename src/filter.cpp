@@ -11,24 +11,18 @@ std::map<std::string, CCPLUS_FILTER_FUNC> *filterMap = 0;
 Filter::Filter(const std::string& name) {
     if(!filterMap || !filterMap->count(name)) {
         log(logWARN) << "Couldn't find filter: " << name;
-        this->profiler = 0;
         func = 0;
     } else {
-        this->profiler = new Profiler("Filter_" + name);       
         func = (*filterMap)[name];
     }
 }
 
 Filter::~Filter() {
-    if(profiler)
-        delete profiler;
 }
 
 GPUFrame Filter::apply(GPUFrame frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
-        profileBegin(Filters);
         frame = func(frame, parameters, width, height);
-        profileEnd(Filters);
     }
     return frame;
 }
