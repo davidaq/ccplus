@@ -5,11 +5,6 @@
 namespace CCPlus {
     class VideoRenderable;
     class VideoDecoder;
-    struct FrameCache {
-        cv::Mat compressed;
-        CCPlus::Frame normal;
-        int refer = -1;
-    };
 }
 
 // @ handle videos, make'm to preprocessed image
@@ -31,7 +26,6 @@ private:
 
     std::string uri;
     VideoDecoder *decoder, *alpha_decoder;
-    std::map<int, CCPlus::FrameCache> framesCache;
-    std::map<int, int> framesUsage;
-    int decompressedCache = 0;
+    std::map<int, CCPlus::Frame> framesCache;
+    std::map<int, int> frameRefer;
 };

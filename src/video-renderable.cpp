@@ -34,6 +34,7 @@ VideoRenderable::~VideoRenderable() {
 
 void VideoRenderable::release() {
     framesCache.clear();
+    frameRefer.clear();
     if(decoder) {
         delete decoder;
         decoder = 0;
@@ -55,37 +56,22 @@ void VideoRenderable::prepare() {
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
+    for(;frameRefer.count(frameNum);) {
+        frameNum = frameRefer[frameNum];
+    }
     if(framesCache.count(frameNum)) {
-        for(;;) {
-            const FrameCache& ref = framesCache[frameNum];
-            if(ref.refer > -1) {
-                frameNum = ref.refer;
-            } else {
-                break;
-            }
-        }
-        FrameCache& cache = framesCache[frameNum];
-        Frame frame;
-        if(cache.compressed.empty()) {
-            frame = cache.normal;
+        Frame& cache = framesCache[frameNum];
+        if(cache.isCompressed()) {
+            Frame frame = cache.decompressed();
+            GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
+            ret->load(frame);
+            return ret;
         } else {
-            frame.readZimCompressed(cache.compressed);
-            if(decompressedCache < 15) {
-                if(!framesUsage.count(frameNum)) {
-                    framesUsage[frameNum] = 1;
-                } else {
-                    int count = framesUsage[frameNum]++;
-                    if(count > 3) {
-                        decompressedCache++;
-                        cache.compressed = cv::Mat();
-                        cache.normal = frame;
-                    }
-                }
-            }
+            Frame& frame = cache;
+            GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
+            ret->load(frame);
+            return ret;
         }
-        GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
-        ret->load(frame);
-        return ret;
     } else {
         return GPUFrame();
     }
@@ -111,7 +97,7 @@ void VideoRenderable::preparePart(float start, float duration) {
             for (int j = 1; j + last_f < f; j++) {
                 int insf = j + last_f;
                 if(!framesCache.count(insf)) {
-                    framesCache[insf].refer = last_f;
+                    frameRefer[insf] = last_f;
                 }
             }
         };
@@ -164,11 +150,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                     cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
                 ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
-                if(isPreserved || renderMode == FINAL_MODE) {
-                    framesCache[f].compressed = ret.zimCompressed();
-                } else {
-                    framesCache[f].normal = ret;
-                }
+                framesCache[f] = ret.compressed();
                 lastFrame = f;
             }
 
@@ -190,7 +172,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if (!framesCache.count(f)) {
                     Frame ret;
                     ret.ext.audio = subAudio(audios, f);
-                    framesCache[f].normal = ret;
+                    framesCache[f]= ret;
                     lastFrame = f;
                 }
             }    
