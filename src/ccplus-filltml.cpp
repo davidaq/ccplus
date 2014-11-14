@@ -211,11 +211,13 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
 
     std::string result;
     try {
-        js.execute(script);
-        if(halfSize)
-            result = js.evaluate("JSON.stringify(toHalf(result))");
-        else
-            result = js.evaluate("JSON.stringify(result)");
+        profile (ExecutingJS) {
+            js.execute(script);
+            if(halfSize)
+                result = js.evaluate("JSON.stringify(toHalf(result))");
+            else
+                result = js.evaluate("JSON.stringify(result)");
+        }
     } catch (CScriptException* e) {
         L() << e->toString().c_str();
         log(logFATAL) << "Failed executing script";

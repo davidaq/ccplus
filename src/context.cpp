@@ -25,7 +25,9 @@ void Context::begin(const std::string& tmlPath) {
     this->tmlDir = dirName(tmlPath);
     
     TMLReader reader;
-    mainComposition = reader.read(tmlPath);
+    profile(TMLRead) {
+        mainComposition = reader.read(tmlPath);
+    }
     collector = new FootageCollector(mainComposition);
     flags.clear();
     active = true;

@@ -86,7 +86,9 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
         ctx->collector->prepare();
         float delta = 1.0f / frameRate;
         float duration = ctx->mainComposition->getDuration();
-        initGL();
+        profile(InitOpenGL) {
+            initGL();
+        }
         GPUFrame blackBackground = GPUFrameCache::alloc(
                 nearestPOT(ctx->mainComposition->width),
                 nearestPOT(ctx->mainComposition->height));
