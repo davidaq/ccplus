@@ -17,8 +17,6 @@ public:
     
 private:
     CCPLUS_FILTER_FUNC func;
-
-    CCPlus::Profiler* profiler;
 };
 
 class CCPlus::FilterLoader {
