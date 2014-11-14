@@ -19,14 +19,16 @@ CCPLUS_FILTER(mask) {
     int ksize = (kwidth + kheight) / 2;
     int sz = parameters.size() / 2 - 1;
 
+    int rw = frame->width * frame->ext.scaleAdjustX;
+    int rh = frame->height * frame->ext.scaleAdjustY;
     for (int i = 1; i <= sz; i++) {
         if (i > 1 && 
-            parameters[i * 2] == parameters[i * 2 - 2] && 
+            parameters[i * 2    ] == parameters[i * 2 - 2] && 
             parameters[i * 2 + 1] == parameters[i * 2 - 1])
             continue;
         pnts.push_back({
-                parameters[i * 2 + 1] / frame->ext.scaleAdjustX / width * 2.0 - 1.0, 
-                parameters[i * 2] / frame->ext.scaleAdjustY / height * 2.0 - 1.0});
+                parameters[i * 2 + 1] / rw * 2.0 - 1.0, 
+                parameters[i * 2    ] / rh * 2.0 - 1.0});
     }
     pnts = CCPlus::triangulate(pnts);
 
