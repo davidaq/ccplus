@@ -258,36 +258,90 @@ Frame Frame::compressed() const {
     Frame ret;
     ret.compressedFlag = true;
 
-    //cv::Mat image;
-    //cv::cvtColor(this->image, image, CV_BGR2YCrCb);
-
-    
-
     int srcLen = image.rows * image.cols * 4;
+    uint8_t* srcData = image.data;
+    bool freeSrcData = false;
+    if(false&&image.rows > 20 && image.cols > 20) {
+        // convet to YAUV, keeping full Y and quartered AUV, experimental
+        cv::Mat color(image.rows, image.cols, CV_8UC3);
+        uint8_t* srcPtr = image.data;
+        uint8_t* colPtr = color.data;
+        uint8_t* alpPtr = new uint8_t[image.rows * image.cols];
+        for(int i = 0; i < image.total(); i++) {
+            memcpy(colPtr, srcPtr, 3);
+            srcPtr += 3;
+            colPtr += 3;
+            alpPtr[i] = *(srcPtr++);
+        }
+        cv::cvtColor(color, color, CV_BGR2YCrCb);
+        uint8_t* lumPtr = new uint8_t[image.rows * image.cols];
+        colPtr = color.data;
+        for(int i = 0; i < image.total(); i++) {
+            lumPtr[i] = *colPtr;
+            *colPtr = alpPtr[i];
+            colPtr += 3;
+        }
+        delete[] alpPtr;
+        cv::resize(color, color, cv::Size(image.cols / 2, image.rows / 2));
+        int nsz = image.total() + color.total() * 3;
+        srcData = new uint8_t[nsz];
+        freeSrcData = true;
+        memcpy(srcData, lumPtr, image.total());
+        delete[] lumPtr;
+        memcpy(srcData + image.total(), color.data, color.total() * 3);
+        srcLen = nsz;
+    }
     int sz = LZ4_compressBound(srcLen + 10);
     char* dest = new char[sz];
-    sz = LZ4_compress((const char*)image.data, dest, srcLen);
+    sz = LZ4_compress((char*)srcData, dest, srcLen);
+    if(freeSrcData)
+        delete[] srcData;
     ret.image = cv::Mat(1, sz, CV_8U);
     memcpy(ret.image.data, dest, sz);
-
-    L() << srcLen << "->" << sz;
 
     ret.expectedWidth = image.cols;
     ret.expectedHeight = image.rows;
     ret.ext = ext;
     return ret;
-
-    
 }
 
 Frame Frame::decompressed() const {
     Frame ret;
     ret.compressedFlag = false;
 
-    int srcLen = image.total();
-    int sz = expectedWidth * expectedHeight * 4;
-    ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
-    LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+    if(false&&expectedWidth > 20 && expectedHeight > 20) {
+        // Convert YAUV to BGRA, experimental
+        int sz = expectedWidth * expectedHeight + 3 * (expectedWidth / 2) * (expectedHeight / 2);
+        char* decompressedData = new char[sz];
+        LZ4_decompress_fast((const char*)image.data, decompressedData, sz);
+        cv::Mat color(expectedHeight / 2, expectedWidth / 2, CV_8UC3);
+        memcpy(color.data, decompressedData + expectedWidth * expectedHeight, (expectedWidth / 2) * (expectedHeight / 2));
+        cv::resize(color, color, cv::Size(expectedWidth, expectedHeight));
+        uint8_t* alpPtr = new uint8_t[expectedWidth * expectedHeight];
+        uint8_t* lumPtr = (uint8_t*)decompressedData;
+        uint8_t* colPtr = color.data;
+        for(int i = 0; i < color.total(); i++) {
+            alpPtr[i] = *colPtr;
+            *colPtr = lumPtr[i];
+            colPtr += 3;
+        }
+        cv::cvtColor(color, color, CV_YCrCb2BGR);
+        delete[] decompressedData;
+        ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
+        colPtr = color.data;
+        uint8_t* dstPtr = ret.image.data;
+        for(int i = 0; i < ret.image.total(); i++) {
+            memcpy(dstPtr, colPtr, 3);
+            dstPtr += 3;
+            colPtr += 3;
+            *(dstPtr++) = alpPtr[i];
+        }
+        delete[] alpPtr;
+    } else {
+        int sz = expectedWidth * expectedHeight * 4;
+        ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
+        LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+    }
 
     ret.ext = ext;
     return ret;

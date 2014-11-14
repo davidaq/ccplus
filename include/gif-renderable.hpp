@@ -19,6 +19,6 @@ public:
 
 private:
     std::string path;
-    std::vector<std::pair<float, cv::Mat> > framesCache;
+    std::vector<std::pair<float, Frame> > framesCache;
     float duration = 0xffffff;
 };

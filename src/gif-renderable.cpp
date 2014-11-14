@@ -25,8 +25,7 @@ GPUFrame GifRenderable::getGPUFrame(float time) {
         else
             break;
     }
-    Frame f;
-    f.readZimCompressed(framesCache[index].second);
+    Frame f = framesCache[index].second.decompressed();
     GPUFrame ret = GPUFrameCache::alloc(f.image.cols, f.image.rows);
     ret->load(f);
     return ret;
@@ -143,7 +142,7 @@ void GifRenderable::prepareGif() {
         if(!ret.image.empty())
             cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-        framesCache.push_back(std::pair<float, cv::Mat>(currentTime, ret.zimCompressed()));
+        framesCache.push_back(std::pair<float, Frame>(currentTime, ret.compressed()));
 
         currentTime += pallete.delay;
         // only allow gif less than 10 sec
