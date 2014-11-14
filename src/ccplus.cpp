@@ -23,7 +23,6 @@ void CCPlus::go(const std::string& tmlPath) {
     render();
     waitRender();
     releaseContext();
-    profileFlush;
 }
 
 void CCPlus::initContext(const std::string& tmlPath) {
@@ -67,6 +66,7 @@ void CCPlus::releaseContext(bool forceClearCache) {
             releasingContext = false;
         }
     }
+    profileFlush;
 }
 
 void renderAs(std::function<void(const Frame&)> writeFuc) {
