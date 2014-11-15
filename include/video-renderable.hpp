@@ -21,6 +21,7 @@ public:
 
 private:
     float duration = -1;
+    bool audioOnly;
     void preparePart(float start, float duration);
     int time2frame(float time);
 

@@ -26,4 +26,5 @@ public:
     bool stillCached = false;
     bool still = false;
     bool isStill();
+    bool transparent = true;
 };

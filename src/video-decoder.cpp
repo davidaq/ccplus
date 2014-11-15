@@ -163,14 +163,6 @@ Frame VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        uint8_t* ptr = data.data;
-        for(int i = 0; i < data.total() * 4; i += 4) {
-            if(ptr[i + 3] == 0)
-                continue;
-            ptr[i] = ptr[i] * 255 / ptr[i + 3];
-            ptr[i+1] = ptr[i+1] * 255 / ptr[i + 3];
-            ptr[i+2] = ptr[i+2] * 255 / ptr[i + 3];
-        }
         decodedImage = new Frame();
         decodedImage->image = data;
     }

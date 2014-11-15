@@ -3,12 +3,14 @@
 
 using namespace CCPlus;
 
-std::string CCPlus::assetsPath = "";
-std::string CCPlus::outputPath = "tmp";
-int CCPlus::audioSampleRate = 32000;
-int CCPlus::collectorThreadsNumber = 2;
-int CCPlus::frameRate = 18;
-int CCPlus::renderMode = FINAL_MODE;
+
+std::string CCPlus::assetsPath          = "";
+std::string CCPlus::outputPath          = "tmp";
+int CCPlus::audioSampleRate             = 32000;
+int CCPlus::collectorThreadsNumber      = 3;
+int CCPlus::frameRate                   = 18;
+int CCPlus::renderMode                  = FINAL_MODE;
+
 
 void CCPlus::setAudioSampleRate(int val) {
     audioSampleRate = val;

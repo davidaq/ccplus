@@ -16,7 +16,7 @@ public:
     }
     void start() {
         thread = ParallelExecutor::runInNewThread([&]() {
-            float fStep = frameRate;
+            float fStep =  1.0 / frameRate;
             while(goon) {
                 c.sync.lock();
                 if(c.sortedListPtr > 0) {

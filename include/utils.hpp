@@ -229,6 +229,8 @@ static inline std::string readTextAsset(const std::string& path) {
 
 // get nearest power of two
 static inline int nearestPOT(int n) {
+    if(!USE_POT_TEXTURE)
+        return n;
     const static int pots[] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
     const static int potsN = 11;
     int pd = 0xffff;
@@ -242,8 +244,4 @@ static inline int nearestPOT(int n) {
         }
     }
     return ret;
-}
-
-static inline bool isPOT(int x) {
-    return ((x != 0) && ((x & (~x + 1)) == x));
 }

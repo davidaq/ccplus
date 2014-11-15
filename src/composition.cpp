@@ -67,7 +67,11 @@ GPUFrame Composition::getGPUFrame(float time) {
     // Merge & track matte 
     GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
     // make sure clean
+    if(!transparent)
+        glClearColor(0, 0, 0, 1.0f);
     ret->bindFBO();
+    if(!transparent)
+        glClearColor(0, 0, 0, 0);
     for (int i = layers.size() - 1; i >= 0; i--) {
         Layer& l = layers[i];
         if(!l.show || !l.visible(time))

@@ -213,10 +213,17 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     try {
         profile (ExecutingJS) {
             js.execute(script);
-            if(halfSize)
-                result = js.evaluate("JSON.stringify(toHalf(result))");
-            else
-                result = js.evaluate("JSON.stringify(result)");
+            if(JSON_BEUTIFY) {
+                if(halfSize)
+                    result = js.evaluate("JSON.stringify(toHalf(result))");
+                else
+                    result = js.evaluate("JSON.stringify(result)");
+            } else {
+                if(halfSize)
+                    result = js.evaluate("JSON.stringifyCompact(toHalf(result))");
+                else
+                    result = js.evaluate("JSON.stringifyCompact(result)");
+            }
         }
     } catch (CScriptException* e) {
         L() << e->toString().c_str();

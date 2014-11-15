@@ -8,8 +8,9 @@
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(const std::string& _uri, bool audioOnly) :
-    uri(_uri)
+VideoRenderable::VideoRenderable(const std::string& _uri, bool _audioOnly) :
+    uri(_uri),
+    audioOnly(_audioOnly)
 {
     std::string path = parseUri2File(uri);
     alpha_decoder = 0;
@@ -83,10 +84,6 @@ void VideoRenderable::preparePart(float start, float duration) {
         decoder->seekTo(start);
         std::vector<int16_t> audios = decoder->decodeAudio(duration);
 
-        // Video
-        decoder->seekTo(start);
-        if(alpha_decoder)
-            alpha_decoder->seekTo(start);
         float gap = -1;
         float pos = -1;
         int lastFrame = -1;
@@ -119,50 +116,65 @@ void VideoRenderable::preparePart(float start, float duration) {
             }
         };
 
-        cv::Mat alpha;
-        while((pos = decoder->decodeImage()) + 0.001 > 0) {
-            if(gap < 0.001)
-                gap = (pos - start) / 3;
-            int f = time2frame(pos);
-
-            // Make up lost frames
-            makeup_frames(f, lastFrame);
-            
-            // Assume alpha channel video is synchronized with color channel video
+        // Video
+        if(!audioOnly) {
+            decoder->seekTo(start);
             if(alpha_decoder)
-                alpha_decoder->decodeImage();
-            if (!framesCache.count(f)) {
-                Frame ret = decoder->getDecodedImage();
-                if(alpha_decoder) {
-                    Frame opac = alpha_decoder->getDecodedImage();
-                    unsigned char* opacData = opac.image.data;
-                    unsigned char* frameData = ret.image.data;
-                    if(opac.image.cols == ret.image.cols &&
-                            opac.image.rows == ret.image.rows) {
-                        for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
-                            frameData[i] = opacData[i - 1];
+                alpha_decoder->seekTo(start);
+            cv::Mat alpha;
+            while((pos = decoder->decodeImage()) + 0.001 > 0) {
+                if(gap < 0.001)
+                    gap = (pos - start) / 3;
+                int f = time2frame(pos);
+
+                // Make up lost frames
+                makeup_frames(f, lastFrame);
+                
+                // Assume alpha channel video is synchronized with color channel video
+                if(alpha_decoder)
+                    alpha_decoder->decodeImage();
+                if (!framesCache.count(f)) {
+                    Frame ret = decoder->getDecodedImage();
+                    if(alpha_decoder) {
+                        Frame opac = alpha_decoder->getDecodedImage();
+                        unsigned char* opacData = opac.image.data;
+                        unsigned char* frameData = ret.image.data;
+                        if(opac.image.cols == ret.image.cols &&
+                                opac.image.rows == ret.image.rows) {
+                            for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
+                                frameData[i] = opacData[i - 1];
+                            }
                         }
                     }
-                }
-                ret.ext.audio = subAudio(audios, f);
+                    ret.ext.audio = subAudio(audios, f);
 #ifdef __ANDROID__
-                if(!ret.image.empty())
-                    cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
+                    if(!ret.image.empty())
+                        cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-                ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
-                framesCache[f] = ret.compressed();
-                lastFrame = f;
-            }
+                    ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
+                    if(!alpha_decoder) {
+                        uint8_t* ptr = ret.image.data;
+                        for(int i = 0; i < ret.image.total(); i++) {
+                            const uint8_t &a = ptr[3];
+                            if(a == 0 || a == 255) {
+                                ptr += 4;
+                                continue;
+                            }
+                            *ptr *= *(ptr++) * 255 / a;
+                            *ptr *= *(ptr++) * 255 / a;
+                            *ptr *= *(ptr++) * 255 / a;
+                            ptr++;
+                        }
+                    }
+                    framesCache[f] = ret.compressed();
+                    lastFrame = f;
+                }
 
-            if(pos - start + gap > duration) {
-                break;
+                if(pos - start + gap > duration) {
+                    break;
+                }
             }
         }
-
-        // Make up some missed frame :
-        // Used while decoding low fps video
-        makeup_frames(time2frame(start + duration), lastFrame);
-
         if (lastFrame == -1) {
             // Audio only
             float inter = 1.0 / frameRate;
@@ -177,6 +189,10 @@ void VideoRenderable::preparePart(float start, float duration) {
                 }
             }    
         }
+
+        // Make up some missed frame :
+        // Used while decoding low fps video
+        makeup_frames(time2frame(start + duration), lastFrame);
     }
 }
 

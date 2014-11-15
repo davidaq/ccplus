@@ -81,21 +81,14 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
     continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([&writeFuc] () {
         Context* ctx = Context::getContext();
-        void* glCtx = createGLContext();
         ctx->collector->limit = 10;
         ctx->collector->prepare();
+        void* glCtx = createGLContext();
+        initGL();
         float delta = 1.0f / frameRate;
         float duration = ctx->mainComposition->getDuration();
-        profile(InitOpenGL) {
-            initGL();
-        }
-        GPUFrame blackBackground = GPUFrameCache::alloc(
-                nearestPOT(ctx->mainComposition->width),
-                nearestPOT(ctx->mainComposition->height));
-        blackBackground->bindFBO();
-        glClearColor(0, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0, 0, 0, 0);
+
+        ctx->mainComposition->transparent = false;
 
         for (float i = 0; i <= duration; i += delta) {
             renderProgress = (i * 98 / duration) + 1;
@@ -108,10 +101,9 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
                 log(logINFO) << "wait --" << ctx->collector->finished();
                 ctx->collector->signal.wait();
             }
-            ctx->collector->limit = i + 10;
+            ctx->collector->limit = i + 5;
             log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-            frame = mergeFrame(blackBackground, frame, DEFAULT);
             writeFuc(frame->toCPU());
             for(auto item = ctx->renderables.begin();
                     item != ctx->renderables.end(); ) {
