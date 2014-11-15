@@ -27,6 +27,7 @@ public:
     bool isActive() {
         return active;
     }
+
 private:
     bool active = false;
     FT_Library ft;

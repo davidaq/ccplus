@@ -89,6 +89,8 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
         float duration = ctx->mainComposition->getDuration();
 
         ctx->mainComposition->transparent = false;
+        
+        bool extFlag;
 
         for (float i = 0; i <= duration; i += delta) {
             renderProgress = (i * 98 / duration) + 1;
@@ -102,18 +104,20 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
                 ctx->collector->signal.wait();
             }
             ctx->collector->limit = i + 5;
-            log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             writeFuc(frame->toCPU());
-            for(auto item = ctx->renderables.begin();
-                    item != ctx->renderables.end(); ) {
-                Renderable* r = item->second;
-                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                    log(logINFO) << "release" << item->first;
-                    r->release();
-                    ctx->renderables.erase(item++);
-                } else {
-                    item++;
+            if(extFlag = !extFlag) {
+                log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
+                for(auto item = ctx->renderables.begin();
+                        item != ctx->renderables.end(); ) {
+                    Renderable* r = item->second;
+                    if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                        log(logINFO) << "release" << item->first;
+                        r->release();
+                        ctx->renderables.erase(item++);
+                    } else {
+                        item++;
+                    }
                 }
             }
         }
