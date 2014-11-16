@@ -2,6 +2,7 @@
 #include "profile.hpp"
 #include "zip.hpp"
 #include "externals/lz4.h"
+#include "ccplus.hpp"
 
 using namespace CCPlus;
 using namespace std;
@@ -249,7 +250,10 @@ void Frame::toNearestPOT(int max_size) {
     if(w != image.cols || h != image.rows) {
         ext.scaleAdjustX *= image.cols * 1.0f / w;
         ext.scaleAdjustY *= image.rows * 1.0f / h;
-        cv::resize(image, image, {w, h});
+        if(renderMode == PREVIEW_MODE)
+            cv::resize(image, image, {w, h}, 0, 0, cv::INTER_NEAREST);
+        else
+            cv::resize(image, image, {w, h});
     }
 }
 

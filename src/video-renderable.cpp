@@ -151,6 +151,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                     if(!ret.image.empty())
                         cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
+
                     ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
                     if(!alpha_decoder) {
                         uint8_t* ptr = ret.image.data;
