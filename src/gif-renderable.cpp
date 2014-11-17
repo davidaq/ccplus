@@ -25,10 +25,7 @@ GPUFrame GifRenderable::getGPUFrame(float time) {
         else
             break;
     }
-    Frame f = framesCache[index].second.decompressed();
-    GPUFrame ret = GPUFrameCache::alloc(f.image.cols, f.image.rows);
-    ret->load(f);
-    return ret;
+    return framesCache[index].second.toGPU();
 }
 
 float GifRenderable::getDuration() {

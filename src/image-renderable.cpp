@@ -12,9 +12,7 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
     if(!gpuCache) {
-        Frame im = image.decompressed();
-        gpuCache = GPUFrameCache::alloc(im.image.cols, im.image.rows);
-        gpuCache->load(im);
+        gpuCache = image.toGPU();
     }
     return gpuCache;
 }

@@ -184,8 +184,15 @@ static void jsB_encodeURIComponent(js_State *J)
 	Encode(J, js_tostring(J, 1), URIUNESCAPED);
 }
 
+static void js_consoleLog(js_State *J) {
+    const char *str = js_tostring(J, 1);
+    printf("%s\n", str);
+    js_pushundefined(J);
+}
+
 void jsB_init(js_State *J)
 {
+
 	/* Create the prototype objects here, before the constructors */
 	J->Object_prototype = jsV_newobject(J, JS_COBJECT, NULL);
 	J->Array_prototype = jsV_newobject(J, JS_CARRAY, J->Object_prototype);
@@ -238,4 +245,6 @@ void jsB_init(js_State *J)
 	jsB_globalf(J, "decodeURIComponent", jsB_decodeURIComponent, 1);
 	jsB_globalf(J, "encodeURI", jsB_encodeURI, 1);
 	jsB_globalf(J, "encodeURIComponent", jsB_encodeURIComponent, 1);
+
+	jsB_globalf(J, "consolelog", js_consoleLog, 1);
 }

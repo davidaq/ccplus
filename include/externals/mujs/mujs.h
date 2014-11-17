@@ -1,6 +1,14 @@
 #ifndef mujs_h
 #define mujs_h
 
+#ifndef NULL
+#define NULL 0
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* noreturn is a GCC extension */
 #ifdef __GNUC__
 #define JS_NORETURN __attribute__((noreturn))
@@ -22,10 +30,6 @@
 #else
 #define JS_PRINTFLIKE(fmtarg, firstvararg)
 #endif
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 typedef struct js_State js_State;
@@ -171,9 +175,6 @@ int js_compare(js_State *J, int *okay);
 int js_equal(js_State *J);
 int js_strictequal(js_State *J);
 int js_instanceof(js_State *J);
-
-js_State *J = js_newstate(NULL, NULL);
-
 
 #ifdef __cplusplus
 }

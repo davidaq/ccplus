@@ -61,18 +61,7 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
         frameNum = frameRefer[frameNum];
     }
     if(framesCache.count(frameNum)) {
-        Frame& cache = framesCache[frameNum];
-        if(cache.isCompressed()) {
-            Frame frame = cache.decompressed();
-            GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
-            ret->load(frame);
-            return ret;
-        } else {
-            Frame& frame = cache;
-            GPUFrame ret = GPUFrameCache::alloc(frame.image.cols, frame.image.rows);
-            ret->load(frame);
-            return ret;
-        }
+        return framesCache[frameNum].toGPU();
     } else {
         return GPUFrame();
     }
@@ -153,21 +142,24 @@ void VideoRenderable::preparePart(float start, float duration) {
 #endif
 
                     ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
-                    if(!alpha_decoder) {
-                        uint8_t* ptr = ret.image.data;
-                        for(int i = 0; i < ret.image.total(); i++) {
-                            const uint8_t &a = ptr[3];
-                            if(a == 0 || a == 255) {
-                                ptr += 4;
-                                continue;
-                            }
-                            *ptr *= *(ptr++) * 255 / a;
-                            *ptr *= *(ptr++) * 255 / a;
-                            *ptr *= *(ptr++) * 255 / a;
-                            ptr++;
-                        }
-                    }
-                    framesCache[f] = ret.compressed();
+                    //if(!alpha_decoder) {
+                    //    uint8_t* ptr = ret.image.data;
+                    //    for(int i = 0; i < ret.image.total(); i++) {
+                    //        const uint8_t &a = ptr[3];
+                    //        if(a == 0 || a == 255) {
+                    //            ptr += 4;
+                    //            continue;
+                    //        }
+                    //        *ptr *= *(ptr++) * 255 / a;
+                    //        *ptr *= *(ptr++) * 255 / a;
+                    //        *ptr *= *(ptr++) * 255 / a;
+                    //        ptr++;
+                    //    }
+                    //}
+                    if(ret.image.cols * ret.image.rows > 100000)
+                        framesCache[f] = ret.compressed();
+                    else
+                        framesCache[f] = ret;
                     lastFrame = f;
                 }
 

@@ -3,7 +3,7 @@
 #include "global.hpp"
 
 #define L() \
-    log(logDEBUG)
+    log(CCPlus::logDEBUG)
 
 #define log(level) if (level > logLevel) ; \
     else CCPlus::Logger(level, __LINE__, __FILE__)

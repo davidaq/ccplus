@@ -1,6 +1,10 @@
 #ifndef jsi_h
 #define jsi_h
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #include "mujs.h"
 
 #include <stdio.h>
@@ -190,5 +194,9 @@ struct js_State
 	int trylen;
 	js_Jumpbuf trybuf[JS_TRYLIMIT];
 };
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

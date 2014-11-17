@@ -16,6 +16,7 @@ using namespace CCPlus;
 pthread_t render_thread = 0;
 bool continueRunning = false;
 int renderProgress = 0;
+int fakeProgress = 0;
 bool initing = false;
 
 void CCPlus::go(const std::string& tmlPath) {
@@ -30,6 +31,7 @@ void CCPlus::initContext(const std::string& tmlPath) {
     initing = true;
     Context::getContext()->begin(tmlPath);
     renderProgress = 0;
+    fakeProgress = 0;
     initing = false;
 }
 
@@ -51,6 +53,7 @@ void CCPlus::releaseContext(bool forceClearCache) {
         ctx->end();
         render_thread = 0;
         renderProgress = 0;
+        fakeProgress = 0;
         releasingContext = false;
     }
     if(forceClearCache || renderMode != PREVIEW_MODE) {
@@ -90,7 +93,7 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
 
         ctx->mainComposition->transparent = false;
         
-        bool extFlag;
+        bool extFlag = true;
 
         for (float i = 0; i <= duration; i += delta) {
             renderProgress = (i * 98 / duration) + 1;
@@ -106,7 +109,8 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
             ctx->collector->limit = i + 5;
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             writeFuc(frame->toCPU());
-            if(extFlag = !extFlag) {
+            extFlag = !extFlag;
+            if(extFlag) {
                 log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
                 for(auto item = ctx->renderables.begin();
                         item != ctx->renderables.end(); ) {
@@ -151,7 +155,9 @@ void CCPlus::render() {
 }
 
 int CCPlus::getRenderProgress() {
-    return renderProgress;
+    if(fakeProgress < 5)
+        fakeProgress++;
+    return renderProgress * 0.95 + fakeProgress;
 }
 
 void CCPlus::waitRender() {
