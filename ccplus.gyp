@@ -19,6 +19,7 @@
                 'build',
                 'dependency',
                 '.', 
+                'include/externals/mujs',
             ],
             'all_dependent_settings': {
                 'include_dirs': [
