@@ -23,26 +23,52 @@ function getScenes(tpl) {
     var ret = [];
     var comps = tpl["compositions"];
     var cnt = 0;
+    function countElements(layers, pname, paths) {
+        var cnt = 0;
+        for (var ln in layers) {
+            var uri = layers[ln].uri;
+            if (uri.substr(0, 14) == "composition://") {
+                if (uri[14] == '@') {
+                    cnt++;
+                } else {
+                    var name = uri.substr(14);
+                    var tmp = countElements(comps[name].layers, name, paths);
+                    cnt += tmp;
+                    if (tmp > 0) {
+                        if (!paths[pname]) {
+                            paths[pname] = [];
+                        }
+                        paths[pname].push(name);
+                    }
+                }
+            } 
+        }
+        return cnt;
+    }
     for (var name in comps) {
-        if (name[0] == '#' && name != "#+1" && name != "#COVER") {
+        if (name[0] == '#' && name != "#+1" && name.toUpperCase() != "#COVER") {
             var cmp = comps[name];
             var layers = cmp.layers;
             var num_ele = 0;
-            for (var ln in layers) {
-                if (layers[ln].uri[14] == '@') {
-                    num_ele++;
-                }
-            }
+            //for (var ln in layers) {
+            //    if (layers[ln].uri[14] == '@') {
+            //        num_ele++;
+            //    }
+            //}
+            paths = {};
+            num_ele = countElements(layers, name, paths);
             if (num_ele == 0) continue;
             ret.push({
                 name: name,
                 duration: cmp.duration,
                 num_ele: num_ele,
-                used: 0
+                used: 0,
+                paths: paths
             });
             cnt++;
         }
     }
+    //console.log(ret);
     return ret;
 }
 
@@ -109,7 +135,7 @@ function genResourcesComp(js, width, height) {
 }
 
 /*
- * return [scene_name, [comp_name1, comp_name2, ...]] in order
+ * return [scene_name, [comp_name1, comp_name2, ...], paths] in order
  * NOTE: scene_name can be duplicated
  */
 function fit(comps, scenes) {
@@ -145,7 +171,7 @@ function fit(comps, scenes) {
         if (num_ele > cnt) {
             continue;
         }
-        var tmp_ret = [scene.name, []];
+        var tmp_ret = [scene.name, [], scene.paths];
         for (var y = 0; y < comps.length; y++) {
             var comp = comps[y];
             if (used[comp.name]) continue;
@@ -189,31 +215,54 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     var len = fitted.length;
     for (var i = 0; i < len; i++) {
         var fit = fitted[i];
-        // Ugly clone!
-        var cname = fit[0];
-        var comp = JSON.parse(JSON.stringify(tplJS.compositions[cname]));
-        var layers = comp.layers;
-        var idx = 0;
+        var cname = fit[0]; // Scene name
+        var paths = fit[2];
         var overlap = 0;
-        var cnt_layers = layers.length;
-        for (var l = 0; l < cnt_layers; l++) {
-            var layer = layers[l];
-            if (layer.uri[14] == '@') {
-                layer.uri = "composition://" + fit[1][idx];
-                idx++;
-            }
-            if (layer.uri == 'composition://#+1') {
-                if (i < len - 1) {
-                    layer.uri = 'composition://$' + (i + 1);
-                } else {
-                    layer.uri = "composition://End";
+        var idx = 0; // Index of matched resources
+        var all_comps = tplJS.compositions;
+        function cloneScene(name) {
+            var comp = JSON.parse(JSON.stringify(all_comps[name])); // Clone scene
+            var layers = comp.layers;
+            var cnt_layers = layers.length;
+            for (var l = 0; l < cnt_layers; l++) {
+                var layer = layers[l];
+                if (layer.uri[14] == '@') {
+                    layer.uri = "composition://" + fit[1][idx];
+                    idx++;
+                } else if (layer.uri == 'composition://#+1') {
+                    if (i < len - 1) {
+                        layer.uri = 'composition://$' + (i + 1);
+                    } else {
+                        layer.uri = "composition://End";
+                    }
+                    // FIXME: should calculate relative time
+                    // Currently, generally #+1 will be on the top-most comp
+                    overlap = comp.duration - layer.time;
                 }
-                overlap = comp.duration - layer.time;
             }
+            var children = paths[name];
+            if (children && children.length > 0) {
+                for (var ch = 0; ch < children.length; ch++) {
+                    var child_name = children[ch];
+                    cloneScene(child_name);
+                    for (var l = 0; l < cnt_layers; l++) {
+                        var layer = layers[l];
+                        if (layers[l].uri.substr(14) == child_name) {
+                            layers[l].uri = "composition://" + child_name + "$" + i;
+                        }
+                    }
+                }
+            }
+            if (name[0] == "#") {
+                all_comps["$" + i] = comp;
+            } else {
+                all_comps[name + "$" + i] = comp;
+            }
+            // Return main scene comp
+            return comp;
         }
-        var tmp = ["$"+i, comp, overlap];
-        candidates.push(tmp);
-        tplJS.compositions[tmp[0]] = comp;
+        var comp = cloneScene(cname);
+        candidates.push(["$" + i, comp.duration, overlap]);
     }
 
     var comps_in_wrap = wrapJS.compositions;
@@ -234,13 +283,13 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     tplJS.compositions[main_name] = ret;
     var currentTime = 0;
     var overlap = 0;
-    function appendScene(name, comp) {
+    function appendScene(name, duration) {
         var layer = {
             uri: "composition://" + name,
             time: currentTime,
-            duration: comp.duration - overlap,
+            duration: duration - overlap,
             start: overlap,
-            last: comp.duration - overlap,
+            last: duration - overlap,
             properties: {
                 transform: {
                     0 : [
@@ -288,7 +337,7 @@ function fillTML(tplJS, fitted, userJS, wrapJS) {
     }
 
     // Append end scenes
-    appendScene("End", tplJS.compositions["End"]);
+    appendScene("End", tplJS.compositions["End"].duration);
 
     // Append background music
     ret.duration = currentTime;
