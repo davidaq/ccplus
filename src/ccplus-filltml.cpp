@@ -9,7 +9,7 @@
 #include "utils.hpp"
 #include "ccplus.hpp"
 
-#include "mujs.h"
+#include "externals/TinyJS.h"
 
 namespace boost { namespace property_tree { namespace json_parser
 {
@@ -201,32 +201,35 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         script = readTextAsset("gen_tml.js");
     }
 
-    js_State* J = js_newstate(NULL, NULL);
+    CTinyJS js;
+    const auto& root = js.getRoot();
 
-    js_newstring(J, slurp(tmlPath).c_str());
-    js_setglobal(J, "tpljs");
+    root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
+    root->addChild("userjs", js.newScriptVar(slurp(configFile)));
+    root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
+    root->addChild("assetPath", js.newScriptVar(assetsPath));
 
-    js_newstring(J, slurp(configFile).c_str());
-    js_setglobal(J, "userjs");
-
-    js_newstring(J, readTextAsset("wrap/wrap.tml").c_str());
-    js_setglobal(J, "wrapjs");
-
-    js_newstring(J, assetsPath.c_str());
-    js_setglobal(J, "assetPath");
-
-    js_dostring(J, "console={log:function(v){consolelog(v)}};", 0);
-    js_dostring(J, script.c_str(), 0);
-    if(halfSize)
-        js_dostring(J, "returnResult = JSON.stringify(toHalf(result));", 0);
-    else
-        js_dostring(J, "returnResult = JSON.stringify(result);", 0);
-
-    js_getglobal(J, "returnResult");
-    std::string result = js_tostring(J, 0);
-    
-    js_freestate(J);
-
+    std::string result;
+    try {
+        profile (ExecutingJS) {
+            js.execute(script);
+            if(JSON_BEUTIFY) {
+                if(halfSize)
+                    result = js.evaluate("JSON.stringify(toHalf(result))");
+                else
+                    result = js.evaluate("JSON.stringify(result)");
+            } else {
+                if(halfSize)
+                    result = js.evaluate("JSON.stringifyCompact(toHalf(result))");
+                else
+                    result = js.evaluate("JSON.stringifyCompact(result)");
+            }
+        }
+    } catch (CScriptException* e) {
+        L() << e->toString().c_str();
+        log(logFATAL) << "Failed executing script";
+        return "";
+    }
     std::string outputPath = generatePath(dirName(configFile), "render.tml");
     spit(outputPath, result);
     return outputPath;
