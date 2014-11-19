@@ -19,7 +19,7 @@
                 'build',
                 'dependency',
                 '.', 
-                'include/externals/mujs',
+                'include/externals/lua',
             ],
             'all_dependent_settings': {
                 'include_dirs': [
