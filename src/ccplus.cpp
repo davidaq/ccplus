@@ -72,7 +72,11 @@ void CCPlus::releaseContext(bool forceClearCache) {
     profileFlush;
 }
 
-void renderAs(std::function<void(const Frame&)> writeFuc) {
+typedef void* (*BeginFunc)(void);
+typedef void (*WriteFunc)(const Frame&, int, void* ctx);
+typedef void (*FinishFunc)(void*);
+
+void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     if (render_thread) {
         log(logERROR) << "Another render context is currently in use! Aborted.";
         return;
@@ -82,7 +86,7 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
         return;
     }
     continueRunning = true;
-    render_thread = ParallelExecutor::runInNewThread([&writeFuc] () {
+    render_thread = ParallelExecutor::runInNewThread([beginFunc, writeFuc, finishFunc] () {
         Context* ctx = Context::getContext();
         ctx->collector->limit = 10;
         ctx->collector->prepare();
@@ -93,8 +97,9 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
 
         ctx->mainComposition->transparent = false;
         
-        bool extFlag = true;
+        int fn = 0;
 
+        void* writeCtx = beginFunc ? beginFunc() : 0;
         for (float i = 0; i <= duration; i += delta) {
             renderProgress = (i * 98 / duration) + 1;
             if (!continueRunning) {
@@ -108,9 +113,9 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
             }
             ctx->collector->limit = i + 5;
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-            writeFuc(frame->toCPU());
-            extFlag = !extFlag;
-            if(extFlag) {
+            if(writeFuc)
+                writeFuc(frame->toCPU(), fn++, ctx);
+            if(fn & 1) {
                 log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
                 for(auto item = ctx->renderables.begin();
                         item != ctx->renderables.end(); ) {
@@ -125,33 +130,44 @@ void renderAs(std::function<void(const Frame&)> writeFuc) {
                 }
             }
         }
+        if(finishFunc)
+            finishFunc(writeCtx);
         destroyGLContext(glCtx);
         renderProgress = 100;
     });
 }
 
+void* beginVideo() {
+    std::string outfile = outputPath;
+    if(!stringEndsWith(outfile, ".mp4")) {
+        outfile = Context::getContext()->getStoragePath("result.mp4");
+    }
+    return new VideoEncoder(outfile, frameRate);
+}
+
+void writeVideo(const Frame& frame, int fn, void* ctx) {
+    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
+    encoder->appendFrame(frame);
+}
+
+void finishVideo(void* ctx) {
+    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
+    encoder->finish();
+    delete encoder;
+}
+
+void writePreview(const Frame& frame, int fn, void* ctx) {
+    char buf[20];
+    sprintf(buf, "%07d.zim", fn);
+    frame.write(Context::getContext()->getStoragePath(buf));
+}
+
 void CCPlus::render() {
     if(renderMode == FINAL_MODE) {
-        std::string outfile = outputPath;
-        if(!stringEndsWith(outfile, ".mp4")) {
-            outfile = Context::getContext()->getStoragePath("result.mp4");
-        }
-        VideoEncoder encoder(outfile, frameRate);
-        renderAs([&encoder](const Frame& frame) {
-            encoder.appendFrame(frame);
-        });
-        waitRender();
-        encoder.finish();
+        renderAs(beginVideo, writeVideo, finishVideo);
     } else {
-        int fn = 0;
-        renderAs([&fn](const Frame& frame) {
-            char buf[20];
-            sprintf(buf, "%07d.zim", fn++);
-            frame.write(Context::getContext()->getStoragePath(buf));
-        });
-        waitRender();
+        renderAs(0, writePreview, 0);
     }
-    renderProgress = 100;
 }
 
 int CCPlus::getRenderProgress() {
