@@ -11,6 +11,12 @@
 
 #include "externals/TinyJS.h"
 
+extern "C" {
+#include "externals/lua/lua.h"
+#include "externals/lua/lualib.h"
+#include "externals/lua/lauxlib.h"
+}
+
 namespace boost { namespace property_tree { namespace json_parser
 {
     // Create necessary escape sequences from illegal characters
@@ -196,6 +202,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     if (tmlPath[0] != '/') { // Relative to templateURL
         tmlPath = generatePath(dirName(configFile), tmlPath);
     }
+    /*
     std::string script = jsont.get<std::string>("script", "");
     if (script == "") {
         script = readTextAsset("gen_tml.js");
@@ -230,6 +237,36 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         log(logFATAL) << "Failed executing script";
         return "";
     }
+    */
+
+    lua_State* L = luaL_newstate();
+    luaL_openlibs(L);
+
+    std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
+    lua_pushstring(L, dkjson_path.c_str());
+    lua_setglobal(L, "DKJSON_PATH");
+
+    lua_pushstring(L, CCPlus::assetsPath.c_str());
+    lua_setglobal(L, "ASSETS_PATH");
+
+    lua_pushstring(L, slurp(tmlPath).c_str());
+    lua_setglobal(L, "TPL_JSON");
+    lua_pushstring(L, slurp(configFile).c_str());
+    lua_setglobal(L, "USER_JSON");
+    lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
+    lua_setglobal(L, "TPL_AUX_JSON");
+
+    std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+    if (luaL_dofile(L, script_path.c_str())) {
+        lua_error(L);
+        //lua_close(L);
+        log(logFATAL) << "Failed executing script";
+        return "";
+    }
+
+    lua_getglobal(L, "RESULT");
+    std::string result = lua_tostring(L, -1);
+    lua_close(L);
     std::string outputPath = generatePath(dirName(configFile), "render.tml");
     spit(outputPath, result);
     return outputPath;

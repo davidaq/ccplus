@@ -380,7 +380,6 @@ function uriToGlobal(js, globalPath) {
     }
 }
 
-console.log(tpljs);
 var tplJS = JSON.parse(tpljs); // Template json
 var userJS = JSON.parse(userjs);
 var templateDir = userJS.templateURL;
