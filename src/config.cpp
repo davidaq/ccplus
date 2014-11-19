@@ -4,7 +4,7 @@
 using namespace CCPlus;
 
 
-std::string CCPlus::assetsPath          = "";
+std::string CCPlus::assetsPath          = "assets";
 std::string CCPlus::outputPath          = "tmp";
 int CCPlus::audioSampleRate             = 32000;
 int CCPlus::collectorThreadsNumber      = 3;
