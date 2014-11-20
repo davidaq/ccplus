@@ -37,6 +37,7 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
     cv::Mat ret = cv::Mat(1, audioSampleRate / frameRate, CV_16S, cv::Scalar(0));
     cv::Mat o;
     if(base.total() != in.total()) {
+        L();
         cv::resize(in, o, base.size(), CV_INTER_LINEAR);
     } else {
         o = in;

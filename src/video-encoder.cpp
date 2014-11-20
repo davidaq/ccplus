@@ -41,9 +41,11 @@ struct CCPlus::EncodeContext {
 
 };
 
-VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int _quality) :
+VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int width, int height, int _quality) :
     outputPath(_outputPath), fps(_fps), quality(_quality)
 {
+    this->width = width;
+    this->height = height;
 }
 
 VideoEncoder::~VideoEncoder() {
@@ -52,8 +54,10 @@ VideoEncoder::~VideoEncoder() {
 
 void VideoEncoder::appendFrame(const Frame& frame) {
     if(!ctx) {
-        width = frame.image.cols;
-        height = frame.image.rows;
+        if(width == 0 && height == 0) {
+            width = frame.image.cols;
+            height = frame.image.rows;
+        }
         if(width == 0 || height == 0)
             return;
         if(width & 1)

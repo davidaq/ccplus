@@ -114,7 +114,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             ctx->collector->limit = i + 5;
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             if(writeFuc)
-                writeFuc(frame->toCPU(), fn++, ctx);
+                writeFuc(frame->toCPU(), fn++, writeCtx);
             if(fn & 1) {
                 log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
                 for(auto item = ctx->renderables.begin();
@@ -138,11 +138,13 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
 }
 
 void* beginVideo() {
+    Context* ctx = Context::getContext();
     std::string outfile = outputPath;
     if(!stringEndsWith(outfile, ".mp4")) {
         outfile = Context::getContext()->getStoragePath("result.mp4");
     }
-    return new VideoEncoder(outfile, frameRate);
+    return new VideoEncoder(outfile, frameRate, 
+            nearestPOT(ctx->mainComposition->width), nearestPOT(ctx->mainComposition->height));
 }
 
 void writeVideo(const Frame& frame, int fn, void* ctx) {
