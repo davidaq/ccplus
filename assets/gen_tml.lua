@@ -168,6 +168,9 @@ function fit(comps, scenes)
         local comp_cnt = #comps - idx + 1
         sortScenes(scenes, function(a) 
             if comp_cnt < a.num_ele then return 0x7fffffff end
+            if a.name == "#LAST" then -- Ignore #last now
+                return 0x7fffffff
+            end
             local diff = 0
             for i = idx, idx + a.num_ele - 1 do 
                 if comps[i]["type"] ~= "image" then
@@ -202,7 +205,20 @@ function fit(comps, scenes)
             preferredDuration = 5.0
         end 
     end
-    -- TODO Try hard scene: num_ele > 1, use random
+    -- Try #LAST scene use random
+    local last_scene
+    for i = 1, #scenes do
+        if scenes[i].name == "#LAST" then
+            last_scene = scenes[i]
+        end
+    end
+    if last_scene and last_scene.num_ele <= #comps then
+        local tmp = {}
+        for i = 1, last_scene.num_ele do
+            table.insert(tmp, comps[i].name)
+        end
+        table.insert(ret, {last_scene.name, tmp, last_scene.paths})
+    end
     log(ret)
     return ret
 end
@@ -242,8 +258,8 @@ function fillTML(fitted, template, userinfo, aux_template)
                     local child = children[ch]
                     cloneScene(child)
                     for l = 1, #layers do
-                        if layers[l].uri.sub(15) == child then
-                            layers[l].uri = "composition://" .. child_name .. "$" .. i
+                        if layers[l].uri:sub(15) == child then
+                            layers[l].uri = "composition://" .. child .. "$" .. i
                         end 
                     end 
                 end 
