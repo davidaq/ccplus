@@ -369,6 +369,64 @@ function urisToGlobal(template, globalPath)
     end
 end
 
+function toHalf(template) 
+    local resizers = {
+        transform= function(len) 
+            local ret = {}
+            for i = 1, len, 12 do 
+                for j = 0, 5 do
+                    table.insert(ret, i + j)
+                end 
+            end
+            return ret
+        end,
+        mask= function(len)
+            local ret = {}
+            for i = 1, len do
+                table.insert(ret, i)
+            end
+            return ret
+        end,
+        ramp= function (len)
+            return {1, 2}
+        end
+    }
+    resizers["4color"] = function() 
+        return {1, 2, 6, 7, 11, 12, 16, 17}
+    end
+
+    function resize(props, resizer)
+        if not props then return end
+        for time, prop in pairs(props) do
+            local keys = resizer(#prop)
+            for i = 1, #keys do 
+                prop[keys[i]] = prop[keys[i]] * 0.5
+            end
+        end
+    end
+
+    for name, comp in pairs(template.compositions) do
+        comp.resolution.width = comp.resolution.width * 0.5
+        comp.resolution.height = comp.resolution.height * 0.5
+        for i = 1, #comp.layers do 
+            local layer = comp.layers[i]
+            for pname, resizer in pairs(resizers) do
+                resize(layer.properties[pname], resizer)
+            end
+            local trans = layer.properties.transform
+            if trans and layer.uri:sub(1, 14) ~= "composition://" then
+                for time, prop in pairs(trans) do
+                    local newprop = {0, 0, 0, 0, 0, 0, 0.5, 0.5, 1, 0, 0, 0}
+                    for i = 1, #prop do
+                        table.insert(newprop, prop[i])
+                    end
+                    layer.properties.transform[time] = newprop
+                end
+            end
+        end
+    end
+end
+
 local template = json.decode(TPL_JSON, 1, nil);
 local userinfo = json.decode(USER_JSON, 1, nil);
 local aux_template = json.decode(TPL_AUX_JSON, 1, nil)
@@ -403,6 +461,12 @@ fillTML(fit(comps, scenes), template, userinfo, aux_template)
 if JSON_BEAUTIFY == nil then
     JSON_BEAUTIFY = true
 end
+if HALF_SIZE then
+    toHalf(template)
+end
 RESULT = json.encode(template, {
     indent= JSON_BEAUTIFY
 })
+
+
+

@@ -256,6 +256,12 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
     lua_setglobal(L, "TPL_AUX_JSON");
 
+    lua_pushboolean(L, JSON_BEUTIFY);
+    lua_setglobal(L, "JSON_BEAUTIFY");
+
+    lua_pushboolean(L, halfSize);
+    lua_setglobal(L, "HALF_SIZE");
+
     std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
     if (luaL_dofile(L, script_path.c_str())) {
         lua_error(L);
