@@ -4,6 +4,9 @@ local json = require("dkjson");
 WIDTH = 640
 HEIGHT = 640
 
+----------------------------------------------
+-- Helpers
+----------------------------------------------
 function log(tb) 
     print(json.encode(tb, {indent= true}));
 end
@@ -26,6 +29,21 @@ function deepcopy(orig)
         copy = orig
     end
     return copy
+end
+
+function spairs(t)
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+    table.sort(keys)
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
 end
 
 --[==[
@@ -58,7 +76,7 @@ function getScenes(template)
         end
         return cnt 
     end
-    for cname, comp in pairs(comps) do 
+    for cname, comp in spairs(comps) do 
         if string.sub(cname, 1, 1) == "#" and cname ~= "#+1" and string.upper(cname) ~= "#COVER" then
             local layers = comp.layers;
             local num_ele 
