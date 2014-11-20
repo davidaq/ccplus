@@ -239,42 +239,44 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     }
     */
 
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
+    profile (ExecutingLua) {
+        lua_State* L = luaL_newstate();
+        luaL_openlibs(L);
 
-    std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
-    lua_pushstring(L, dkjson_path.c_str());
-    lua_setglobal(L, "DKJSON_PATH");
+        std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
+        lua_pushstring(L, dkjson_path.c_str());
+        lua_setglobal(L, "DKJSON_PATH");
 
-    lua_pushstring(L, CCPlus::assetsPath.c_str());
-    lua_setglobal(L, "ASSETS_PATH");
+        lua_pushstring(L, CCPlus::assetsPath.c_str());
+        lua_setglobal(L, "ASSETS_PATH");
 
-    lua_pushstring(L, slurp(tmlPath).c_str());
-    lua_setglobal(L, "TPL_JSON");
-    lua_pushstring(L, slurp(configFile).c_str());
-    lua_setglobal(L, "USER_JSON");
-    lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
-    lua_setglobal(L, "TPL_AUX_JSON");
+        lua_pushstring(L, slurp(tmlPath).c_str());
+        lua_setglobal(L, "TPL_JSON");
+        lua_pushstring(L, slurp(configFile).c_str());
+        lua_setglobal(L, "USER_JSON");
+        lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
+        lua_setglobal(L, "TPL_AUX_JSON");
 
-    lua_pushboolean(L, JSON_BEUTIFY);
-    lua_setglobal(L, "JSON_BEAUTIFY");
+        lua_pushboolean(L, JSON_BEUTIFY);
+        lua_setglobal(L, "JSON_BEAUTIFY");
 
-    lua_pushboolean(L, halfSize);
-    lua_setglobal(L, "HALF_SIZE");
+        lua_pushboolean(L, halfSize);
+        lua_setglobal(L, "HALF_SIZE");
 
-    std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
-    if (luaL_dofile(L, script_path.c_str())) {
-        lua_error(L);
-        //lua_close(L);
-        log(logFATAL) << "Failed executing script";
-        return "";
+        std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+        if (luaL_dofile(L, script_path.c_str())) {
+            lua_error(L);
+            //lua_close(L);
+            log(logFATAL) << "Failed executing script";
+            return "";
+        }
+
+        lua_getglobal(L, "RESULT");
+        std::string result = lua_tostring(L, -1);
+        lua_close(L);
+        std::string outputPath = generatePath(dirName(configFile), "render.tml");
+        spit(outputPath, result);
+        return outputPath;
     }
-
-    lua_getglobal(L, "RESULT");
-    std::string result = lua_tostring(L, -1);
-    lua_close(L);
-    std::string outputPath = generatePath(dirName(configFile), "render.tml");
-    spit(outputPath, result);
-    return outputPath;
 }
 

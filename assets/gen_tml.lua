@@ -43,14 +43,16 @@ function getScenes(template)
                     cnt = cnt + 1
                 else 
                     local cname = string.sub(uri, 15)
-                    local tmp_cnt = countUserElements(comps[cname].layers, cname, paths)
-                    cnt = cnt + tmp_cnt
-                    if tmp_cnt > 0 then 
-                        if (paths[pname] == nil) then
-                            paths[pname] = {}
+                    if comps[cname] then 
+                        local tmp_cnt = countUserElements(comps[cname].layers, cname, paths)
+                        cnt = cnt + tmp_cnt
+                        if tmp_cnt > 0 then 
+                            if (paths[pname] == nil) then
+                                paths[pname] = {}
+                            end 
+                            table.insert(paths[pname], cname)
                         end 
-                        table.insert(paths[pname], cname)
-                    end 
+                    end
                 end 
             end 
         end
@@ -153,7 +155,7 @@ end
 function fit(comps, scenes) 
     local idx = 1
     local ret = {}
-    local preferredDuration = 5.0
+    local preferredDuration = 6.0
     function sortScenes(s, eval)
         for i=1, #s do 
             for j=i+1, #s do
@@ -199,10 +201,10 @@ function fit(comps, scenes)
         scene.used = scene.used + 1
 
         table.insert(ret, tmp)
-        if preferredDuration == 5.0 then
-            preferredDuration = 3.0;
-        elseif preferredDuration == 3.0 then
-            preferredDuration = 5.0
+        if preferredDuration == 6.0 then
+            preferredDuration = 3.6;
+        elseif preferredDuration == 3.6 then
+            preferredDuration = 6.0
         end 
     end
     -- Try #LAST scene use random
