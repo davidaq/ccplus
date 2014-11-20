@@ -73,7 +73,7 @@ Export.prototype.exportTo = function(filePath) {
         for(var k in this.exportList) {
             this.compsCount += this.getCompsCount(this.comp[this.exportList[k]]);
         }
-        this.exported = {};
+        this.exported = {'@':true,'#+1':true};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
         var comma = false;
