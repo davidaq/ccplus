@@ -13,7 +13,7 @@ Composition::Composition(float duration, float width, float height) {
     potWidth = nearestPOT(width);
     potHeight = nearestPOT(height);
     scaleAdjustX = width / potWidth;
-    scaleAdjustY = width / potHeight;
+    scaleAdjustY = height / potHeight;
 }
 
 void Composition::appendLayer(const Layer& layer) {
