@@ -62,8 +62,7 @@ public:
     // return a GPUFrame containing the result passed through filters
     GPUFrame getFilteredFrame(float time);
 
-    void setProperties(const std::map<std::string, Property>&,
-            const std::vector<std::string>& keyOrder);
+    void setProperties(const std::map<std::string, Property>&);
     const std::map<std::string, Property>& getProperties() const;
 
     std::vector<float> interpolate(const std::string&, float) const;
@@ -77,5 +76,4 @@ private:
     int width = 0;
     int height = 0;
     std::map<std::string, Property> properties;
-    std::vector<std::string> orderedKey;
 };

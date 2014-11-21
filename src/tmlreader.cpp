@@ -61,15 +61,6 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
     return ret;
 }
 
-std::vector<std::string> TMLReader::readPropertiesOrder(const boost::property_tree::ptree& pt) const {
-    std::vector<std::string> ret;
-    for (auto& child: pt.get_child("properties")) {
-        auto name = child.first.data();
-        ret.push_back(name);
-    }
-    return ret;
-}
-
 std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height, bool preserved) const {
     std::string uri = pt.get("uri", "");
@@ -160,7 +151,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
             blendMode, trkMat, showup);
-    l.setProperties(readProperties(pt), readPropertiesOrder(pt));
+    l.setProperties(readProperties(pt));
     return l;
 }
 

@@ -51,9 +51,7 @@ bool Layer::visible(float t) const {
     return true;
 }
 
-void Layer::setProperties(const std::map<std::string, Property>& prop, 
-        const std::vector<std::string>& keyOrder) {
-    this->orderedKey = keyOrder;
+void Layer::setProperties(const std::map<std::string, Property>& prop) {
     this->properties = prop;
 }
 
