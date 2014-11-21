@@ -7,8 +7,6 @@ using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(transform) {
-    if (parameters.size() == 0)
-        return frame;
     if (parameters.size() < 12 || parameters.size() % 12 != 0) {
         log(CCPlus::logERROR) << "Not enough parameters for transform";
         return frame;

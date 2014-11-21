@@ -78,6 +78,8 @@ TEST(Filter, RampRadial) {
 TEST(Filter, HSL) {
     imwrite("tmp/hsl.png", testFilter("test/res/test2.jpg", "hsl",
                 {135, 1.1, 1.5}, 640, 852).image);
+    imwrite("tmp/hsl2.png", testFilter("test/res/test2.jpg", "hsl",
+                {0, 0, 1}, 640, 852).image);
 }
 
 TEST(Filter, Fill) {

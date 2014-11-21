@@ -8,6 +8,8 @@ namespace CCPlus {
 
 typedef CCPlus::GPUFrame (*CCPLUS_FILTER_FUNC) (CCPlus::GPUFrame input, const std::vector<float>& parameters, int width, int height);
 
+extern std::vector<std::string>* filterOrder;
+
 class CCPlus::Filter : public CCPlus::Object {
 public:
     Filter(const std::string& name);

@@ -113,7 +113,8 @@ GPUFrame Layer::getFilteredFrame(float t) {
     float local_t = mapInnerTime(t);
     GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
     if(frame) {
-        for (auto& k : orderedKey) {
+        for (auto& k : (*filterOrder)) {
+            if (!properties.count(k)) continue;
             const auto& params = interpolate(k, t);
             frame = Filter(k).apply(frame, params, width, height);
         }
