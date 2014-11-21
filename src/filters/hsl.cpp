@@ -18,7 +18,7 @@ CCPLUS_FILTER(hsl) {
     GLuint program = manager->getProgram(filter_hsl, &hue, &sat, &lit);
     glUseProgram(program);
 
-    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
     ret->bindFBO(false);
 
     glActiveTexture(GL_TEXTURE0);
