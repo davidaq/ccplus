@@ -251,9 +251,6 @@ void Frame::toNearestPOT(int max_size) {
     if(w != image.cols || h != image.rows) {
         ext.scaleAdjustX *= image.cols * 1.0f / w;
         ext.scaleAdjustY *= image.rows * 1.0f / h;
-        //if(renderMode == PREVIEW_MODE)
-        //  cv::resize(image, image, {w, h}, 0, 0, cv::INTER_NEAREST);
-        //else
         cv::resize(image, image, {w, h});
     }
 }

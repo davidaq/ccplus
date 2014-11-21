@@ -25,7 +25,13 @@ public:
                     c.sync.unlock();
                     if(!pitem->usedFragments.empty()) {
                         log(logINFO) << "prepare begin" << pitem->getUri();
-                        pitem->prepare();
+                        for(int i = 0; i < 3; i++) {
+                            try {
+                                pitem->prepare();
+                            } catch(...) {
+                                log(logWARN) << "prepare failed(" << i << "):" << pitem->getUri();
+                            }
+                        }
                         log(logINFO) << "prepare end" << pitem->getUri();
                     }
                     while(t > c.limit && goon)

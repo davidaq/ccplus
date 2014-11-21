@@ -231,8 +231,8 @@ static inline std::string readTextAsset(const std::string& path) {
 static inline int nearestPOT(int n) {
     if(!USE_POT_TEXTURE)
         return n;
-    const static int pots[] = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
-    const static int potsN = 11;
+    const static int pots[] = {16, 32, 64, 128, 256, 512, 1024, 2048};
+    const static int potsN = 8;
     int pd = 0xffff;
     int ret = 512;
     for(int i = 0; i < potsN; i++) {
