@@ -95,7 +95,7 @@ function getScenes(template)
             local num_ele 
             local paths = {}
             num_ele, num_rand_ele = countUserElements(layers, cname, paths)
-            if num_ele > 0 then
+            if num_ele > 0 or num_rand_ele > 0 then
                 table.insert(ret, {
                     name= cname,
                     duration= comp.duration,
@@ -231,7 +231,13 @@ function fit(comps, scenes)
         for i = idx, idx + scene.num_ele - 1 do 
             table.insert(tmp.matched_comps, comps[i].name)
         end 
+        local rand = {}
         for i = 1, scene.num_rand_ele do 
+            --local tmp_i = math.random(#comps)
+            --if not rand[tmp_i] then
+            --    table.insert(tmp.matched_rand_comps, comps[tmp_i].name)
+            --    rand[tmp_i] = true
+            --end
             table.insert(tmp.matched_rand_comps, comps[math.random(#comps)].name)
         end 
         idx = idx + scene.num_ele 
@@ -257,6 +263,7 @@ function fit(comps, scenes)
             table.insert(tmp, comps[i].name)
         end
         local rand_tmp = {}
+        local rand = {}
         for i = 1, last_scene.num_rand_ele do
             table.insert(rand_tmp, comps[i].name)
         end
