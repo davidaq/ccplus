@@ -6,7 +6,7 @@ var Export = function() {
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
+            if(this.comp[item.name] && item.name[0][0] != '@' && item.name != '#+1') {
                 throw "Duplicate composition name: " + item.name;
             }
             this.comp[item.name] = item;
@@ -42,7 +42,7 @@ Export.prototype.exportTo = function(filePath) {
         var comma = false;
         while(this.exportList.length > 0) {
             var compName = this.exportList.pop();
-            if(this.exported[compName])
+            if(this.exported[compName]||compName[0]=='@')
                 continue;
             if(comma)
                 this.tmlFile.write(',');

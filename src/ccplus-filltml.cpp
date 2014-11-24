@@ -202,48 +202,13 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     if (tmlPath[0] != '/') { // Relative to templateURL
         tmlPath = generatePath(dirName(configFile), tmlPath);
     }
-    /*
-    std::string script = jsont.get<std::string>("script", "");
-    if (script == "") {
-        script = readTextAsset("gen_tml.js");
-    }
-
-    CTinyJS js;
-    const auto& root = js.getRoot();
-
-    root->addChild("tpljs", js.newScriptVar(slurp(tmlPath)));
-    root->addChild("userjs", js.newScriptVar(slurp(configFile)));
-    root->addChild("wrapjs", js.newScriptVar(readTextAsset("wrap/wrap.tml")));
-    root->addChild("assetPath", js.newScriptVar(assetsPath));
-
-    std::string result;
-    try {
-        profile (ExecutingJS) {
-            js.execute(script);
-            if(JSON_BEUTIFY) {
-                if(halfSize)
-                    result = js.evaluate("JSON.stringify(toHalf(result))");
-                else
-                    result = js.evaluate("JSON.stringify(result)");
-            } else {
-                if(halfSize)
-                    result = js.evaluate("JSON.stringifyCompact(toHalf(result))");
-                else
-                    result = js.evaluate("JSON.stringifyCompact(result)");
-            }
-        }
-    } catch (CScriptException* e) {
-        L() << e->toString().c_str();
-        log(logFATAL) << "Failed executing script";
-        return "";
-    }
-    */
 
     profile (ExecutingLua) {
         lua_State* L = luaL_newstate();
         luaL_openlibs(L);
 
         std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
+        L() << dkjson_path;
         lua_pushstring(L, dkjson_path.c_str());
         lua_setglobal(L, "DKJSON_PATH");
 
@@ -264,6 +229,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_setglobal(L, "HALF_SIZE");
 
         std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+        L() << script_path;
         if (luaL_dofile(L, script_path.c_str())) {
             lua_error(L);
             //lua_close(L);

@@ -37,21 +37,4 @@ void CCPlus::destroyGLContext(void* ctx) {
     CGLDestroyContext(*((CGLContextObj*)ctx));
 }
 
-cv::Mat CCPlus::readAsset(const char* _name) {
-    std::string name = "assets/";
-    name += _name;
-    FILE* fp = fopen(name.c_str(), "rb");
-    if(!fp) {
-        log(logWARN) << "Asset " + name + " not found";
-        return cv::Mat();
-    }
-    fseek(fp, 0, SEEK_END);
-    size_t len = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    cv::Mat ret(1, len, CV_8U);
-    fread(ret.data, 1, len, fp);
-    fclose(fp);
-    return ret;
-}
-
 #endif

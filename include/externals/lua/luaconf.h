@@ -545,7 +545,9 @@
 ** without modifying the main part of the file.
 */
 
-
+#if __ANDROID__
+#define getlocaledecpoint() ('.')
+#endif
 
 #endif
 

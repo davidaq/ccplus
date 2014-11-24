@@ -14,6 +14,11 @@
 #include "logger.hpp"
 #include "platform.hpp"
 
+namespace CCPlus {
+    cv::Mat readAsset(const char* name);
+    int getImageRotation(const std::string& jpgpath); 
+}
+
 static inline double getSystemTime() { 
     // Might not work at multicore situation
     struct timeval now;
@@ -160,8 +165,6 @@ static inline void spit(const std::string& file, const std::string& content) {
 static inline void stringToLower(std::string& str) {
     std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
-
-int getImageRotation(const std::string& jpgpath); 
 
 static inline void utf8toWStr(std::wstring& dest, const std::string& src){
     dest.clear();
