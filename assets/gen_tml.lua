@@ -52,10 +52,9 @@ end
 function getScenes(template) 
     local ret = {};
     local comps = template.compositions;
-    function countUserElements(layers, pname, paths) 
+    function countUserElements(layers, pname, paths, used) 
         local cnt = 0
         local cnt_random = 0
-        local used = {}
         for i = 1, #layers do 
             local uri = layers[i].uri
             if string.sub(uri, 1, 14) == "composition://" then
@@ -74,7 +73,7 @@ function getScenes(template)
                 else 
                     local cname = string.sub(uri, 15)
                     if comps[cname] then 
-                        local tmp_cnt, tmp_rand_cnt = countUserElements(comps[cname].layers, cname, paths)
+                        local tmp_cnt, tmp_rand_cnt = countUserElements(comps[cname].layers, cname, paths, used)
                         cnt = cnt + tmp_cnt
                         cnt_random = cnt_random + tmp_rand_cnt
                         if tmp_cnt > 0 or tmp_rand_cnt > 0 then 
@@ -94,7 +93,7 @@ function getScenes(template)
             local layers = comp.layers;
             local num_ele 
             local paths = {}
-            num_ele, num_rand_ele = countUserElements(layers, cname, paths)
+            num_ele, num_rand_ele = countUserElements(layers, cname, paths, {})
             if num_ele > 0 or num_rand_ele > 0 then
                 table.insert(ret, {
                     name= cname,
