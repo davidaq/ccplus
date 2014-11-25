@@ -68,16 +68,11 @@ void DependencyWalker::scan(Composition* comp, Range* parent, float from, float 
     }
 }
 
-static inline RangeSet concat(const RangeSet& a, const RangeSet& b) {
-    if(a.empty())
-        return b;
+static inline void concat(RangeSet& a, const RangeSet& b) {
     if(b.empty())
-        return a;
-    RangeSet ret;
-    ret.reserve(a.size() + b.size());
-    ret.insert(ret.end(), a.begin(), a.end());
-    ret.insert(ret.end(), b.begin(), b.end());
-    return ret;
+        return;
+    a.reserve(a.size() + b.size());
+    a.insert(a.end(), b.begin(), b.end());
 }
 RangeSet crop(const RangeSet& a, float left, float right) {
     RangeSet ret;
@@ -116,13 +111,13 @@ void explode(RangeSet& set, Range chunk) {
     float d = chunk.maxDuration;
     RangeSet original = set;
     while(d < chunk.refEnd) {
-        set = concat(set, transform(original, d, 1));
+        concat(set, transform(original, d, 1));
         d += chunk.maxDuration;
     }
     d = 0;
     while(d > chunk.refStart) {
         d -= chunk.maxDuration;
-        set = concat(set, transform(original, d, 1));
+        concat(set, transform(original, d, 1));
     }
     set = crop(set, chunk.refStart, chunk.refEnd);
 }
@@ -176,7 +171,7 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
     RangeSet set;
     log(logINFO) << "dependency --" << item->getUri();
     for(const auto & chunk : chunks) {
-        set = concat(set, calcChunk(item, chunk));
+        concat(set, calcChunk(item, chunk));
     }
     crop(set, 0, mainComp->duration);
     item->firstAppearTime = 9999999;
