@@ -86,12 +86,12 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 };
                 extMap["mp3"]       = audioExt;
                 extMap["aac"]       = audioExt;
-                extMap["flac"]       = audioExt;
+                extMap["flac"]      = audioExt;
                 extMap["wav"]       = audioExt;
                 extMap["asf"]       = audioExt;
                 extMap["wma"]       = audioExt;
                 extMap["ogg"]       = audioExt;
-                extMap["rm"]       = audioExt;
+                extMap["rm"]        = audioExt;
                 extMap["caf"]       = audioExt;
                 // Just treat everything else as video
                 auto videoExt = [](const std::string& uri) {

@@ -31,8 +31,15 @@ void DependencyWalker::walkThrough() {
     }
 }
 
-void DependencyWalker::scan(Composition* comp, Range* parent) {
+void DependencyWalker::scan(Composition* comp, Range* parent, float from, float to) {
+    if(to > comp->getDuration())
+        to = comp->getDuration();
+    if(from < 0)
+        from = 0;
     for(Layer& layer : comp->layers) {
+        if(layer.time + layer.duration < from || layer.time > to) {
+            continue;
+        }
         Renderable* renderable = layer.getRenderObject();
         if(!renderable)
             continue;
@@ -47,13 +54,25 @@ void DependencyWalker::scan(Composition* comp, Range* parent) {
         };
         ranges.push_back(range);
         if(child) {
-            scan(child, range);
+            float cf = layer.mapInnerTime(from);
+            float ct = layer.mapInnerTime(to);
+            float lf = layer.mapInnerTime(range->left);
+            float lt = layer.mapInnerTime(range->right);
+            if(lf > cf)
+                cf = lf;
+            if(lt < ct)
+                ct = lt;
+            scan(child, range, cf, ct);
         }
         fragments[renderable].push_back(range);
     }
 }
 
-RangeSet concat(const RangeSet& a, const RangeSet& b) {
+static inline RangeSet concat(const RangeSet& a, const RangeSet& b) {
+    if(a.empty())
+        return b;
+    if(b.empty())
+        return a;
     RangeSet ret;
     ret.reserve(a.size() + b.size());
     ret.insert(ret.end(), a.begin(), a.end());
@@ -187,7 +206,7 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     full.maxDuration = 0;
     set.push_back(full);
     //L() << "full" << toString(full);
-    while(chunk) {
+    while(!set.empty() && chunk) {
         if(chunk->maxDuration <= 0)
             return RangeSet();
         //L() << "chunk" << toString(*chunk);
@@ -198,7 +217,7 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
         //L() << "transform" << toString(set);
         chunk = chunk->parent;
     }
-    //L() << "++++++++++++ portion ------" << toString(set);
+    //L() << "++++++++++++ portion ------" << toString(set) << item->getUri();
     return set;
 }
 
