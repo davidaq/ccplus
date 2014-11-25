@@ -208,11 +208,15 @@ function fit(comps, scenes)
             end
             local diff = 0
             for i = idx, idx + a.num_ele - 1 do 
-                if comps[i]["type"] ~= "image" then
+                if comps[i]["type"] == "video" then
                     if a.duration > comps[i].comp.duration then
                         return 0x7fffffff
                     end
                     diff = diff + (comps[i].comp.duration - a.duration) 
+                elseif comps[i]["type"] == "image" then
+                    if a.duration > 7.0 then 
+                        diff = diff + a.duration - comps[i].comp.duration
+                    end
                 end
             end
             return a.used * 1 + diff * 100 + math.abs(preferredDuration - a.duration) * 10
@@ -263,7 +267,6 @@ function fit(comps, scenes)
             table.insert(tmp, comps[i].name)
         end
         local rand_tmp = {}
-        local rand = {}
         for i = 1, last_scene.num_rand_ele do
             table.insert(rand_tmp, comps[i].name)
         end
