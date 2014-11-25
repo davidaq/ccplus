@@ -54,17 +54,30 @@ function getScenes(template)
     local comps = template.compositions;
     function countUserElements(layers, pname, paths) 
         local cnt = 0
+        local cnt_random = 0
+        local used = {}
         for i = 1, #layers do 
             local uri = layers[i].uri
             if string.sub(uri, 1, 14) == "composition://" then
                 if (string.sub(uri, 15, 15) == "@") then
-                    cnt = cnt + 1
+                    local id = 1
+                    if #uri > 15 then
+                        id = tonumber(string.sub(uri, 16));
+                    end
+                    if not used[id] and id ~= 0 then
+                        cnt = cnt + 1
+                        used[id] = true
+                    end
+                    if id == 0 then
+                        cnt_random = cnt_random + 1
+                    end
                 else 
                     local cname = string.sub(uri, 15)
                     if comps[cname] then 
-                        local tmp_cnt = countUserElements(comps[cname].layers, cname, paths)
+                        local tmp_cnt, tmp_rand_cnt = countUserElements(comps[cname].layers, cname, paths)
                         cnt = cnt + tmp_cnt
-                        if tmp_cnt > 0 then 
+                        cnt_random = cnt_random + tmp_rand_cnt
+                        if tmp_cnt > 0 or tmp_rand_cnt > 0 then 
                             if (paths[pname] == nil) then
                                 paths[pname] = {}
                             end 
@@ -74,19 +87,20 @@ function getScenes(template)
                 end 
             end 
         end
-        return cnt 
+        return cnt, cnt_random
     end
     for cname, comp in spairs(comps) do 
         if string.sub(cname, 1, 1) == "#" and cname ~= "#+1" and string.upper(cname) ~= "#COVER" then
             local layers = comp.layers;
             local num_ele 
             local paths = {}
-            num_ele = countUserElements(layers, cname, paths)
-            if num_ele > 0 then
+            num_ele, num_rand_ele = countUserElements(layers, cname, paths)
+            if num_ele > 0 or num_rand_ele > 0 then
                 table.insert(ret, {
                     name= cname,
                     duration= comp.duration,
                     num_ele= num_ele,
+                    num_rand_ele= num_rand_ele,
                     used= 0,
                     paths= paths
                 });
@@ -94,6 +108,7 @@ function getScenes(template)
         end 
     end 
 
+    log(ret);
     return ret;
 end
 
@@ -208,12 +223,22 @@ function fit(comps, scenes)
             break
         end
         local tmp = {
-            scene.name,
-            {},
-            scene.paths
+            name= scene.name,
+            matched_comps= {},
+            matched_rand_comps= {},
+            scene_path= scene.paths
         }
         for i = idx, idx + scene.num_ele - 1 do 
-            table.insert(tmp[2], comps[i].name)
+            table.insert(tmp.matched_comps, comps[i].name)
+        end 
+        local rand = {}
+        for i = 1, scene.num_rand_ele do 
+            --local tmp_i = math.random(#comps)
+            --if not rand[tmp_i] then
+            --    table.insert(tmp.matched_rand_comps, comps[tmp_i].name)
+            --    rand[tmp_i] = true
+            --end
+            table.insert(tmp.matched_rand_comps, comps[math.random(#comps)].name)
         end 
         idx = idx + scene.num_ele 
         scene.used = scene.used + 1
@@ -232,12 +257,22 @@ function fit(comps, scenes)
             last_scene = scenes[i]
         end
     end
-    if last_scene and last_scene.num_ele <= #comps then
+    if last_scene and last_scene.num_rand_ele <= #comps and last_scene.num_ele <= #comps then
         local tmp = {}
         for i = 1, last_scene.num_ele do
             table.insert(tmp, comps[i].name)
         end
-        table.insert(ret, {last_scene.name, tmp, last_scene.paths})
+        local rand_tmp = {}
+        local rand = {}
+        for i = 1, last_scene.num_rand_ele do
+            table.insert(rand_tmp, comps[i].name)
+        end
+        table.insert(ret, {
+            name= last_scene.name, 
+            matched_comps= tmp, 
+            matched_rand_comps= rand_tmp,
+            scene_path= last_scene.paths
+        })
     end
     log(ret)
     return ret
@@ -249,8 +284,8 @@ function fillTML(fitted, template, userinfo, aux_template)
     local comps = template.compositions
     for i = 1, #fitted do 
         local fit = fitted[i]
-        local cname = fit[1]
-        local paths = fit[3]
+        local cname = fit.name
+        local paths = fit.scene_path
         local overlap = 0
         local idx = 1
         function cloneScene(name) 
@@ -259,8 +294,16 @@ function fillTML(fitted, template, userinfo, aux_template)
             for l = 1, #layers do
                 layer = layers[l]
                 if layer.uri:sub(15, 15) == "@" then
-                    layer.uri = "composition://" .. fit[2][idx]
-                    idx = idx + 1
+                    if layer.uri:sub(16) == "0" then 
+                        layer.uri = "composition://" .. fit.matched_rand_comps[idx]
+                        idx = idx + 1
+                    else
+                        local id = 1
+                        if #layer.uri >= 16 then
+                            id = tonumber(layer.uri:sub(16))
+                        end 
+                        layer.uri = "composition://" .. fit.matched_comps[id]
+                    end
                 elseif layer.uri == "composition://#+1" then
                     if i ~= #fitted then 
                         layer.uri = "composition://$" .. (i + 1)
