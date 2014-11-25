@@ -43,7 +43,7 @@ var Export = function() {
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name] && item.name[0][0] != '@' && item.name != '#+1') {
+            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
                 throw "Duplicate composition name: " + item.name;
             }
             this.comp[item.name] = item;
@@ -89,10 +89,6 @@ Export.prototype.exportTo = function(filePath) {
             this.tmlFile.write(obj2str(expComp));
             log('  Write comp');
         }
-        //this.tmlFile.write('},"usedfiles":');
-        //this.tmlFile.write(obj2str(this.files));
-        //this.tmlFile.write(',"usedcolors":');
-        //this.tmlFile.write(obj2str(this.colors));
         this.tmlFile.write('}}');
     } finally {
         this.tmlFile.close();
@@ -100,7 +96,7 @@ Export.prototype.exportTo = function(filePath) {
     alert('Export Done!');
 };
 Export.prototype.getCompsCount = function(comp) {
-    if(this.exported[comp.name])
+    if(this.exported[comp.name] || comp.name[0] == '@' || comp.name == '#+1')
         return 0;
     this.exported[comp.name] = true;
     var count = 1;
