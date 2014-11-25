@@ -43,7 +43,7 @@ void DependencyWalker::scan(Composition* comp, Range* parent) {
             .right = layer.time + layer.duration,
             .refStart = layer.start,
             .refEnd = layer.start + layer.last,
-            .maxDuration = renderable->getDuration()
+            .maxDuration = renderable->getDuration(),
         };
         ranges.push_back(range);
         if(child) {
@@ -124,14 +124,15 @@ void simplify(std::vector<TimePair>& ranges) {
             }
             cleft = pair.first;
         }
-        cright = pair.second;
+        if(cright < pair.second)
+            cright = pair.second;
     }
     if(cright > cleft) {
         ranges.push_back(TimePair(cleft, cright));
     }
 }
 std::string toString(const Range& range) {
-    char buff[40];
+    char buff[140];
     sprintf(buff, "[%.3f:%.3f, %.3f:%.3f, %.3f]", range.left, range.right, range.refStart, range.refEnd, range.maxDuration);
     return buff;
 }
@@ -185,18 +186,19 @@ RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
     full.refEnd = chunk->maxDuration;
     full.maxDuration = 0;
     set.push_back(full);
-    //log(logINFO) << "full" << toString(full);
+    //L() << "full" << toString(full);
     while(chunk) {
         if(chunk->maxDuration <= 0)
             return RangeSet();
-        //log(logINFO) << "chunk" << toString(*chunk);
+        //L() << "chunk" << toString(*chunk);
         explode(set, *chunk);
-        //log(logINFO) << "explode" << toString(set);
+        //L() << "explode" << toString(set);
         set = transform(set, chunk->left - chunk->refStart,
                 (chunk->right - chunk->left) / (chunk->refEnd - chunk->refStart));
-        //log(logINFO) << "transform" << toString(set);
+        //L() << "transform" << toString(set);
         chunk = chunk->parent;
     }
+    //L() << "++++++++++++ portion ------" << toString(set);
     return set;
 }
 
