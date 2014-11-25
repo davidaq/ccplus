@@ -321,7 +321,7 @@ Export.prototype.exportLayer = function(layer) {
             var result = [];
             try {
                 result = getArgs(layer, t, pmk);
-                if(pmk == 'transform') {
+                if(propName == 'transform') {
                     var pl = layer.parent;
                     while(pl) {
                         result = result.concat(getArgs(pl, t, pmk));
