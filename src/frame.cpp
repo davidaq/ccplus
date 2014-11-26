@@ -296,6 +296,8 @@ GPUFrame Frame::toGPU() {
         return decompressed().toGPU();
     }
     GPUFrame ret = GPUFrameCache::alloc(image.cols, image.rows);
-    ret->load(*this);
+    ret->loadFromCPU(*this);
+    ret = ret->alphaMultiplied();
+    ret->ext = ext;
     return ret;
 }

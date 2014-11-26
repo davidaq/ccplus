@@ -15,6 +15,13 @@ public:
     GLuint textureID = 0, fboID = 0;
 
     CCPlus::FrameExt ext;
+    
+
     // @ load a frame from cpu to gpu
-    void load(const CCPlus::Frame& );
+    // DO NOT USE THIS!
+    // USE toGPU of Frame instead
+    void loadFromCPU(const CCPlus::Frame& );
+
+    // Will be called in toGPU
+    GPUFrame alphaMultiplied();
 };

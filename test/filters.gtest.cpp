@@ -27,8 +27,7 @@ static inline Frame testFilter(const std::string srcFile, const std::string filt
     Frame tmp;
     tmp.image = cv::imread(srcFile);
     mat3to4(tmp.image);
-    GPUFrame src = GPUFrameCache::alloc(tmp.image.cols, tmp.image.rows);
-    src->load(tmp);
+    GPUFrame src = tmp.toGPU();
 
     if(width < 0)
         width = tmp.image.cols;

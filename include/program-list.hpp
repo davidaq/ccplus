@@ -106,6 +106,9 @@ CCPLUS_PROGRAM( filter_ramp_radial, "shaders/fill.v.glsl", "shaders/filters/ramp
     CACHE_UNIFORM(e_rgb);
 })
 
+CCPLUS_PROGRAM( alpha_premultiply, "shaders/fill.v.glsl", "shaders/alpha_premultiply.f.glsl", SETUP_FUNC_DECL {
+    SET_UNIFORM(tex, 0);
+})
 
 #undef SETUP_FUNC_DECL
 #undef SET_UNIFORM
