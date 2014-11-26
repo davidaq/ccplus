@@ -50,7 +50,7 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
             log(logERROR) << "failed to make complete framebuffer object" << glCheckFramebufferStatus(GL_FRAMEBUFFER);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return boost::shared_ptr<GPUFrameImpl>(frame); 
+        return GPUFrame(frame); 
     }
 }
 

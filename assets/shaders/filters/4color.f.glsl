@@ -29,7 +29,7 @@ void main() {
         params_b[3] * xy.x +
         params_b[4] * xy.y +
         params_b[5];
-    gl_FragColor.w = opacity;
+    gl_FragColor.a = opacity;
     gl_FragColor.rgb = min(gl_FragColor.rgb, vec3(1.0));
-    gl_FragColor.rgb = max(gl_FragColor.rgb, vec3(0.0));
+    gl_FragColor.rgb = max(gl_FragColor.rgb, vec3(0.0)) * opacity;
 }

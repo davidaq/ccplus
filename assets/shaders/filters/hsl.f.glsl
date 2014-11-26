@@ -13,7 +13,7 @@ float max3(float r, float g, float b) {
     return max(r, max(g, b));
 }
 
-vec4 convertRGBtoHSL( vec4 col )
+vec3 convertRGBtoHSL( vec3 col )
 {
     mediump float red   = col.r;
     mediump float green = col.g;
@@ -53,11 +53,11 @@ vec4 convertRGBtoHSL( vec4 col )
     if (hue < 0.0)
         hue += 1.0;
 
-    return vec4( hue, sat, lum, col.a );
+    return vec3( hue, sat, lum );
 }
 
 // HSL [0:1] to RGB [0:1]
-vec4 convertHSLtoRGB( vec4 col )
+vec3 convertHSLtoRGB( vec3 col )
 {
     const mediump float onethird = 1.0 / 3.0;
     const mediump float twothird = 2.0 / 3.0;
@@ -98,12 +98,12 @@ vec4 convertHSLtoRGB( vec4 col )
          rgb = (luminv * ct) + lum2m1;
     else rgb =  lum    * ct;
 
-    return vec4( rgb, col.a );
+    return rgb;
 }
 
 void main() {
     vec4 col = texture2D(tex, xy);
-    vec4 hsl = convertRGBtoHSL(col);
+    vec3 hsl = convertRGBtoHSL(col.rgb / col.a);
     // Hue
     hsl.r += hue;
     if (hsl.r > 1.0)
@@ -117,5 +117,6 @@ void main() {
     hsl.b += (lit - 1.0) * (lit > 1.0 ? (1.0 - hsl.b) : hsl.b);
     hsl.b = clamp(hsl.b, 0.0, 1.0);
 
-    gl_FragColor = convertHSLtoRGB(hsl);
+    gl_FragColor.rgb = convertHSLtoRGB(hsl) * col.a;
+    gl_FragColor.a = col.a;
 }

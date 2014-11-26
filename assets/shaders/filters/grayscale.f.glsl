@@ -27,7 +27,7 @@ vec3 hsv2rgb(vec3 c)
 
 void main() {
     vec4 col = texture2D(tex, xy);
-    col.rgb = rgb2hsv(col.rgb);
+    col.rgb = rgb2hsv(col.rgb / col.a);
 
     float idx = floor(col.r / delta);
 
@@ -40,5 +40,5 @@ void main() {
     col.g = hue_sat[1]; // sat
     col.b = clamp(tmp * col.b, 0.0, 1.0); // val
 
-    gl_FragColor = vec4(hsv2rgb(col.rgb), col.a);
+    gl_FragColor = vec4(hsv2rgb(col.rgb) * col.a, col.a);
 }
