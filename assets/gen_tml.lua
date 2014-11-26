@@ -310,7 +310,7 @@ function fillTML(fitted, template, userinfo, aux_template)
                     if i ~= #fitted then 
                         layer.uri = "composition://$" .. (i + 1)
                     else
-                        layer.uri = "composition://End"
+                        layer.uri = "composition://#END"
                     end
                     -- FIXME: should calculate relative time
                     -- Currently, generally #+1 will be on the top-most comp
@@ -388,9 +388,9 @@ function fillTML(fitted, template, userinfo, aux_template)
         table.insert(ret_layers, layer)
     end
     
-    -- Fill text
-    local text_comp = comps['TitleText']
-    local start_comp = comps['Caption']
+    -- Fill text and append TITLE
+    local start_comp = comps['#TITLE']
+    local text_comp = comps['#T']
     if text_comp and start_comp then 
         text_comp.layers[1]['text-properties']['text']["0"] = userinfo.videoTitle
         local l = {
@@ -398,7 +398,7 @@ function fillTML(fitted, template, userinfo, aux_template)
             time= 0,
             duration= start_comp.duration,
             last= start_comp.duration,
-            uri= "composition://Caption",
+            uri= "composition://#TITLE",
             properties= {
                 transform= {}
             }
@@ -414,7 +414,7 @@ function fillTML(fitted, template, userinfo, aux_template)
     end
 
     -- Append end scenes
-    appendScene("End", comps["End"].duration)
+    appendScene("#END", comps["#END"].duration)
 
     -- Append background music
     main_comp.duration = currentTime
@@ -526,12 +526,12 @@ else
 end
 urisToGlobal(template, templateDir)
 
--- TODO Deal with URI in end_template
+-- TODO Deal with URI in aux tpl
 if ASSETS_PATH and ASSETS_PATH ~= "" then
     if ASSETS_PATH:sub(#ASSETS_PATH) ~= "/" then
         ASSETS_PATH = ASSETS_PATH .. "/"
     end
-    urisToGlobal(aux_template, ASSETS_PATH .. "wrap")
+    urisToGlobal(aux_template, ASSETS_PATH .. "aux_tpl")
 end 
 
 local scenes = getScenes(template);

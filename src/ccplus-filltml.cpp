@@ -208,7 +208,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         luaL_openlibs(L);
 
         std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
-        L() << dkjson_path;
+        //L() << dkjson_path;
         lua_pushstring(L, dkjson_path.c_str());
         lua_setglobal(L, "DKJSON_PATH");
 
@@ -219,7 +219,8 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_setglobal(L, "TPL_JSON");
         lua_pushstring(L, slurp(configFile).c_str());
         lua_setglobal(L, "USER_JSON");
-        lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
+        //lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
+        lua_pushstring(L, readTextAsset("aux_tpl/aux.tml").c_str());
         lua_setglobal(L, "TPL_AUX_JSON");
 
         lua_pushboolean(L, JSON_BEUTIFY);
@@ -229,7 +230,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_setglobal(L, "HALF_SIZE");
 
         std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
-        L() << script_path;
+        //L() << script_path;
         if (luaL_dofile(L, script_path.c_str())) {
             lua_error(L);
             //lua_close(L);

@@ -175,7 +175,7 @@ void TextRenderable::prepareFrame(int time) {
             for (int j = 0; j < cols; j++) {
                 int ty = sy + i;
                 int tx = sx + j;
-                if (ty >= 2 * height || tx >= 2 * width || 
+                if (ty >= ret.rows || tx >= ret.cols || 
                     ty < 0 || tx < 0) 
                     continue;
                 if (bitmap->buffer[i * cols + j] == 0)
@@ -188,8 +188,9 @@ void TextRenderable::prepareFrame(int time) {
 
     wstring s = get<wstring>(this->text, time);
     int x = 0;
-    int y = height * sy * 1.2;
+    int y = height * sy;
     int prevAdvance = 0;
+    // Calculate correct anchor
     for (int j = 0; j < s.length(); j++) {
         error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
         if (error) {
@@ -198,7 +199,10 @@ void TextRenderable::prepareFrame(int time) {
         } else {
             x += prevAdvance;
             FT_GlyphSlot slot = face->glyph;
-            draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
+            int bearing = slot->metrics.horiBearingY / 72;
+            //L() << bearing << y - bearing << "~" << y - bearing + slot->bitmap.rows;
+            //draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
+            draw(&slot->bitmap, slot->bitmap_left + x, y - bearing);
             float advance = (slot->advance.x >> 6) - slot->bitmap.width;
             if(advance < 0.5)
                 advance = 0.5;
@@ -208,7 +212,8 @@ void TextRenderable::prepareFrame(int time) {
     }
     Frame retFrame;
     retFrame.image = ret;
-    retFrame.ext.anchorAdjustY = y / 1.5;
+    //retFrame.ext.anchorAdjustY = y / 1.5;
+    retFrame.ext.anchorAdjustY = y - 6;
     switch(get(this->justification, time)) {
         case 0: // left
             retFrame.ext.anchorAdjustX = 0;
