@@ -10,20 +10,13 @@ CCPLUS_FILTER(fill) {
         log(logERROR) << "Insufficient parameters for fill effect";
         return frame;
     }
-
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint col;
-    GLuint program = manager->getProgram(filter_fill, &col);
-    glUseProgram(program);
-
+    glClearColor(
+        parameters[0] / 255.0f, 
+        parameters[1] / 255.0f, 
+        parameters[2] / 255.0f,
+        1.0f);
     frame->bindFBO(false);
-
-    glUniform3f(col,
-            parameters[0] / 255.0f, 
-            parameters[1] / 255.0f, 
-            parameters[2] / 255.0f);
-
-    fillSprite();
+    glClearColor(0, 0, 0, 0);
 
     return frame;
 }

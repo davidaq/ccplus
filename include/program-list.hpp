@@ -61,10 +61,6 @@ CCPLUS_PROGRAM( filter_hsl, "shaders/fill.v.glsl", "shaders/filters/hsl.f.glsl",
     CACHE_UNIFORM(lit);
 })
 
-CCPLUS_PROGRAM( filter_fill, "shaders/fill.v.glsl", "shaders/filters/fill.f.glsl", SETUP_FUNC_DECL {
-    CACHE_UNIFORM(col);
-})
-
 CCPLUS_PROGRAM( filter_mask, "shaders/fill.v.glsl", "shaders/filters/mask.f.glsl", SETUP_FUNC_DECL {
     SET_UNIFORM(tex, 0);
 })

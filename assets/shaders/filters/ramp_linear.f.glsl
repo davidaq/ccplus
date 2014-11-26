@@ -22,6 +22,6 @@ void main() {
 
     gl_FragColor.rgb = diff_rgb * intensity(xy) + s_rgb;
     gl_FragColor.rgb = max(vec3(0.0), gl_FragColor.rgb);
-    gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb);
+    gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb) * alpha;
     gl_FragColor.a = alpha;
 }
