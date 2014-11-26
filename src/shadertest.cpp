@@ -20,9 +20,7 @@ GPUFrame imreadAsset(const std::string& path) {
     mat3to4(mat);
     Frame frame;
     frame.image = mat;
-    GPUFrame ret = GPUFrameCache::alloc(mat.cols, mat.rows);
-    ret->load(frame);
-    return ret;
+    return frame.toGPU();
 }
 
 static inline Frame testFilter(const std::string srcFile, const std::string filterName, const std::vector<float>& parameters, 

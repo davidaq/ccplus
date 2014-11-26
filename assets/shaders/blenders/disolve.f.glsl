@@ -9,6 +9,5 @@ void main() {
     vec4 cb = texture2D(tex_down, xy);
     float val = step(snoise2D(xy), ca.a);
     ca.a = 1.0;
-    gl_FragColor= mix(cb, ca, val);
-    gl_FragColor.a = 1.0;
+    gl_FragColor = mix(cb, ca, val);
 }

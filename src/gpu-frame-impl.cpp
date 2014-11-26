@@ -2,6 +2,8 @@
 #include "frame.hpp"
 #include "profile.hpp"
 #include "gpu-frame-cache.hpp"
+#include "glprogram-manager.hpp"
+#include "render.hpp"
 
 using namespace CCPlus;
 
@@ -43,11 +45,21 @@ Frame GPUFrameImpl::toCPU() {
     return ret;
 }
 
-void GPUFrameImpl::load(const Frame& frame) {
-    ext = frame.ext;
+void GPUFrameImpl::loadFromCPU(const Frame& frame) {
     if(width * height > 0) {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, 
                 GL_BGRA_EXT, GL_UNSIGNED_BYTE, frame.image.data);
     }
+}
+
+GPUFrame GPUFrameImpl::alphaMultiplied() {
+    GPUFrame ret = GPUFrameCache::alloc(width, height);
+    ret->bindFBO();
+    GLuint program = GLProgramManager::getManager()->getProgram(alpha_premultiply);
+    glUseProgram(program);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    fillSprite();
+    return ret;
 }

@@ -19,6 +19,7 @@ void CCPlus::initGL() {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
 
     glGenBuffers(1, &squareVBO);
     glBindBuffer(GL_ARRAY_BUFFER, squareVBO);

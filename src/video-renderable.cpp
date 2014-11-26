@@ -9,8 +9,8 @@
 using namespace CCPlus;
 
 VideoRenderable::VideoRenderable(const std::string& _uri, bool _audioOnly) :
-    uri(_uri),
-    audioOnly(_audioOnly)
+    audioOnly(_audioOnly),
+    uri(_uri)
 {
     std::string path = parseUri2File(uri);
     alpha_decoder = 0;
