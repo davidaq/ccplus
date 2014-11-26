@@ -38,8 +38,15 @@ static inline Frame testFilter(const std::string srcFile, const std::string filt
 }
 
 TEST(Filter, Transform) {
-    imwrite("tmp/transform.png", testFilter("test/res/test1.jpg", "transform",
-                {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500).image);
+    for (int i = 0; i <= 90; i+=10) {
+        char s[64];
+        sprintf(s, "tmp/transform%d.jpg", i);
+        imwrite(s, testFilter("test/res/test1.jpg", "transform",
+                    {0, 0, 0, 0, 0, 0, 1, 1, 1, (float)i, 0, 0}, 500, 500).image);
+
+    }
+    //imwrite("tmp/transform.png", testFilter("test/res/test1.jpg", "transform",
+    //            {250, 280, 0, 0, 0, 0, 1, 1, 1, 0, 0, 90}, 500, 500).image);
 }
 
 TEST(Filter, Mask) {
