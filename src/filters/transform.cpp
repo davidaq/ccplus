@@ -72,11 +72,6 @@ CCPLUS_FILTER(transform) {
                 cz * sx * sy + cx * sz, cx * cz - sx * sy * sz, -cy * sx,   0,
                 -cx * cz * sy + sx * sz, cz * sx + sx * sy * sz, cx * cy,   0,
                 0,                      0,                      0,          1);
-        Mat tmp = (Mat_<double>(4, 4) << 
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 1,
-                0, 0, 0, 1);
         trans = rotate * trans;
 
         //std::cout << "After rotate: " << std::endl << trans << std::endl;
@@ -92,6 +87,7 @@ CCPLUS_FILTER(transform) {
 
         finalTrans = trans * finalTrans;
     }
+    //std::cout << finalTrans << std::endl;
     int potWidth = nearestPOT(width);
     int potHeight = nearestPOT(height);
     Mat tmp = (Mat_<double>(4, 4) << 
@@ -100,6 +96,7 @@ CCPLUS_FILTER(transform) {
             0, 0, 1, 0,
             0, 0, 0, 1);
     finalTrans = tmp * finalTrans;
+    //std::cout << finalTrans << std::endl;
 
     auto apply = [](Mat trans, float x, float y, float z) {
         double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
@@ -117,6 +114,17 @@ CCPLUS_FILTER(transform) {
         return Vec3f(nx, ny, nz);
     };
 
+    /*****************************
+     * Calculate Camera parameters
+     * Currently will only support one default camera
+     * TODO: Customizable camera 
+     *****************************/
+
+    float dov = 141.73 / 102.05 * width;
+
+    /****************************
+     * Calculate the homography 
+     **************************/
     Mat A = Mat::zeros(8, 8, CV_64F);
     Mat C = Mat::zeros(8, 1, CV_64F);
     int idx = 0;
@@ -125,36 +133,34 @@ CCPLUS_FILTER(transform) {
             int x1 = i * (frame->width - 1);
             int y1 = j * (frame->height - 1);
             Vec3f tmp = apply(finalTrans, x1, y1, 0);
-            // Black magic
-            double ratio = (tmp[2] + 1777) / 1777;
-            float x2 = tmp[0] / ratio;
-            float y2 = tmp[1] / ratio;
-            //L() << x1 << " " << y1 << " " << x2 << " " << y2;
+            // Black magic - mimic AE camera
+            double ratio = (tmp[2] + dov) / dov;
+            float x2 = (tmp[0] - width / 2.0) / ratio + width / 2.0;
+            float y2 = (tmp[1] - height / 2.0) / ratio + height / 2.0;
+            L() << x1 << " " << y1 << " " << x2 << " " << y2;
 
-            A.at<double>(idx * 2, 0) = -x2;
-            A.at<double>(idx * 2, 1) = -y2;
+            A.at<double>(idx * 2, 0) = -x1;
+            A.at<double>(idx * 2, 1) = -y1;
             A.at<double>(idx * 2, 2) = -1;
-            A.at<double>(idx * 2, 6) = (x1 * x2);
-            A.at<double>(idx * 2, 7) = (x1 * y2);
-            C.at<double>(idx * 2, 0) = -x1;
+            A.at<double>(idx * 2, 6) = (x2 * x1);
+            A.at<double>(idx * 2, 7) = (x2 * y1);
+            C.at<double>(idx * 2, 0) = -x2;
 
-            A.at<double>(idx * 2 + 1, 3) = -x2;
-            A.at<double>(idx * 2 + 1, 4) = -y2;
+            A.at<double>(idx * 2 + 1, 3) = -x1;
+            A.at<double>(idx * 2 + 1, 4) = -y1;
             A.at<double>(idx * 2 + 1, 5) = -1;
-            A.at<double>(idx * 2 + 1, 6) = (y1 * x2);
-            A.at<double>(idx * 2 + 1, 7) = (y1 * y2);
-            C.at<double>(idx * 2 + 1, 0) = -y1;
+            A.at<double>(idx * 2 + 1, 6) = (y2 * x1);
+            A.at<double>(idx * 2 + 1, 7) = (y2 * y1);
+            C.at<double>(idx * 2 + 1, 0) = -y2;
             idx++;
         }
 
-    /* 
-     * Calculate the homography 
-     **/
     invert(A, A);
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
-    invert(H, H);
+    std::cout << H << std::endl;
+    std::cout << H.at<double>(0, 0) * 279 + H.at<double>(0, 1) * 242 + H.at<double>(0, 2)<< std::endl;
     float tmatrix[9];
     for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
