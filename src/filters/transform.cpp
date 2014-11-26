@@ -98,22 +98,6 @@ CCPLUS_FILTER(transform) {
     finalTrans = tmp * finalTrans;
     //std::cout << finalTrans << std::endl;
 
-    auto apply = [](Mat trans, float x, float y, float z) {
-        double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
-            trans.at<double>(3, 2) * z + trans.at<double>(3, 3);
-
-        double nx = trans.at<double>(0, 0) * x + trans.at<double>(0, 1) * y + 
-            trans.at<double>(0, 2) * z + trans.at<double>(0, 3);
-        nx /= noer;
-        double ny = trans.at<double>(1, 0) * x + trans.at<double>(1, 1) * y + 
-            trans.at<double>(1, 2) * z + trans.at<double>(1, 3);
-        ny /= noer;
-        double nz = trans.at<double>(2, 0) * x + trans.at<double>(2, 1) * y + 
-            trans.at<double>(2, 2) * z + trans.at<double>(2, 3);
-        nz /= noer;
-        return Vec3f(nx, ny, nz);
-    };
-
     /*****************************
      * Calculate Camera parameters
      * Currently will only support one default camera
@@ -122,62 +106,24 @@ CCPLUS_FILTER(transform) {
 
     float dov = 141.73 / 102.05 * width;
 
-    /****************************
-     * Calculate the homography 
-     **************************/
-    Mat A = Mat::zeros(8, 8, CV_64F);
-    Mat C = Mat::zeros(8, 1, CV_64F);
-    int idx = 0;
-    for (int i = 0; i <= 1; i++)
-        for (int j = 0; j <= 1; j++) {
-            int x1 = i * (frame->width - 1);
-            int y1 = j * (frame->height - 1);
-            Vec3f tmp = apply(finalTrans, x1, y1, 0);
-            // Black magic - mimic AE camera
-            double ratio = (tmp[2] + dov) / dov;
-            float x2 = (tmp[0] - width / 2.0) / ratio + width / 2.0;
-            float y2 = (tmp[1] - height / 2.0) / ratio + height / 2.0;
-            L() << x1 << " " << y1 << " " << x2 << " " << y2;
-
-            A.at<double>(idx * 2, 0) = -x1;
-            A.at<double>(idx * 2, 1) = -y1;
-            A.at<double>(idx * 2, 2) = -1;
-            A.at<double>(idx * 2, 6) = (x2 * x1);
-            A.at<double>(idx * 2, 7) = (x2 * y1);
-            C.at<double>(idx * 2, 0) = -x2;
-
-            A.at<double>(idx * 2 + 1, 3) = -x1;
-            A.at<double>(idx * 2 + 1, 4) = -y1;
-            A.at<double>(idx * 2 + 1, 5) = -1;
-            A.at<double>(idx * 2 + 1, 6) = (y2 * x1);
-            A.at<double>(idx * 2 + 1, 7) = (y2 * y1);
-            C.at<double>(idx * 2 + 1, 0) = -y2;
-            idx++;
-        }
-
-    invert(A, A);
-    Mat H = A * C;
-    H.push_back(1.0);
-    H = H.reshape(0, 3);
-    std::cout << H << std::endl;
-    std::cout << H.at<double>(0, 0) * 279 + H.at<double>(0, 1) * 242 + H.at<double>(0, 2)<< std::endl;
-    float tmatrix[9];
-    for(int i = 0; i < 3; i++) {
-        for(int j = 0; j < 3; j++) {
-            tmatrix[i * 3 + j] = H.at<double>(j, i);
+    //std::cout << finalTrans << std::endl;
+    float tmatrix[16];
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            tmatrix[i * 4 + j] = finalTrans.at<double>(j, i);
         }
     }
 
-
     GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint trans, src_dst_size;
-    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size);
+    GLuint trans, src_dst_size, zoom;
+    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size, &zoom);
     glUseProgram(program);
 
     GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
     ret->bindFBO();
 
-    glUniformMatrix3fv(trans, 1, GL_FALSE, tmatrix);
+    glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
+    glUniform1f(zoom, dov);
 
     glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
     glActiveTexture(GL_TEXTURE0);

@@ -37,6 +37,7 @@ CCPLUS_PROGRAM( filter_transform, "shaders/filters/transform.v.glsl", "shaders/f
     SET_UNIFORM(tex, 0);
     CACHE_UNIFORM(trans);
     CACHE_UNIFORM(src_dst_size);
+    CACHE_UNIFORM(zoom);
 })
 
 CCPLUS_PROGRAM( filter_4color, "shaders/fill.v.glsl", "shaders/filters/4color.f.glsl", SETUP_FUNC_DECL {
