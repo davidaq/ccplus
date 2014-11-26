@@ -290,7 +290,7 @@ function fillTML(fitted, template, userinfo, aux_template)
         local paths = fit.scene_path
         local overlap = 0
         local idx = 1
-        function cloneScene(name) 
+        function cloneScene(name, newname) 
             local comp = deepcopy(comps[name])
             local layers = comp.layers
             for l = 1, #layers do
@@ -319,12 +319,16 @@ function fillTML(fitted, template, userinfo, aux_template)
             end 
             local children = paths[name]
             if type(children) == "table" then
+                local cloned = {}
                 for ch = 1, #children do
                     local child = children[ch]
-                    cloneScene(child)
+                    local tmp = child .. "$" .. i .. "ch" .. ch
+                    cloneScene(child, tmp)
                     for l = 1, #layers do
-                        if layers[l].uri:sub(15) == child then
-                            layers[l].uri = "composition://" .. child .. "$" .. i
+                        if layers[l].uri:sub(15) == child and not cloned[l] then
+                            layers[l].uri = "composition://" .. tmp
+                            cloned[l] = true
+                            break
                         end 
                     end 
                 end 
@@ -333,7 +337,7 @@ function fillTML(fitted, template, userinfo, aux_template)
             if name:sub(1, 1) == "#" then
                 comps["$" .. i] = comp
             else
-                comps[name .. "$" .. i] = comp
+                comps[newname] = comp
             end
             return comp
         end 
