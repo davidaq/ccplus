@@ -55,10 +55,12 @@ function getScenes(template)
     function countUserElements(layers, pname, paths, used) 
         local cnt = 0
         local cnt_random = 0
+        local got_child = false
         for i = 1, #layers do 
             local uri = layers[i].uri
             if string.sub(uri, 1, 14) == "composition://" then
                 if (string.sub(uri, 15, 15) == "@") then
+                    got_child = true
                     local id = 1
                     if #uri > 15 then
                         id = tonumber(string.sub(uri, 16));
@@ -73,11 +75,12 @@ function getScenes(template)
                 else 
                     local cname = string.sub(uri, 15)
                     if comps[cname] then 
-                        local tmp_cnt, tmp_rand_cnt = countUserElements(comps[cname].layers, cname, paths, used)
+                        local tmp_cnt, tmp_rand_cnt, tmp_got_child = countUserElements(comps[cname].layers, cname, paths, used)
                         cnt = cnt + tmp_cnt
                         cnt_random = cnt_random + tmp_rand_cnt
-                        if tmp_cnt > 0 or tmp_rand_cnt > 0 then 
-                            if (paths[pname] == nil) then
+                        if tmp_got_child then 
+                            got_child = true
+                            if paths[pname] == nil then
                                 paths[pname] = {}
                             end 
                             table.insert(paths[pname], cname)
@@ -86,7 +89,7 @@ function getScenes(template)
                 end 
             end 
         end
-        return cnt, cnt_random
+        return cnt, cnt_random, got_child
     end
     for cname, comp in spairs(comps) do 
         if string.sub(cname, 1, 1) == "#" and cname ~= "#+1" and string.upper(cname) ~= "#COVER" then
