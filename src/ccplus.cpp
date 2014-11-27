@@ -47,6 +47,7 @@ void CCPlus::releaseContext(bool forceClearCache) {
         while(releasingContext)
             sleep(1);
     } else {
+        renderProgress = 0;
         releasingContext = true;
         continueRunning = false;
         waitRender();
@@ -102,14 +103,14 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
         void* writeCtx = beginFunc ? beginFunc() : 0;
         for (float i = 0; i <= duration; i += delta) {
             renderProgress = (i * 98 / duration) + 1;
+            while(continueRunning && ctx->collector->finished() < i) {
+                log(logINFO) << "wait --" << ctx->collector->finished();
+                usleep(500000);
+            }
             if (!continueRunning) {
                 renderProgress = 0;
                 log(logINFO) << "----Rendering process is terminated!---";
                 return;
-            }
-            while(ctx->collector->finished() < i) {
-                log(logINFO) << "wait --" << ctx->collector->finished();
-                usleep(500000);
             }
             ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 10 : 5);
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
