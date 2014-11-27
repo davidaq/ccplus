@@ -55,7 +55,7 @@ void ImageRenderable::prepare() {
         try {
             int degree = getImageRotation(filepath);
             if (degree == -1) {
-                log(logWARN) << "Failed getting image rotationg angle";
+                log(logWARN) << "Failed getting image's rotation angle: " << filepath;
             } else {
                 rotateCWRightAngle(degree);
             }

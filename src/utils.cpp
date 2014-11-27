@@ -6,6 +6,11 @@
 
 using namespace CCPlus;
 
+/*
+ * Followed document in http://www.media.mit.edu/pia/Research/deepview/exif.html
+ *
+ */
+
 int CCPlus::getImageRotation(const std::string& jpgpath) {
     FILE* f = fopen(jpgpath.c_str(), "rb");   
     int ret = -1;
@@ -77,6 +82,7 @@ int CCPlus::getImageRotation(const std::string& jpgpath) {
                 continue;
             } else if (!strncmp(tmp, "II", 2)) {
                 // DAMN the Intel
+                log(logWARN) << "Image is using Intel type align, it unsupported now";
                 return -1;
             }
 
@@ -116,6 +122,10 @@ int CCPlus::getImageRotation(const std::string& jpgpath) {
                     state = DONE;
                     break;
                 }
+            }
+            if (state == IFD) {
+                // Only have one chance
+                return -1;
             }
         }
         fseek(f, -1, SEEK_CUR);
