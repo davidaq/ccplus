@@ -37,7 +37,7 @@ public:
 
     bool isCompressed() const;
 
-    CCPlus::GPUFrame toGPU();
+    CCPlus::GPUFrame toGPU(bool premultiply=true) const;
 private:
     void frameCompress(std::function<void(void*, size_t, size_t)>, int quality) const;
     bool compressedFlag = false;

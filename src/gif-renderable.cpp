@@ -25,7 +25,7 @@ GPUFrame GifRenderable::getGPUFrame(float time) {
         else
             break;
     }
-    return framesCache[index].second.toGPU();
+    return framesCache[index].second.toGPU(false);
 }
 
 float GifRenderable::getDuration() {

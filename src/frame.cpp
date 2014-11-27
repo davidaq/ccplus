@@ -291,13 +291,14 @@ bool Frame::isCompressed() const {
     return compressedFlag;
 }
 
-GPUFrame Frame::toGPU() {
+GPUFrame Frame::toGPU(bool premultiply) const {
     if(isCompressed()) {
         return decompressed().toGPU();
     }
     GPUFrame ret = GPUFrameCache::alloc(image.cols, image.rows);
     ret->loadFromCPU(*this);
-    ret = ret->alphaMultiplied();
+    if(premultiply)
+        ret = ret->alphaMultiplied();
     ret->ext = ext;
     return ret;
 }
