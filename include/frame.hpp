@@ -30,7 +30,7 @@ public:
     void read(const std::string& zim);
 
     // get a resized image that has dimensions power of 2
-    void toNearestPOT(int max_size);
+    void toNearestPOT(int max_size, bool nearestInterpolate=false);
 
     Frame compressed() const;
     Frame decompressed() const;

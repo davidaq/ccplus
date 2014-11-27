@@ -236,7 +236,7 @@ void Frame::read(const std::string& zimpath) {
     readZimCompressed(fileContent);
 }
 
-void Frame::toNearestPOT(int max_size) {
+void Frame::toNearestPOT(int max_size, bool nearestInterpolate) {
     if(image.empty())
         return;
     int w = image.cols, h = image.rows;
@@ -251,7 +251,10 @@ void Frame::toNearestPOT(int max_size) {
     if(w != image.cols || h != image.rows) {
         ext.scaleAdjustX *= image.cols * 1.0f / w;
         ext.scaleAdjustY *= image.rows * 1.0f / h;
-        cv::resize(image, image, {w, h});
+        if(nearestInterpolate)
+            cv::resize(image, image, {w, h}, cv::INTER_NEAREST);
+        else
+            cv::resize(image, image, {w, h});
     }
 }
 

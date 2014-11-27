@@ -140,8 +140,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                     if(!ret.image.empty())
                         cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-
-                    ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512);
+                    ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderable == PREVIEW_MODE);
                     if(ret.image.cols * ret.image.rows > 100000)
                         framesCache[f] = ret.compressed();
                     else
