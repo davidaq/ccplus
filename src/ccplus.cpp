@@ -109,9 +109,9 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             }
             while(ctx->collector->finished() < i) {
                 log(logINFO) << "wait --" << ctx->collector->finished();
-                ctx->collector->signal.wait();
+                usleep(500000);
             }
-            ctx->collector->limit = i + 5;
+            ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 10 : 5);
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             if(writeFuc)
                 writeFuc(frame->toCPU(), fn++, writeCtx);
@@ -219,7 +219,6 @@ void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& 
     setOutputPath(outputPath);
     for (int i = 0; i < size; i++) {
         initContext(generatePath(dir, "COVER" + toString(i) + ".tml"));
-        //, outputPath, 18);
         render();
         waitRender();
         releaseContext();
