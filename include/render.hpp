@@ -12,7 +12,8 @@ namespace CCPlus {
         BLEND_MODE_COUNT
     };
     // Merge frames using blendmode, audio will also be mixed
-    CCPlus::GPUFrame mergeFrame(CCPlus::GPUFrame bottom,
+    // Use `blend` instead if possible
+    CCPlus::GPUFrame shaderBlend(CCPlus::GPUFrame bottom,
             CCPlus::GPUFrame top, CCPlus::BlendMode blendmode);
 
     enum TrackMatteMode {
@@ -26,6 +27,10 @@ namespace CCPlus {
             CCPlus::GPUFrame alpha, CCPlus::TrackMatteMode);
 
     CCPlus::GPUFrame blendUsingProgram(GLuint, const GPUFrame&, const GPUFrame& top);
+    
+    // Use native blend if possible, fall back to shaderBlend
+    // bind dst fbo before using this
+    void blend(CCPlus::GPUFrame& dst, const CCPlus::GPUFrame& src, CCPlus::BlendMode blendMode);
 
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();

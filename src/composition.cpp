@@ -3,6 +3,7 @@
 #include "render.hpp"
 #include "gpu-frame.hpp"
 #include "context.hpp"
+#include "glprogram-manager.hpp"
 
 using namespace CCPlus;
 
@@ -76,8 +77,7 @@ GPUFrame Composition::getGPUFrame(float time) {
         Layer& l = layers[i];
         if(!l.show || !l.visible(time))
             continue;
-        GPUFrame cframe = frames[i];
-        ret = mergeFrame(ret, cframe, (BlendMode)l.blendMode);
+        blend(ret, frames[i], (BlendMode)l.blendMode);
     }
     delete[] frames;
     ret->ext.scaleAdjustX = scaleAdjustX;

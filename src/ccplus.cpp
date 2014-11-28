@@ -88,8 +88,9 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     }
     continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([beginFunc, writeFuc, finishFunc] () {
+        renderMode = PREVIEW_MODE;
         Context* ctx = Context::getContext();
-        ctx->collector->limit = 10;
+        ctx->collector->limit = 5;
         ctx->collector->prepare();
         void* glCtx = createGLContext();
         initGL();
@@ -112,7 +113,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
                 log(logINFO) << "----Rendering process is terminated!---";
                 return;
             }
-            ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 10 : 5);
+            ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
             GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
             if(writeFuc)
                 writeFuc(frame->toCPU(), fn++, writeCtx);

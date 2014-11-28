@@ -82,6 +82,10 @@ TEST(Filter, RampRadial) {
 }
 
 TEST(Filter, HSL) {
+    cv::Mat x(100, 100, CV_8UC4, cv::Scalar(255,255,255,255));
+    imwrite("tmp/white.png", x);
+    imwrite("tmp/hsl_white.png", testFilter("tmp/white.png", "hsl",
+                {0, 0.5, 1}, 640, 852).image);
     imwrite("tmp/hsl.png", testFilter("test/res/test2.jpg", "hsl",
                 {135, 1.1, 1.5}, 640, 852).image);
     imwrite("tmp/hsl2.png", testFilter("test/res/test2.jpg", "hsl",

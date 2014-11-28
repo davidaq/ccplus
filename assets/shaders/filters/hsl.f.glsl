@@ -34,9 +34,7 @@ vec3 convertRGBtoHSL( vec3 col )
 
     mediump vec3 masks = vec3(
         (maxc == red   && maxc != green) ? 1.0 : 0.0,
-        (maxc == green && maxc != blue)  ? 1.0 : 0.0,
-        (maxc == blue  && maxc != red)   ? 1.0 : 0.0
-    );
+        (maxc == green && maxc != blue)  ? 1.0 : 0.0, (maxc == blue  && maxc != red)   ? 1.0 : 0.0);
 
     mediump vec3 adds = vec3(
               ((green - blue ) / delta),
@@ -59,44 +57,48 @@ vec3 convertRGBtoHSL( vec3 col )
 // HSL [0:1] to RGB [0:1]
 vec3 convertHSLtoRGB( vec3 col )
 {
-    const mediump float onethird = 1.0 / 3.0;
-    const mediump float twothird = 2.0 / 3.0;
-    const mediump float rcpsixth = 6.0;
+    vec3 rgb;
+    if(col.g < 0.001) {
+        rgb = vec3(col.b);
+    } else {
+        const mediump float onethird = 1.0 / 3.0;
+        const mediump float twothird = 2.0 / 3.0;
+        const mediump float rcpsixth = 6.0;
 
-    mediump float hue = col.x;
-    mediump float sat = col.y;
-    mediump float lum = col.z;
+        mediump float hue = col.x;
+        mediump float sat = col.y;
+        mediump float lum = col.z;
 
-    mediump vec3 xt = vec3(
-        rcpsixth * (hue - twothird),
-        0.0,
-        rcpsixth * (1.0 - hue)
-    );
+        mediump vec3 xt = vec3(
+            rcpsixth * (hue - twothird),
+            0.0,
+            rcpsixth * (1.0 - hue)
+        );
 
-    if (hue < twothird) {
-        xt.r = 0.0;
-        xt.g = rcpsixth * (twothird - hue);
-        xt.b = rcpsixth * (hue      - onethird);
-    } 
+        if (hue < twothird) {
+            xt.r = 0.0;
+            xt.g = rcpsixth * (twothird - hue);
+            xt.b = rcpsixth * (hue      - onethird);
+        } 
 
-    if (hue < onethird) {
-        xt.r = rcpsixth * (onethird - hue);
-        xt.g = rcpsixth * hue;
-        xt.b = 0.0;
+        if (hue < onethird) {
+            xt.r = rcpsixth * (onethird - hue);
+            xt.g = rcpsixth * hue;
+            xt.b = 0.0;
+        }
+
+        xt = min( xt, 1.0 );
+
+        mediump float sat2   =  2.0 * sat;
+        mediump float satinv =  1.0 - sat;
+        mediump float luminv =  1.0 - lum;
+        mediump float lum2m1 = (2.0 * lum) - 1.0;
+        mediump vec3  ct     = (sat2 * xt) + satinv;
+
+        if (lum >= 0.5)
+             rgb = (luminv * ct) + lum2m1;
+        else rgb =  lum    * ct;
     }
-
-    xt = min( xt, 1.0 );
-
-    mediump float sat2   =  2.0 * sat;
-    mediump float satinv =  1.0 - sat;
-    mediump float luminv =  1.0 - lum;
-    mediump float lum2m1 = (2.0 * lum) - 1.0;
-    mediump vec3  ct     = (sat2 * xt) + satinv;
-
-    mediump vec3 rgb;
-    if (lum >= 0.5)
-         rgb = (luminv * ct) + lum2m1;
-    else rgb =  lum    * ct;
 
     return rgb;
 }

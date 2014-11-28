@@ -12,7 +12,7 @@ void* CCPlus::createGLContext() {
 }
 
 void CCPlus::destroyGLContext(void*) {
-    [EAGLContext setCurrentContext:nil];
+    //[EAGLContext setCurrentContext:nil];
 }
 
 #endif
