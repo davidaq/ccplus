@@ -38,7 +38,7 @@ static inline std::string P(const std::string& p) {
 }
 
 static inline Frame testMerge(GPUFrame a, GPUFrame b, BlendMode mode) {
-    return shaderBlend(a, b, mode)->toCPU();
+    return mergeFrame(a, b, mode)->toCPU();
 }
 
 static inline Frame testTrkMat(GPUFrame a, GPUFrame b, TrackMatteMode mode) {

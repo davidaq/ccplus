@@ -95,7 +95,7 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     return frame;
 }
 
-GPUFrame CCPlus::shaderBlend(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
+GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
         manager->getProgram((GLProgram)(blend_default + blendmode - DEFAULT))
@@ -138,60 +138,4 @@ void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
     glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, fv);
     glDrawArrays(GL_TRIANGLES, 0, sz / 2);
     delete [] fv;
-}
-
-typedef void (*VoidFunc)(void);
-#define UNDEFINED 0xffffff
-struct BlendMethod {
-    GLenum srcColor = UNDEFINED;
-    GLenum dstColor = UNDEFINED;
-    GLenum srcAlpha = UNDEFINED;
-    GLenum dstAlpha = UNDEFINED;
-};
-
-BlendMethod *blendMethods = 0;
-
-void CCPlus::blend(GPUFrame& dst, const GPUFrame& texture, BlendMode blendMode) {
-    if(!texture)
-        return;
-    // setup blend functions
-    if(!blendMethods) {
-        blendMethods = new BlendMethod[BLEND_MODE_COUNT];
-        blendMethods[NONE] = BlendMethod {
-            .srcColor = GL_ONE,
-            .dstColor = GL_ZERO,
-        };
-        blendMethods[DEFAULT] = BlendMethod {
-            .srcColor = GL_ONE,
-            .dstColor = GL_ONE_MINUS_SRC_ALPHA,
-        };
-        blendMethods[ADD] = BlendMethod {
-            .srcColor = GL_ONE,
-            .srcAlpha = GL_ONE,
-            .dstColor = GL_ONE,
-            .dstAlpha = GL_ONE_MINUS_SRC_ALPHA,
-        };
-        blendMethods[SCREEN] = BlendMethod {
-            .srcColor = GL_ONE,
-            .dstColor = GL_ONE_MINUS_SRC_COLOR,
-        };
-    }
-    
-    BlendMethod& method = blendMethods[blendMode];
-    if(method.srcColor == UNDEFINED) {
-        dst = shaderBlend(dst, texture, blendMode);
-    } else {
-        GLuint program = GLProgramManager::getManager()->getProgram(plainfill);
-        glUseProgram(program);
-        glEnable(GL_BLEND);
-        if(method.srcAlpha == UNDEFINED) {
-            glBlendFunc(method.srcColor, method.dstColor);
-        } else {
-            glBlendFuncSeparate(method.srcColor, method.dstColor, method.srcAlpha, method.dstAlpha);
-        }
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture->textureID);
-        fillSprite();
-        glDisable(GL_BLEND);
-    }
 }

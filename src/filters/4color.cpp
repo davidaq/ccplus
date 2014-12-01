@@ -93,5 +93,5 @@ CCPLUS_FILTER(4color) {
     }
     fillSprite();
 
-    return shaderBlend(frame, tmp_frame, (BlendMode)mode);
+    return mergeFrame(frame, tmp_frame, (BlendMode)mode);
 }
