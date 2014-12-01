@@ -39,7 +39,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
 
     for (auto& child: pt.get_child("layers")) {
         auto& t = child.second;
-        Layer compLayer = initLayer(t, comp->width, comp->height, name[0] == '@');
+        Layer compLayer = initLayer(t, comp->width, comp->height);
         comp->appendLayer(compLayer);
     }
 
@@ -62,7 +62,7 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
 }
 
 std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
-Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height, bool preserved) const {
+Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
@@ -134,14 +134,8 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             log(logWARN) << "Ignore unkwown footage type " << uri;
         }
         if(renderable) {
-            //Context::getContext()->retain(renderable);
-            //Context::getContext()->putRenderable(uri, renderable);
-            if (preserved && renderMode == PREVIEW_MODE) {
-                Context::getContext()->putPreservedRenderable(uri, renderable);
-            } else {
-                Context::getContext()->retain(renderable);
-                Context::getContext()->putRenderable(uri, renderable);
-            }
+            Context::getContext()->retain(renderable);
+            Context::getContext()->putRenderable(uri, renderable);
         }
     }
     int blendMode = pt.get("blend", 0);

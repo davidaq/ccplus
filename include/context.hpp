@@ -12,12 +12,10 @@ public:
     std::string getStoragePath(const std::string& relativePath);
     bool hasRenderable(const std::string& uri);
     void putRenderable(const std::string& uri, Renderable* renderable);
-    void putPreservedRenderable(const std::string& uri, Renderable* renderable);
     Renderable* getRenderable(const std::string& uri);
 
     std::string tmlDir = "";
     std::map<std::string, Renderable*> renderables;
-    std::map<std::string, Renderable*> preservedRenderable;
 
     Composition* mainComposition;
     FootageCollector* collector = nullptr;

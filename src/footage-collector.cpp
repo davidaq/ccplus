@@ -85,14 +85,9 @@ void FootageCollector::prepare() {
     dep.walkThrough();
 
     auto& renderables = Context::getContext()->renderables;
-    auto& preservedRenderable = Context::getContext()->preservedRenderable;
-    sortedList = new Renderable*[renderables.size() + preservedRenderable.size() + 2];
+    sortedList = new Renderable*[renderables.size() + 2];
     sortedListPtr = 0;
     for(auto ite : renderables) {
-        if(ite.second && ite.second != main)
-            sortedList[sortedListPtr++] = ite.second;
-    }
-    for(auto ite : preservedRenderable) {
         if(ite.second && ite.second != main)
             sortedList[sortedListPtr++] = ite.second;
     }

@@ -39,12 +39,6 @@ void Context::end() {
         collector = nullptr;
     }
     renderables.clear();
-    for (auto& kv : preservedRenderable) {
-        ImageRenderable* image = dynamic_cast<ImageRenderable*>(kv.second);
-        if (image) {
-            image->releaseGPUCache();
-        }
-    }
     deleteRetained();
     GPUFrameCache::clear();
     GLProgramManager::getManager()->clean();
@@ -60,12 +54,7 @@ std::string Context::getFootagePath(const std::string& relativePath) {
 }
 
 bool Context::hasRenderable(const std::string& uri) {
-    return renderables.count(uri) || preservedRenderable.count(uri);
-}
-
-void Context::putPreservedRenderable(const std::string& uri, Renderable* renderable) {
-    preservedRenderable[uri] = renderable;
-    renderable->isPreserved = true;
+    return renderables.count(uri);
 }
 
 void Context::putRenderable(const std::string& uri, Renderable* renderable) {
@@ -73,8 +62,6 @@ void Context::putRenderable(const std::string& uri, Renderable* renderable) {
 }
 
 Renderable* Context::getRenderable(const std::string& uri) {
-    if (preservedRenderable.count(uri))
-        return preservedRenderable[uri];
     return renderables[uri];
 }
 

@@ -63,10 +63,7 @@ void CCPlus::releaseContext(bool forceClearCache) {
                 sleep(1);
         } else {
             releasingContext = true;
-            for (auto& kv : ctx->preservedRenderable) {
-                delete kv.second;
-            }
-            ctx->preservedRenderable.clear();
+            // Do something
             releasingContext = false;
         }
     }

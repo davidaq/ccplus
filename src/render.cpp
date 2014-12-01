@@ -104,6 +104,9 @@ GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) 
 }
 
 GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode) {
+    if (!color && !alpha) {
+        return GPUFrame();
+    }
     if (!alpha) {
         alpha = GPUFrameCache::alloc(color->width, color->height);
         glClearColor(0, 0, 0, 0);
