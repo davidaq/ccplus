@@ -263,14 +263,20 @@ function fit(comps, scenes)
             last_scene = scenes[i]
         end
     end
-    if last_scene and last_scene.num_rand_ele <= #comps and last_scene.num_ele <= #comps then
+    local image_comps = {}
+    for i = 1, #comps do 
+        if comps[i].type ~= "video" then
+            table.insert(image_comps, comps[i])
+        end
+    end
+    if last_scene and last_scene.num_rand_ele <= #image_comps and last_scene.num_ele <= #image_comps then
         local tmp = {}
         for i = 1, last_scene.num_ele do
-            table.insert(tmp, comps[i].name)
+            table.insert(tmp, image_comps[i].name)
         end
         local rand_tmp = {}
         for i = 1, last_scene.num_rand_ele do
-            table.insert(rand_tmp, comps[i].name)
+            table.insert(rand_tmp, image_comps[i].name)
         end
         table.insert(ret, {
             name= last_scene.name, 
