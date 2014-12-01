@@ -88,7 +88,6 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     }
     continueRunning = true;
     render_thread = ParallelExecutor::runInNewThread([beginFunc, writeFuc, finishFunc] () {
-        renderMode = PREVIEW_MODE;
         Context* ctx = Context::getContext();
         ctx->collector->limit = 5;
         ctx->collector->prepare();
