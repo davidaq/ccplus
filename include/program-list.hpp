@@ -7,10 +7,6 @@
 #define SET_UNIFORM(NAME, VALUE) glUniform1i(glGetUniformLocation(program, #NAME), VALUE)
 #define CACHE_UNIFORM(NAME) uniforms.push_back(glGetUniformLocation(program, #NAME))
 
-// Plain Draw
-CCPLUS_PROGRAM( plainfill, "shaders/fill.v.glsl", "shaders/plain.f.glsl", SETUP_FUNC_DECL {
-    SET_UNIFORM(tex, 0);
-})
 
 // Blend mode programs
 #define BLEND_PROGRAM(X) CCPLUS_PROGRAM(blend_ ## X, "shaders/fill.v.glsl", "shaders/blenders/" #X ".f.glsl", \
@@ -37,7 +33,7 @@ TRKMTE_PROGRAM( luma_inv )
 #undef TRKMTE_PROGRAM
 
 // Filter programs
-CCPLUS_PROGRAM( filter_transform, "shaders/filters/transform.v.glsl", "shaders/plain.f.glsl", SETUP_FUNC_DECL {
+CCPLUS_PROGRAM( filter_transform, "shaders/filters/transform.v.glsl", "shaders/filters/transform.f.glsl", SETUP_FUNC_DECL {
     SET_UNIFORM(tex, 0);
     CACHE_UNIFORM(trans);
     CACHE_UNIFORM(src_dst_size);
@@ -66,7 +62,7 @@ CCPLUS_PROGRAM( filter_hsl, "shaders/fill.v.glsl", "shaders/filters/hsl.f.glsl",
     CACHE_UNIFORM(lit);
 })
 
-CCPLUS_PROGRAM( filter_mask, "shaders/fill.v.glsl", "shaders/plain.f.glsl", SETUP_FUNC_DECL {
+CCPLUS_PROGRAM( filter_mask, "shaders/fill.v.glsl", "shaders/filters/mask.f.glsl", SETUP_FUNC_DECL {
     SET_UNIFORM(tex, 0);
 })
 
