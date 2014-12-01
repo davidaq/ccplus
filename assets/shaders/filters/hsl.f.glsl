@@ -7,8 +7,8 @@ uniform float lit; // 0 ~ 2.0
 
 vec3 HUEtoRGB(float H) {
     float R = clamp(abs(H * 6.0 - 3.0) - 1.0, 0.0, 1.0);
-    float G = clamp(2 - abs(H * 6.0 - 2.0), 0.0, 1.0);
-    float B = clamp(2 - abs(H * 6.0 - 4.0), 0.0, 1.0);
+    float G = clamp(2.0 - abs(H * 6.0 - 2.0), 0.0, 1.0);
+    float B = clamp(2.0 - abs(H * 6.0 - 4.0), 0.0, 1.0);
     return vec3(R,G,B);
 }
 
