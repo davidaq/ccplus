@@ -190,6 +190,12 @@ end
 function fit(comps, scenes) 
     local idx = 1
     local ret = {}
+    local image_comps = {}
+    for i = 1, #comps do 
+        if comps[i].type ~= "video" then
+            table.insert(image_comps, comps[i])
+        end
+    end
     local preferredDuration = 6.0
     function sortScenes(s, eval)
         for i=1, #s do 
@@ -244,7 +250,11 @@ function fit(comps, scenes)
             --    table.insert(tmp.matched_rand_comps, comps[tmp_i].name)
             --    rand[tmp_i] = true
             --end
-            table.insert(tmp.matched_rand_comps, comps[math.random(#comps)].name)
+            if #image_comps > 0 then
+                table.insert(tmp.matched_rand_comps, comps[math.random(#image_comps)].name)
+            else 
+                table.insert(tmp.matched_rand_comps, comps[math.random(#comps)].name)
+            end
         end 
         idx = idx + scene.num_ele 
         scene.used = scene.used + 1
@@ -261,12 +271,6 @@ function fit(comps, scenes)
     for i = 1, #scenes do
         if scenes[i].name == "#LAST" then
             last_scene = scenes[i]
-        end
-    end
-    local image_comps = {}
-    for i = 1, #comps do 
-        if comps[i].type ~= "video" then
-            table.insert(image_comps, comps[i])
         end
     end
     if last_scene and last_scene.num_rand_ele <= #image_comps and last_scene.num_ele <= #image_comps then
