@@ -24,8 +24,8 @@ private:
     bool audioOnly;
     void preparePart(float start, float duration);
     int time2frame(float time);
+    bool useSlowerCompress = false;
 
-    std::string uri;
     VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::Frame> framesCache;
     std::map<int, int> frameRefer;

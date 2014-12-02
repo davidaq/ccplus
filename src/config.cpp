@@ -6,8 +6,8 @@ using namespace CCPlus;
 
 std::string CCPlus::assetsPath          = "assets";
 std::string CCPlus::outputPath          = "tmp";
-int CCPlus::audioSampleRate             = 32000;
-int CCPlus::collectorThreadsNumber      = 3;
+int CCPlus::audioSampleRate             = 44100;
+int CCPlus::collectorThreadsNumber      = 2;
 int CCPlus::frameRate                   = 18;
 int CCPlus::renderMode                  = FINAL_MODE;
 

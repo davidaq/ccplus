@@ -147,7 +147,7 @@ function generateResourcesComp(userinfo)
         if type(md.w) == "string" then md.w = tonumber(md.w) end
         if type(md.h) == "string" then md.h = tonumber(md.h) end
         local l = {
-            uri= "file://" .. md.filename,
+            uri= "xfile://" .. md.filename,
             time= 0,
             duration= comp.duration,
             start= start,

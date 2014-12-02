@@ -66,7 +66,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
-        if (stringStartsWith(uri, "file://")) {
+        if (stringStartsWith(uri, "xfile://") || stringStartsWith(uri, "file://")) {
             if(!_extMap)
                 _extMap = new std::map<std::string, std::function<Renderable*(const std::string&)> >();
             std::map<std::string, std::function<Renderable*(const std::string&)> >& extMap = *_extMap;

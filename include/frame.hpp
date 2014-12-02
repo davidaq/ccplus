@@ -32,7 +32,7 @@ public:
     // get a resized image that has dimensions power of 2
     void toNearestPOT(int max_size, bool nearestInterpolate=false);
 
-    Frame compressed() const;
+    Frame compressed(bool slower=false) const;
     Frame decompressed() const;
 
     bool isCompressed() const;
@@ -41,5 +41,6 @@ public:
 private:
     void frameCompress(std::function<void(void*, size_t, size_t)>, int quality) const;
     bool compressedFlag = false;
+    bool zimCompressedFlag = false;
     int expectedWidth, expectedHeight;
 };

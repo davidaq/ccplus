@@ -8,10 +8,11 @@
 
 using namespace CCPlus;
 
-VideoRenderable::VideoRenderable(const std::string& _uri, bool _audioOnly) :
-    audioOnly(_audioOnly),
-    uri(_uri)
+VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
+    audioOnly(_audioOnly)
 {
+    if(uri[0] == 'x')
+        useSlowerCompress = true;
     std::string path = parseUri2File(uri);
     alpha_decoder = 0;
     if(audioOnly) {
@@ -141,10 +142,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                         cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
                     ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderMode == PREVIEW_MODE);
-                    if(ret.image.cols * ret.image.rows > 100000)
-                        framesCache[f] = ret.compressed();
-                    else
-                        framesCache[f] = ret;
+                    framesCache[f] = ret.compressed(useSlowerCompress);
                     lastFrame = f;
                 }
 
@@ -193,6 +191,8 @@ float VideoRenderable::getDuration() {
         if(duration < oduration && oduration - duration < oduration * 0.1)
             duration = oduration;
     }
-    return decoder->getVideoInfo().duration;
+    if(decoder)
+        return decoder->getVideoInfo().duration;
+    return 9999999;
 }
 

@@ -11,6 +11,14 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+#ifdef TRACE_RAM_USAGE
+#include <mach/mach.h>
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h> 
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+#endif
+
 using namespace CCPlus;
 
 pthread_t render_thread = 0;
@@ -115,6 +123,17 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
                 writeFuc(frame->toCPU(), fn++, writeCtx);
             if(fn & 1) {
                 log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
+                
+#ifdef TRACE_RAM_USAGE
+                struct task_basic_info t_info;
+                mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+                if (KERN_SUCCESS != task_info(mach_task_self(),
+                    TASK_BASIC_INFO, (task_info_t)&t_info, 
+                    &t_info_count)) {
+                } else
+                    L() << "RAM used:" << (int64_t)t_info.resident_size;
+#endif
+
                 for(auto item = ctx->renderables.begin();
                         item != ctx->renderables.end(); ) {
                     Renderable* r = item->second;

@@ -21,6 +21,8 @@ float Renderable::getDuration() {
 std::string Renderable::parseUri2File(std::string uri) {
     if(stringStartsWith(uri, "file://")) {
         uri = uri.substr(7);
+    } else if(stringStartsWith(uri, "xfile://")) {
+        uri = uri.substr(8);
     }
     return Context::getContext()->getFootagePath(uri);
 }
