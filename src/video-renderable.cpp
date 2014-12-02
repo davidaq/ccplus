@@ -162,7 +162,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 if (!framesCache.count(f)) {
                     Frame ret;
                     ret.ext.audio = subAudio(audios, f);
-                    framesCache[f]= ret;
+                    framesCache[f] = ret;
                     lastFrame = f;
                 }
             }    
