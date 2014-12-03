@@ -61,11 +61,15 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
     for(;frameRefer.count(frameNum);) {
         frameNum = frameRefer[frameNum];
     }
+    if(lastFrame && frameNum == lastFrameNum)
+        return lastFrame;
+    lastFrameNum = frameNum;
     if(framesCache.count(frameNum)) {
-        return framesCache[frameNum].toGPU(false);
+        lastFrame = framesCache[frameNum].toGPU(false);
     } else {
-        return GPUFrame();
+        lastFrame = GPUFrame();
     }
+    return lastFrame;
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
@@ -106,7 +110,8 @@ void VideoRenderable::preparePart(float start, float duration) {
             }
         };
 
-        // Video
+        bool dropFrame = false;
+        // video
         if(!audioOnly) {
             decoder->seekTo(start);
             if(alpha_decoder)
@@ -117,35 +122,36 @@ void VideoRenderable::preparePart(float start, float duration) {
                     gap = (pos - start) / 3;
                 int f = time2frame(pos);
 
-                // Make up lost frames
+                // make up lost frames
                 makeup_frames(f, lastFrame);
                 
-                // Assume alpha channel video is synchronized with color channel video
+                // assume alpha channel video is synchronized with color channel video
                 if(alpha_decoder)
                     alpha_decoder->decodeImage();
                 if (!framesCache.count(f)) {
-                    Frame ret = decoder->getDecodedImage();
-                    if(alpha_decoder) {
-                        Frame opac = alpha_decoder->getDecodedImage();
-                        unsigned char* opacData = opac.image.data;
-                        unsigned char* frameData = ret.image.data;
-                        if(opac.image.cols == ret.image.cols &&
-                                opac.image.rows == ret.image.rows) {
-                            for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
-                                frameData[i] = opacData[i - 1];
+                    if(renderMode == FINAL_MODE || (dropFrame = !dropFrame)) {
+                        Frame ret = decoder->getDecodedImage();
+                        if(alpha_decoder) {
+                            Frame opac = alpha_decoder->getDecodedImage();
+                            unsigned char* opacData = opac.image.data;
+                            unsigned char* frameData = ret.image.data;
+                            if(opac.image.cols == ret.image.cols &&
+                                    opac.image.rows == ret.image.rows) {
+                                for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
+                                    frameData[i] = opacData[i - 1];
+                                }
                             }
                         }
-                    }
-                    ret.ext.audio = subAudio(audios, f);
+                        ret.ext.audio = subAudio(audios, f);
 #ifdef __ANDROID__
-                    if(!ret.image.empty())
-                        cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
+                        if(!ret.image.empty())
+                            cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
 #endif
-                    ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderMode == PREVIEW_MODE);
-                    framesCache[f] = ret.compressed(useSlowerCompress);
-                    lastFrame = f;
+                        ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderMode == PREVIEW_MODE);
+                        framesCache[f] = ret.compressed(useSlowerCompress);
+                        lastFrame = f;
+                    }
                 }
-
                 if(pos - start + gap > duration) {
                     break;
                 }
