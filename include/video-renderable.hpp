@@ -29,4 +29,6 @@ private:
     VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::Frame> framesCache;
     std::map<int, int> frameRefer;
+    CCPlus::GPUFrame lastFrame;
+    int lastFrameNum = 0;
 };
