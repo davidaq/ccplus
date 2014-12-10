@@ -408,7 +408,8 @@ function mapProperty(options) {
     });
     try {
         log('starting....');
-        new Export().exportTo(app.project.file.fullName + '.tml');
+        //new Export().exportTo(app.project.file.fullName + '.tml');
+        new Export().exportTo('tpl.tml');
     } catch (e) {
         alert(e);
     }
