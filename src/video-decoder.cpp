@@ -2,7 +2,6 @@
 #include "video-decoder.hpp"
 #include "global.hpp"
 #include "utils.hpp"
-#include <stdlib.h>
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define __STDC_FORMAT_MACROS
@@ -56,14 +55,12 @@ VideoDecoder::~VideoDecoder() {
 
 VideoInfo VideoDecoder::getVideoInfo() {
     initContext();
-    if(invalid) return VideoInfo();
     return decodeContext->info;
 }
 
 void VideoDecoder::seekTo(float time) {
     if (decoderFlag & DECODE_VIDEO) {
         initContext();
-        if(invalid) return;
         cursorTime = time;
         time -= 1;
         if(time < 1) {
@@ -75,32 +72,25 @@ void VideoDecoder::seekTo(float time) {
 
 bool VideoDecoder::readNextFrameIfNeeded() {
     initContext();
-    if(invalid) return false;
     if(decodeContext->haveCurrentPkt)
         return true;
-    int avRet = av_read_frame(decodeContext->fmt_ctx, &(decodeContext->pkt));
-    if(avRet == AVERROR(EAGAIN)) {
-        usleep(10000);
-        return readNextFrameIfNeeded();
-    } else if(avRet < 0) {
-        return false;
+    if(av_read_frame(decodeContext->fmt_ctx, &(decodeContext->pkt)) >= 0) {
+        decodeContext->currentPkt = decodeContext->pkt;
+        decodeContext->haveCurrentPkt = true;
+        return true;
     }
-    decodeContext->currentPkt = decodeContext->pkt;
-    decodeContext->haveCurrentPkt = true;
-    return true;
+    return false;
 }
 
 float VideoDecoder::decodeImage() {
-    bool prevHaveDecodedeImageState = haveDecodedImage;
     haveDecodedImage = false;
     if(decodedImage)
         delete decodedImage;
     decodedImage = 0;
     float retTime = -1;
-    int brutal = 10;
-    while(!haveDecodedImage && brutal > 0) {
+    while(!haveDecodedImage) {
         if(!readNextFrameIfNeeded())
-            brutal--;
+            return -1;
         if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
             int gotFrame = 0;
             int ret = avcodec_decode_video2(decodeContext->video_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
@@ -126,9 +116,6 @@ float VideoDecoder::decodeImage() {
             av_free_packet(&(decodeContext->currentPkt));
             decodeContext->haveCurrentPkt = false;
         }
-    }
-    if(brutal <= 0) {
-        return -1;
     }
     cursorTime = retTime;
     return retTime;
@@ -163,8 +150,7 @@ Frame VideoDecoder::getDecodedImage() {
                 flip(data, data, 0); 
             }
         }
-        decodedImage = new Frame();
-        decodedImage->image = data;
+        decodedImage = new Frame(data);
     }
     return *decodedImage;
 }
@@ -192,7 +178,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
                 av_opt_set_sample_fmt(decodeContext->swrContext, "in_sample_fmt", dec->sample_fmt, 0);
 
                 av_opt_set_int(decodeContext->swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-                av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::audioSampleRate, 0);
+                av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
                 av_opt_set_sample_fmt(decodeContext->swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
                 if(swr_init(decodeContext->swrContext) < 0) {
@@ -201,7 +187,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
                 }
             }
             int dst_nb_samples = av_rescale_rnd(0
-                    + decodeContext->frame->nb_samples, CCPlus::audioSampleRate, dec->sample_rate, AV_ROUND_UP);
+                    + decodeContext->frame->nb_samples, CCPlus::AUDIO_SAMPLE_RATE, dec->sample_rate, AV_ROUND_UP);
             if(dst_nb_samples > decodeContext->swrDestSamples) {
                 decodeContext->swrDestSamples = dst_nb_samples;
                 int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);
@@ -249,7 +235,6 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
         return;
     }
     initContext();
-    if(invalid) return;
     FILE* destFile = fopen(outputFile.c_str(), "wb");
     if(!destFile)
         return;
@@ -301,12 +286,12 @@ static int open_codec_context(int *stream_idx,
         dec_ctx = st->codec;
         dec = avcodec_find_decoder(dec_ctx->codec_id);
         if (!dec) {
-            log(logERROR) << "Failed to find codec " << av_get_media_type_string(type);
+            log(logERROR) << "Failed to find %s codec " << av_get_media_type_string(type);
             return AVERROR(EINVAL);
         }
 
         if ((ret = avcodec_open2(dec_ctx, dec, &opts)) < 0) {
-            log(logERROR) << "Failed to open codec " << av_get_media_type_string(type);
+            log(logERROR) << "Failed to open %s codec " << av_get_media_type_string(type);
             return ret;
         }
     }
@@ -322,7 +307,6 @@ void VideoDecoder::initContext() {
     if(!avregistered) {
         avregistered = true;
         av_register_all();
-        sleep(1);
     }
     if(avformat_open_input(&(decodeContext->fmt_ctx), inputFile.c_str(), NULL, NULL) < 0) {
         log(logERROR) << "Faild to open decode context for: " << inputFile;
@@ -380,11 +364,9 @@ void VideoDecoder::initContext() {
     av_init_packet(&(decodeContext->pkt));
     decodeContext->pkt.data = NULL;
     decodeContext->pkt.size = 0;
-    invalid = false;
 }
 
 void VideoDecoder::releaseContext() {
-    invalid = true;
     if(!decodeContext)
         return;
     if(decodeContext->video_dec_ctx)

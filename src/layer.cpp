@@ -1,13 +1,5 @@
 #include "layer.hpp"
-
-#include "context.hpp"
-#include "gpu-frame.hpp"
-#include "renderable.hpp"
-#include "composition.hpp"
-#include "render.hpp"
 #include "filter.hpp"
-
-#include "image-renderable.hpp"
 
 using namespace CCPlus;
 
@@ -15,38 +7,57 @@ Layer::Layer() {}
 
 
 Layer::Layer(
+    Context* ctx,
     const std::string& _renderableUri, 
     float _time, 
     float _duration, 
     float _start, 
     float _last,
-    float _width,
-    float _height,
+    int _width,
+    int _height,
     int _blendMode,
     int _trkMat,
     bool _showup
 ) :
+    context(ctx),
+    renderableUri(_renderableUri),
+    renderObject(0),
     time(_time),
     duration(_duration),
     start(_start),
     last(_last),
+    width(_width),
+    height(_height), 
     blendMode(_blendMode),
     trkMat(_trkMat),
-    show(_showup),
-    renderableUri(_renderableUri),
-    width(_width),
-    height(_height)
+    showup(_showup)
 {
 }
 
 Renderable* Layer::getRenderObject() {
     if(!renderObject)
-        renderObject = Context::getContext()->getRenderable(renderableUri);
+        renderObject = context->getRenderable(renderableUri);
     return renderObject;
 }
 
+float Layer::getTime() const {
+    return time;
+}
+
+float Layer::getDuration() const {
+    return duration;
+}
+
+float Layer::getStart() const {
+    return start;
+}
+
+float Layer::getLast() const {
+    return last;
+}
+
 bool Layer::visible(float t) const {
-    if (t < this->time || t > this->duration + this->time) 
+    if (t < this->getTime() || t > this->getDuration() + this->getTime()) 
         return false;
     return true;
 }
@@ -54,13 +65,18 @@ bool Layer::visible(float t) const {
 void Layer::setProperties(const std::map<std::string, Property>& prop, 
         const std::vector<std::string>& keyOrder) {
     this->orderedKey = keyOrder;
-    this->properties = prop;
+    properties = prop;
+}
+
+void Layer::setProperties(const std::map<std::string, Property>& prop) {
+    properties = prop;
 }
 
 const std::map<std::string, Property>& Layer::getProperties() const {
     return properties;
 }
 
+// TODO: binary search needed here
 std::vector<float> Layer::interpolate(const std::string& name, float time) const {
     std::vector<float> ret;
     if (properties.find(name) == properties.end()) {
@@ -91,7 +107,7 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
         }
     }
     if (low == nullptr || high == nullptr) {
-        log(logWARN) << "Parameter for " << name << " are not interpolatable at time " << time;
+        log(logWARN) << "Parametere for " << name << " are not interpolatable at time " << time;
         return ret;
     }
 
@@ -107,15 +123,21 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-GPUFrame Layer::getFilteredFrame(float t) {
-    if (!visible(t) || !getRenderObject())
-        return GPUFrame();
+Frame Layer::applyFiltersToFrame(float t) {
+    if (!visible(t)) 
+        return Frame();
+
+    // Calculate corresponding local time
     float local_t = mapInnerTime(t);
-    GPUFrame frame = getRenderObject()->getWrapedGPUFrame(local_t);
-    if(frame) {
+    Frame frame = this->getRenderObject()->getFrame(local_t);
+    if (orderedKey.empty()) {
+        for (auto& kv : properties) {
+            Filter(kv.first).apply(
+                    frame, interpolate(kv.first, t), width, height);
+        }
+    } else {
         for (auto& k : orderedKey) {
-            const auto& params = interpolate(k, t);
-            frame = Filter(k).apply(frame, params, width, height);
+            Filter(k).apply(frame, interpolate(k, t), width, height);
         }
     }
     return frame;
@@ -125,31 +147,14 @@ float Layer::mapInnerTime(float t) const {
     return start + last / duration * (t - time);   
 }
 
-bool Layer::still() {
-    Composition* comp = dynamic_cast<Composition*>(getRenderObject());
-    if(comp && !comp->isStill())
-        return false;
-    if (!comp && !dynamic_cast<ImageRenderable*>(this->getRenderObject())) {
-        return false;
-    }
-    for (auto& kv : properties) {
-        auto& p = kv.second;
-        if (p.size() <= 1) continue; 
-        bool first = true;
-        std::vector<float> ref;
-        for (auto& kv2 : p) {
-            auto& v = kv2.second;
-            if (first) {
-                first = false;
-                ref = v;
-            } else {
-                if (v.size() != ref.size()) return false;
-                for (int i = 0; i < v.size(); i++) {
-                    if (v[i] != ref[i])
-                        return false;
-                }
-            }
-        }
-    } 
-    return true;
+int Layer::getBlendMode() const {
+    return blendMode;
+}
+
+int Layer::getTrackMatte() const {
+    return trkMat;
+}
+
+bool Layer::show() const {
+    return showup;
 }

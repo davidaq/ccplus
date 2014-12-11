@@ -1,6 +1,5 @@
 #pragma once
 
-#include "global.hpp"
 #include <string>
 
 #ifndef RELEASE
@@ -17,6 +16,10 @@
 #define profileBegin
 #define profileEnd
 #endif
+
+namespace CCPlus {
+    class Profiler;
+};
 
 class CCPlus::Profiler {
 public:

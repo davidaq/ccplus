@@ -1,24 +1,32 @@
 #pragma once
 
-#include "renderable.hpp"
+#include "animated-renderable.hpp"
+
+#define GIF_FPS 15
 
 namespace CCPlus {
     class GifRenderable;
 }
 
+struct GifFileType;
+
 // @ handle gif animations
-class CCPlus::GifRenderable : public CCPlus::Renderable {
+class CCPlus::GifRenderable : public CCPlus::AnimatedRenderable {
 public:
-    GifRenderable(const std::string& uri);
+    GifRenderable(CCPlus::Context* context, const std::string& uri);
+    ~GifRenderable();
 
-    float getDuration();
-    GPUFrame getGPUFrame(float time);
-    void prepare();
-    void prepareGif();
-    void release();
+    float getDuration() const;
+    int getWidth() const;
+    int getHeight() const;
+    const std::string& getName() const;
 
+    bool still(float t1, float t2);
 private:
-    std::string path;
-    std::vector<std::pair<float, Frame> > framesCache;
-    float duration = 0xffffff;
+
+    std::string uri;
+
+    GifFileType* ctx = 0;
+
+    void renderPart(float start, float duration);
 };

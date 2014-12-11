@@ -1,69 +1,54 @@
 #include "filter.hpp"
-#include "glprogram-manager.hpp"
-#include "gpu-frame-cache.hpp"
-#include "gpu-frame-impl.hpp"
-#include "render.hpp"
-#include "externals/triangulate.h"
+#include "logger.hpp"
+#include "mat-cache.hpp"
+#include <cmath>
 
 using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(mask) {
     if (parameters.size() < 2) {
-        log(logERROR) << "Not enough parameters for mask";
-        return frame;
+        log(CCPlus::logERROR) << "Not enough parameters for mask"; 
+        return;
     }
-    std::vector<std::pair<float, float>> pnts;
-    int kwidth = parameters[1] / frame->ext.scaleAdjustX;
-    int kheight = parameters[0] / frame->ext.scaleAdjustY;
-    int ksize = (kwidth + kheight) / 2;
-    int sz = parameters.size() / 2 - 1;
+    int kwidth = parameters[0];
+    int kheight = parameters[1];
 
-    int rw = frame->width * frame->ext.scaleAdjustX;
-    int rh = frame->height * frame->ext.scaleAdjustY;
-    for (int i = 1; i <= sz; i++) {
-        if (i > 1 && 
-            parameters[i * 2    ] == parameters[i * 2 - 2] && 
-            parameters[i * 2 + 1] == parameters[i * 2 - 1])
-            continue;
-        pnts.push_back({
-                parameters[i * 2 + 1] / rw * 2.0 - 1.0, 
-                parameters[i * 2    ] / rh * 2.0 - 1.0});
+    HashFactory hash;
+    hash << "MASK" << kwidth << kheight;
+
+    int pointNum = parameters.size() / 2 - 1;
+    std::vector<cv::Point> points(pointNum);
+    cv::Point* ptr = &points[pointNum - 1];
+    for(int i = 1; i <= pointNum; i++) {
+        int x = parameters[(i << 1) + 1] * 8;
+        int y = parameters[(i << 1)] * 8;
+        *(ptr--) = cv::Point(x, y);
+        hash << x << y;
     }
-    pnts = CCPlus::triangulate(pnts);
+    hash << frame.getWidth() << frame.getHeight();
+    
+    const cv::Point *contours[1] = {&points[0]};
+    cv::Mat maskImg = MatCache::get(hash.str(), [&frame, &contours, &pointNum, &kwidth, &kheight] {
+        cv::Mat maskImg(frame.getHeight(), frame.getWidth(), CV_8UC1, cv::Scalar(0));
+        cv::fillPoly(maskImg, contours, &pointNum, 1, cv::Scalar(255), 8, 3);
+        /*
+         * feather effect
+         */
+        if (kwidth != 0 && kheight != 0) {
+            if(!(kwidth & 1))
+                kwidth++;
+            if(!(kheight & 1))
+                kheight++;
+            GaussianBlur(maskImg, maskImg, {kwidth, kheight}, std::max(kwidth, kheight));
+            //cv::fillPoly(maskImg, contours, &pointNum, 1, cv::Scalar(255), 8, 3);
+        }
+        return maskImg;
+    });
 
-    GLProgramManager* manager = GLProgramManager::getManager();
-
-    if (ksize == 0) {
-        GLuint program = manager->getProgram(filter_mask);
-        glUseProgram(program);
-        GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
-        ret->ext = frame->ext;
-        ret->bindFBO();
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, frame->textureID);
-
-        if (pnts.size() == 0)
-            return ret;
-        fillTriangles(pnts);
-        return ret;
-    } 
-    GLuint program = manager->getProgram(filter_mask_gen);
-    glUseProgram(program);
-
-    GPUFrame mask = GPUFrameCache::alloc(frame->width, frame->height);
-    mask->bindFBO();
-    fillTriangles(pnts);
-
-    //mask = Filter("gaussian").apply(mask, {(float)ksize, 1}, mask->width, mask->height);
-    if (kwidth == kheight) {
-        mask = Filter("gaussian").apply(mask, {(float)kwidth, 1}, mask->width, mask->height);
-    } else {
-        mask = Filter("gaussian").apply(mask, {(float)kwidth, 3}, mask->width, mask->height);
-        mask = Filter("gaussian").apply(mask, {(float)kheight, 2}, mask->width, mask->height);
+    unsigned char* srcPtr = frame.getImage().data;
+    unsigned char* mskPtr = maskImg.data;
+    for(int i = 0, j = 3, c = maskImg.total(); i < c; i++, j+=4) {
+        srcPtr[j] = ((int)srcPtr[j] * mskPtr[i]) / 255;
     }
-
-    program = manager->getProgram(filter_mask_merge);
-    return blendUsingProgram(program, frame, mask);
 }

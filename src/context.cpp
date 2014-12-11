@@ -1,93 +1,76 @@
-#include "context.hpp"
-#include "tmlreader.hpp"
-#include "footage-collector.hpp"
-#include "glprogram-manager.hpp"
-#include "gpu-frame-cache.hpp"
-#include "platform.hpp"
-#include "ccplus.hpp"
-#include "image-renderable.hpp"
+#include "extra-context.hpp"
+#include "file-manager.hpp"
+#include "mat-cache.hpp"
 
 using namespace CCPlus;
 
-Context* singleton = 0;
+Context::Context(const std::string& _storagePath, 
+        int _fps):
+    storagePath(_storagePath), fps(_fps)
+{
+    FileManager::getInstance();
 
-Context* Context::getContext() {
-    if(!singleton)
-        singleton = new Context();
-    return singleton;
-}
-
-void Context::begin(const std::string& tmlPath) {
-    if(active) {
-        log(logFATAL) << "Previous context still active, context begin failed";
-        return;
+    extra = new ExtraContext;
+    // Init FreeType
+    int fterror;
+    fterror = FT_Init_FreeType(&(extra->freetype));
+    if ( fterror ) {
+        log(logFATAL) << "Can't initialize FreeType";
     }
-    this->tmlDir = dirName(tmlPath);
-    
-    TMLReader reader;
-    profile(TMLRead) {
-        mainComposition = reader.read(tmlPath);
+    fterror = FT_New_Memory_Face(extra->freetype,
+        (const unsigned char*)
+#include "res/font.ttf"
+    , 
+#include "res/font.ttf.count"
+    , 0, &(extra->font));
+    if (fterror) {
+        log(logFATAL) << "Can't load font...";
     }
-    collector = new FootageCollector(mainComposition);
-    flags.clear();
-    active = true;
 }
 
-void Context::end() {
-    if (collector) {
-        delete collector;
-        collector = nullptr;
+Context::~Context() {
+    FT_Done_Face(extra->font);
+    FT_Done_FreeType(extra->freetype);
+    delete extra;
+}
+
+void Context::releaseMemory() {
+    FileManager::getInstance()->clear();
+    for (auto& r : renderables) {
+        r.second->clear();
     }
-    renderables.clear();
-    for (auto& kv : preservedRenderable) {
-        ImageRenderable* image = dynamic_cast<ImageRenderable*>(kv.second);
-        if (image) {
-            image->releaseGPUCache();
-        }
-    }
-    deleteRetained();
-    GPUFrameCache::clear();
-    GLProgramManager::getManager()->clean();
-    active = false;
+    MatCache::clear();
 }
 
-std::string Context::getStoragePath(const std::string& relativePath) {
-    return generatePath(outputPath, relativePath);
-}
-
-std::string Context::getFootagePath(const std::string& relativePath) {
-    return generatePath(this->tmlDir, relativePath);
-}
-
-bool Context::hasRenderable(const std::string& uri) {
-    return renderables.count(uri) || preservedRenderable.count(uri);
-}
-
-void Context::putPreservedRenderable(const std::string& uri, Renderable* renderable) {
-    preservedRenderable[uri] = renderable;
-    renderable->isPreserved = true;
-}
-
-void Context::putRenderable(const std::string& uri, Renderable* renderable) {
-    renderables[uri] = renderable;
+const std::string& Context::getStoragePath() const {
+    return storagePath;
 }
 
 Renderable* Context::getRenderable(const std::string& uri) {
-    if (preservedRenderable.count(uri))
-        return preservedRenderable[uri];
-    return renderables[uri];
+    return renderables.at(uri);
 }
 
-FT_Library& Context::freetype() {
-    if(!freetypeInited) {
-        freetypeInited = true;
-        int fterror;
-        fterror = FT_Init_FreeType(&ft);
-        if(fterror) {
-            log(logFATAL) << "Can't initialize FreeType";
-        } else {
-            freetypeInited = true;
-        }
-    }
-    return ft;
+void Context::putRenderable(const std::string& uri, Renderable* renderable) {
+    this->retain(renderable);
+    renderables[uri] = renderable;
+}
+
+bool Context::hasRenderable(const std::string& uri) const {
+    return (renderables.find(uri) != renderables.end());
+}
+
+int Context::numberOfRenderable() const {
+    return renderables.size();
+}
+
+int Context::getFPS() const {
+    return fps;
+}
+
+void Context::setInputDir(const std::string& dir) {
+    this->inputDir = dir;
+}
+
+const std::string& Context::getInputDir() const {
+    return inputDir;
 }

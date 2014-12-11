@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderable.hpp"
+#include "animated-renderable.hpp"
 
 namespace CCPlus {
     class VideoRenderable;
@@ -8,25 +8,24 @@ namespace CCPlus {
 }
 
 // @ handle videos, make'm to preprocessed image
-class CCPlus::VideoRenderable : public CCPlus::Renderable {
+class CCPlus::VideoRenderable : public CCPlus::AnimatedRenderable {
 public:
-    VideoRenderable(const std::string& uri, bool audioOnly);
+    VideoRenderable(CCPlus::Context* context, const std::string& uri);
     ~VideoRenderable();
 
-    void prepare();
-    void release();
-    float getDuration();
+    float getDuration() const;
+    int getWidth() const;
+    int getHeight() const;
+    const std::string& getName() const;
 
-    CCPlus::GPUFrame getGPUFrame(float time);
+    bool still(float t1, float t2);
 
 private:
-    float duration = -1;
-    bool audioOnly;
-    void preparePart(float start, float duration);
-    int time2frame(float time);
 
     std::string uri;
+    
     VideoDecoder *decoder, *alpha_decoder;
-    std::map<int, CCPlus::Frame> framesCache;
-    std::map<int, int> frameRefer;
+
+    void renderPart(float start, float duration);
 };
+

@@ -2,82 +2,35 @@
     "version" : 0.01,
     "main" : "MAIN",
     "compositions" : {
-        "#1" : {
+        "MAIN" : {
             "resolution" : {
-                "width" : 640,
-                "height" : 640
+                "width" : 500,
+                "height" : 500
             },
-            "duration" : 3,
+            "duration" : 10,
             "layers" : [
                 {
-                    "uri" : "composition://@",
+                    "uri" : "composition://@1",
                     "properties" : {
                         "transform" : {
-                            "0" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+                            "0" : [0, 0, 0, 0, 1, 1, 0],
+                            "10" : [0, 0, 0, 0, 0.1, 0.1, 0]
                         }
                     },
                     "time": 0,
-                    "duration" : 3,
+                    "duration" : 10,
                     "start" : 0,
-                    "last" : 3
-                },
-                {
-                    "uri" : "file://test1.jpg",
-                    "properties" : {
-                        "transform" : {
-                            "0" : [0, 0, 0, 0, 0, 0, 0.3, 0.3, 1, 0, 0, 0]
-                        }
-                    },
-                    "time": 0,
-                    "duration" : 3,
-                    "start" : 0,
-                    "last" : 3
-                },
-                {
-                    "uri" : "composition://#+1",
-                    "properties" : {
-                        "transform" : {
-                            "0" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
-                        }
-                    },
-                    "time": 2.5,
-                    "duration" : 0.5,
-                    "start" : 0,
-                    "last" : 0.5
+                    "last" : 10
                 }
             ]
         },
-        "#2" : {
+        "@1" : {
             "resolution" : {
-                "width" : 640,
-                "height" : 640
+                "width" : 500,
+                "height" : 500
             },
-            "duration" : 3,
+            "duration" : 10000,
             "layers" : [
-                {
-                    "uri" : "composition://@",
-                    "properties" : {
-                        "transform" : {
-                            "0" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
-                        }
-                    },
-                    "time": 0,
-                    "duration" : 3,
-                    "start" : 0,
-                    "last" : 3
-                }, 
-                {
-                    "uri" : "composition://#+1",
-                    "properties" : {
-                        "transform" : {
-                            "0" : [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
-                        }
-                    },
-                    "time": 2.7,
-                    "duration" : 0.3,
-                    "start" : 0,
-                    "last" : 0.3
-                }
             ]
         }
     }

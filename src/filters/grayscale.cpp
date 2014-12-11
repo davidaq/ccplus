@@ -1,33 +1,56 @@
 #include "filter.hpp"
-#include "glprogram-manager.hpp"
-#include "gpu-frame.hpp"
-#include "render.hpp"
+#include "logger.hpp"
+#include <cmath>
+#include <algorithm>
 
+using namespace cv;
 using namespace CCPlus;
 
+const std::vector<float> HUE = {0, 30, 60, 90, 120, 150, 180};
+
 CCPLUS_FILTER(grayscale) {
-    if (parameters.size() < 8) {
-        log(logERROR) << "Insufficient parameters for grayscale effect";
-        return frame;
+    if (parameters.size() < 5)
+        return;
+    /*
+     * Parameter 0~5: From -200 ~ 300, unit: %
+     * Parameter 6: 0 ~ 360, unit: %
+     * Parameter 7: 0 ~ 1, unit: %
+     */
+
+    Mat& mat = frame.getImage();
+    std::vector<unsigned char> alphas;
+    for (int i = 3, j = 0; j < mat.total(); j++, i += 4) 
+        alphas.push_back(mat.data[i]);
+    cvtColor(mat, mat, CV_BGR2HSV);
+
+    for (int i = 0; i < mat.cols; i++) {
+        for (int j = 0; j < mat.rows; j++) {
+            Vec3b& hsv = mat.at<Vec3b>(i, j);
+            //L() << hsv;
+            float h = hsv[0];
+            float v = (float) hsv[2];
+            float ret;
+            int idx = int(h) / 30;
+            if (int(h) % 30 == 0) {
+                ret = (unsigned char) parameters[idx] / 100.0 * v;
+            } else {
+                ret = (h - HUE[idx]) / 30.0 * 
+                    parameters[idx] / 100.0 * v;
+                //L() << h << " " << idx << " " << ret;
+                ret += (HUE[idx + 1] - h) / 30.0 * 
+                    parameters[(idx + 1) % 6] / 100.0 * v;
+            }
+            ret = std::max(0.0f, ret);
+            ret = std::min(255.0f, ret);
+
+            hsv[0] = (unsigned char) parameters[6] / 2;
+            hsv[1] = (unsigned char) parameters[7] * 255.0;
+            hsv[2] = (unsigned char) ret;
+            //L() << hsv;
+        }
     }
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint weightsU, hue_satU;
-    GLuint program = manager->getProgram(filter_grayscale, &weightsU, &hue_satU);
-    glUseProgram(program);
-
-    GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
-    ret->bindFBO(false);
-
-    static float weights[6];
-    for (int i = 0; i < 6; i++) 
-        weights[i] = parameters[i] / 100.0;
-
-    glUniform1fv(weightsU, 6, weights);
-    glUniform2f(hue_satU, parameters[6] / 360.0f, parameters[7]);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, frame->textureID);
-
-    fillSprite();
-
-    return ret;
+    
+    cvtColor(mat, mat, CV_HSV2BGR);
+    frame.addAlpha(alphas);
+    return;
 }

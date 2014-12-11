@@ -1,10 +1,13 @@
 #pragma once
-#include "global.hpp"
 #include <string>
 #include <opencv2/opencv.hpp>
 
+
 namespace CCPlus {
+    class VideoEncoder;
     struct EncodeContext;
+    class Frame;
+    class ParallelExecutor;
 }
 
 class CCPlus::VideoEncoder {
