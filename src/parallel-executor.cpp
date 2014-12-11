@@ -73,3 +73,18 @@ void ParallelExecutor::waitForAll() {
         pthread_join(extraThreads[i], 0);
 }
 
+pthread_t ParallelExecutor::runInNewThread(std::function<void()> job) {
+    pthread_t thread;
+    std::function<void()>* jobPtr = new std::function<void()>();
+    *jobPtr = job;
+    pthread_create(&thread, 0, threadFunc, jobPtr);
+    return thread;
+}
+
+void* ParallelExecutor::threadFunc(void* ctx) {
+    std::function<void()> &jobPtr = *((std::function<void()>*) ctx);
+    jobPtr();
+    delete &jobPtr;
+    return 0;
+}
+

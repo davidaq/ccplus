@@ -1,0 +1,63 @@
+{
+    "version" : 0.01,
+    "main" : "MAIN",
+    "compositions" : {
+        "MAIN" : {
+            "resolution" : {
+                "width" : 640,
+                "height" : 360
+            },
+            "duration" : 10,
+            "layers" : [
+                {
+                    "uri" : "composition://the minor",
+                    "properties" : {
+                        "transform": {
+                            "1": [0, 100, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],
+                            "10": [400, 100, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 80]
+                        },
+                        "opacity" : {
+                            "1": [0],
+                            "4": [1.0],
+                            "10": [1.0]
+                        }
+                    },
+                    "time" : 1,
+                    "duration" : 10,
+                    "start" : 2,
+                    "last" : 11,
+                    "blend": 4
+                }
+            ]
+        },
+        "the minor" : {
+            "resolution" : {
+                "width" : 300,
+                "height" : 300
+            },
+            "duration" : 10,
+            "layers" : [
+                {
+                    "uri" : "file://test.mp4",
+                    "properties" : {
+                        "transform": {
+                            "0": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0],
+                            "10": [0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 0]
+                        },
+                        "4color" : {
+                            "0" : [0, 0, 255, 0, 0, 
+                            279, 0, 0, 255, 0, 
+                            0, 242, 0, 0, 255, 
+                            140, 121, 255, 255, 255, 
+                            5, 0.5, 0]
+                        }
+                    },
+                    "time" : 0,
+                    "duration" : 10,
+                    "start" : 0,
+                    "last" : 10
+                }
+            ]
+        }
+    }
+}

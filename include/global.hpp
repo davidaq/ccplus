@@ -1,65 +1,54 @@
 #pragma once
 
-#include "config.hpp"
-
-// ccplus classes predifinitions
 namespace CCPlus {
-
-    class Context;
-    
-    class Renderable;
-
-    class TMLReader;
-
-    class Composition;
-
-    class Layer;
-    
-    class CompositionDependency;
-    
     class Object;
-
+    class Lock;
+    class Semaphore;
+    class Context;
+    class Layer;
+    class Profiler;
+    class Logger;
+    class VideoDecoder;
+    class VideoEncoder;
+    class ParallelExecutor;
+    class TMLReader;
     class Frame;
-}
+    class GPUFrameImpl;
+    class GPUFrameCache;
+    class GPUDoubleBuffer;
+    class FootageCollector;
+    class DependencyWalker;
+    class Filter;
+    class GLProgramManager;
 
-// system dependencies
-#include <string>
-#include <vector>
-#include <tuple>
-#include <map>
-#include <utility>
+    class Renderable;
+    class Composition;
+    class ImageRenderable;
+    class VideoRenderable;
+    class ColorRenderable;
+};
+
 #include <cstdio>
-#include <cstdlib>
+#include <cmath>
+#include <cstring>
 #include <iostream>
-#include <complex>
-#include <functional>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <opencv2/opencv.hpp>
+#include <ft2build.h>
+#include <boost/shared_ptr.hpp>
+#include FT_FREETYPE_H
+#include "externals/gl2.h"
+#include "externals/gl2ext.h"
 
-struct DoubleLess {
-    bool operator()(float left, float right) const
-    {
-        //return left < right;
-        return (std::abs(left - right) > 0.00001) && (left < right);
-    }
-}; 
-typedef std::map<float, std::vector<float>, DoubleLess> Property;
-typedef std::map<std::string, Property> PropertyMap;
-
-#ifdef IN_CCPLUS_PRIVATE_CONTEXT
-
-#endif
-
-// public headers
+#include "config.hpp"
 #include "object.hpp"
-#include "context.hpp"
-#include "renderable.hpp"
-#include "tmlreader.hpp"
-#include "composition.hpp"
-#include "layer.hpp"
-#include "frame.hpp"
-#include "filter.hpp"
-#include "time.h"
+#include "utils.hpp"
 #include "logger.hpp"
 #include "profile.hpp"
 
-#define PASS printf("passed line %d in %s at %lums\n", __LINE__, __FILE__, clock() * 1000 / CLOCKS_PER_SEC);
-
+namespace CCPlus {
+    typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
+}
+#include "platform.hpp"

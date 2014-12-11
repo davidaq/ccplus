@@ -1,43 +1,35 @@
 #include "filter.hpp"
-#include "logger.hpp"
-#include "mat-cache.hpp"
-#include <cmath>
-#include "utils.hpp"
-
-#ifndef __ANDROID__
-#define round(X) std::round(X)
-#endif
+#include "glprogram-manager.hpp"
+#include "gpu-frame.hpp"
+#include "render.hpp"
 
 using namespace cv;
 using namespace CCPlus;
 
-/*
- * Another atempt to implement transform filter using more opencv
- */
-
 CCPLUS_FILTER(transform) {
     if (parameters.size() == 0)
-        return;
+        return frame;
     if (parameters.size() < 12 || parameters.size() % 12 != 0) {
         log(CCPlus::logERROR) << "Not enough parameters for transform";
-        return;
+        return frame;
     }
-    Mat& input = frame.getImage();
-    if (input.empty()) {
-        return;
-    }
-    Mat finalTrans = Mat::eye(4, 4, CV_64F);
+    Mat finalTrans = (Mat_<double>(4, 4) << 
+            frame->ext.scaleAdjustX, 0, 0, 0, 
+            0, frame->ext.scaleAdjustY, 0, 0, 
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+
     for (int set = 0; set < parameters.size(); set += 12) {
-        int pos_x = (int)parameters[0 + set];
-        int pos_y = (int)parameters[1 + set];
-        int pos_z = (int)parameters[2 + set];
-        int anchor_x = (int)parameters[3 + set];
-        int anchor_y = (int)parameters[4 + set];
+        float pos_x = parameters[0 + set];
+        float pos_y = parameters[1 + set];
+        float pos_z = parameters[2 + set];
+        float anchor_x = parameters[3 + set];
+        float anchor_y = parameters[4 + set];
         if(set == 0) {
-            anchor_x += frame.getAnchorAdjustX();
-            anchor_y += frame.getAnchorAdjustY();
+            anchor_x += frame->ext.anchorAdjustX;
+            anchor_y += frame->ext.anchorAdjustY;
         }
-        int anchor_z = (int)parameters[5 + set];
+        float anchor_z = parameters[5 + set];
         if (anchor_z != 0) {
             log(CCPlus::logWARN) << "Anchor z is not supported";
         }
@@ -102,6 +94,14 @@ CCPLUS_FILTER(transform) {
 
         finalTrans = trans * finalTrans;
     }
+    int potWidth = nearestPOT(width);
+    int potHeight = nearestPOT(height);
+    Mat tmp = (Mat_<double>(4, 4) << 
+            potWidth * 1.0f / width, 0, 0, 0,
+            0, potHeight * 1.0f / height, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+    finalTrans = tmp * finalTrans;
 
     auto apply = [](Mat trans, float x, float y, float z) {
         double noer = trans.at<double>(3, 0) * x + trans.at<double>(3, 1) * y + 
@@ -119,25 +119,19 @@ CCPLUS_FILTER(transform) {
         return Vec3f(nx, ny, nz);
     };
 
-    float xMax = 0, xMin = width - 1, yMax = 0, yMin = height - 1;
-
     Mat A = Mat::zeros(8, 8, CV_64F);
     Mat C = Mat::zeros(8, 1, CV_64F);
     int idx = 0;
     for (int i = 0; i <= 1; i++)
         for (int j = 0; j <= 1; j++) {
-            int x1 = i * (frame.getImage().cols - 1);
-            int y1 = j * (frame.getImage().rows - 1);
+            int x1 = i * (frame->width - 1);
+            int y1 = j * (frame->height - 1);
             Vec3f tmp = apply(finalTrans, x1, y1, 0);
             // Black magic
             double ratio = (tmp[2] + 1777) / 1777;
             float x2 = tmp[0] / ratio;
             float y2 = tmp[1] / ratio;
             //L() << x1 << " " << y1 << " " << x2 << " " << y2;
-            xMax = max(xMax, x2);
-            xMin = min(xMin, x2);
-            yMax = max(yMax, y2);
-            yMin = min(yMin, y2);
 
             A.at<double>(idx * 2, 0) = -x2;
             A.at<double>(idx * 2, 1) = -y2;
@@ -155,43 +149,6 @@ CCPLUS_FILTER(transform) {
             idx++;
         }
 
-    xMin = std::max<float>(xMin, 0);
-    xMax = std::min<float>(xMax, width);
-    yMin = std::max<float>(yMin, 0);
-    yMax = std::min<float>(yMax, height);
-
-    frame.setXMin(xMin);
-    frame.setXMax(xMax);
-    frame.setYMin(yMin);
-    frame.setYMax(yMax);
-
-    /*
-     * Check whether it's a affin transform
-     */
-    auto at = [&finalTrans] (int i, int j) {
-        return finalTrans.at<double>(i, j);
-    };
-    auto nonZero = [&at] (int i, int j) {
-        return std::abs(at(i, j)) > 0.00001;
-    };
-    bool affine = true;
-    if (nonZero(0, 2) || nonZero(1, 2) || nonZero(2, 0) ||
-        nonZero(2, 1) || nonZero(2, 3)) 
-        affine = false;
-    if (affine) {
-        Mat affineMat = (Mat_<double>(2, 3) << 
-                at(0, 0), at(0, 1), at(0, 3),
-                at(1, 0), at(1, 1), at(1, 3));
-        Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        profile(Filter_transform_affine) {
-            warpAffine(input, ret, affineMat, {width, height}, 
-                    INTER_LINEAR, BORDER_TRANSPARENT);
-        }
-        frame.setImage(ret);
-        return;
-    }
-
-
     /* 
      * Calculate the homography 
      **/
@@ -199,45 +156,33 @@ CCPLUS_FILTER(transform) {
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
-
-    Mat ret(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::Mat pixelMapping(ret.size(), CV_16SC2, cv::Scalar(-1, -1));
-    cv::Mat interpoDist(ret.size(), CV_16UC1, cv::Scalar(0));
-
-    float tmatrix[3][3];
-    for(int i = 0; i < 3; i++)
+    invert(H, H);
+    float tmatrix[9];
+    for(int i = 0; i < 3; i++) {
         for(int j = 0; j < 3; j++) {
-            tmatrix[i][j] = H.at<double>(i, j);
-        }
-
-    profileBegin(Filter_transform_map_func);
-
-    for (int i = yMin; i < yMax; i++) {
-        Vec2s* pPtr = pixelMapping.ptr<Vec2s>(i);
-        int16_t* iPtr = interpoDist.ptr<int16_t>(i);
-        for (int j = xMin; j < xMax; j++) {
-            float x = tmatrix[0][0] * j + tmatrix[0][1] * i + tmatrix[0][2];
-            float y = tmatrix[1][0] * j + tmatrix[1][1] * i + tmatrix[1][2];
-            float z = tmatrix[2][0] * j + tmatrix[2][1] * i + tmatrix[2][2];
-            x /= z;
-            y /= z;
-
-            pPtr[j][0] = x;
-            pPtr[j][1] = y;
-
-            // Keep only one digit after decimal point
-            // using magical numbers tested from OpenCV convertMaps
-            const static int dxMapping[] = {0, 3, 6, 10, 13, 16, 19, 22, 26, 29};
-            const static int dyMapping[] = {0, 96, 192, 320, 416, 512, 608, 704, 832, 928};
-            int dx = (x - (int)x) * 10;
-            int dy = (y - (int)y) * 10;
-            iPtr[j] = dxMapping[dx] + dyMapping[dy];
+            tmatrix[i * 3 + j] = H.at<double>(j, i);
         }
     }
-    profileEnd(Filter_transform_map_func);
 
-    profile(Filter_transform_remap) {
-        cv::remap(input, ret, pixelMapping, interpoDist, CV_INTER_LINEAR, BORDER_TRANSPARENT);
-    }
-    frame.setImage(ret);
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint trans, src_dst_size;
+    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size);
+    glUseProgram(program);
+
+    GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
+    ret->bindFBO();
+
+    glUniformMatrix3fv(trans, 1, GL_FALSE, tmatrix);
+
+    glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, frame->textureID);
+
+    fillSprite();
+
+    ret->ext = frame->ext;
+    ret->ext.anchorAdjustX = ret->ext.anchorAdjustY = 0;
+    ret->ext.scaleAdjustX = ret->ext.scaleAdjustY = 1;
+    return ret;
 }

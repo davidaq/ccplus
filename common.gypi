@@ -26,9 +26,10 @@
                     'SUPPORTED_PLATFORMS': 'iOS',
                     'OTHER_CFLAGS' : ['-D_RELEASE'],
                 },
-                'cflags': ['-D_RELEASE'],
+                'defines': ['__IOS__', 'GLSLES'],
             }],
             ['OS=="mac"', {
+                'defines': ['__OSX__'],
                 'xcode_settings' : {
                     'SDKROOT': 'macosx10.9',
                 },
@@ -47,7 +48,7 @@
                 'cxxflags': ['-c', '-pthread'],
                 'link_settings':{
                     "libraries":[
-                        "-pthread"
+                        "-pthread", "-lGL"
                     ]
                 }
             }],

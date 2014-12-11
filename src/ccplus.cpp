@@ -1,181 +1,206 @@
-#include <limits>
-#include <ctime>
-
 #include "global.hpp"
 #include "ccplus.hpp"
-#include "utils.hpp"
-#include "video-encoder.hpp"
-#include "parallel-executor.hpp"
-
-// Tweak
-#include "image-renderable.hpp"
+#include "context.hpp"
+#include "footage-collector.hpp"
 #include "composition.hpp"
+#include "video-encoder.hpp"
+#include "gpu-frame.hpp"
+#include "render.hpp"
+#include "profile.hpp"
+#include "parallel-executor.hpp"
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
-//using namespace CCPlus;
+using namespace CCPlus;
 
-struct UserContext {
-    CCPlus::Context* ctx;
-    CCPlus::Composition* mainComp;
-};
+pthread_t render_thread = 0;
+bool continueRunning = false;
+int renderProgress = 0;
+bool initing = false;
 
-void* CCPlus::initContext(const char* tmlPath, 
-        const char* storagePath, int fps) {
-    log(logINFO) << "Loading tml file......";
-    UserContext* ret = new UserContext;
-    ret->ctx = new CCPlus::Context(storagePath, fps);
-    CCPlus::TMLReader reader(ret->ctx);
-    ret->mainComp = reader.read(tmlPath);
-
-    // Init rand seed
-    srand(std::time(0));
-
-    return (void*) ret;
+void CCPlus::go(const std::string& tmlPath) {
+    initContext(tmlPath);
+    render();
+    waitRender();
+    releaseContext();
 }
 
-void CCPlus::releaseContext(void* ctxHandle) {
-    if(!ctxHandle)
-        return;
-    UserContext* uCtx = (UserContext*) ctxHandle;
-    uCtx->ctx->releaseMemory();
-    delete uCtx->ctx;
-    delete uCtx;
+void CCPlus::initContext(const std::string& tmlPath) {
+    releaseContext();
+    initing = true;
+    Context::getContext()->begin(tmlPath);
+    renderProgress = 0;
+    initing = false;
 }
 
-void CCPlus::freeMemory(void* ctxHandle) {
-    if(!ctxHandle)
-        return;
-    UserContext* uCtx = (UserContext*) ctxHandle;
-    uCtx->ctx->releaseMemory();
-    log(logINFO) << "Released memory";
-}
-
-void CCPlus::renderPart(void* ctxHandle, float start, float length) {
-    if(!ctxHandle)
-        return;
-    UserContext* uCtx = (UserContext*) ctxHandle;
-    while (start > uCtx->mainComp->getDuration())
-        start -= uCtx->mainComp->getDuration();
-    while (start < 0)
-        start += uCtx->mainComp->getDuration();
-    if(length < 0)
-        length = uCtx->mainComp->getDuration() - start;
-    log(logINFO) << "Start rendering...... start:" << start << " length:" << length;
-    uCtx->mainComp->setForceRenderToFile(true);
-    std::vector<CCPlus::CompositionDependency> deps = uCtx->mainComp->fullOrderedDependency(start, start + length);
-    // Clear previous used memory
-    //uCtx->ctx->releaseMemory();
-
-    float total_time = 0;
-    for (auto& dep : deps) {
-        if (dynamic_cast<ImageRenderable*>(dep.renderable))
-            continue;
-        total_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
+void CCPlus::releaseContext(bool forceClearCache) {
+    while(initing) {
+        sleep(1);
     }
-    float done_time = 0;
-    /*
-     * Render non-composition renderable parallelly
-     */
-    ParallelExecutor* exec = new ParallelExecutor(CCPlus::CONCURRENT_THREAD);
-    for (auto& dep : deps) {
-        if (dynamic_cast<Composition*>(dep.renderable))
-            continue;
-        auto task = [&dep, &done_time, &total_time] () {
-            Profiler* p = new Profiler("Renderable__" + dep.renderable->getName());
-            dep.renderable->render(dep.from, dep.to - dep.from);
-            delete p;
-            if (!dynamic_cast<ImageRenderable*>(dep.renderable)) {
-                done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
-                log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
+    static bool releasingContext = false;
+    Context* ctx = Context::getContext();
+    if(releasingContext) {
+        // Don't do any thing if someone else is calling release
+        // just wait for end instead 
+        while(releasingContext)
+            sleep(1);
+    } else {
+        releasingContext = true;
+        continueRunning = false;
+        waitRender();
+        ctx->end();
+        render_thread = 0;
+        renderProgress = 0;
+        releasingContext = false;
+    }
+    if(forceClearCache || renderMode != PREVIEW_MODE) {
+        if(releasingContext) {
+            while(releasingContext)
+                sleep(1);
+        } else {
+            releasingContext = true;
+            for (auto& kv : ctx->preservedRenderable) {
+                delete kv.second;
             }
-        };
-        exec->execute(task);
-    }
-    delete exec;
-
-    /*
-     * Only render Composition
-     */
-    for (auto& dep : deps) {
-        if (!dynamic_cast<Composition*>(dep.renderable))
-            continue;
-        Profiler* p = new Profiler("Renderable__" + dep.renderable->getName());
-        dep.renderable->render(dep.from, dep.to - dep.from);
-        delete p;
-        done_time += std::min(dep.to - dep.from, dep.renderable->getDuration());
-        log(logINFO) << "Rendering progress: " << done_time * 100.0 / total_time << "%";
+            ctx->preservedRenderable.clear();
+            releasingContext = false;
+        }
     }
     profileFlush;
 }
 
-void CCPlus::encodeVideo(void* ctxHandle, float start, float length) {
-    if(!ctxHandle)
+void renderAs(std::function<void(const Frame&)> writeFuc) {
+    if (render_thread) {
+        log(logERROR) << "Another render context is currently in use! Aborted.";
         return;
-    log(logINFO) << "Encoding video......";
-    UserContext* uCtx = (UserContext*) ctxHandle;
-    // TODO: duplicate code with renderPart
-    while (start > uCtx->mainComp->getDuration())
-        start -= uCtx->mainComp->getDuration();
-    while (start < 0)
-        start += uCtx->mainComp->getDuration();
-    if(length < 0)
-        length = uCtx->mainComp->getDuration() - start;
-    float inter = 1.0 / uCtx->ctx->getFPS();
-    VideoEncoder encoder(uCtx->ctx->getStoragePath() + "/result.mp4", uCtx->ctx->getFPS());
-    for (float i = 0.0; i < length; i += inter) {
-        float t = start + i;
-        CCPlus::Frame img = uCtx->mainComp->getFrame(t);
-        img.setBlackBackground();
-        encoder.appendFrame(img);
     }
-    encoder.finish();
-
-    log(logINFO) << "---Done!---";
-}
-
-void CCPlus::go(
-        const std::string& tmlpath,
-        const std::string& storagePath, 
-        float start,
-        float length,
-        int fps) {
-
-    void* ctx = initContext(tmlpath.c_str(), storagePath.c_str(), fps);
-    profile(rendering) {
-        renderPart(ctx, start, length);
+    if (!Context::getContext()->isActive()) {
+        log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
+        return;
     }
-    log(logINFO) << "Finish rendering...";
-    log(logINFO) << "\tZIM path prefix: " << getZIMPath(ctx);
-    log(logINFO) << "\tZIM number: " << numberOfZIM(ctx);
-    profile(encoding) {
-        encodeVideo(ctx, start, length);
+    continueRunning = true;
+    render_thread = ParallelExecutor::runInNewThread([&writeFuc] () {
+        Context* ctx = Context::getContext();
+        ctx->collector->limit = 10;
+        ctx->collector->prepare();
+        void* glCtx = createGLContext();
+        initGL();
+        float delta = 1.0f / frameRate;
+        float duration = ctx->mainComposition->getDuration();
+
+        ctx->mainComposition->transparent = false;
+        
+        bool extFlag;
+
+        for (float i = 0; i <= duration; i += delta) {
+            renderProgress = (i * 98 / duration) + 1;
+            if (!continueRunning) {
+                renderProgress = 0;
+                log(logINFO) << "----Rendering process is terminated!---";
+                return;
+            }
+            while(ctx->collector->finished() < i) {
+                log(logINFO) << "wait --" << ctx->collector->finished();
+                ctx->collector->signal.wait();
+            }
+            ctx->collector->limit = i + 5;
+            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
+            writeFuc(frame->toCPU());
+            if(extFlag = !extFlag) {
+                log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
+                for(auto item = ctx->renderables.begin();
+                        item != ctx->renderables.end(); ) {
+                    Renderable* r = item->second;
+                    if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                        log(logINFO) << "release" << item->first;
+                        r->release();
+                        ctx->renderables.erase(item++);
+                    } else {
+                        item++;
+                    }
+                }
+            }
+        }
+        destroyGLContext(glCtx);
+        renderProgress = 100;
+    });
+}
+
+void CCPlus::render() {
+    if(renderMode == FINAL_MODE) {
+        std::string outfile = outputPath;
+        if(!stringEndsWith(outfile, ".mp4")) {
+            outfile = Context::getContext()->getStoragePath("result.mp4");
+        }
+        VideoEncoder encoder(outfile, frameRate);
+        renderAs([&encoder](const Frame& frame) {
+            encoder.appendFrame(frame);
+        });
+        waitRender();
+        encoder.finish();
+    } else {
+        int fn = 0;
+        renderAs([&fn](const Frame& frame) {
+            char buf[20];
+            sprintf(buf, "%07d.zim", fn++);
+            frame.write(Context::getContext()->getStoragePath(buf));
+        });
+        waitRender();
     }
-    releaseContext(ctx);
-    profileFlush;
+    renderProgress = 100;
 }
 
-const std::string CCPlus::getZIMPath(void* ctx) {
-    UserContext* uCtx = (UserContext*) ctx;
-    if (uCtx->mainComp)
-        return uCtx->mainComp->getPrefix();
-    log(logERROR) << 
-        "Accessed Main Composition before its initialization";
-    return "";
+int CCPlus::getRenderProgress() {
+    return renderProgress;
 }
 
-int CCPlus::numberOfZIM(void* ctx) {
-    UserContext* uCtx = (UserContext*) ctx;
-    if (uCtx->mainComp)
-        return uCtx->mainComp->getTotalNumberOfFrame();
-    log(logERROR) << 
-        "Accessed Main Composition before its initialization";
-    return 0;
+void CCPlus::waitRender() {
+    if (!render_thread) return;
+    pthread_join(render_thread, 0);
 }
 
-bool CCPlus::finishedFrame(void* ctx, int frame) {
-    UserContext* uCtx = (UserContext*) ctx;
-    if (uCtx->mainComp)
-        return uCtx->mainComp->finished(frame);
-    log(logERROR) << 
-        "Accessed Main Composition before its initialization";
-    return false;
+int CCPlus::numberOfFrames() {
+    Context* ctx = Context::getContext();
+    float d = 1.0 / frameRate;
+    return ctx->mainComposition->getDuration() / d;
+}
+
+void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& outputPath) {
+    using boost::property_tree::ptree;
+    ptree pt;
+    read_json(tmlPath, pt);
+    int size = 0;
+    for (auto& child : pt.get_child("compositions")) {
+        const std::string& s = child.first.data();
+        if (s[0] == '@' && s.length() > 1) {
+            size++;
+        }
+    }
+
+    std::string dir = dirName(tmlPath);
+
+    for (int i = 0; i < size; i++) {
+        auto& layers = pt.get_child("compositions.#COVER.layers");
+        for (auto& kv : layers) {
+            if (stringStartsWith(kv.second.get("uri", ""), "composition://@")) {
+                kv.second.put("uri", "composition://@" + toString(i));
+            }
+        }
+        pt.put("main", "#COVER");
+        std::ofstream fileStream;
+        fileStream.open(generatePath(dir, "COVER" + toString(i) + ".tml"));
+        write_json(fileStream, pt, true);
+    }
+
+    setOutputPath(outputPath);
+    for (int i = 0; i < size; i++) {
+        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"));
+        //, outputPath, 18);
+        render();
+        waitRender();
+        releaseContext();
+        Frame f;
+        f.read(generatePath(outputPath, "0000000.zim"));
+        imwrite(generatePath(outputPath, toString(i) + ".jpg"), f.image);
+    }
 }

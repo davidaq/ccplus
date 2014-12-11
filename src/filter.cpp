@@ -1,6 +1,6 @@
 #define CCPLUS_FILTER_SELF
 #include "filter.hpp"
-#include "frame.hpp"
+#include "gpu-frame.hpp"
 
 #include "profile.hpp"
 
@@ -10,25 +10,21 @@ std::map<std::string, CCPLUS_FILTER_FUNC> *filterMap = 0;
 
 Filter::Filter(const std::string& name) {
     if(!filterMap || !filterMap->count(name)) {
-        this->profiler = 0;
+        log(logWARN) << "Couldn't find filter: " << name;
         func = 0;
     } else {
-        this->profiler = new Profiler("Filter_" + name);       
         func = (*filterMap)[name];
     }
 }
 
 Filter::~Filter() {
-    if(profiler)
-        delete profiler;
 }
 
-void Filter::apply(Frame& frame, const std::vector<float>& parameters, int width, int height) {
+GPUFrame Filter::apply(GPUFrame frame, const std::vector<float>& parameters, int width, int height) {
     if(func) {
-        profileBegin(Filters);
-        func(frame, parameters, width, height);
-        profileEnd(Filters);
+        frame = func(frame, parameters, width, height);
     }
+    return frame;
 }
 
 FilterLoader::FilterLoader() {
@@ -44,3 +40,4 @@ FilterLoader::~FilterLoader() {
 }
 
 FilterLoader CCPlus__FilterLoader;
+

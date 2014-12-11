@@ -1,44 +1,32 @@
 #pragma once
-#include "object.hpp"
+#include "global.hpp"
 #include "frame.hpp"
 
-namespace CCPlus {
-    class Renderable;
-    class Context;
-}
 // @ base class of anything that could be referenced by a layer
 class CCPlus::Renderable : public CCPlus::Object {
 public:
-    Renderable(CCPlus::Context*);
-    
-    virtual void render(float start, float duration) = 0;
-    virtual Frame getFrame(float time) const = 0;
-    virtual Frame getFrameByNumber(int frame) const = 0;
+    Renderable();
+    ~Renderable();
 
-    virtual const std::string& getName() const = 0;
-    
-    virtual float getDuration() const = 0;
-    virtual int getWidth() const = 0;
-    virtual int getHeight() const = 0;
+    virtual void prepare();
+    virtual void release();
+    virtual float getDuration();
 
-    virtual void clear() = 0;
+    GPUFrame getWrapedGPUFrame(float time);
+    virtual GPUFrame getGPUFrame(float time);
 
-    /**
-     * Chech if this renderable *LOOKS* the same at
-     * time @t1 and @t2
-     * Note: they might have different audio
-     */
-    virtual bool still(float t1, float t2) = 0;
+    static std::string parseUri2File(std::string uri);
 
-    int getFrameNumber(float time) const;
+    // first and last moments this renderable is visible in the main composition
+    float firstAppearTime = 0, lastAppearTime = 0;
+    // chunks of used fragments of this renderable as <start,end>
+    std::vector<std::pair<float,float> > usedFragments;
+    std::string getUri();
 
-    float getFrameTime(int frame) const;
-
-
+    bool isPreserved = false;
 protected:
-    std::string getFramePath(int f) const;
-
-    std::string uuid;
-
-    CCPlus::Context* context = 0;
+    bool prepared = false;
+private:
+    std::map<int, Frame> frames;
+    std::string uri;
 };
