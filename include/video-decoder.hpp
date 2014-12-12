@@ -1,11 +1,10 @@
 #pragma once
 
+#include "global.hpp"
 #include <vector>
-
 #include "frame.hpp"
 
 namespace CCPlus {
-    class VideoDecoder;
     struct VideoInfo;
     struct DecodeContext;
 }
@@ -49,6 +48,8 @@ public:
     // Output to a vec
     void decodeAudio(std::vector<int16_t>& vec, float durationLimit = -1);
     std::vector<int16_t> decodeAudio(float durationLimit = -1);
+
+    bool invalid = true;
     
 private:
     std::string inputFile;

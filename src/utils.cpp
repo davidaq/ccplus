@@ -1,9 +1,17 @@
+#include "global.hpp"
 #include "utils.hpp"
 
 #include <cstdio>
 #include <map>
 
-int getImageRotation(const std::string& jpgpath) {
+using namespace CCPlus;
+
+/*
+ * Followed document in http://www.media.mit.edu/pia/Research/deepview/exif.html
+ *
+ */
+
+int CCPlus::getImageRotation(const std::string& jpgpath) {
     FILE* f = fopen(jpgpath.c_str(), "rb");   
     int ret = -1;
     if (f == NULL) return ret; 
@@ -74,6 +82,7 @@ int getImageRotation(const std::string& jpgpath) {
                 continue;
             } else if (!strncmp(tmp, "II", 2)) {
                 // DAMN the Intel
+                log(logWARN) << "Image is using Intel type align, it unsupported now";
                 return -1;
             }
 
@@ -114,6 +123,10 @@ int getImageRotation(const std::string& jpgpath) {
                     break;
                 }
             }
+            if (state == IFD) {
+                // Only have one chance
+                return -1;
+            }
         }
         fseek(f, -1, SEEK_CUR);
     }
@@ -121,4 +134,20 @@ int getImageRotation(const std::string& jpgpath) {
     fclose(f);
     // CW
     return retTable[ret];
+}
+
+cv::Mat CCPlus::readAsset(const char* _name) {
+    std::string name = generatePath(assetsPath, _name);
+    FILE* fp = fopen(name.c_str(), "rb");
+    if(!fp) {
+        log(logWARN) << "Asset " + name + " not found";
+        return cv::Mat();
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    cv::Mat ret(1, len, CV_8U);
+    fread(ret.data, 1, len, fp);
+    fclose(fp);
+    return ret;
 }

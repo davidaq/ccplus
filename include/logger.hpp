@@ -1,19 +1,14 @@
 #pragma once
 
-#include <cstdio>
-#include <cmath>
-#include <iostream>
-#include <sstream>
-#include <vector>
+#include "global.hpp"
 
 #define L() \
-    log(logDEBUG)
+    log(CCPlus::logDEBUG)
 
 #define log(level) if (level > logLevel) ; \
     else CCPlus::Logger(level, __LINE__, __FILE__)
  
 namespace CCPlus {
-    class Logger;
     enum LogLevel {
         logFATAL, logERROR, logWARN, logINFO, logDEBUG, logDEBUG1
     };
@@ -29,7 +24,7 @@ public:
 
     template <typename T>
     Logger& operator<<(T const & value) {
-        _buffer << value;
+        _buffer << value << ' ';
         return *this;
     }
 private: 

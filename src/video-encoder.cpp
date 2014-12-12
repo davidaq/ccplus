@@ -13,6 +13,8 @@ extern "C" {
 
 #include "global.hpp"
 #include "video-encoder.hpp"
+#include "frame.hpp"
+#include "context.hpp"
 
 using namespace CCPlus;
 
@@ -39,9 +41,11 @@ struct CCPlus::EncodeContext {
 
 };
 
-VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int _quality) :
+VideoEncoder::VideoEncoder(const std::string& _outputPath, int _fps, int width, int height, int _quality) :
     outputPath(_outputPath), fps(_fps), quality(_quality)
 {
+    this->width = width;
+    this->height = height;
 }
 
 VideoEncoder::~VideoEncoder() {
@@ -50,8 +54,10 @@ VideoEncoder::~VideoEncoder() {
 
 void VideoEncoder::appendFrame(const Frame& frame) {
     if(!ctx) {
-        width = frame.getWidth();
-        height = frame.getHeight();
+        if(width == 0 && height == 0) {
+            width = frame.image.cols;
+            height = frame.image.rows;
+        }
         if(width == 0 || height == 0)
             return;
         if(width & 1)
@@ -62,15 +68,19 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         frameNum = 0;
     }
     cv::Mat img;
-    if(frame.getWidth() == 0 || frame.getHeight() == 0) {
+    if(frame.image.cols == 0 || frame.image.rows == 0) {
         img = cv::Mat::zeros(height, width, CV_8UC4);
     } else
-        img = frame.getImage();
+        img = frame.image;
     writeVideoFrame(img);
-    cv::Mat mat = frame.getAudio();
-    if(mat.total() > 0) {
-        writeAudioFrame(mat);
+    cv::Mat mat = frame.ext.audio;
+    int sz = audioSampleRate / frameRate;
+    if(mat.empty()) {
+        mat = cv::Mat(1, sz, CV_16S, cv::Scalar(0));
+    } else if(mat.total() != sz) {
+        cv::resize(mat, mat, cv::Size(1, sz));
     }
+    writeAudioFrame(mat);
     frameNum++;
 }
 
@@ -222,7 +232,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
             else
                 codecCtx->bit_rate    = 16000;
 
-            codecCtx->sample_rate = CCPlus::AUDIO_SAMPLE_RATE;
+            codecCtx->sample_rate = CCPlus::audioSampleRate;
             codecCtx->channels        = 1;
             codecCtx->channel_layout  = AV_CH_LAYOUT_MONO;
             break;
@@ -314,11 +324,11 @@ void VideoEncoder::initContext() {
     // init swr context
     ctx->swr = swr_alloc();
     av_opt_set_int(ctx->swr, "in_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "in_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
+    av_opt_set_int(ctx->swr, "in_sample_rate", CCPlus::audioSampleRate, 0);
     av_opt_set_sample_fmt(ctx->swr, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
     av_opt_set_int(ctx->swr, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-    av_opt_set_int(ctx->swr, "out_sample_rate", CCPlus::AUDIO_SAMPLE_RATE, 0);
+    av_opt_set_int(ctx->swr, "out_sample_rate", CCPlus::audioSampleRate, 0);
     av_opt_set_sample_fmt(ctx->swr, "out_sample_fmt", AV_SAMPLE_FMT_FLTP, 0);
     if(0 > swr_init(ctx->swr)) {
         fprintf(stderr, "Unable to init swr context\n");

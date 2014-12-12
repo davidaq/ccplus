@@ -1,98 +1,61 @@
 #include "filter.hpp"
-#include "logger.hpp"
-#include "frame.hpp"
-#include "mat-cache.hpp"
-
-#include <cmath>
+#include "glprogram-manager.hpp"
+#include "gpu-frame.hpp"
+#include "render.hpp"
+#include "externals/triangulate.h"
 
 using namespace cv;
 using namespace CCPlus;
 
 CCPLUS_FILTER(ramp) {
-    if (parameters.size() == 0)
-        return;
     if (parameters.size() < 12) {
-        log(CCPlus::logERROR) << "Insufficient parameters for ramp effect";
-        return;
+        log(logERROR) << "Insufficient parameters for ramp effect";
+        return frame;
     }
-    
-    width = frame.getWidth();
-    height = frame.getHeight();
-    
-    float alpha = parameters[11];
-    if (alpha < 0)
-        alpha = 0;
-    if(alpha > 1)
-        alpha = 1;
-    HashFactory hash;
-    hash << "RAMP" << width << height;
-    for(int i = 0; i < 10; i++) {
-        hash << parameters[i];
+    float alpha = 1 - parameters[11];
+    int type = parameters[0];
+    float start_x = parameters[1] / frame->width / frame->ext.scaleAdjustX;
+    float start_y = parameters[2] / frame->height / frame->ext.scaleAdjustY;
+    float sr = parameters[3] / 255.0;
+    float sg = parameters[4] / 255.0;
+    float sb = parameters[5] / 255.0;
+
+    float end_x = parameters[6] / frame->width / frame->ext.scaleAdjustX;
+    float end_y = parameters[7] / frame->height / frame->ext.scaleAdjustY;
+    float er = parameters[8] / 255.0;
+    float eg = parameters[9] / 255.0;
+    float eb = parameters[10] / 255.0;
+
+    std::string fshader = "";
+    std::string name = "";
+    GLProgram programName = (type < 0) ? filter_ramp_linear : filter_ramp_radial;
+    if (type < 0) {
+        name = "filter_ramp_linear";
+        fshader = "shaders/filters/ramp_linear.f.glsl";
+    } else {
+        name = "filter_ramp_radial";
+        fshader = "shaders/filters/ramp_radial.f.glsl";
     }
-    hash << alpha;
-    cv::Mat ret = MatCache::get(hash.str(), [width, height, alpha, &parameters]() {
-        
-        int type = parameters[0];
-        int start_x = parameters[1];
-        int start_y = parameters[2];
-        int sr = parameters[3];
-        int sg = parameters[4];
-        int sb = parameters[5];
-        
-        int end_x = parameters[6];
-        int end_y = parameters[7];
-        int er = parameters[8];
-        int eg = parameters[9];
-        int eb = parameters[10];
-        
-        Mat ret = Mat::zeros(height, width, CV_8UC4);
-        
-        float dx = start_x - end_x;
-        float dy = start_y - end_y;
-        // TODO: implemented a fast sqrt or get rid of it
-        float dis = sqrt(dx * dx + dy * dy);
-        
-        auto getIntensity =
-        [type, start_x, start_y, end_x, end_y, dis] (int x, int y) {
-            if (type < 0) {
-                // Linear ramp
-                float vx = x - start_x;
-                float vy = y - start_y;
-                
-                float dx = end_x - start_x;
-                float dy = end_y - start_y;
-                
-                float prj_len = vx * dx + vy * dy;
-                prj_len /= dis;
-                return prj_len / dis;
-            } else {
-                // Radial ramp
-                float dx = x - start_x;
-                float dy = y - start_y;
-                return sqrt(dx * dx + dy * dy) / dis;
-            }
-        };
-#define uchar unsigned char
-        Vec4b* ptr = ret.ptr<Vec4b>(0);
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                float intensity = getIntensity(i, j);
-                float diff_r = er - sr;
-                float diff_g = eg - sg;
-                float diff_b = eb - sb;
-                Vec4b& tmp = ptr[j * width + i];
-                tmp[0] = (uchar) std::min(255.0f,
-                        std::max(0.0f, diff_r * intensity + sr));
-                tmp[1] = (uchar) std::min(255.0f,
-                        std::max(0.0f, diff_g * intensity + sg));
-                tmp[2] = (uchar) std::min(255.0f,
-                        std::max(0.0f, diff_b * intensity + sb));
-                tmp[3] = 255 * (1 - alpha);
-            }
-        }
-        return ret;
-    });
-    Frame retFrame = Frame(ret);
-    retFrame.mergeFrame(frame);
-    frame = retFrame;
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint alphaU, disU, startU, endU, s_rgbU, e_rgbU;
+    GLuint program = manager->getProgram(programName, &alphaU, &disU, &startU, &endU, &s_rgbU, &e_rgbU);
+    glUseProgram(program);
+
+    GPUFrame tmp_frame = GPUFrameCache::alloc(frame->width, frame->height);
+    tmp_frame->bindFBO(false);
+
+    float dx = start_x - end_x;
+    float dy = start_y - end_y;
+    float dis = sqrt(dx * dx + dy * dy);
+    glUniform1f(alphaU, alpha);
+    glUniform1f(disU, dis);
+    glUniform2f(startU, start_x, start_y);
+    glUniform2f(endU, end_x, end_y);
+    glUniform3f(s_rgbU, sr, sg, sb);
+    glUniform3f(e_rgbU, er, eg, eb);
+
+    fillSprite();
+
+    return mergeFrame(frame, tmp_frame, (BlendMode)0);
 }

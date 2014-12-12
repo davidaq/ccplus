@@ -4,16 +4,18 @@ ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
 	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
-	-std=gnu99 -D__ANDROID__ \
+	-Iinclude/externals/lua \
+	-std=c99 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 	-Ibuild/ -Iinclude -Idependency/boost -Idependency/opencv/headers -Idependency/ffmpeg/headers -Idependency/freetype \
 	-I${ANDROID_SYS_ROOT}/usr/include \
+	-Iinclude/externals/lua \
 	-I{$NDK_PATH}/sources/cxx-stl/llvm-libc++/libcxx/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/include \
 	-I${NDK_PATH}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include \
-	-std=c++11 -D__ANDROID__ \
+	-std=c++11 -D__ANDROID__ -DGLSLES \
 	-D__STDC_CONSTANT_MACROS  -D_STDC_FORMAT_MACROS \
 	-O3 -ffast-math 
 
@@ -43,14 +45,14 @@ clean-zim:
 	-rm -rf tmp/*.zim
 
 make_bin_header:
-	mkdir -p build/res
-	find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
+	#mkdir -p build/res
+	#find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
 
 .dependency:make_bin_header
 	@-./scripts/run load.py
 
 build/Makefile: .dependency
-	dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
+	-dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
 
 testbuild: build/Makefile
 	-rm -rf tmp/
@@ -65,8 +67,9 @@ android_a:build/android/_
 	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
 	chmod a+x .tmp.sh
 	find src -type d -exec mkdir -p build/android/{} \;
+	#find src -name \*.cpp -exec "./.tmp.sh" "if [`stat -f %m {}` -gt `stat -f %m build/android/{}.o`];then ${NDK_CXX} {} -c -o build/android/{}.o; fi" \;
 	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
-	find src -name \*.c -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
+	find src -name \*.c -exec "./.tmp.sh" ${NDK_CC} {} -c -o build/android/{}.o \;
 	rm -f .tmp.sh
 	@echo "\033[1;32mMake static lib\n\033[0m"
 	${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
@@ -79,29 +82,22 @@ android_so:
 android:android_a android_so
 	@echo "\033[1;32mDone!!\n\033[0m"
 
-ft_android:
-	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
-	chmod a+x .tmp.sh
-	find port/android/freetype/src -type d -exec mkdir -p build/ft_android/{} \;
-	find port/android/freetype/src -name \*.c -exec "./.tmp.sh" ${NDK_CC} {} -c -o build/ft_android/{}.o \;
-	-ls port/android/freetype/src | while read x;do "./.tmp.sh" ${NDK_CC} port/android/freetype/src/$$x/$$x.c -c -o build/ft_android/$$x.o; done
-	rm -f .tmp.sh
-	@echo "\033[1;32mMake static lib\n\033[0m"
-	${NDK_AR} cr build/ft_android/libfreetype.a `find build/ft_android/ -type f -name \*.o`
-
 ios:
+	./tools/make_ios_assets_bundle.sh
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
+	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
+	rm -r -f /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
+	cp -r -f ./port/iOS/ccplus.bundle /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
 
 test: testbuild
 	./test.sh '*'
 
 xcode:
-	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
+	-dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/xcode -Icommon.gypi
 
 todo:
-	@grep TODO `find src -type f -name *.cpp -o -name *.hpp`
-
-	@grep TODO `find include -type f -name *.cpp -o -name *.hpp`
+	@grep -n TODO `find src -type f -name *.cpp -o -name *.hpp`
+	@grep -n TODO `find include -type f -name *.cpp -o -name *.hpp`
 

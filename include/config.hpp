@@ -1,14 +1,25 @@
 #pragma once
 
+// Constant Compile-time Configuration
+
+const static bool JSON_BEUTIFY        = false;
+const static bool USE_POT_TEXTURE     = false;
+
+#ifndef GLSLES
+#if defined(__ANDROID__) || defined(__IOS__)
+#define GLSLES
+#endif
+#endif
+
+
+// Runtime Dynamic Configurations
+
 namespace CCPlus {
-
-    const int AUDIO_SAMPLE_RATE = 24000;
-
-    const int CONCURRENT_THREAD = 4;
-    
-    const bool COMPRESS_AUDIO = false;
-
-    const bool MEMORY_FS = true;
-
-    const bool GPU_ACCELERATION = false;
+    extern std::string assetsPath;
+    extern std::string outputPath;
+    extern int audioSampleRate;
+    extern int collectorThreadsNumber;
+    extern int frameRate;
+    extern int renderMode;
 }
+

@@ -1,18 +1,15 @@
 #pragma once
+#include "global.hpp"
 #include <string>
 #include <opencv2/opencv.hpp>
 
-
 namespace CCPlus {
-    class VideoEncoder;
     struct EncodeContext;
-    class Frame;
-    class ParallelExecutor;
 }
 
 class CCPlus::VideoEncoder {
 public:
-    VideoEncoder(const std::string& outputPath, int fps, int quality=70);
+    VideoEncoder(const std::string& outputPath, int fps, int width=0, int height=0, int quality=70);
     ~VideoEncoder();
 
     // @ append a frame

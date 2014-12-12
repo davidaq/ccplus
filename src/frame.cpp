@@ -1,499 +1,299 @@
-#include "global.hpp"
-#include "utils.hpp"
-#include "file-manager.hpp"
-#include "file.hpp"
+#include "frame.hpp"
+#include "profile.hpp"
 #include "zip.hpp"
-#include <ios>
-#include <stdexcept>
-#include <algorithm>
-#include "file.hpp"
-#include "file-manager.hpp"
-#include "blend-utils.hpp"
+#include "externals/lz4.h"
+#include "ccplus.hpp"
+#include "gpu-frame.hpp"
 
 using namespace CCPlus;
-using namespace cv;
+using namespace std;
 
-typedef uint16_t ushort;
+Frame::Frame() {
 
-Frame::Frame(const std::string& filepath) {
-    if(stringEndsWith(filepath, ".zim")) {
-        File* inFile = FileManager::getInstance()->open(filepath, "rb");
-        if(!inFile) {
-            log(logWARN) << "File not exists: " << filepath;
-            image = cv::Mat(8, 8, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-            return;
-        }
-        int sz = inFile->getSize();
-        unsigned char* fileContent = new unsigned char[sz];
-        unsigned char* endOfFile = fileContent + sz;
-        inFile->readAll(fileContent);
-        inFile->close();
-        unsigned char* ptr = fileContent;
+}
+
+Frame::~Frame() {
+
+}
+
+void Frame::readZimCompressed(const cv::Mat& inData) {
+    if(inData.empty()) {
+        log(logERROR) << "uncompress fail due to empty input";
+        return;
+    }
+    unsigned char* fileContent = (unsigned char*)inData.data;
+    int sz = inData.total();
+    unsigned char* endOfFile = fileContent + sz;
+    unsigned char* ptr = fileContent;
 #define NEXT(TYPE) *((TYPE*)ptr);ptr += sizeof(TYPE)
 
-        // Image size 
-        ushort width = NEXT(ushort);
-        ushort height = NEXT(ushort); 
+    // Image size 
+    uint16_t width = NEXT(uint16_t);
+    uint16_t height = NEXT(uint16_t); 
 
-        /* 
-         * Read jpg part
-         */
-        uint32_t jpgLen = NEXT(uint32_t);
-        if (jpgLen >= 125) {
-            vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
-            profile(DecodeImage) {
-                image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
-            }
-            to4Channels();
+    /* 
+     * Read jpg part
+     */
+    uint32_t jpgLen = NEXT(uint32_t);
+    if (jpgLen >= 125) {
+        //image = cv::Mat(height, width, CV_8UC4);
+        //memcpy(image.data, ptr, jpgLen);
+
+        vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
+        profile(DecodeImage) {
+            image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
         }
-        ptr += jpgLen;
+        mat3to4(image);
+    }
+    ptr += jpgLen;
 
-        /*
-         * Read alpha channel
-         */
-        uint32_t alphaLen = NEXT(uint32_t);
+    /*
+     * Read alpha channel
+     */
+    uint32_t alphaLen = NEXT(uint32_t);
+    if(alphaLen) {
         unsigned long destLen = width * height;
         unsigned char* alphaBytes = new unsigned char[destLen];       
-        int ret = 0;
-        profile(ZipUncompress) {
-            ret = uncompress(alphaBytes, &destLen, ptr, alphaLen);
-        }
-        if(destLen != width * height || ret != 0) {
-            log(logFATAL) << "Failed decompressing alpha";
-        }
-        for(int i = 3, j =0; j < destLen; i += 4, j++) {
+        LZ4_decompress_fast((const char*)ptr, (char*)alphaBytes, destLen);
+        for(int i = 3, j = 0; j < destLen; i += 4, j++) {
             image.data[i] = alphaBytes[j];
         }
         ptr += alphaLen;
-
-        /*
-         * Read audio channel
-         */
-        uint32_t audioLen = NEXT(uint32_t);
-        uint32_t audioRealByteLen = NEXT(uint32_t);
-        if (CCPlus::COMPRESS_AUDIO) {
-            unsigned char* audioData = new unsigned char[audioRealByteLen];
-            destLen = (unsigned long)0x7fffffff;
-            profile(ZipUncompress) {
-                ret = uncompress(audioData, &destLen, ptr, audioLen);
-            }
-            if (ret != 0 || audioRealByteLen != destLen) {
-                log(logFATAL) << "Failed decompressing audio";
-            }
-            // I don't trust memcpy
-            std::vector<int16_t> tmp;
-            for (int i = 0; i < destLen / 2; i++)
-                tmp.push_back(((int16_t*) audioData)[i]);
-            audio = Mat(tmp, true);
-            delete[] audioData;
-            ptr += audioLen;
-        } else {
-            vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);
-            audio = Mat(tmp, true);
-            ptr += audioRealByteLen;
-        }        
         delete[] alphaBytes;
-        if(ptr != endOfFile) {
-            anchorAdjustX = NEXT(int16_t);
-            anchorAdjustY = NEXT(int16_t);
+    }
+
+    /*
+     * Read audio channel
+     */
+    //uint32_t audioLen = NEXT(uint32_t);
+    uint32_t audioRealByteLen = NEXT(uint32_t);
+    audioRealByteLen = NEXT(uint32_t);
+    if(audioRealByteLen) {
+        vector<int16_t> tmp((int16_t*)ptr, (int16_t*)ptr + audioRealByteLen / 2);
+        ext.audio = cv::Mat(tmp, true);
+        ptr += audioRealByteLen;
+    }
+
+    if(ptr != endOfFile) {
+        ext.anchorAdjustX = NEXT(int16_t);
+        ext.anchorAdjustY = NEXT(int16_t);
+    }
+    if(ptr != endOfFile) {
+        ext.scaleAdjustX = NEXT(float);
+        ext.scaleAdjustY = NEXT(float);
+    }
+}
+
+void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) const {
+    uint16_t metric; 
+    // write size first
+    metric = (uint16_t) image.cols;
+    write(&metric, sizeof(metric), 1);
+    metric = (uint16_t) image.rows;
+    write(&metric, sizeof(metric), 1);
+
+    /* 
+     * write jpeg encoded color part
+     */
+    vector<unsigned char> buff;
+    if (!image.empty()) {
+        profile(EncodeImage) {
+            //buff = vector<unsigned char>(image.data, image.data + image.total() * 4);
+            imencode(".jpg", image, buff, 
+                    vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
         }
-        delete[] fileContent;
-    } else {
-        // read from file system
-        // ignore audio
-        image = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
-        if (!image.data) {
-            log(logWARN) << "File not exists: " << filepath;
-            image = cv::Mat(8, 8, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-            return;
-        }
     }
-
-    if (image.channels() == 3) {
-        to4Channels();
-    } else if (image.channels() < 3 && !image.empty()) {
-        log(logFATAL) << "Can't take images with less than 3 channels";
+    uint32_t jpgLen = buff.size();
+    write(&jpgLen, sizeof(jpgLen), 1);
+    if (!image.empty()) {
+        write(&buff[0], sizeof(char), jpgLen);
     }
+    buff.clear();
 
-    if (stringEndsWith(toLower(filepath), ".jpg")) {
-        try {
-            int degree = getImageRotation(filepath);
-            if (degree == -1) {
-                log(logWARN) << "Failed getting image rotationg angle";
-                return;
-            }
-            rotateCWRightAngle(degree);
-        } catch (...) {
-            log(logWARN) << "Failed getting image rotationg angle";
-        }
-    }
-}
-
-Frame::Frame(int width, int height) {
-    image = Mat::zeros(height, width, CV_8UC4);
-}
-
-Frame::Frame(const cv::Mat& _data) {
-    if (_data.type() == CV_16S) {
-        audio = _data;
-    } else if (_data.type() == CV_8UC4) {
-        image = _data;
-    }
-}
-
-Frame::Frame(const std::vector<int16_t>& data) {
-    audio = Mat(data, true);
-}
-
-Frame::Frame(const cv::Mat& _image, const cv::Mat& _audio) : image(_image), audio(_audio) {};
-
-Frame::Frame() {}
-
-void Frame::rotateCWRightAngle(int angle) {
-    if (angle % 90 != 0) {
-        log(logWARN) << "Unexpected rotation angle: " << angle;
-    }
-
-    if (angle == 180) {
-        flip(image, image, -1); 
-    } else if (angle == 90) {
-        transpose(image, image);
-        flip(image, image, 1); 
-    } else if (angle == 270) {
-        transpose(image, image);
-        flip(image, image, 0); 
-    }
-}
-
-void Frame::to4Channels() {
-    Mat newdata = Mat(getHeight(), getWidth(), CV_8UC4, {0, 0, 0, 255});
-    int from_to[] = {0, 0, 1, 1, 2, 2};
-    mixChannels(&image, 1, &newdata, 1, from_to, 3);
-    image = newdata;
-}
-
-void Frame::write(const std::string& file, int quality, bool inMemory) {
-    if(stringEndsWith(file, ".zim")) {   
-        FileManager* fm = FileManager::getInstance();
-        File& outFile = *fm->open(file, "wb", inMemory);
-        ushort metric; 
-        // write size first
-        metric = (ushort)getWidth();
-        outFile.write(&metric, sizeof(metric));
-        metric = (ushort)getHeight();
-        outFile.write(&metric, sizeof(metric));
-
-        /* 
-         * write jpeg encoded color part
-         */
-        vector<unsigned char> buff;
-        if (!image.empty()) {
-            profile(EncodeImage) {
-                imencode(".jpg", image, buff, 
-                        vector<int>{CV_IMWRITE_JPEG_QUALITY, quality});
-            }
-        }
-        uint32_t jpgLen = buff.size();
-        outFile.write(&jpgLen, sizeof(jpgLen));
-        if (!image.empty())
-            outFile.write(&buff[0], sizeof(char), jpgLen);
-        buff.clear();
-
-        /* 
-         * write zip compressed alpha channel
-         */
-        unsigned long len = image.cols * image.rows;
+    /* 
+     * write zip compressed alpha channel
+     * Note: this is legacy feature and should be disabled
+     */
+    unsigned long len = image.cols * image.rows;
+    if(len) {
         unsigned char* uncompressedBytes = new unsigned char[len];
-        unsigned char* compressedBytes = new unsigned char[std::max((int)len, 124)];
+        unsigned long tmplen = LZ4_compressBound(len);
+        unsigned char* compressedBytes = new unsigned char[tmplen];
         for(int i = 3, j = 0, c = len * 4; i < c; i += 4, j++) 
             uncompressedBytes[j] = image.data[i];
 
-        unsigned long tmplen = std::max((int) len, 128);
-        int ret = 0;
-        profile(ZipCompress) {
-            ret = compress(compressedBytes, &tmplen, uncompressedBytes, len);
-        }
-        if (ret != 0) {
-            outFile.close();
-            log(logFATAL) << "Failed compressing alpha " << ret << " " << len;
-        }
+        tmplen = LZ4_compress((const char*)uncompressedBytes, (char*)compressedBytes, len);
         uint32_t wlen = tmplen;
-        outFile.write(&wlen, sizeof(wlen));
-        outFile.write(compressedBytes, sizeof(char), wlen);
-
-        /*
-         * Compress audio data
-         */
-        len = audio.total();
-        if (CCPlus::COMPRESS_AUDIO) {
-            unsigned long tmp = len * 2 + 128;
-            unsigned char* compressedAudio = new unsigned char[tmp];
-            profile(ZipCompress) {
-                ret = compress(compressedAudio, &tmp, (unsigned char*) audio.data, len * 2);
-            }
-            if (ret != 0) {
-                outFile.close();
-                log(logFATAL) << "Failed compressing audio " << ret;
-            }
-            wlen = tmp;
-            outFile.write(&wlen, sizeof(wlen));
-            wlen = len * 2;
-            outFile.write(&wlen, sizeof(wlen));
-            outFile.write(compressedAudio, sizeof(char), tmp);
-            delete[] compressedAudio;
-        } else {
-            wlen = 0;
-            outFile.write(&wlen, sizeof(wlen));
-            wlen = len * 2;
-            outFile.write(&wlen, sizeof(wlen));
-            outFile.write(audio.data, sizeof(int16_t), len);
-        }
-        /*
-         * write anchor adjust
-         */
-        int16_t val = anchorAdjustX;
-        outFile.write(&val, sizeof(int16_t));
-        val = anchorAdjustY;
-        outFile.write(&val, sizeof(int16_t));
-
-        outFile.close();
+        write(&wlen, sizeof(wlen), 1);
+        write(compressedBytes, sizeof(char), wlen);
         delete[] uncompressedBytes;
         delete[] compressedBytes;
     } else {
-        cv::imwrite(file, image);
+        uint32_t wlen = 0;
+        write(&wlen, sizeof(wlen), 1);
     }
+
+    /*
+     * Write audio data
+     */
+
+    // write legacy compressed audio length
+    uint32_t wlen = 0;
+    write(&wlen, sizeof(wlen), 1);
+
+    len = ext.audio.total();
+    wlen = len * 2;
+    write(&wlen, sizeof(wlen), 1);
+    write(ext.audio.data, sizeof(int16_t), len);
+    /*
+     * write extra
+     */
+    int16_t val = ext.anchorAdjustX;
+    write(&val, sizeof(int16_t), 1);
+    val = ext.anchorAdjustY;
+    write(&val, sizeof(int16_t), 1);
+    float fval = ext.scaleAdjustX;
+    write(&fval, sizeof(float), 1);
+    fval = ext.scaleAdjustY;
+    write(&fval, sizeof(float), 1);
 }
 
-int Frame::getWidth() const {
-    return image.cols;
+cv::Mat Frame::zimCompressed(int quality) const {
+    std::vector<uint8_t> ret;
+    ret.reserve(20);
+    frameCompress([&ret](void* data, size_t sz, size_t len) {
+        ret.reserve(ret.size() + sz * len);
+        ret.insert(ret.end(), (uint8_t*)data, (uint8_t*)data + sz * len);
+    }, quality);
+    return cv::Mat(ret, true);
 }
 
-int Frame::getHeight() const {
-    return image.rows;
-}
-
-int Frame::getImageChannels() const {
-    return image.channels();
-}
-
-cv::Mat& Frame::getImage() {
-    return image;
-}
-
-const cv::Mat& Frame::getImage() const {
-    return image;
-}
-
-void Frame::setImage(const cv::Mat& m) {
-    this->image = m;
-}
-
-const Mat& Frame::getAudio() const {
-    return audio;
-}
-
-Mat& Frame::getAudio() {
-    return audio;
-}
-
-void Frame::setAudio(const Mat& aud) {
-    this->audio = aud;
-}
-
-void Frame::setAudio(const std::vector<int16_t>& aud) {
-    this->audio = Mat(aud, true);
-}
-
-void Frame::mergeFrame(const Frame& f, int mode) {
-    profile(mergeFrame) {
-        if (!f.getImage().empty()) {
-            // Calculate new boundary 
-            setXMin(min(getXMin(), f.getXMin()));
-            setXMax(max(getXMax(), f.getXMax()));
-            setYMin(min(getYMin(), f.getYMin()));
-            setYMax(max(getYMax(), f.getYMax()));
-
-            this->overlayImage(f.getImage(), getBlender(mode));
+void Frame::write(const std::string& zimpath, int quality) const {
+    profile(zimWrite) {
+        if (!stringEndsWith(zimpath, ".zim")) {
+            log(logWARN) << "Zim file should use .zim ext " + zimpath;
         }
-
-        mergeAudio(f);
-    }
-}
-
-void Frame::mergeAudio(const Frame& f) {
-    // Merge audio
-    // Two frames are supposed to have the same number of audio signals
-    const Mat& input = f.getAudio();
-    if (audio.total() == 0) {
-        audio = input;
-        return;
-    }
-    for (int i = 0; i < input.total() && i < audio.total(); i++) {
-        int tmp = (int)audio.at<int16_t>(i) + (int)input.at<int16_t>(i);
-        tmp = std::max((int)std::numeric_limits<int16_t>::min(), tmp);
-        tmp = std::min((int)std::numeric_limits<int16_t>::max(), tmp);
-        audio.at<int16_t>(i) = int16_t(tmp);
-    }
-}
-
-void Frame::overlayImage(const Frame& f, BLENDER_CORE blend) {
-    const Mat& input = f.getImage();
-    if (input.empty()) return;
-    // When pure audio frame merges visible frame  
-    if (image.empty()) {
-        image = input;
-        return;
-    }
-    
-    if (this->getHeight() != input.rows || this->getWidth() != input.cols) {
-        log(logWARN) << "image overlay expects two images with the same size"; 
-        return;
-    }
-
-    if (this->getImageChannels() != 4 || input.channels() != 4) {
-        log(logWARN) << "image overlay requires image to have alpha channel"; 
-        return;
-    }
-
-    cv::Vec4b* imagePixel = image.ptr<cv::Vec4b>(0);
-    const cv::Vec4b* inputPixel = input.ptr<cv::Vec4b>(0);
-    // Merge effective zone only BETA
-    //int cols = image.cols;
-    //int ymn = f.getYMin();
-    //int ymx = f.getYMax();
-    //int xmn = f.getXMin();
-    //int xmx = f.getXMax();
-    //for (int i = ymn; i < ymx; i++) {
-    //    for (int j = xmn; j < xmx; j++) {
-    //        imagePixel[i * cols + j] = blendWithBlender(blend,
-    //                imagePixel[i * cols + j], 
-    //                inputPixel[i * cols + j]);
-    //    }
-    //}
-    // Merge all 
-    for (int i = 0, c = this->getWidth() * this->getHeight(); i < c; i++) { 
-        *imagePixel = blendWithBlender(blend, *imagePixel, *inputPixel);
-        imagePixel++;
-        inputPixel++;
-    }
-}
-
-static inline float luma(const Vec4b& c) {
-    int max = std::max<int>(c[0], std::max<int>(c[1], c[2]));
-    int min = std::min<int>(c[0], std::min<int>(c[1], c[2]));
-    return (max + min) / 2 / 255.0;
-}
-
-void Frame::trackMatte(const Frame& frame, int trkMat) {
-    if (!trkMat) return;
-    if (frame.empty()) return;
-    const Mat& input = frame.getImage();
-    if (this->getHeight() != input.rows || 
-            this->getWidth() != input.cols) {
-        log(logWARN) << "Track matte requires two layer have the same size";
-        return;
-    }
-
-    if (trkMat <= 2 && 
-            (frame.getImageChannels() < 4 || 
-             this->getImageChannels() < 4)) {
-        log(logWARN) << "Alpha mode track matte requires image to have alpha channel";
-        return;
-    }
-    int rows = this->getHeight();
-    int cols = this->getWidth();
-    for (int i = 0; i < rows; i++) {
-        Vec4b* imagePtr = image.ptr<Vec4b>(i);
-        const Vec4b* inputPtr = input.ptr<Vec4b>(i);
-        for (int j = 0; j < cols; j++) {
-            Vec4b& col = imagePtr[j];
-            const Vec4b& inputcol = inputPtr[j];
-            float opa;
-            switch (trkMat) {
-                case 1:
-                    opa = inputcol[3] / 255.0f;
-                    col[3] = int(opa * col[3]);
+        FILE* file = fopen(zimpath.c_str(), "wb");
+        if(!file) {
+            log(logERROR) << "can't open file for write" << zimpath;
+            return;
+        }
+        frameCompress([&file, &zimpath](void* _data, size_t sz, size_t len) {
+            unsigned char* data = (unsigned char*)_data;
+            while(len > 0) {
+                size_t wlen = len;
+                if(wlen > 3000)
+                    wlen = 3000;
+                size_t wrote = fwrite(data, sz, len, file);
+                if(wrote <= 0) {
                     break;
-                case 2:
-                    opa = 1.0 - inputcol[3] / 255.0f;
-                    col[3] = int(opa * col[3]);
-                    break;
-                case 3:
-                    col[3] = int(luma(inputcol) * col[3]);
-                    break;
-                case 4:
-                    col[3] = int((1.0 - luma(inputcol)) * col[3]);
-                    break;
+                }
+                len -= wrote;
+                data += wrote;
             }
-        }
-    }
-}
-
-Frame Frame::emptyFrame(int width, int height) {
-    return Frame(width, height);
-}
-
-bool Frame::empty() const {
-    return image.empty() && audio.empty();   
-}
-
-/**
- * Eliminate alpha, set transparent parts to black
- */
-void Frame::setBlackBackground() {
-    for (int i = 0; i < this->getHeight(); i++) { 
-        Vec4b* ptr = image.ptr<Vec4b>(i);
-        for (int j = 0; j < this->getWidth(); j++) {
-            Vec4b& col = ptr[j];
-            //int alpha = image.at<Vec4b>(i, j)[3];
-            int alpha = col[3];
-            for(int k = 0; k < 3; k++) {
-                //image.at<Vec4b>(i, j)[k] = alpha * image.at<Vec4b>(i, j)[k] / 0xff;
-                col[k] = alpha * col[k] / 0xff;
+            if(len > 0) {
+                log(logERROR) << "failed to write some data to" << zimpath;
             }
+        }, quality);
+        if(ftell(file) <= 0) {
+            log(logWARN) << "wrote empty file:" << zimpath;
         }
+        fclose(file);
     }
 }
 
-void Frame::addAlpha(const std::vector<unsigned char>& input) {
-    if (this->image.empty()) return;
-    if (this->image.channels() == 3)
-        to4Channels();
-    for (int i = 0, j = 3; i < input.size() && j < image.total() * 4; 
-            i++, j += 4) {
-        image.data[j] = input[i];
+void Frame::read(const std::string& zimpath) {
+    if (!stringEndsWith(zimpath, ".zim")) {
+        log(logERROR) << "Unrecgnozied file format:" + zimpath;
+        return;
+    }
+    FILE* file = fopen(zimpath.c_str(), "rb");
+    if(!file) {
+        log(logERROR) << "File not exists:" << zimpath;
+        return;
+    }
+    fseek(file, 0, SEEK_END);
+    int sz = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    if(!sz) {
+        log(logWARN) << "Trying to read empty zim file:" << zimpath;
+    }
+    cv::Mat fileContent(1, sz, CV_8U);
+    fread(fileContent.data, sizeof(unsigned char), sz, file);
+    fclose(file);
+    readZimCompressed(fileContent);
+}
+
+void Frame::toNearestPOT(int max_size, bool nearestInterpolate) {
+    if(image.empty())
+        return;
+    int w = image.cols, h = image.rows;
+    if(w > max_size) {
+        w = max_size;
+    }
+    if(h > max_size) {
+        h = max_size;
+    }
+    w = nearestPOT(w);
+    h = nearestPOT(h);
+    if(w != image.cols || h != image.rows) {
+        ext.scaleAdjustX *= image.cols * 1.0f / w;
+        ext.scaleAdjustY *= image.rows * 1.0f / h;
+        if(nearestInterpolate)
+            cv::resize(image, image, {w, h}, cv::INTER_NEAREST);
+        else
+            cv::resize(image, image, {w, h});
     }
 }
 
-int Frame::getXMin() const { 
-    return std::max(0, xMin);
+
+Frame Frame::compressed(bool slower) const {
+    Frame ret;
+    ret.compressedFlag = true;
+    ret.expectedWidth = image.cols;
+    ret.expectedHeight = image.rows;
+    if(slower) {
+        ret.zimCompressedFlag = true;
+        ret.image = zimCompressed(70);
+    } else {
+        ret.ext = ext;
+        int srcLen = image.rows * image.cols * 4;
+        uint8_t* srcData = image.data;
+        int sz = LZ4_compressBound(srcLen);
+        char* dest = new char[sz];
+        sz = LZ4_compress((char*)srcData, dest, srcLen);
+        ret.image = cv::Mat(1, sz, CV_8U);
+        memcpy(ret.image.data, dest, sz);
+        delete[] dest;
+    }
+    return ret;
 }
 
-int Frame::getYMin() const { 
-    return std::max(0, yMin);
+Frame Frame::decompressed() const {
+    Frame ret;
+    if(zimCompressedFlag) {
+        ret.readZimCompressed(image);
+    } else {
+        int sz = expectedWidth * expectedHeight * 4;
+        ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
+        LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+        ret.ext = ext;
+    }
+    return ret;
 }
 
-int Frame::getXMax() const { 
-    return std::min(image.cols, xMax);
+bool Frame::isCompressed() const {
+    return compressedFlag;
 }
 
-int Frame::getYMax() const { 
-    return std::min(image.rows, yMax);
+GPUFrame Frame::toGPU(bool premultiply) const {
+    if(isCompressed()) {
+        return decompressed().toGPU();
+    }
+    GPUFrame ret = GPUFrameCache::alloc(image.cols, image.rows);
+    ret->loadFromCPU(*this);
+    if(premultiply)
+        ret = ret->alphaMultiplied();
+    ret->ext = ext;
+    return ret;
 }
-
-void Frame::setAnchorAdjustX(int val) {
-    anchorAdjustX = val;
-}
-
-void Frame::setAnchorAdjustY(int val) {
-    anchorAdjustY = val;
-}
-
-int Frame::getAnchorAdjustX() const {
-    return anchorAdjustX;
-}
-
-int Frame::getAnchorAdjustY() const {
-    return anchorAdjustY;
-}
-

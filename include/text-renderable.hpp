@@ -1,8 +1,7 @@
 #pragma once
 
 #include "renderable.hpp"
-#include <map>
-#include <string>
+#include <boost/property_tree/ptree.hpp> 
 
 namespace CCPlus {
     class TextRenderable;
@@ -10,53 +9,49 @@ namespace CCPlus {
 
 class CCPlus::TextRenderable : public CCPlus::Renderable {
 public:
-    TextRenderable(CCPlus::Context* context, const std::string& uri);
+    TextRenderable(const boost::property_tree::ptree& properties);
+    ~TextRenderable() {this->release();};
 
-    void render(float start, float duration);
+    void prepare();
 
-    Frame getFrame(float time) const;
-    Frame getFrameByNumber(int frame) const;
+    float getDuration();
+    CCPlus::GPUFrame getGPUFrame(float time);
+    void release();
 
-    float getDuration() const;
     int getWidth() const;
     int getHeight() const;
 
-    bool still(float t1, float t2);
-
-    void clear();
-
-    const std::string& getName() const;
-    
-    std::map<float, std::wstring> text;
-    std::map<float, std::wstring> font;
-    std::map<float, int> size;
-    std::map<float, float > scale_x;
-    std::map<float, float > scale_y;
-    std::map<float, float> tracking;
-    std::map<float, bool> bold;
-    std::map<float, bool> italic;
-    std::map<float, int> color;
-    std::map<float, int> justification;
-
 protected:
+    std::map<int, std::wstring> text;
+    std::map<int, std::string> font;
+    std::map<int, int> size;
+    std::map<int, float > scale_x;
+    std::map<int, float > scale_y;
+    std::map<int, float> tracking;
+    std::map<int, bool> bold;
+    std::map<int, bool> italic;
+    std::map<int, int> color;
+    std::map<int, int> justification;
+
     template<typename T> 
-    T get(const std::map<float, T>& m, float t) const {
-        float ret;
-        // TODO: binary search
+    T get(const std::map<int, T>& m, int t) const {
+        int ret;
         for (auto& kv : m) {
-            if (kv.first <= t + 0.0001) 
+            if (kv.first <= t) 
                 ret = kv.first;
             if (kv.first > t)
                 break;
         }
+        if (!m.count(ret)) {
+            for (auto& kv : m)
+                return kv.second;
+        }
         return m.at(ret);
     }
 
-    int findKey(int f) const;
-    int findKeyByTime(float f) const;
-
+    void prepareFrame(int time);
+    int findKeyTime(float time);
     std::vector<int> keyframes;
-    std::set<int> rendered;
-
-    std::string uri;
+    std::map<int, Frame> framesCache;
+    std::map<int, GPUFrame> gpuFramesCache;
 };
