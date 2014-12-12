@@ -28,6 +28,8 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
             decoder = new VideoDecoder(path, VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
         }
     }
+    if(decoder)
+        duration = decoder->getVideoInfo().duration;
 }
 
 VideoRenderable::~VideoRenderable() {
@@ -53,7 +55,7 @@ void VideoRenderable::prepare() {
     }
     prepared = true;
     for(const auto& part : usedFragments)
-        preparePart((int)(part.first - 0.5), (int)(part.second - part.first + 1));
+        preparePart((part.first - 0.5), (part.second - part.first + 1));
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
@@ -73,6 +75,8 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
+    if(getUri() == "file:///Users/apple/Documents/workspace/ccplus/assets/aux_tpl/(Footage)/Footage/Logo.mov")
+        L() << start << duration;
     profile(videoDecode) {
         // Audio
         decoder->seekTo(start);
@@ -183,22 +187,6 @@ int VideoRenderable::time2frame(float time) {
 }
 
 float VideoRenderable::getDuration() {
-    if(duration > 0)
-        return duration;
-    if(!framesCache.empty()) {
-        int max = 0;
-        for(const auto& item : framesCache) {
-            if(item.first > max)
-                max = item.first;
-        }
-        max++;
-        duration = max * 1.0f / frameRate;
-        float oduration = decoder->getVideoInfo().duration;
-        if(duration < oduration && oduration - duration < oduration * 0.1)
-            duration = oduration;
-    }
-    if(decoder)
-        return decoder->getVideoInfo().duration;
-    return 9999999;
+    return duration;
 }
 

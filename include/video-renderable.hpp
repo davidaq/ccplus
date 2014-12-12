@@ -20,7 +20,7 @@ public:
     CCPlus::GPUFrame getGPUFrame(float time);
 
 private:
-    float duration = -1;
+    float duration = 999999;
     bool audioOnly;
     void preparePart(float start, float duration);
     int time2frame(float time);

@@ -13,7 +13,8 @@
     });
     try {
         log('starting....');
-        new Export().exportTo(app.project.file.fullName + '.tml');
+        //new Export().exportTo(app.project.file.fullName + '.tml');
+        new Export().exportTo(app.project.file.parent.fullName + '/tpl.tml');
     } catch (e) {
         alert(e);
     }
