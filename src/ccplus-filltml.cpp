@@ -9,8 +9,6 @@
 #include "utils.hpp"
 #include "ccplus.hpp"
 
-#include "externals/TinyJS.h"
-
 extern "C" {
 #include "externals/lua/lua.h"
 #include "externals/lua/lualib.h"
