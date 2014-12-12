@@ -75,8 +75,6 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
-    if(getUri() == "file:///Users/apple/Documents/workspace/ccplus/assets/aux_tpl/(Footage)/Footage/Logo.mov")
-        L() << start << duration;
     profile(videoDecode) {
         // Audio
         decoder->seekTo(start);
