@@ -212,16 +212,20 @@ static inline void utf8toWStr(std::wstring& dest, const std::string& src){
 }
 
 static inline void mat3to4(cv::Mat& org) {
-    if (org.channels() == 3) {
-        cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
-        static const int from_to[] = {0, 0, 1, 1, 2, 2};
-        mixChannels(&org, 1, &newimg, 1, from_to, 3);
+    if(org.channels() == 4)
+        return;
+    cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
+    if(org.channels() < 1 || org.channels() > 3) {
         org = newimg;
-    } else if(org.channels() == 1) {
-        cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
-        static const int from_to[] = {0, 0, 0, 1, 0, 2};
-        mixChannels(&org, 1, &newimg, 1, from_to, 3);
+        return;
     }
+    static const int from_to[][6] {
+        {0, 0, 0, 1, 0, 2}, // 1 channel
+        {0, 0, 0, 1, 0, 2}, // 2 channel
+        {0, 0, 1, 1, 2, 2}, // 3 channel
+    };
+    mixChannels(&org, 1, &newimg, 1, from_to[org.channels() - 1], 3);
+    org = newimg;
 }
 
 static inline std::string readTextAsset(const std::string& path) {

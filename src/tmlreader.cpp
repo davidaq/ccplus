@@ -22,6 +22,11 @@ Composition* TMLReader::read(const std::string& s) const {
     fstream.close();
 
     std::string main_name = pt.get<std::string>("main");
+    int fps = pt.get<int>("fps", frameRate);
+    if(renderMode == PREVIEW_MODE) {
+        fps = pt.get<int>("preview_fps", fps);
+    }
+    setFrameRate(fps);
 
     for (auto& child: pt.get_child("compositions")) {
         ptree& comp = child.second;
