@@ -181,8 +181,7 @@ void VideoRenderable::preparePart(float start, float duration) {
 }
 
 int VideoRenderable::time2frame(float time) {
-    return std::round(time * frameRate);
-    //return (int)(time * frameRate);
+    return (int)(time * frameRate + 0.5);
 }
 
 float VideoRenderable::getDuration() {
