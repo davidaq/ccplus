@@ -225,7 +225,7 @@ Export.prototype.exportLayer = function(layer) {
         var alias = PropertyMapping[pmk].alias;
         if(!alias)
             alias = {};
-        for(var t = ret.time; ; t += 0.1) {
+        for(var t = ret.time; ; t += 0.04) {
             if(t > layer.outPoint) {
                 if(proced)
                     break;

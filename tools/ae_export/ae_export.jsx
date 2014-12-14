@@ -179,7 +179,7 @@ Export.prototype.exportLayer = function(layer) {
             var proced = false;
             var prevVal = -314.159;
             var prop = {};
-            for(var t = layer.inPoint; ; t += 0.1) {
+            for(var t = layer.inPoint; ; t += 0.04) {
                 if(t > layer.outPoint) {
                     if(proced)
                         break;
