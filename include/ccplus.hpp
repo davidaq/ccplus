@@ -14,6 +14,7 @@ namespace CCPlus {
     void setAssetsPath(const std::string&);     // defaults to ""
     void setCollectorThreadsNumber(int);        // defaults to 2
     void setFrameRate(int);                     // defaults to 18
+    int getFrameRate();
     void setOutputPath(const std::string&);     // defaults to "tmp"
     
     const int PREVIEW_MODE = 0;
