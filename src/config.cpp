@@ -28,6 +28,10 @@ void CCPlus::setFrameRate(int val) {
     frameRate = val;
 }
 
+int CCPlus::getFrameRate() {
+    return frameRate;
+}
+
 void CCPlus::setOutputPath(const std::string& val) {
     outputPath = val;
 }

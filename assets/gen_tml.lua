@@ -491,6 +491,9 @@ function toHalf(template)
             return {1, 2}
         end
     }
+    resizers["4corner"] = function() 
+        return {1, 2, 3, 4, 5, 6, 7, 8}
+    end
     resizers["4color"] = function() 
         return {1, 2, 6, 7, 11, 12, 16, 17}
     end
