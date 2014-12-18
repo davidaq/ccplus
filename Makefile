@@ -1,4 +1,4 @@
-NDK_PATH := /Users/apple/Lib/android-ndk-r9d
+NDK_PATH := /Users/apple/Lib/android-ndk-r10d
 NDK_TOOLCHAIN_PREFIX := ${NDK_PATH}/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-
 ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
