@@ -1,6 +1,7 @@
 #include "global.hpp"
 #include "ccplay.hpp"
 #include "parallel-executor.hpp"
+#include "frame.hpp"
 #include <queue>
 
 using namespace CCPlus;
