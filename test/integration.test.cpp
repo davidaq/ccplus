@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "ccplus.hpp"
+#include "ccplay.hpp"
 #include "global.hpp"
 
 using namespace CCPlus;
@@ -39,9 +40,35 @@ TEST(Integration, Repeat) {
     target2.waitFinish();
 }
 
-//TEST(Integration, Misc) {
-//    CCPlus::go("test/res/test2.tml");
-//    CCPlus::go("test/res/test2.tml");
-//    CCPlus::go("test/res/test2.tml");
-//    CCPlus::go("test/res/basic.tml");
-//}
+TEST(Integration, Player) {
+    CCPlus::setRenderMode(PREVIEW_MODE);
+    CCPlus::RenderTarget target;
+    target.tmlPath = "test/res/test2.tml";
+    CCPlus::go(&target);
+    CCPlus::play("tmp", 18, true);
+    target.waitFinish();
+}
+
+TEST(Integration, Player_Stop) {
+    CCPlus::setRenderMode(PREVIEW_MODE);
+    CCPlus::RenderTarget target;
+    target.tmlPath = "test/res/test2.tml";
+    CCPlus::go(&target);
+    CCPlus::play("tmp", 18);
+
+    sleep(3);
+    CCPlus::stop();
+    target.waitFinish();
+}
+
+TEST(Integration, Player_Rewind) {
+    CCPlus::setRenderMode(PREVIEW_MODE);
+    CCPlus::RenderTarget target;
+    target.tmlPath = "test/res/test2.tml";
+    CCPlus::go(&target);
+    CCPlus::play("tmp", 18);
+
+    sleep(6);
+    CCPlus::rewind();
+    sleep(15);
+}

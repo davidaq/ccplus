@@ -102,8 +102,13 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
         }
         ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-        if(writeFuc)
-            writeFuc(frame->toCPU(), fn++, writeCtx);
+        if(writeFuc) {
+            Frame cpu_frame = frame->toCPU();
+            if (i + delta > duration) {
+                cpu_frame.eov = true;
+            }
+            writeFuc(cpu_frame, fn++, writeCtx);
+        }
         if(fn & 1) {
             log(logINFO) << "render frame --" << i << ':' << activeTarget->progress << '%';
 
@@ -165,11 +170,16 @@ void writePreview(const Frame& frame, int fn, void* ctx) {
     frame.write(Context::getContext()->getStoragePath(buf));
 }
 
+void writeEOF(void* ctx) {
+    std::string path = Context::getContext()->getStoragePath("eov.zim");
+    spit(path, "I'm an extremly bored EOV -- End Of Video.");
+}
+
 void render() {
     if(renderMode == FINAL_MODE) {
         renderAs(beginVideo, writeVideo, finishVideo);
     } else {
-        renderAs(0, writePreview, 0);
+        renderAs(0, writePreview, writeEOF);
     }
 }
 

@@ -6,22 +6,25 @@
 
 using namespace CCPlus;
 
-const int BUFFER_DURATION = 2;
-bool keepRunning = false;
-int currentFrame = 0; // Latest frame that haven't been showed
-
-PlayerInterface playerInterface = 0;
-
 struct BufferObj {
     Frame frame;
     int fid;
 };
 
-void CCPlus::play(const std::string& zimDir, int fps) {
+const int BUFFER_DURATION = 2;
+bool keepRunning = false;
+int currentFrame = 0; // Latest frame that haven't been showed
+float playerTime = 0;
+pthread_mutex_t buffer_lock;
+std::queue<BufferObj*> buffer;
+
+PlayerInterface playerInterface = 0;
+ProgressInterface progressInterface = 0;
+
+void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
     keepRunning = true;
-    pthread_mutex_t buffer_lock;
-    std::queue<BufferObj*> buffer;
-    pthread_t buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps, &buffer, &buffer_lock] () {
+    pthread_t buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps] () {
+        bool finished = false;
         while (keepRunning) {
             // Clean useless frame
             pthread_mutex_lock(&buffer_lock);
@@ -37,6 +40,10 @@ void CCPlus::play(const std::string& zimDir, int fps) {
                 usleep(10000); // Sleep 10 msecs
                 continue;
             }
+            if (finished) {
+                usleep(10000); // Sleep 10 msecs
+                continue;
+            }
             int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             char buf[32];
@@ -44,13 +51,18 @@ void CCPlus::play(const std::string& zimDir, int fps) {
             std::string fn = generatePath(zimDir, buf);
             sprintf(buf, "%07d.zim", targetFrame + 1);
             std::string next_fn = generatePath(zimDir, buf);
-            std::string eof_fn = generatePath(zimDir, "eof.zim");
+            std::string eov_fn = generatePath(zimDir, "eov.zim");
 
             // Check next frame to make sure targetframe is 
-            if (file_exists(next_fn) || file_exists(eof_fn)) {
+            bool flag = file_exists(eov_fn);
+            if (file_exists(fn) && (flag || file_exists(next_fn))) {
                 BufferObj* obj = new BufferObj();
                 obj->fid = targetFrame;
                 obj->frame.read(fn);
+
+                if (obj->frame.eov) {
+                    finished = true;
+                }
 
                 buffer.push(obj);
             }
@@ -58,8 +70,9 @@ void CCPlus::play(const std::string& zimDir, int fps) {
             usleep(10000); // Sleep 10 msecs
         }
     });
-    pthread_t play_thread = ParallelExecutor::runInNewThread([fps, &buffer, &buffer_lock] () {
-        float time = 0;
+    pthread_t play_thread = ParallelExecutor::runInNewThread([fps] () {
+        playerTime = 0.0;
+        currentFrame = 0;
         const int WAITING = 0;
         const int INITING = -1;
         const int PLAYING = 1;
@@ -67,14 +80,25 @@ void CCPlus::play(const std::string& zimDir, int fps) {
         while (keepRunning) {
             usleep(5000);
             if (status == PLAYING) {
-                time += 0.005;
+                playerTime += 0.005;
                 float desiredTime = currentFrame * 1.0 / fps;
-                if (time >= desiredTime) {
+                if (playerTime >= desiredTime) {
                     pthread_mutex_lock(&buffer_lock);
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
                         // Invoke callback
-                        L() << "Invoke callback time: " << time;
+                        L() << "Playing: " << playerTime;
+                        Frame* buf = &buffer.front()->frame;
+                        if (playerInterface) {
+                            playerInterface(desiredTime, buf->image.data, buf->image.cols, 
+                                buf->image.rows, buf->ext.audio.data, buf->ext.audio.total(), 1.0);
+                        }
+                        if (buf->eov) {
+                            L() << "DONE! ";
+                            return;
+                        }
+                        currentFrame++;
                     } else {
+                        L() << "Start warting: " << currentFrame;
                         status = WAITING;
                     }
                     pthread_mutex_unlock(&buffer_lock);
@@ -85,13 +109,21 @@ void CCPlus::play(const std::string& zimDir, int fps) {
                         status = PLAYING;
                     }
                 } else {
-                    if (buffer.size() > BUFFER_DURATION * fps) {
+                    if (buffer.size() >= BUFFER_DURATION * fps) {
                         status = PLAYING;
+                    } else {
+                        if (progressInterface) {
+                            progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * fps));
+                        }
                     }
                 }
             }
         }
     });
+
+    if (blocking) {
+        pthread_join(play_thread, NULL);
+    }
 }
 
 void CCPlus::stop() {
@@ -100,9 +132,13 @@ void CCPlus::stop() {
 
 void CCPlus::rewind() {
     currentFrame = 0;
+    playerTime = 0.0;
 }
 
 void CCPlus::attachPlayerInterface(PlayerInterface interface) {
     playerInterface = interface;
 }
 
+void CCPlus::attachProgressInterface(ProgressInterface interface) {
+    progressInterface = interface;
+}

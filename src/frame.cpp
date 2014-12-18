@@ -82,6 +82,10 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
         ext.scaleAdjustX = NEXT(float);
         ext.scaleAdjustY = NEXT(float);
     }
+    if (ptr != endOfFile) {
+        int16_t tmp = NEXT(int16_t);
+        eov = (tmp == 1 ? true : false);
+    }
 }
 
 void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int quality) const {
@@ -156,6 +160,9 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&fval, sizeof(float), 1);
     fval = ext.scaleAdjustY;
     write(&fval, sizeof(float), 1);
+
+    int16_t eov_val = (eov == true ? 1 : 0);
+    write(&eov_val, sizeof(int16_t), 1);
 }
 
 cv::Mat Frame::zimCompressed(int quality) const {

@@ -22,6 +22,8 @@ public:
     ~Frame();
     cv::Mat image;
     CCPlus::FrameExt ext;
+    // Mark whether this frame are the End-Of-Video
+    bool eov = false;
 
     cv::Mat zimCompressed(int quality = 85) const;
     void readZimCompressed(const cv::Mat&);
