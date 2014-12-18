@@ -9,6 +9,23 @@
 #pragma once
 
 namespace CCPlus {
+    class RenderTarget {
+    public:
+        RenderTarget();
+        // @ Destructing Rendertarget will be blocking
+        ~RenderTarget();
+        std::string uuid;
+        int progress = 0;
+        void stop();
+        void waitFinish();
+        int fps = 0;
+        bool stopped = false;
+        std::string tmlPath = "";
+        bool operator==(const RenderTarget& b) const {
+            return uuid == b.uuid;
+        }
+    };
+
     // @ configuration functions
     void setAudioSampleRate(int);               // defaults to 32000
     void setAssetsPath(const std::string&);     // defaults to ""
@@ -23,32 +40,23 @@ namespace CCPlus {
 
     // @ easy one shot render shortcut
     // pass thorugh init, render, wait, release procedure 
-    void go(const std::string& tmlPath);
+    void go(RenderTarget*);
+    // @ Deprecated function. This function is BLOCKING and it's meant be be used as testing
+    void go(const std::string&);
 
     // @ initialize the rendering context
-    void initContext(const std::string& tmlPath);
+    //void initContext(const std::string& tmlPath);
 
     // @ release the rendering context, terminates the rendering process if running
     // will not release preserved renderables in preview mode by default
     // but the cache can be cleared by passing true to forceClearCache
-    void releaseContext(bool forceClearCache=false);
+    //void releaseContext();
 
     // @ start the asynchronized render process
     // when in preview mode, a list of zim files will be generated to `outputPath` directory
     // when in final mode, a single video file will be generated to `outputPath`
     // mind that we only support encoding mp4 files
-    void render();
-
-    // @ Wait for render thread to finish or terminate
-    void waitRender();
-
-    // @ get the render progress in percentage
-    // 100 means done or there is no render activity
-    // 99 means in encoding procces
-    int getRenderProgress();
-
-    // @ get the total number of frames for the current render context
-    int numberOfFrames();
+    //void render();
     
     // @ Generate a timeline file using a dynamical template
     // may use the half size hint to generate a smaller resolution
@@ -59,16 +67,4 @@ namespace CCPlus {
     const bool FULL_SIZE = false;
     std::string generateTML(const std::string& configFile, bool halfSize=false);
 
-    // @ Gernerates images to be used as covers if there is a #cover scene in the tml
-    // Results will be save to @outputPath
-    void generateCoverImages(const std::string& tmlPath, const std::string& outputPath);
-    
-
-    /******************************************************
-     * Deprecated - The following functions are deprecated
-     * they are legacy features or for testing purpose
-     *****************************************************/
-
-    // @ generate a timeline from a configuration file using statical templates
-    void fillTML(const std::string& configFile, const std::string& output);
 };

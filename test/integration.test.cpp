@@ -20,16 +20,28 @@ TEST(Integration, Shaders) {
 }
 
 TEST(Integration, Stop) {
-    CCPlus::initContext("test/res/test2.tml");
-    CCPlus::render();
-    CCPlus::render();
-
-    sleep(2);
-
-    CCPlus::releaseContext();
-
-    CCPlus::render();
-
-    CCPlus::initContext("test/res/test2.tml");
-    CCPlus::render();
+    CCPlus::RenderTarget target;
+    target.tmlPath = "test/res/test2.tml";
+    CCPlus::go(&target);
+    target.stop();
+    target.waitFinish();
 }
+
+TEST(Integration, Repeat) {
+    CCPlus::RenderTarget target;
+    target.tmlPath = "test/res/test2.tml";
+    CCPlus::go(&target);
+    CCPlus::go(&target);
+    CCPlus::go(&target);
+    CCPlus::RenderTarget target2;
+    target2.tmlPath = "test/res/basic.tml";
+    CCPlus::go(&target2);
+    target2.waitFinish();
+}
+
+//TEST(Integration, Misc) {
+//    CCPlus::go("test/res/test2.tml");
+//    CCPlus::go("test/res/test2.tml");
+//    CCPlus::go("test/res/test2.tml");
+//    CCPlus::go("test/res/basic.tml");
+//}
