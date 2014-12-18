@@ -16,4 +16,12 @@ namespace CCPlus {
     //void play(const std::string& zimDir, std::function<void()> imageAction = nullptr, std::function<void()> audioAction = nullptr);
     // @ Stop scanning and playing
     void stop();
+
+    typedef void (*PlayerInterface)(
+        float currentTime,
+        const char* imageData, int imageWidth, int imageHeight, 
+        const char* audioData, int audioLen,
+        float bgmVolume
+    );
+    void attachPlayerInterface(PlayerInterface);
 }

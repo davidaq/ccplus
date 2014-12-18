@@ -66,5 +66,4 @@ namespace CCPlus {
     const bool HALF_SIZE = true;
     const bool FULL_SIZE = false;
     std::string generateTML(const std::string& configFile, bool halfSize=false);
-
 };

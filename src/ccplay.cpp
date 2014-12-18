@@ -10,6 +10,8 @@ const int BUFFER_DURATION = 2;
 bool keepRunning = false;
 int currentFrame = 0; // Latest frame that haven't been showed
 
+PlayerInterface playerInterface = 0;
+
 struct BufferObj {
     Frame buf;
     int fid;
@@ -96,6 +98,11 @@ void CCPlus::stop() {
     keepRunning = false;
 }
 
-void rewind() {
+void CCPlus::rewind() {
     currentFrame = 0;
 }
+
+void CCPlus::attachPlayerInterface(PlayerInterface interface) {
+    playerInterface = interface;
+}
+

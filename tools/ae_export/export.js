@@ -82,7 +82,7 @@ Export.prototype.exportComp = function(comp) {
     setSubProgress(0);
     for(var i = 1; i <= comp.layers.length; i++) {
         log('  Export Layer: ' + i);
-        var exportedLayer = this.exportLayer(comp.layers[i]);
+        var exportedLayer = this.exportLayer(comp.layers[i], 1.0 / comp.frameRate);
         if(NULL != exportedLayer)
             ret.layers.push(exportedLayer);
         setSubProgress(i * 100 / comp.layers.length);
@@ -94,7 +94,9 @@ Export.prototype.exportComp = function(comp) {
     setMainProgress(this.exportedCount * 100 / this.compsCount);
     return ret;
 };
-Export.prototype.exportLayer = function(layer) {
+Export.prototype.exportLayer = function(layer, frameStep) {
+    if(!frameStep)
+        frameStep = 0.04;
     if(layer.adjustmentLayer) {
         if(!this.adjustLayers)
             this.adjustLayers = [];
@@ -143,7 +145,7 @@ Export.prototype.exportLayer = function(layer) {
             var proced = false;
             var prevVal = NULL;
             var prop = {};
-            for(var t = layer.inPoint; ; t += 0.1) {
+            for(var t = layer.inPoint; ; t += frameStep) {
                 if(t > layer.outPoint) {
                     if(proced)
                         break;
@@ -225,7 +227,7 @@ Export.prototype.exportLayer = function(layer) {
         var alias = PropertyMapping[pmk].alias;
         if(!alias)
             alias = {};
-        for(var t = ret.time; ; t += 0.04) {
+        for(var t = ret.time; ; t += frameStep) {
             if(t > layer.outPoint) {
                 if(proced)
                     break;
@@ -299,6 +301,9 @@ Export.prototype.exportLayer = function(layer) {
         }
         if(ret.properties[propName])
             ret.properties[propName] = this.simplifyProperties(ret.properties[propName], PropertyMapping[pmk].error);
+    }
+    if(layer.name.substr(layer.name.length - 6) == '_MUTED') {
+        ret.properties['volume'] = {'0':0};
     }
     return ret;
 };
