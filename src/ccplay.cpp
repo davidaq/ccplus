@@ -13,7 +13,7 @@ int currentFrame = 0; // Latest frame that haven't been showed
 PlayerInterface playerInterface = 0;
 
 struct BufferObj {
-    Frame buf;
+    Frame frame;
     int fid;
 };
 
@@ -21,11 +21,11 @@ void CCPlus::play(const std::string& zimDir, int fps) {
     keepRunning = true;
     pthread_mutex_t buffer_lock;
     std::queue<BufferObj*> buffer;
-    pthread_t buffer_thread = ParallelExecutor::runInNewThread([fps, &buffer, &buffer_lock] () {
+    pthread_t buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps, &buffer, &buffer_lock] () {
         while (keepRunning) {
             // Clean useless frame
             pthread_mutex_lock(&buffer_lock);
-            while (!buffer.empty() && buffer.front().fid != currentFrame) {
+            while (!buffer.empty() && buffer.front()->fid != currentFrame) {
                 BufferObj* tmp = buffer.front();
                 buffer.pop();
                 delete tmp;
@@ -37,7 +37,7 @@ void CCPlus::play(const std::string& zimDir, int fps) {
                 usleep(10000); // Sleep 10 msecs
                 continue;
             }
-            int targetFrame = buffer.empty() ? currentFrame : (buffer.back().fid + 1);
+            int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             char buf[32];
             sprintf(buf, "%07d.zim", targetFrame);
@@ -52,7 +52,7 @@ void CCPlus::play(const std::string& zimDir, int fps) {
                 obj->fid = targetFrame;
                 obj->frame.read(fn);
 
-                queue.push(obj);
+                buffer.push(obj);
             }
 
             usleep(10000); // Sleep 10 msecs
@@ -75,7 +75,7 @@ void CCPlus::play(const std::string& zimDir, int fps) {
                         // Invoke callback
                         L() << "Invoke callback time: " << time;
                     } else {
-                        status = 0;
+                        status = WAITING;
                     }
                     pthread_mutex_unlock(&buffer_lock);
                 }
