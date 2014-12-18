@@ -55,6 +55,7 @@ dependency/
 # tmp
 tmp/
 port/
+*undefinedlog
 
 # Test
 test/test.gtest.cpp

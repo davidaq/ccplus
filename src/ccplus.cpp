@@ -8,8 +8,11 @@
 #include "render.hpp"
 #include "profile.hpp"
 #include "parallel-executor.hpp"
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
+
+#include <boost/uuid/uuid.hpp>            // uuid class
+#include <boost/uuid/uuid_generators.hpp> // generators
+#include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
+#include <boost/lexical_cast.hpp>
 
 #ifdef TRACE_RAM_USAGE
 #include <mach/mach.h>
@@ -23,58 +26,48 @@ using namespace CCPlus;
 
 pthread_t render_thread = 0;
 bool continueRunning = false;
-int renderProgress = 0;
-int fakeProgress = 0;
-bool initing = false;
 
-void CCPlus::go(const std::string& tmlPath) {
-    initContext(tmlPath);
-    render();
-    waitRender();
-    releaseContext();
+// The life-cycle of these two object are managed by rendering thread
+pthread_mutex_t renderLock;
+RenderTarget* activeTarget = 0;
+RenderTarget* pendingTarget = 0;
+
+RenderTarget::RenderTarget() {
+    uuid = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
 }
 
-void CCPlus::initContext(const std::string& tmlPath) {
-    releaseContext();
-    initing = true;
-    Context::getContext()->begin(tmlPath);
-    renderProgress = 0;
-    fakeProgress = 0;
-    initing = false;
+RenderTarget::~RenderTarget() {
+    this->stop();
+    this->waitFinish();
 }
 
-void CCPlus::releaseContext(bool forceClearCache) {
-    while(initing) {
-        sleep(1);
+void RenderTarget::waitFinish() {
+    pthread_mutex_lock(&renderLock);
+    if ((activeTarget && *activeTarget == *this) || 
+        (pendingTarget && *pendingTarget == *this)) {
+        pthread_join(render_thread, NULL);
     }
-    static bool releasingContext = false;
-    Context* ctx = Context::getContext();
-    if(releasingContext) {
-        // Don't do any thing if someone else is calling release
-        // just wait for end instead 
-        while(releasingContext)
-            sleep(1);
-    } else {
-        renderProgress = 0;
-        releasingContext = true;
+    pthread_mutex_unlock(&renderLock);
+}
+
+void RenderTarget::stop() {
+    pthread_mutex_lock(&renderLock);
+    if (activeTarget && *activeTarget == *this) {
         continueRunning = false;
-        waitRender();
-        ctx->end();
-        render_thread = 0;
-        renderProgress = 0;
-        fakeProgress = 0;
-        releasingContext = false;
     }
-    if(forceClearCache || renderMode != PREVIEW_MODE) {
-        if(releasingContext) {
-            while(releasingContext)
-                sleep(1);
-        } else {
-            releasingContext = true;
-            // Do something
-            releasingContext = false;
-        }
-    }
+    pthread_mutex_unlock(&renderLock);
+    // Lazy stop
+    this->stopped = true;
+}
+
+void initContext(const std::string& tmlPath) {
+    if (!continueRunning) return;
+    Context::getContext()->begin(tmlPath);
+}
+
+void releaseContext() {
+    Context* ctx = Context::getContext();
+    ctx->end();
     profileFlush;
 }
 
@@ -83,75 +76,66 @@ typedef void (*WriteFunc)(const Frame&, int, void* ctx);
 typedef void (*FinishFunc)(void*);
 
 void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
-    if (render_thread) {
-        log(logERROR) << "Another render context is currently in use! Aborted.";
-        return;
-    }
-    if (!Context::getContext()->isActive()) {
-        log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
-        return;
-    }
-    continueRunning = true;
-    render_thread = ParallelExecutor::runInNewThread([beginFunc, writeFuc, finishFunc] () {
-        Context* ctx = Context::getContext();
-        ctx->collector->limit = 5;
-        ctx->collector->prepare();
-        void* glCtx = createGLContext();
-        initGL();
-        float delta = 1.0f / frameRate;
-        float duration = ctx->mainComposition->getDuration();
+    if (!continueRunning) return;
+    Context* ctx = Context::getContext();
+    ctx->collector->limit = 5;
+    ctx->collector->prepare();
+    void* glCtx = createGLContext();
+    initGL();
+    float delta = 1.0f / frameRate;
+    float duration = ctx->mainComposition->getDuration();
 
-        ctx->mainComposition->transparent = false;
-        
-        int fn = 0;
+    ctx->mainComposition->transparent = false;
 
-        void* writeCtx = beginFunc ? beginFunc() : 0;
-        for (float i = 0; i <= duration; i += delta) {
-            renderProgress = (i * 98 / duration) + 1;
-            while(continueRunning && ctx->collector->finished() < i) {
-                log(logINFO) << "wait --" << ctx->collector->finished();
-                usleep(500000);
-            }
-            if (!continueRunning) {
-                renderProgress = 0;
-                log(logINFO) << "----Rendering process is terminated!---";
-                return;
-            }
-            ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
-            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-            if(writeFuc)
-                writeFuc(frame->toCPU(), fn++, writeCtx);
-            if(fn & 1) {
-                log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
-                
+    int fn = 0;
+
+    void* writeCtx = beginFunc ? beginFunc() : 0;
+    for (float i = 0; i <= duration; i += delta) {
+        activeTarget->progress = (i * 98 / duration) + 1;
+        while(continueRunning && ctx->collector->finished() < i) {
+            log(logINFO) << "wait --" << ctx->collector->finished();
+            usleep(500000);
+        }
+        if (!continueRunning) {
+            log(logINFO) << "----Rendering process is terminated!---";
+            return;
+        }
+        ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
+        GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
+        if(writeFuc)
+            writeFuc(frame->toCPU(), fn++, writeCtx);
+        if(fn & 1) {
+            log(logINFO) << "render frame --" << i << ':' << activeTarget->progress << '%';
+
 #ifdef TRACE_RAM_USAGE
-                struct task_basic_info t_info;
-                mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-                if (KERN_SUCCESS != task_info(mach_task_self(),
-                    TASK_BASIC_INFO, (task_info_t)&t_info, 
-                    &t_info_count)) {
-                } else
-                    L() << "RAM used:" << (int64_t)t_info.resident_size;
+            struct task_basic_info t_info;
+            mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+            if (KERN_SUCCESS != task_info(mach_task_self(),
+                        TASK_BASIC_INFO, (task_info_t)&t_info, 
+                        &t_info_count)) {
+            } else {
+                L() << "RAM used:" << (int64_t)t_info.resident_size;
+            }
 #endif
 
-                for(auto item = ctx->renderables.begin();
-                        item != ctx->renderables.end(); ) {
-                    Renderable* r = item->second;
-                    if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                        log(logINFO) << "release" << item->first;
-                        r->release();
-                        ctx->renderables.erase(item++);
-                    } else {
-                        item++;
-                    }
+            for(auto item = ctx->renderables.begin();
+                    item != ctx->renderables.end(); ) {
+                Renderable* r = item->second;
+                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
+                    log(logINFO) << "release" << item->first;
+                    r->release();
+                    ctx->renderables.erase(item++);
+                } else {
+                    item++;
                 }
             }
         }
-        if(finishFunc)
-            finishFunc(writeCtx);
-        destroyGLContext(glCtx);
-        renderProgress = 100;
-    });
+    }
+    if(finishFunc)
+        finishFunc(writeCtx);
+    destroyGLContext(glCtx);
+
+    activeTarget->progress = 100;
 }
 
 void* beginVideo() {
@@ -181,7 +165,7 @@ void writePreview(const Frame& frame, int fn, void* ctx) {
     frame.write(Context::getContext()->getStoragePath(buf));
 }
 
-void CCPlus::render() {
+void render() {
     if(renderMode == FINAL_MODE) {
         renderAs(beginVideo, writeVideo, finishVideo);
     } else {
@@ -189,58 +173,59 @@ void CCPlus::render() {
     }
 }
 
-int CCPlus::getRenderProgress() {
-    if(fakeProgress < 5)
-        fakeProgress++;
-    return renderProgress * 0.95 + fakeProgress;
+void CCPlus::go(const std::string& tmlPath) {
+    RenderTarget* target = new RenderTarget();
+    target->tmlPath = tmlPath;
+    go(target);
+    target->waitFinish();
+    delete target;
 }
 
-void CCPlus::waitRender() {
-    if (!render_thread) return;
-    pthread_join(render_thread, 0);
-}
-
-int CCPlus::numberOfFrames() {
-    Context* ctx = Context::getContext();
-    float d = 1.0 / frameRate;
-    return ctx->mainComposition->getDuration() / d;
-}
-
-void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& outputPath) {
-    using boost::property_tree::ptree;
-    ptree pt;
-    read_json(tmlPath, pt);
-    int size = 0;
-    for (auto& child : pt.get_child("compositions")) {
-        const std::string& s = child.first.data();
-        if (s[0] == '@' && s.length() > 1) {
-            size++;
-        }
+void CCPlus::go(RenderTarget* target) {
+    pthread_mutex_lock(&renderLock);
+    if (activeTarget && *activeTarget == *target) {
+        return;
     }
+    if (pendingTarget && *pendingTarget == *target) {
+        return;
+    }
+    pendingTarget = target;
+    if (activeTarget) {
+        activeTarget->stop();
+    }
+    pthread_mutex_unlock(&renderLock);
 
-    std::string dir = dirName(tmlPath);
+    if (!render_thread) {
+        /*************************************
+         * Only this thread will be able to modify @activeTarget
+         ************************************/
+        render_thread = ParallelExecutor::runInNewThread([] () {
+            while (true) {
+                pthread_mutex_lock(&renderLock);
+                if (!pendingTarget || activeTarget) {
+                    pthread_mutex_unlock(&renderLock);
+                    break;
+                }
+                activeTarget = pendingTarget;
+                pendingTarget = 0;
+                pthread_mutex_unlock(&renderLock);
 
-    for (int i = 0; i < size; i++) {
-        auto& layers = pt.get_child("compositions.#COVER.layers");
-        for (auto& kv : layers) {
-            if (stringStartsWith(kv.second.get("uri", ""), "composition://@")) {
-                kv.second.put("uri", "composition://@" + toString(i));
+                continueRunning = !activeTarget->stopped;
+                initContext(activeTarget->tmlPath);
+                // Keep GL context in a seprated thread context
+                // May the ugliness be our POWER!!!!
+                pthread_t tmp_thread = ParallelExecutor::runInNewThread([] () {
+                    render();
+                });
+                pthread_join(tmp_thread, NULL);
+                releaseContext();
+                continueRunning = false;
+
+                pthread_mutex_lock(&renderLock);
+                activeTarget = 0;
+                pthread_mutex_unlock(&renderLock);
             }
-        }
-        pt.put("main", "#COVER");
-        std::ofstream fileStream;
-        fileStream.open(generatePath(dir, "COVER" + toString(i) + ".tml"));
-        write_json(fileStream, pt, true);
-    }
-
-    setOutputPath(outputPath);
-    for (int i = 0; i < size; i++) {
-        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"));
-        render();
-        waitRender();
-        releaseContext();
-        Frame f;
-        f.read(generatePath(outputPath, "0000000.zim"));
-        imwrite(generatePath(outputPath, toString(i) + ".jpg"), f.image);
+            render_thread = 0;
+        });
     }
 }
