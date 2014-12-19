@@ -14,7 +14,7 @@ struct BufferObj {
 
 int BUFFER_DURATION = 2;
 bool keepRunning = false;
-int currentFrame = 0; // Latest frame that haven't been showed
+int currentFrame = 0; // Latest frame that hasn't/has been showed
 pthread_mutex_t buffer_lock;
 pthread_t buffer_thread = 0;
 pthread_t play_thread = 0;
