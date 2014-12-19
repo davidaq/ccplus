@@ -2,6 +2,7 @@
 #include "ccplay.hpp"
 #include "parallel-executor.hpp"
 #include "frame.hpp"
+#include <time.h>
 #include <queue>
 
 using namespace CCPlus;
@@ -13,17 +14,41 @@ struct BufferObj {
 
 const int BUFFER_DURATION = 2;
 bool keepRunning = false;
+int playerStillWorking = 0;
 int currentFrame = 0; // Latest frame that haven't been showed
 float playerTime = 0;
+time_t stopTime = 0;
+
 pthread_mutex_t buffer_lock;
 std::queue<BufferObj*> buffer;
 
 PlayerInterface playerInterface = 0;
 ProgressInterface progressInterface = 0;
 
-void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
+void doPlay(const char* _zimDir, int fps, bool blocking);
+
+void CCPlus::play(const char* _zimDir, int fps, bool blocking) {
+    static int controlCounter = 0;
+    int myCounter = ++controlCounter;
+    stop();
+    std::string zimDir = _zimDir;
+    pthread_t playThread = ParallelExecutor::runInNewThread([zimDir, fps, blocking, myCounter]) {
+        while(playerStillWorking > 0) {
+            usleep(100000);
+        }
+        if(myCounter != controlCounter) {
+            return;
+        }
+        doPlay(zimDir, fps, blocking);
+    });
+    if(blocking)
+        pthread_join(playThread, NULL);
+}
+
+void doPlay(const std::string& zimDir, int fps, bool blocking) {
     keepRunning = true;
-    pthread_t buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps] () {
+    playerStillWorking = 2;
+    pthread_t buffer_thread = ParallelExecutor::runInNewThread([zimDir, fps] () {
         bool finished = false;
         while (keepRunning) {
             // Clean useless frame
@@ -69,6 +94,7 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
 
             usleep(10000); // Sleep 10 msecs
         }
+        playerStillWorking--;
     });
     pthread_t play_thread = ParallelExecutor::runInNewThread([fps] () {
         playerTime = 0.0;
@@ -119,10 +145,11 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
                 }
             }
         }
+        playerStillWorking--;
     });
-
     if (blocking) {
         pthread_join(play_thread, NULL);
+        pthread_join(buffer_thread, NULL);
     }
 }
 
@@ -142,3 +169,4 @@ void CCPlus::attachPlayerInterface(PlayerInterface interface) {
 void CCPlus::attachProgressInterface(ProgressInterface interface) {
     progressInterface = interface;
 }
+

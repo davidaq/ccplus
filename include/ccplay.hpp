@@ -12,7 +12,7 @@ namespace CCPlus {
     void rewind();
     // Main function
     // Will check framebuffer and upload needed frames to @imageaction and @audioaction
-    void play(const std::string& zimDir, int fps, bool blocking = false);
+    void play(const char* zimDir, int fps, bool blocking = false);
     // @ Stop scanning and playing
     void stop();
 
