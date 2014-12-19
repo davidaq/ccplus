@@ -24,7 +24,8 @@ std::queue<BufferObj*> buffer;
 PlayerInterface playerInterface = 0;
 ProgressInterface progressInterface = 0;
 
-void CCPlus::CCPlay::play(const std::string& zimDir, int fps, bool blocking) {
+void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
+    std::string zimDir(_zimDir);
     stop();
     keepRunning = true;
     while (!buffer.empty()) {

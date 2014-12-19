@@ -13,7 +13,7 @@ namespace CCPlus {
         // Main function
         // It will call @stop() first to make sure there is no running thread
         // After that, this function will be non-blocking
-        void play(const std::string& zimDir, int fps, bool blocking = false);
+        void play(const char* zimDir, int fps, bool blocking = false);
         // @ Stop scanning and playing
         // IT IS A BLOCKING FUNCTION
         void stop();
