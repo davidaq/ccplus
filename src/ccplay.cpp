@@ -2,6 +2,7 @@
 #include "ccplay.hpp"
 #include "parallel-executor.hpp"
 #include "frame.hpp"
+#include <time.h>
 #include <queue>
 
 using namespace CCPlus::CCPlay;
@@ -131,7 +132,6 @@ void CCPlus::CCPlay::play(const std::string& zimDir, int fps, bool blocking) {
         }
         play_thread = 0;
     });
-
     if (blocking) {
         if (play_thread) {
             pthread_join(play_thread, NULL);
@@ -163,3 +163,4 @@ void CCPlus::CCPlay::attachPlayerInterface(PlayerInterface interface) {
 void CCPlus::CCPlay::attachProgressInterface(ProgressInterface interface) {
     progressInterface = interface;
 }
+

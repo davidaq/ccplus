@@ -17,7 +17,6 @@ namespace CCPlus {
         // @ Stop scanning and playing
         // IT IS A BLOCKING FUNCTION
         void stop();
-
         // Default 2 seconds
         void setBufferDuration(int); 
 

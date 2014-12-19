@@ -90,6 +90,8 @@ ios:
 	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
 	rm -r -f /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
 	cp -r -f ./port/iOS/ccplus.bundle /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
+	cp -f ./include/ccplus.hpp /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/Headers/ccplus.hpp
+	cp -f ./include/ccplay.hpp /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/Headers/ccplay.hpp
 
 test: testbuild
 	./test.sh '*'
