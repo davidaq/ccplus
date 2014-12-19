@@ -4,6 +4,7 @@
 #include "frame.hpp"
 #include <queue>
 
+using namespace CCPlus::CCPlay;
 using namespace CCPlus;
 
 struct BufferObj {
@@ -11,20 +12,25 @@ struct BufferObj {
     int fid;
 };
 
-const int BUFFER_DURATION = 2;
+int BUFFER_DURATION = 2;
 bool keepRunning = false;
 int currentFrame = 0; // Latest frame that haven't been showed
-float playerTime = 0;
 pthread_mutex_t buffer_lock;
+pthread_t buffer_thread = 0;
+pthread_t play_thread = 0;
 std::queue<BufferObj*> buffer;
 
 PlayerInterface playerInterface = 0;
 ProgressInterface progressInterface = 0;
 
-void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
+void CCPlus::CCPlay::play(const std::string& zimDir, int fps, bool blocking) {
+    stop();
     keepRunning = true;
-    pthread_t buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps] () {
-        bool finished = false;
+    while (!buffer.empty()) {
+        buffer.pop();
+    }
+    buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps] () {
+        int lastFrame = 0x7fffffff;
         while (keepRunning) {
             // Clean useless frame
             pthread_mutex_lock(&buffer_lock);
@@ -40,11 +46,12 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
                 usleep(10000); // Sleep 10 msecs
                 continue;
             }
-            if (finished) {
-                usleep(10000); // Sleep 10 msecs
+            int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
+
+            if (targetFrame > lastFrame) {
+                usleep(10000);
                 continue;
             }
-            int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             char buf[32];
             sprintf(buf, "%07d.zim", targetFrame);
@@ -61,7 +68,7 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
                 obj->frame.read(fn);
 
                 if (obj->frame.eov) {
-                    finished = true;
+                    lastFrame = obj->fid;
                 }
 
                 buffer.push(obj);
@@ -69,9 +76,10 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
 
             usleep(10000); // Sleep 10 msecs
         }
+        buffer_thread = 0;
     });
-    pthread_t play_thread = ParallelExecutor::runInNewThread([fps] () {
-        playerTime = 0.0;
+    play_thread = ParallelExecutor::runInNewThread([fps] () {
+        float playerTime = 0.0;
         currentFrame = 0;
         const int WAITING = 0;
         const int INITING = -1;
@@ -94,7 +102,9 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
                         }
                         if (buf->eov) {
                             L() << "DONE! ";
-                            return;
+                            pthread_mutex_unlock(&buffer_lock);
+                            keepRunning = false;
+                            break;
                         }
                         currentFrame++;
                     } else {
@@ -119,26 +129,37 @@ void CCPlus::play(const std::string& zimDir, int fps, bool blocking) {
                 }
             }
         }
+        play_thread = 0;
     });
 
     if (blocking) {
-        pthread_join(play_thread, NULL);
+        if (play_thread) {
+            pthread_join(play_thread, NULL);
+        }
+        if (buffer_thread) {
+            pthread_join(buffer_thread, NULL);
+        }
     }
 }
 
-void CCPlus::stop() {
+void CCPlus::CCPlay::stop() {
     keepRunning = false;
+    if (play_thread) {
+        pthread_join(play_thread, NULL);
+    }
+    if (buffer_thread) {
+        pthread_join(buffer_thread, NULL);
+    }
 }
 
-void CCPlus::rewind() {
-    currentFrame = 0;
-    playerTime = 0.0;
+void CCPlus::CCPlay::setBufferDuration(int buffer_duration) {
+    BUFFER_DURATION = buffer_duration;
 }
 
-void CCPlus::attachPlayerInterface(PlayerInterface interface) {
+void CCPlus::CCPlay::attachPlayerInterface(PlayerInterface interface) {
     playerInterface = interface;
 }
 
-void CCPlus::attachProgressInterface(ProgressInterface interface) {
+void CCPlus::CCPlay::attachProgressInterface(ProgressInterface interface) {
     progressInterface = interface;
 }
