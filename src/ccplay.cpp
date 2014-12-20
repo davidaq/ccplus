@@ -1,5 +1,6 @@
 #include "global.hpp"
 #include "ccplay.hpp"
+#include "ccplus.hpp"
 #include "parallel-executor.hpp"
 #include "frame.hpp"
 #include <time.h>
@@ -24,14 +25,14 @@ std::queue<BufferObj*> buffer;
 PlayerInterface playerInterface = 0;
 ProgressInterface progressInterface = 0;
 
-void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
+void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
     std::string zimDir(_zimDir);
     stop();
     keepRunning = true;
     while (!buffer.empty()) {
         buffer.pop();
     }
-    buffer_thread = ParallelExecutor::runInNewThread([&zimDir, fps] () {
+    buffer_thread = ParallelExecutor::runInNewThread([&zimDir] () {
         int lastFrame = 0x7fffffff;
         while (keepRunning) {
             // Clean useless frame
@@ -44,7 +45,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
             pthread_mutex_unlock(&buffer_lock);
 
             // Make sure buffer is not too big
-            if (buffer.size() > BUFFER_DURATION * fps) {
+            if (buffer.size() > BUFFER_DURATION * getFrameRate()) {
                 usleep(10000); // Sleep 10 msecs
                 continue;
             }
@@ -80,7 +81,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
         }
         buffer_thread = 0;
     });
-    play_thread = ParallelExecutor::runInNewThread([fps] () {
+    play_thread = ParallelExecutor::runInNewThread([] () {
         float playerTime = 0.0;
         currentFrame = 0;
         const int WAITING = 0;
@@ -91,26 +92,26 @@ void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
             usleep(5000);
             if (status == PLAYING) {
                 playerTime += 0.005;
-                float desiredTime = currentFrame * 1.0 / fps;
+                float desiredTime = currentFrame * 1.0 / getFrameRate();
                 if (playerTime >= desiredTime) {
                     pthread_mutex_lock(&buffer_lock);
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
                         // Invoke callback
-                        L() << "Playing: " << playerTime;
+                        log(logINFO) << "Playing: " << playerTime;
                         Frame* buf = &buffer.front()->frame;
                         if (playerInterface) {
                             playerInterface(desiredTime, buf->image.data, buf->image.cols, 
                                 buf->image.rows, buf->ext.audio.data, buf->ext.audio.total(), 1.0);
                         }
                         if (buf->eov) {
-                            L() << "DONE! ";
+                            log(logINFO) << "DONE! ";
                             pthread_mutex_unlock(&buffer_lock);
                             keepRunning = false;
                             break;
                         }
                         currentFrame++;
                     } else {
-                        L() << "Start warting: " << currentFrame;
+                        log(logINFO) << "Start warting: " << currentFrame;
                         status = WAITING;
                     }
                     pthread_mutex_unlock(&buffer_lock);
@@ -121,11 +122,11 @@ void CCPlus::CCPlay::play(const char* _zimDir, int fps, bool blocking) {
                         status = PLAYING;
                     }
                 } else {
-                    if (buffer.size() >= BUFFER_DURATION * fps) {
+                    if (buffer.size() >= BUFFER_DURATION * getFrameRate()) {
                         status = PLAYING;
                     } else {
                         if (progressInterface) {
-                            progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * fps));
+                            progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
                         }
                     }
                 }

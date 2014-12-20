@@ -13,61 +13,43 @@ TEST(Integration, Simple) {
     CCPlus::go("test/res/test2.tml");
 }
 
-extern "C" {
-    void CCPLUS_TEST(const char* _opos);
-}
-TEST(Integration, Shaders) {
-    CCPLUS_TEST("tmp/");
-}
-
 TEST(Integration, Stop) {
     CCPlus::RenderTarget target;
-    target.tmlPath = "test/res/test2.tml";
-    CCPlus::go(&target);
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
     target.stop();
     target.waitFinish();
 }
 
 TEST(Integration, Repeat) {
     CCPlus::RenderTarget target;
-    target.tmlPath = "test/res/test2.tml";
-    CCPlus::go(&target);
-    CCPlus::go(&target);
-    CCPlus::go(&target);
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
+    CCPlus::go(target);
+    CCPlus::go(target);
     CCPlus::RenderTarget target2;
-    target2.tmlPath = "test/res/basic.tml";
-    CCPlus::go(&target2);
+    target2.inputPath = "test/res/basic.tml";
+    CCPlus::go(target2);
     target2.waitFinish();
 }
 
 TEST(Integration, Player) {
     CCPlus::setRenderMode(PREVIEW_MODE);
     CCPlus::RenderTarget target;
-    target.tmlPath = "test/res/test2.tml";
-    CCPlus::go(&target);
-    CCPlus::CCPlay::play("tmp", 18, true);
+    target.inputPath = "test/res/test2.tml";
+    target.mode = PREVIEW_MODE;
+    CCPlus::go(target);
+    CCPlus::CCPlay::play("tmp", true);
 }
 
 TEST(Integration, Player_Stop) {
     CCPlus::setRenderMode(PREVIEW_MODE);
     CCPlus::RenderTarget target;
-    target.tmlPath = "test/res/test2.tml";
-    CCPlus::go(&target);
-    CCPlus::CCPlay::play("tmp", 18);
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
+    CCPlus::CCPlay::play("tmp");
 
     sleep(3);
     CCPlus::CCPlay::stop();
     target.waitFinish();
 }
-
-//TEST(Integration, Player_Rewind) {
-//    CCPlus::setRenderMode(PREVIEW_MODE);
-//    CCPlus::RenderTarget target;
-//    target.tmlPath = "test/res/test2.tml";
-//    CCPlus::go(&target);
-//    CCPlus::play("tmp", 18);
-//
-//    sleep(6);
-//    CCPlus::rewind();
-//    sleep(15);
-//}

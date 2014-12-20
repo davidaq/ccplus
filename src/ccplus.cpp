@@ -1,239 +1,147 @@
 #include "global.hpp"
 #include "ccplus.hpp"
-#include "context.hpp"
-#include "footage-collector.hpp"
-#include "composition.hpp"
-#include "video-encoder.hpp"
-#include "gpu-frame.hpp"
-#include "render.hpp"
-#include "profile.hpp"
+#include "ccplus-base.hpp"
 #include "parallel-executor.hpp"
 
-#include <boost/uuid/uuid.hpp>            // uuid class
-#include <boost/uuid/uuid_generators.hpp> // generators
-#include <boost/uuid/uuid_io.hpp>         // streaming operators etc.
-#include <boost/lexical_cast.hpp>
-
-#ifdef TRACE_RAM_USAGE
-#include <mach/mach.h>
-#include <mach/vm_statistics.h>
-#include <mach/mach_types.h> 
-#include <mach/mach_init.h>
-#include <mach/mach_host.h>
-#endif
 
 using namespace CCPlus;
 
-pthread_t render_thread = 0;
-bool continueRunning = false;
-
 // The life-cycle of these two object are managed by rendering thread
-pthread_mutex_t renderLock;
-RenderTarget* activeTarget = 0;
-RenderTarget* pendingTarget = 0;
+Lock renderLock;
+RenderTarget activeTarget(0);
+RenderTarget pendingTarget(0);
 
-RenderTarget::RenderTarget() {
-    uuid = boost::lexical_cast<std::string>(boost::uuids::random_generator()());
+RenderTarget::RenderTarget(int index) {
+    this->index = index;
+    if(index < 0) {
+        static int counter = 1;
+        this->index = counter++;
+    }
 }
 
 RenderTarget::~RenderTarget() {
-    this->stop();
-    this->waitFinish();
+    stop();
 }
 
-void RenderTarget::waitFinish() {
-    pthread_mutex_lock(&renderLock);
-    if ((activeTarget && *activeTarget == *this) || 
-        (pendingTarget && *pendingTarget == *this)) {
-        pthread_join(render_thread, NULL);
+bool RenderTarget::isActive() const {
+    renderLock.lock();
+    bool ret = (index > 0 && index == activeTarget.index);
+    renderLock.unlock();
+    return ret;
+}
+
+bool RenderTarget::isPending() const {
+    renderLock.lock();
+    bool ret = (index > 0 && index == pendingTarget.index);
+    renderLock.unlock();
+    return ret;
+}
+
+bool RenderTarget::isProcessing() const {
+    bool ret = true;
+    if(index > 0) {
+        renderLock.lock();
+        ret = index == pendingTarget.index || index == activeTarget.index;
+        renderLock.unlock();
     }
-    pthread_mutex_unlock(&renderLock);
+    return ret;
 }
 
 void RenderTarget::stop() {
-    pthread_mutex_lock(&renderLock);
-    if (activeTarget && *activeTarget == *this) {
-        continueRunning = false;
+    if (isActive()) {
+        CCPlus::stop();
+        return;
     }
-    pthread_mutex_unlock(&renderLock);
-    // Lazy stop
-    this->stopped = true;
-}
-
-void initContext(const std::string& tmlPath) {
-    if (!continueRunning) return;
-    Context::getContext()->begin(tmlPath);
-}
-
-void releaseContext() {
-    Context* ctx = Context::getContext();
-    ctx->end();
-    profileFlush;
-}
-
-typedef void* (*BeginFunc)(void);
-typedef void (*WriteFunc)(const Frame&, int, void* ctx);
-typedef void (*FinishFunc)(void*);
-
-void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
-    if (!continueRunning) return;
-    Context* ctx = Context::getContext();
-    ctx->collector->limit = 5;
-    ctx->collector->prepare();
-    void* glCtx = createGLContext();
-    initGL();
-    float delta = 1.0f / frameRate;
-    float duration = ctx->mainComposition->getDuration();
-
-    ctx->mainComposition->transparent = false;
-
-    int fn = 0;
-
-    void* writeCtx = beginFunc ? beginFunc() : 0;
-    for (float i = 0; i <= duration; i += delta) {
-        activeTarget->progress = (i * 98 / duration) + 1;
-        while(continueRunning && ctx->collector->finished() < i) {
-            log(logINFO) << "wait --" << ctx->collector->finished();
-            usleep(500000);
-        }
-        if (!continueRunning) {
-            log(logINFO) << "----Rendering process is terminated!---";
-            return;
-        }
-        ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
-        GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-        if(writeFuc) {
-            Frame cpu_frame = frame->toCPU();
-            if (i + delta > duration) {
-                cpu_frame.eov = true;
-            }
-            writeFuc(cpu_frame, fn++, writeCtx);
-        }
-        if(fn & 1) {
-            log(logINFO) << "render frame --" << i << ':' << activeTarget->progress << '%';
-
-#ifdef TRACE_RAM_USAGE
-            struct task_basic_info t_info;
-            mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-            if (KERN_SUCCESS != task_info(mach_task_self(),
-                        TASK_BASIC_INFO, (task_info_t)&t_info, 
-                        &t_info_count)) {
-            } else {
-                L() << "RAM used:" << (int64_t)t_info.resident_size;
-            }
-#endif
-
-            for(auto item = ctx->renderables.begin();
-                    item != ctx->renderables.end(); ) {
-                Renderable* r = item->second;
-                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                    log(logINFO) << "release" << item->first;
-                    r->release();
-                    ctx->renderables.erase(item++);
-                } else {
-                    item++;
-                }
-            }
-        }
-    }
-    if(finishFunc)
-        finishFunc(writeCtx);
-    destroyGLContext(glCtx);
-
-    activeTarget->progress = 100;
-}
-
-void* beginVideo() {
-    Context* ctx = Context::getContext();
-    std::string outfile = outputPath;
-    if(!stringEndsWith(outfile, ".mp4")) {
-        outfile = Context::getContext()->getStoragePath("result.mp4");
-    }
-    return new VideoEncoder(outfile, frameRate, 
-            nearestPOT(ctx->mainComposition->width), nearestPOT(ctx->mainComposition->height));
-}
-
-void writeVideo(const Frame& frame, int fn, void* ctx) {
-    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
-    encoder->appendFrame(frame);
-}
-
-void finishVideo(void* ctx) {
-    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
-    encoder->finish();
-    delete encoder;
-}
-
-void writePreview(const Frame& frame, int fn, void* ctx) {
-    char buf[20];
-    sprintf(buf, "%07d.zim", fn);
-    frame.write(Context::getContext()->getStoragePath(buf));
-}
-
-void writeEOF(void* ctx) {
-    std::string path = Context::getContext()->getStoragePath("eov.zim");
-    spit(path, "I'm an extremly bored EOV -- End Of Video.");
-}
-
-void render() {
-    if(renderMode == FINAL_MODE) {
-        renderAs(beginVideo, writeVideo, finishVideo);
-    } else {
-        renderAs(0, writePreview, writeEOF);
+    if (isPending()) {
+        renderLock.lock();
+        pendingTarget = 0;
+        renderLock.unlock();
+        return;
     }
 }
 
-void CCPlus::go(const std::string& tmlPath) {
-    RenderTarget* target = new RenderTarget();
-    target->tmlPath = tmlPath;
+void RenderTarget::waitFinish() {
+    while (isProcessing()) {
+        usleep(100000);
+    }
+}
+
+int RenderTarget::getProgress() const {
+    if(isActive()) {
+        return CCPlus::getProgress();
+    }
+    return 0;
+}
+
+void RenderTarget::invalidate() {
+    index = 0;
+}
+
+RenderTarget::operator bool() {
+    return index > 0;
+}
+
+RenderTarget& RenderTarget::operator = (int nindex) {
+    index = nindex;
+    return *this;
+}
+
+void CCPlus::go(const std::string& path, int fps) {
+    RenderTarget target;
+    target.inputPath = path;
+    target.fps = fps;
     go(target);
-    target->waitFinish();
-    delete target;
+    target.waitFinish();
 }
 
-void CCPlus::go(RenderTarget* target) {
-    pthread_mutex_lock(&renderLock);
-    if (activeTarget && *activeTarget == *target) {
+void CCPlus::go(const RenderTarget& target) {
+    if (target.isProcessing()) {
         return;
     }
-    if (pendingTarget && *pendingTarget == *target) {
-        return;
-    }
+    renderLock.lock();
     pendingTarget = target;
     if (activeTarget) {
-        activeTarget->stop();
+        activeTarget.stop();
     }
-    pthread_mutex_unlock(&renderLock);
-
+    renderLock.unlock();
+    static pthread_t render_thread = 0;
     if (!render_thread) {
         /*************************************
          * Only this thread will be able to modify @activeTarget
          ************************************/
         render_thread = ParallelExecutor::runInNewThread([] () {
             while (true) {
-                pthread_mutex_lock(&renderLock);
+                renderLock.lock();
                 if (!pendingTarget || activeTarget) {
-                    pthread_mutex_unlock(&renderLock);
+                    renderLock.unlock();
                     break;
                 }
                 activeTarget = pendingTarget;
                 pendingTarget = 0;
-                pthread_mutex_unlock(&renderLock);
 
-                continueRunning = !activeTarget->stopped;
-                initContext(activeTarget->tmlPath);
+                continueRunning = true;
+                setOutputPath(activeTarget.outputPath);
+                setFrameRate(activeTarget.fps);
+                int mode = activeTarget.mode;
+                setRenderMode(mode);
+                std::string path = activeTarget.inputPath;
+                renderLock.unlock();
+
+                if(!stringEndsWith(path, ".tml")) {
+                    path = generateTML(path, mode==PREVIEW_MODE);
+                }
+                CCPlus::initContext(path);
                 // Keep GL context in a seprated thread context
-                // May the ugliness be our POWER!!!!
-                pthread_t tmp_thread = ParallelExecutor::runInNewThread([] () {
-                    render();
+                pthread_t glThread = ParallelExecutor::runInNewThread([] () {
+                    CCPlus::render();
                 });
-                pthread_join(tmp_thread, NULL);
+                pthread_join(glThread, NULL);
                 releaseContext();
-                continueRunning = false;
 
-                pthread_mutex_lock(&renderLock);
+                renderLock.lock();
+                continueRunning = false;
                 activeTarget = 0;
-                pthread_mutex_unlock(&renderLock);
+                renderLock.unlock();
             }
             render_thread = 0;
         });
