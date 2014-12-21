@@ -21,7 +21,7 @@ using namespace CCPlus;
 
 
 bool CCPlus::continueRunning = false;
-int renderProgress = 0;
+int CCPlus::renderProgress = 0;
 
 void CCPlus::stop() {
     continueRunning = false;
@@ -36,10 +36,6 @@ void CCPlus::releaseContext() {
     Context* ctx = Context::getContext();
     ctx->end();
     profileFlush;
-}
-
-int CCPlus::getProgress() {
-    return renderProgress;
 }
 
 typedef void* (*BeginFunc)(void);

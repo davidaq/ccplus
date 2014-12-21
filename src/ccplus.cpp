@@ -68,7 +68,7 @@ void RenderTarget::waitFinish() {
 
 int RenderTarget::getProgress() const {
     if(isActive()) {
-        return CCPlus::getProgress();
+        return renderProgress;
     }
     return 0;
 }
@@ -98,11 +98,9 @@ void CCPlus::go(const RenderTarget& target) {
     if (target.isProcessing()) {
         return;
     }
+    activeTarget.stop();
     renderLock.lock();
     pendingTarget = target;
-    if (activeTarget) {
-        activeTarget.stop();
-    }
     renderLock.unlock();
     static pthread_t render_thread = 0;
     if (!render_thread) {
@@ -119,6 +117,7 @@ void CCPlus::go(const RenderTarget& target) {
                 activeTarget = pendingTarget;
                 pendingTarget = 0;
 
+                renderProgress = 0;
                 continueRunning = true;
                 setOutputPath(activeTarget.outputPath);
                 setFrameRate(activeTarget.fps);

@@ -23,8 +23,7 @@ static inline double getSystemTime() {
     // Might not work at multicore situation
     struct timeval now;
     gettimeofday (&now, NULL);
-    long long tmp = now.tv_usec + (uint64_t)now.tv_sec * 1000000;
-    return tmp / 1000000.0;
+    return now.tv_usec / 1000000.0 + now.tv_sec;
 }
 
 inline bool file_exists(const std::string& s) {

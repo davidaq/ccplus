@@ -32,7 +32,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
     while (!buffer.empty()) {
         buffer.pop();
     }
-    buffer_thread = ParallelExecutor::runInNewThread([&zimDir] () {
+    buffer_thread = ParallelExecutor::runInNewThread([zimDir] () {
         int lastFrame = 0x7fffffff;
         while (keepRunning) {
             // Clean useless frame
@@ -88,20 +88,26 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
         const int INITING = -1;
         const int PLAYING = 1;
         int status = INITING; // 0 -> waiting, 1 -> playing, -1 -> initing
+        double beforeTime = getSystemTime();
         while (keepRunning) {
-            usleep(5000);
             if (status == PLAYING) {
-                playerTime += 0.005;
-                float desiredTime = currentFrame * 1.0 / getFrameRate();
-                if (playerTime >= desiredTime) {
+                double now = getSystemTime();
+                float d = now - beforeTime;
+                float frameTime = 1.0 / getFrameRate();
+                if(d > 1.5 * frameTime)
+                    d = 1.5 * frameTime;
+                float desiredTime = currentFrame * frameTime;
+                if (playerTime + d >= desiredTime) {
+                    beforeTime = now;
+                    playerTime += d;
                     pthread_mutex_lock(&buffer_lock);
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
                         // Invoke callback
                         log(logINFO) << "Playing: " << playerTime;
                         Frame* buf = &buffer.front()->frame;
                         if (playerInterface) {
-                            playerInterface(desiredTime, buf->image.data, buf->image.cols, 
-                                buf->image.rows, buf->ext.audio.data, buf->ext.audio.total(), 1.0);
+                            playerInterface(desiredTime, buf->image.data, buf->image.cols, buf->image.rows,
+                                    buf->ext.audio.data, buf->ext.audio.total() * 2, 1.0);
                         }
                         if (buf->eov) {
                             log(logINFO) << "DONE! ";
@@ -131,6 +137,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                     }
                 }
             }
+            usleep(5000);
         }
         play_thread = 0;
     });
