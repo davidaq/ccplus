@@ -28,9 +28,7 @@ namespace CCPlus {
                 );
         void attachPlayerInterface(PlayerInterface);
 
-        typedef void (*ProgressInterface)(
-                int precent
-                );
+        typedef void (*ProgressInterface)(int precent);
         void attachProgressInterface(ProgressInterface);
     };
 };

@@ -112,6 +112,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                         if (buf->eov) {
                             log(logINFO) << "DONE! ";
                             pthread_mutex_unlock(&buffer_lock);
+                            playerInterface(0, 0, 0, 0, 0, 0, 0);
                             keepRunning = false;
                             break;
                         }
@@ -122,19 +123,15 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                     }
                     pthread_mutex_unlock(&buffer_lock);
                 }
+            } else if (status == INITING) {
+                if (buffer.size() > 0) {
+                    status = PLAYING;
+                }
             } else {
-                if (status == INITING) {
-                    if (buffer.size() > 0) {
-                        status = PLAYING;
-                    }
-                } else {
-                    if (buffer.size() >= BUFFER_DURATION * getFrameRate()) {
-                        status = PLAYING;
-                    } else {
-                        if (progressInterface) {
-                            progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
-                        }
-                    }
+                if (buffer.size() >= BUFFER_DURATION * getFrameRate()) {
+                    status = PLAYING;
+                } else if (progressInterface) {
+                    progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
                 }
             }
             usleep(5000);
