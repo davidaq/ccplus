@@ -17,7 +17,7 @@ struct BufferObj {
 int BUFFER_DURATION = 2;
 bool keepRunning = false;
 int currentFrame = 0; // Latest frame that hasn't/has been showed
-pthread_mutex_t buffer_lock;
+Lock buffer_lock;
 pthread_t buffer_thread = 0;
 pthread_t play_thread = 0;
 std::queue<BufferObj*> buffer;
@@ -36,13 +36,13 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
         int lastFrame = 0x7fffffff;
         while (keepRunning) {
             // Clean useless frame
-            pthread_mutex_lock(&buffer_lock);
+            buffer_lock.lock();
             while (!buffer.empty() && buffer.front()->fid != currentFrame) {
                 BufferObj* tmp = buffer.front();
                 buffer.pop();
                 delete tmp;
             }
-            pthread_mutex_unlock(&buffer_lock);
+            buffer_lock.unlock();
 
             // Make sure buffer is not too big
             if (buffer.size() > BUFFER_DURATION * getFrameRate()) {
@@ -100,7 +100,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                 if (playerTime + d >= desiredTime) {
                     beforeTime = now;
                     playerTime += d;
-                    pthread_mutex_lock(&buffer_lock);
+                    buffer_lock.lock();
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
                         // Invoke callback
                         log(logINFO) << "Playing: " << playerTime;
@@ -111,7 +111,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                         }
                         if (buf->eov) {
                             log(logINFO) << "DONE! ";
-                            pthread_mutex_unlock(&buffer_lock);
+                            buffer_lock.unlock();
                             playerInterface(0, 0, 0, 0, 0, 0, 0);
                             keepRunning = false;
                             break;
@@ -121,7 +121,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                         log(logINFO) << "Start warting: " << currentFrame;
                         status = WAITING;
                     }
-                    pthread_mutex_unlock(&buffer_lock);
+                    buffer_lock.unlock();
                 }
             } else if (status == INITING) {
                 if (buffer.size() > 0) {
