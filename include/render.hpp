@@ -30,6 +30,10 @@ namespace CCPlus {
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();
 
+    // draw a densed rectangle of (-1, 1, 2, 2)
+    // For avoiding distortion caused by perspecteve correction
+    void fillDensedSprite();
+
     // Draw a set of triangles. 
     // Useful when generating masks
     // size of pnts must satisfy pnts.size() % 3 = 0

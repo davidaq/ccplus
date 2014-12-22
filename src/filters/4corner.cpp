@@ -89,7 +89,8 @@ CCPLUS_FILTER(4corner) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-    fillSprite();
+    //fillSprite();
+    fillDensedSprite();
 
     return ret;
 }
