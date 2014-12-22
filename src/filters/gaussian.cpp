@@ -54,6 +54,11 @@ inline std::vector<float> GenerateSeparableGaussKernel(int kernelSize) {
     return kernel;
 }
 
+/****************************
+ * Optimized Gaussian blur
+ * Contineous between 2 ~ 31
+ *****************/
+
 CCPLUS_FILTER(gaussian) {
     if (parameters.size() < 2) {
         log(logERROR) << "In sufficient parameters for gaussian filter";
@@ -68,9 +73,9 @@ CCPLUS_FILTER(gaussian) {
         scale *= 2;
     }
     if (size % 2 == 0) size += 1;
-    if (size < 7) {
-        size = 7;
-    }
+    //if (size < 7) {
+    //    size = 7;
+    //}
     int direction = (int) parameters[1];
 
     int org_width = frame->width;
@@ -92,25 +97,40 @@ CCPLUS_FILTER(gaussian) {
     for (int i = size / 2; i >= 0; i--)
         halfKernel.push_back(fullKernel[i]);
     halfKernel[0] *= 0.5f; // Center half
-
-    int ksize = halfKernel.size() / 2;
     //TODO: cache
     float kernel[8];
     float offset[8];
-    //L() << halfKernel.size() << " " << ksize;
-    for (int i = 0; i < ksize; i++) {
-        kernel[i] = halfKernel[i * 2] + halfKernel[i * 2 + 1];
-        offset[i] = i * 2.0f + halfKernel[i * 2 + 1] / kernel[i];
-        //std::cout << kernel[i] << std::endl;
-    }
-    for (int i = ksize; i < 8; i++) {
-        kernel[i] = 0;
-        offset[i] = 0;
-    }
 
-    glUniform1i(ksizeU, ksize);
-    glUniform1fv(gWeightsU, 8, kernel);
-    glUniform1fv(gOffsetsU, 8, offset);
+    if (size < 7) { // No optimized
+        int ksize = halfKernel.size();
+        for (int i = 0; i < ksize; i++) {
+            kernel[i] = halfKernel[i];
+            offset[i] = i;
+        }
+        for (int i = ksize; i < 8; i++) {
+            kernel[i] = 0;
+            offset[i] = 0;
+        }
+        glUniform1i(ksizeU, ksize);
+        glUniform1fv(gWeightsU, 8, kernel);
+        glUniform1fv(gOffsetsU, 8, offset);
+    } else { // Optimized
+        int ksize = halfKernel.size() / 2;
+        //L() << halfKernel.size() << " " << ksize;
+        for (int i = 0; i < ksize; i++) {
+            kernel[i] = halfKernel[i * 2] + halfKernel[i * 2 + 1];
+            offset[i] = i * 2.0f + halfKernel[i * 2 + 1] / kernel[i];
+            //std::cout << kernel[i] << std::endl;
+        }
+        for (int i = ksize; i < 8; i++) {
+            kernel[i] = 0;
+            offset[i] = 0;
+        }
+
+        glUniform1i(ksizeU, ksize);
+        glUniform1fv(gWeightsU, 8, kernel);
+        glUniform1fv(gOffsetsU, 8, offset);
+    }
 
 
     GPUFrame ret = GPUFrameCache::alloc(frame->width, frame->height);
