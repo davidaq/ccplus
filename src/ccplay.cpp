@@ -46,13 +46,13 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
 
             // Make sure buffer is not too big
             if (buffer.size() > BUFFER_DURATION * getFrameRate()) {
-                usleep(10000); // Sleep 10 msecs
+                usleep(5000); // Sleep 5 msecs
                 continue;
             }
             int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             if (targetFrame > lastFrame) {
-                usleep(10000);
+                usleep(5000);
                 continue;
             }
 
@@ -77,7 +77,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                 buffer.push(obj);
             }
 
-            usleep(10000); // Sleep 10 msecs
+            usleep(5000); // Sleep 5 msecs
         }
         buffer_thread = 0;
     });
