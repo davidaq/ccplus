@@ -26,6 +26,10 @@ PlayerInterface playerInterface = 0;
 ProgressInterface progressInterface = 0;
 
 void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
+    play(0, _zimDir, blocking);
+}
+
+void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
     std::string zimDir(_zimDir);
     stop();
     keepRunning = true;
@@ -81,7 +85,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
         }
         buffer_thread = 0;
     });
-    play_thread = ParallelExecutor::runInNewThread([] () {
+    play_thread = ParallelExecutor::runInNewThread([key] () {
         float playerTime = 0.0;
         currentFrame = 0;
         const int WAITING = 0;
@@ -106,13 +110,14 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                         log(logINFO) << "Playing: " << playerTime;
                         Frame* buf = &buffer.front()->frame;
                         if (playerInterface) {
-                            playerInterface(desiredTime, buf->image.data, buf->image.cols, buf->image.rows,
+                            playerInterface(key, desiredTime, buf->image.data, 
+                                    buf->image.cols, buf->image.rows,
                                     buf->ext.audio.data, buf->ext.audio.total() * 2, 1.0);
                         }
                         if (buf->eov) {
                             log(logINFO) << "DONE! ";
                             buffer_lock.unlock();
-                            playerInterface(0, 0, 0, 0, 0, 0, 0);
+                            playerInterface(key, 0, 0, 0, 0, 0, 0, 0);
                             keepRunning = false;
                             break;
                         }
@@ -124,14 +129,14 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
                     buffer_lock.unlock();
                 }
             } else if (status == INITING) {
-                if (buffer.size() > 0) {
+                if (buffer.size() > BUFFER_DURATION * getFrameRate() / 3) {
                     status = PLAYING;
                 }
             } else {
                 if (buffer.size() >= BUFFER_DURATION * getFrameRate()) {
                     status = PLAYING;
                 } else if (progressInterface) {
-                    progressInterface(100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
+                    progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
                 }
             }
             usleep(5000);

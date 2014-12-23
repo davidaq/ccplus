@@ -13,6 +13,7 @@ namespace CCPlus {
         // Main function
         // It will call @stop() first to make sure there is no running thread
         // After that, this function will be non-blocking
+        void play(int key, const char* zimDir, bool blocking = false);
         void play(const char* zimDir, bool blocking = false);
         // @ Stop scanning and playing
         // IT IS A BLOCKING FUNCTION
@@ -21,6 +22,7 @@ namespace CCPlus {
         void setBufferDuration(int); 
 
         typedef void (*PlayerInterface)(
+                int key,
                 float currentTime,
                 const unsigned char* imageData, int imageWidth, int imageHeight, 
                 const unsigned char* audioData, int audioLen,
@@ -28,7 +30,7 @@ namespace CCPlus {
                 );
         void attachPlayerInterface(PlayerInterface);
 
-        typedef void (*ProgressInterface)(int precent);
+        typedef void (*ProgressInterface)(int key, int precent);
         void attachProgressInterface(ProgressInterface);
     };
 };

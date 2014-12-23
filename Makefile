@@ -21,6 +21,8 @@ NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 
 NDK_AR:=${NDK_TOOLCHAIN_PREFIX}ar
 
+MEVIDEO_PATH := /Users/apple/Desktop/meVideo-iOS
+
 all: todo
 
 clean:
@@ -87,11 +89,11 @@ ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
-	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
-	rm -r -f /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
-	cp -r -f ./port/iOS/ccplus.bundle /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
-	cp -f ./include/ccplus.hpp /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/Headers/ccplus.hpp
-	cp -f ./include/ccplay.hpp /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/Headers/ccplay.hpp
+	cp -f ./port/iOS/ccplus.framework/ccplus ${MEVIDEO_PATH}/dependency/ccplus.framework/ccplus 
+	rm -r -f ${MEVIDEO}/dependency/ccplus.bundle
+	cp -r -f ./port/iOS/ccplus.bundle ${MEVIDEO_PATH}/dependency/ccplus.bundle
+	cp -f ./include/ccplus.hpp ${MEVIDEO_PATH}/dependency/ccplus.framework/Headers/ccplus.hpp
+	cp -f ./include/ccplay.hpp ${MEVIDEO_PATH}/dependency/ccplus.framework/Headers/ccplay.hpp
 
 test: testbuild
 	./test.sh '*'
