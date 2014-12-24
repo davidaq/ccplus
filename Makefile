@@ -66,15 +66,22 @@ build/android/_:
 	-touch $@
 
 android_a:build/android/_
-	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
-	chmod a+x .tmp.sh
-	find src -type d -exec mkdir -p build/android/{} \;
-	#find src -name \*.cpp -exec "./.tmp.sh" "if [`stat -f %m {}` -gt `stat -f %m build/android/{}.o`];then ${NDK_CXX} {} -c -o build/android/{}.o; fi" \;
-	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
-	find src -name \*.c -exec "./.tmp.sh" ${NDK_CC} {} -c -o build/android/{}.o \;
-	rm -f .tmp.sh
+	@find src -type d -exec mkdir -p build/android/{} \;
+	@find src -name \*.cpp | while read x; do \
+		if [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		echo "\033[1;32m"$$x"\033[0m"; \
+		${NDK_CXX} $$x -c -o build/android/$$x.o; \
+		else echo "\033[2;32m"$$x"\033[0m"; \
+		fi;\
+		done
+	@find src -name \*.c | while read x; do \
+		if [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		echo "\033[1;32m"$$x"\n\033[0m"; \
+		${NDK_CC} $$x -c -o build/android/$$x.o; \
+		fi;\
+		done
 	@echo "\033[1;32mMake static lib\n\033[0m"
-	${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
+	@${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
 
 android_so:
 	@echo "\033[1;32mCompile shared library\n\033[0m"
