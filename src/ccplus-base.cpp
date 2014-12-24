@@ -47,8 +47,10 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     Context* ctx = Context::getContext();
     ctx->collector->limit = 5;
     ctx->collector->prepare();
+    profileBegin(GL_INIT);
     void* glCtx = createGLContext();
     initGL();
+    profileEnd(GL_INIT);
     float delta = 1.0f / frameRate;
     float duration = ctx->mainComposition->getDuration();
 

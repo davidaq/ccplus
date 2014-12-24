@@ -54,13 +54,18 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_pushboolean(L, halfSize);
         lua_setglobal(L, "HALF_SIZE");
 
-        std::string script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+        std::string script_path = generatePath(tmlPath, "gen_tml.lua");
+        if (!file_exists(script_path)) {
+            script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+        }
         //L() << script_path;
-        if (luaL_dofile(L, script_path.c_str())) {
-            lua_error(L);
-            //lua_close(L);
-            log(logFATAL) << "Failed executing script";
-            return "";
+        profile(ExecutingLuaMain) {
+            if (luaL_dofile(L, script_path.c_str())) {
+                lua_error(L);
+                //lua_close(L);
+                log(logFATAL) << "Failed executing script";
+                return "";
+            }
         }
 
         lua_getglobal(L, "RESULT");

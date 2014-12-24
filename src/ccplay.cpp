@@ -110,7 +110,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                     buffer_lock.lock();
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
                         // Invoke callback
-                        log(logINFO) << "Playing: " << playerTime;
+                        //log(logINFO) << "Playing: " << playerTime;
                         Frame* buf = &buffer.front()->frame;
                         if (playerInterface) {
                             playerInterface(key, desiredTime, buf->image.data, 
@@ -118,7 +118,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                                     buf->ext.audio.data, buf->ext.audio.total() * 2, 1.0);
                         }
                         if (buf->eov) {
-                            log(logINFO) << "DONE! ";
+                            //log(logINFO) << "DONE! ";
                             buffer_lock.unlock();
                             playerInterface(key, 0, 0, 0, 0, 0, 0, 0);
                             keepRunning = false;
@@ -126,7 +126,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                         }
                         currentFrame++;
                     } else {
-                        log(logINFO) << "Start warting: " << currentFrame;
+                        //log(logINFO) << "Start warting: " << currentFrame;
                         status = WAITING;
                     }
                     buffer_lock.unlock();
