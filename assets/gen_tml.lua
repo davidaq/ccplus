@@ -469,7 +469,7 @@ function urisToGlobal(template, globalPath)
     end
 end
 
-function toHalf(template) 
+function rescaleTemplate(template, scale) 
     local resizers = {
         transform= function(len) 
             local ret = {}
@@ -503,14 +503,14 @@ function toHalf(template)
         for time, prop in pairs(props) do
             local keys = resizer(#prop)
             for i = 1, #keys do 
-                prop[keys[i]] = prop[keys[i]] * 0.5
+                prop[keys[i]] = prop[keys[i]] * scale
             end
         end
     end
 
     for name, comp in pairs(template.compositions) do
-        comp.resolution.width = comp.resolution.width * 0.5
-        comp.resolution.height = comp.resolution.height * 0.5
+        comp.resolution.width = comp.resolution.width * scale
+        comp.resolution.height = comp.resolution.height * scale
         for i = 1, #comp.layers do 
             local layer = comp.layers[i]
             for pname, resizer in pairs(resizers) do
@@ -519,7 +519,7 @@ function toHalf(template)
             local trans = layer.properties.transform
             if trans and layer.uri:sub(1, 14) ~= "composition://" then
                 for time, prop in pairs(trans) do
-                    local newprop = {0, 0, 0, 0, 0, 0, 0.5, 0.5, 1, 0, 0, 0}
+                    local newprop = {0, 0, 0, 0, 0, 0, scale, scale, 1, 0, 0, 0}
                     for i = 1, #prop do
                         table.insert(newprop, prop[i])
                     end
@@ -565,7 +565,7 @@ if JSON_BEAUTIFY == nil then
     JSON_BEAUTIFY = true
 end
 if HALF_SIZE then
-    toHalf(template)
+    rescaleTemplate(template, 0.65)
 end
 RESULT = json.encode(template, {
     indent= JSON_BEAUTIFY

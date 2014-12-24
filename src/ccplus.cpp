@@ -129,7 +129,9 @@ void CCPlus::go(const RenderTarget& target) {
                 if(!stringEndsWith(path, ".tml")) {
                     path = generateTML(path, mode==PREVIEW_MODE);
                 }
-                CCPlus::initContext(path);
+                profile(InitContext) {
+                    CCPlus::initContext(path);
+                }
                 // Keep GL context in a seprated thread context
                 pthread_t glThread = ParallelExecutor::runInNewThread([] () {
                     CCPlus::render();
