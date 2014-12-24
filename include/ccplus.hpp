@@ -26,7 +26,6 @@ namespace CCPlus {
     class RenderTarget {
     public:
         explicit RenderTarget(int index=-1);
-        ~RenderTarget();
 
         int fps = 18;
         std::string inputPath = "";

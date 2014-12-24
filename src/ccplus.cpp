@@ -19,10 +19,6 @@ RenderTarget::RenderTarget(int index) {
     }
 }
 
-RenderTarget::~RenderTarget() {
-    stop();
-}
-
 bool RenderTarget::isActive() const {
     renderLock.lock();
     bool ret = (index > 0 && index == activeTarget.index);
