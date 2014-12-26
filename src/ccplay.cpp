@@ -6,24 +6,27 @@
 #include <time.h>
 #include <queue>
 
+
+namespace CCPlus{
+    namespace CCPlay {
+        struct BufferObj {
+            Frame frame;
+            int fid;
+        };
+        int BUFFER_DURATION = 2;
+        bool keepRunning = false;
+        int currentFrame = 0; // Latest frame that hasn't/has been showed
+        Lock buffer_lock;
+        pthread_t buffer_thread = 0;
+        pthread_t play_thread = 0;
+        std::queue<BufferObj*> buffer;
+
+        PlayerInterface playerInterface = 0;
+        ProgressInterface progressInterface = 0;
+    };
+};
 using namespace CCPlus::CCPlay;
 using namespace CCPlus;
-
-struct BufferObj {
-    Frame frame;
-    int fid;
-};
-
-int BUFFER_DURATION = 2;
-bool keepRunning = false;
-int currentFrame = 0; // Latest frame that hasn't/has been showed
-Lock buffer_lock;
-pthread_t buffer_thread = 0;
-pthread_t play_thread = 0;
-std::queue<BufferObj*> buffer;
-
-PlayerInterface playerInterface = 0;
-ProgressInterface progressInterface = 0;
 
 void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
     play(0, _zimDir, blocking);
