@@ -68,14 +68,14 @@ build/android/_:
 android_a:build/android/_
 	@find src -type d -exec mkdir -p build/android/{} \;
 	@find src -name \*.cpp | while read x; do \
-		if [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		if [ ! -f "build/android/$$x.o" ] || [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
 		echo "\033[1;32m"$$x"\033[0m"; \
 		${NDK_CXX} $$x -c -o build/android/$$x.o; \
 		else echo "\033[2;32m"$$x"\033[0m"; \
 		fi;\
 		done
 	@find src -name \*.c | while read x; do \
-		if [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		if [ ! -f "build/android/$$x.o" ] || [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
 		echo "\033[1;32m"$$x"\n\033[0m"; \
 		${NDK_CC} $$x -c -o build/android/$$x.o; \
 		fi;\

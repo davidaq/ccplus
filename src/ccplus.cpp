@@ -122,6 +122,8 @@ void CCPlus::go(const RenderTarget& target) {
                 std::string path = activeTarget.inputPath;
                 renderLock.unlock();
 
+                copyAssets();
+
                 if(!stringEndsWith(path, ".tml")) {
                     path = generateTML(path, mode==PREVIEW_MODE);
                 }
