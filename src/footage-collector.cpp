@@ -9,113 +9,65 @@
 
 using namespace CCPlus;
 
-class CCPlus::CollectorThread : public Object {
-public:
-    CollectorThread(int index, FootageCollector* collector) :c(*collector) {
-        this->index = index;
-    }
-    void start() {
-        thread = ParallelExecutor::runInNewThread([&]() {
-            float fStep =  1.0 / frameRate;
-            while(goon) {
-                c.sync.lock();
-                if(c.sortedListPtr > 0) {
-                    Renderable* pitem = c.sortedList[--c.sortedListPtr];
-                    float t = c.finishedTime[index] = pitem->firstAppearTime - fStep;
-                    c.sync.unlock();
-                    if(!pitem->usedFragments.empty()) {
-                        log(logINFO) << "prepare begin" << pitem->getUri();
-                        for(int i = 0; i < 3; i++) {
-                            try {
-                                pitem->prepare();
-                            } catch(...) {
-                                log(logWARN) << "prepare failed(" << i << "):" << pitem->getUri();
-                            }
-                        }
-                        log(logINFO) << "prepare end" << pitem->getUri();
-                    }
-                    while(t > c.limit && goon)
-                        sleep(1);
-                    c.sync.lock();
-                } else {
-                    c.finishedTime[index] = c.main->duration + 1;
-                    goon = false;
-                }
-                c.sync.unlock();
-                c.signal.notify();
-            }
-        });
-    }
-
-    void stop() {
-        goon = false;
-        if (thread) 
-            pthread_join(thread, 0);
-    }
-private:
-    bool goon = true;
-    int index;
-    FootageCollector& c;
-    pthread_t thread = 0;
-};
-
 FootageCollector::FootageCollector(Composition* comp) {
     main = comp;
-    threads = new CollectorThread*[collectorThreadsNumber];
-    finishedTime = new float[collectorThreadsNumber];
-    for(int i = 0; i < collectorThreadsNumber; i++) {
-        finishedTime[i] = 0;
-        threads[i] = new CollectorThread(i, this);
-    }
 }
 
 FootageCollector::~FootageCollector() {
     stop();
-    for(int i = 0; i < collectorThreadsNumber; i++) {
-        delete threads[i];
-    }
-    delete[] threads;
-    if(sortedList)
-        delete[] sortedList;
-    delete[] finishedTime;
 }
 
 void FootageCollector::prepare() {
+    ParallelExecutor::runInNewThread([this] () {
+        this->doPrepare();
+    });
+}
+
+void FootageCollector::doPrepare() {
     DependencyWalker dep(*main);
     dep.walkThrough();
 
-    auto& renderables = Context::getContext()->renderables;
-    sortedList = new Renderable*[renderables.size() + 2];
-    sortedListPtr = 0;
-    for(auto ite : renderables) {
-        if(ite.second && ite.second != main)
-            sortedList[sortedListPtr++] = ite.second;
-    }
-    std::sort(sortedList, sortedList + sortedListPtr,
-            [](Renderable* const & a, Renderable* const & b) {
-        return a->firstAppearTime > b->firstAppearTime;
-    });
-    sortedList[sortedListPtr++] = main;
-    for(int i = 0; i < collectorThreadsNumber; i++) {
-        threads[i]->start();
+    finishedTime = 0;
+    int idx = 0;
+
+    std::map<std::string, Renderable*>& renderables = Context::getContext()->renderables;
+    while (finishedTime < main->duration && continueRunning) {
+        if (finishedTime - renderTime > windowDuration) {
+            //L() << "I'm waiting" << finishedTime << renderTime;
+            usleep(10000);
+            continue;
+        }
+        for (auto& kv : renderables) {
+            Renderable* renderable = kv.second;
+            if (renderable->usedFragmentSlices.count(idx)) {
+                std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
+                for (auto& i : *fragments) {
+                    //L() << "Preparing: " << renderable->getUri() << i.first << "~" << i.second;
+                    //renderable->preparePart(std::max(0.0, i.first - 0.3), i.second - i.first + 0.5);
+                    renderable->preparePart(i.first, i.second - i.first);
+                }
+            }
+
+            if (renderTime > renderable->lastAppearTime) {
+                renderable->release();
+            }
+        }
+
+        //executor.waitForAll();
+        finishedTime += CCPlus::collectorTimeInterval;
+        idx++;
+        log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
     }
 }
 
 void FootageCollector::stop() {
-    for (int i = 0; i < collectorThreadsNumber; i++) {
-        if (threads[i])
-            threads[i]->stop();
-    }
+    continueRunning = false;
+}
+
+void FootageCollector::clean(float time) {
+    renderTime = time;
 }
 
 float FootageCollector::finished() {
-    sync.lock();
-    float ret = main->duration + 1;
-    for(int i = 0; i < collectorThreadsNumber; i++) {
-        if(finishedTime[i] < ret)
-            ret = finishedTime[i];
-    }
-    sync.unlock();
-    return ret;
+    return finishedTime;
 }
-

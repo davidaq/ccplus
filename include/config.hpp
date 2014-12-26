@@ -19,6 +19,7 @@ namespace CCPlus {
     extern std::string outputPath;
     extern int audioSampleRate;
     extern int collectorThreadsNumber;
+    extern int collectorTimeInterval;
     extern int frameRate;
     extern int renderMode;
 }

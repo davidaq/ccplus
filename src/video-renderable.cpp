@@ -54,8 +54,10 @@ void VideoRenderable::prepare() {
         return;
     }
     prepared = true;
-    for(const auto& part : usedFragments)
-        preparePart((part.first - 0.5), (part.second - part.first + 1));
+    // FIXME
+    //for(const auto& part : usedFragments)
+    //    preparePart((part.first - 0.5), (part.second - part.first + 1));
+    preparePart(0, this->duration);
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
@@ -75,6 +77,7 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
+    //L() << this->getUri() << start << " " << duration;
     profile(videoDecode) {
         // Audio
         decoder->seekTo(start);

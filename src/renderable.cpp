@@ -32,8 +32,9 @@ GPUFrame Renderable::getGPUFrame(float time) {
 }
 
 GPUFrame Renderable::getWrapedGPUFrame(float time) {
-    if(usedFragments.empty())
-        return GPUFrame();
+    // FIXME
+    //if(usedFragments.empty())
+    //    return GPUFrame();
     float d = getDuration();
     float duration = d + 1.0 / frameRate;
     while(time < 0)
@@ -55,4 +56,11 @@ std::string Renderable::getUri() {
         }
     }
     return uri;
+}
+
+void Renderable::preparePart(float from, float duration) {
+    prepare();
+}
+
+void Renderable::releasePart(float from, float duration) {
 }

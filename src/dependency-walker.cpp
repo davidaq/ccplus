@@ -167,6 +167,31 @@ std::string toString(std::vector<TimePair> set) {
     return "{" + ret + "}";
 }
 
+void DependencyWalker::generateFragmentSlices(CCPlus::Renderable* item, const RangeSet& set) {
+    float left = 0; 
+    int idx = 0;
+
+    while (left < mainComp->duration) {
+        float right = std::min(left + CCPlus::collectorTimeInterval, mainComp->duration);
+        std::vector<std::pair<float, float> > fragments;
+        for (const Range& r : set) {
+            float newleft = std::max<float>(left, r.left);
+            float newright = std::min<float>(right, r.right);
+            if (newright < newleft) continue;
+            auto innerTime = [&r] (float time) {
+                return (time - r.left) / (r.right - r.left) * (r.refEnd - r.refStart) + r.refStart;
+            };
+            fragments.push_back(std::make_pair(innerTime(newleft), innerTime(newright)));
+        } 
+        if (fragments.size()) {
+            simplify(fragments);
+            item->usedFragmentSlices[idx] = fragments;
+        }
+        idx += 1;
+        left += CCPlus::collectorTimeInterval;
+    }
+}
+
 void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
     RangeSet set;
     log(logINFO) << "dependency --" << item->getUri();
@@ -174,6 +199,8 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
         concat(set, calcChunk(item, chunk));
     }
     crop(set, 0, mainComp->duration);
+
+    // Calculate firstAppearTime and lastAppearTime
     item->firstAppearTime = 9999999;
     item->lastAppearTime = 0;
     for(const Range& r : set) {
@@ -181,14 +208,12 @@ void DependencyWalker::calcItem(Renderable* item, std::vector<Range*> chunks) {
             item->firstAppearTime = r.left;
         if(r.right > item->lastAppearTime)
             item->lastAppearTime = r.right;
-        item->usedFragments.push_back(std::pair<float,float>(r.refStart, r.refEnd));
     }
-    if(item->firstAppearTime < item->lastAppearTime)
-        simplify(item->usedFragments);
-    else
-        item->usedFragments.clear();
-    log(logINFO) << "-- from" << item->firstAppearTime << "to" << item->lastAppearTime
-        << "using" << toString(item->usedFragments);
+
+    generateFragmentSlices(item, set);
+
+    log(logINFO) << "-- from" << item->firstAppearTime << "to" << item->lastAppearTime;
+        //<< "using" << toString(item->usedFragments);
 }
 
 RangeSet DependencyWalker::calcChunk(Renderable* item, Range* chunk) {
