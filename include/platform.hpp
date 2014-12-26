@@ -7,4 +7,6 @@ namespace CCPlus {
 
     // delete file
     void removeFile(const std::string& fileName, bool removeDir=false);
+
+    void copyAssets();
 }

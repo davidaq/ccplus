@@ -6,6 +6,7 @@
 extern "C" {
     void jniCCPlusCreateGLContext();
     void jniCCPlusDestroyGLContext();
+    void jniCCPlusCopyAssets();
 }
 
 void* CCPlus::createGLContext() {
@@ -15,6 +16,10 @@ void* CCPlus::createGLContext() {
 
 void CCPlus::destroyGLContext(void*) {
     jniCCPlusDestroyGLContext();
+}
+
+void CCPlus::copyAssets() {
+    jniCCPlusCopyAssets();
 }
 
 #endif

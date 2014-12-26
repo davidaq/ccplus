@@ -37,4 +37,7 @@ void CCPlus::destroyGLContext(void* ctx) {
     CGLDestroyContext(*((CGLContextObj*)ctx));
 }
 
+void CCPlus::copyAssets() { 
+}
+
 #endif
