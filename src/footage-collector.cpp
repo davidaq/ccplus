@@ -9,16 +9,22 @@
 
 using namespace CCPlus;
 
+pthread_t prepareThread = 0;
+
 FootageCollector::FootageCollector(Composition* comp) {
     main = comp;
 }
 
 FootageCollector::~FootageCollector() {
     stop();
+    if (prepareThread) {
+        pthread_join(prepareThread, NULL);
+        prepareThread = 0;
+    }
 }
 
 void FootageCollector::prepare() {
-    ParallelExecutor::runInNewThread([this] () {
+    prepareThread = ParallelExecutor::runInNewThread([this] () {
         this->doPrepare();
     });
 }
@@ -42,8 +48,6 @@ void FootageCollector::doPrepare() {
             if (renderable->usedFragmentSlices.count(idx)) {
                 std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
                 for (auto& i : *fragments) {
-                    //L() << "Preparing: " << renderable->getUri() << i.first << "~" << i.second;
-                    //renderable->preparePart(std::max(0.0, i.first - 0.3), i.second - i.first + 0.5);
                     renderable->preparePart(i.first, i.second - i.first);
                 }
             }
@@ -58,6 +62,7 @@ void FootageCollector::doPrepare() {
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
     }
+    finishedTime += 1000.0; // Make sure other thread know its done
 }
 
 void FootageCollector::stop() {
