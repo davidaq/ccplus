@@ -17,6 +17,7 @@ TEST(Integration, Stop) {
     CCPlus::RenderTarget target;
     target.inputPath = "test/res/test2.tml";
     CCPlus::go(target);
+    sleep(3);
     target.stop();
     target.waitFinish();
 }
