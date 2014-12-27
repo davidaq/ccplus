@@ -136,7 +136,10 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                     status = PLAYING;
                 }
             } else {
-                if (buffer.size() >= BUFFER_DURATION * getFrameRate()) {
+                buffer_lock.lock();
+                bool flag = (buffer.size() && buffer.back()->frame.eov);
+                buffer_lock.unlock();
+                if (buffer.size() >= BUFFER_DURATION * getFrameRate() || flag) {
                     status = PLAYING;
                 } else if (progressInterface) {
                     progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));

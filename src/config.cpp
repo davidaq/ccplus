@@ -10,6 +10,7 @@ int CCPlus::audioSampleRate             = 44100;
 int CCPlus::collectorThreadsNumber      = 2;
 int CCPlus::frameRate                   = 18;
 int CCPlus::renderMode                  = FINAL_MODE;
+int CCPlus::collectorTimeInterval       = 2;
 
 
 void CCPlus::setAudioSampleRate(int val) {

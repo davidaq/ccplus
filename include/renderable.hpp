@@ -10,7 +10,9 @@ public:
 
     virtual void prepare();
     virtual void release();
+    virtual void releasePart(float from, float duration);
     virtual float getDuration();
+    virtual void preparePart(float from, float duration);
 
     GPUFrame getWrapedGPUFrame(float time);
     virtual GPUFrame getGPUFrame(float time);
@@ -20,7 +22,7 @@ public:
     // first and last moments this renderable is visible in the main composition
     float firstAppearTime = 0, lastAppearTime = 0;
     // chunks of used fragments of this renderable as <start,end>
-    std::vector<std::pair<float,float> > usedFragments;
+    std::map<int, std::vector<std::pair<float, float> > > usedFragmentSlices;
     std::string getUri();
 
     bool isPreserved = false;

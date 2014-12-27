@@ -17,6 +17,7 @@ public:
     void walkThrough();
 private:
     void scan(CCPlus::Composition*, CCPlus::Range*, float from=0, float to=99999.0f);
+    void generateFragmentSlices(CCPlus::Renderable* item, const RangeSet& set);
     void cleanup();
     void calcItem(CCPlus::Renderable* item, std::vector<CCPlus::Range*> chunks);
     CCPlus::RangeSet calcChunk(CCPlus::Renderable*, CCPlus::Range* chunk);

@@ -169,7 +169,8 @@ Frame VideoDecoder::getDecodedImage() {
     return *decodedImage;
 }
 
-int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float duration, float &start, float &gap) {
+int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, 
+        float duration, float &start, float &gap, float* realTime) {
     int gotFrame = 0;
     int ret = avcodec_decode_audio4(decodeContext->audio_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
     if(ret < 0)
@@ -179,7 +180,9 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
                                 decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
                                 AV_TIME_BASE_Q)
                     * 0.000001;
-        if(retTime + 0.01 >= cursorTime) {
+        if(retTime + 0.5 >= cursorTime) {
+            if(realTime)
+                *realTime = retTime;
             cursorTime = retTime;
             if(gap < 0)
                 gap = (cursorTime - start) / 3;
@@ -226,14 +229,15 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
     return ret;
 }
 
-void VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
+float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
     float start = cursorTime;
-    float gap = -1;
+    float gap = 1;
     bool goon = true;
+    float realStart = -1;
     while(goon && readNextFrameIfNeeded()) {
         if (decodeContext->pkt.stream_index == decodeContext->audio_stream_idx) {
             do {
-                int ret = decodeAudioFrame(output, duration, start, gap);
+                int ret = decodeAudioFrame(output, duration, start, gap, realStart > 0 ? 0 : &realStart);
                 goon = ret > 0;
                 decodeContext->pkt.data += ret;
                 decodeContext->pkt.size -= ret;
@@ -242,6 +246,7 @@ void VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> 
         //av_free_packet(&(decodeContext->currentPkt));
         decodeContext->haveCurrentPkt = false;
     }
+    return realStart;
 }
 
 void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
@@ -258,8 +263,7 @@ void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
 }
 
 void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
-    auto output = 
-        [&destFile] (const void* buffer, size_t size, size_t count) {
+    auto output = [&destFile] (const void* buffer, size_t size, size_t count) {
         fwrite(buffer, size, count, destFile);    
     };
     decodeAudio(output, duration);
@@ -267,18 +271,26 @@ void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
 
 std::vector<int16_t> VideoDecoder::decodeAudio(float duration) {
     std::vector<int16_t> ret;
-    decodeAudio(ret, duration);
+    float cTime = cursorTime;
+    float realStart = decodeAudio(ret, duration);
+    cTime -= realStart;
+    if(cTime > 0 && !ret.empty()) {
+        int s = (int)(cTime * CCPlus::audioSampleRate);
+        if(s > 0) {
+            ret = std::vector<int16_t>(ret.begin() + s, ret.end());
+        }
+    }
     return ret;
 }
 
-void VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
+float VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
     auto output = [&ret] (const void* buffer, size_t size, size_t count) {
         // 2 bytes per int16_t
         for (int i = 0; i < count / 2; i++) {
             ret.push_back(((int16_t*) buffer)[i]);
         }
     };
-    decodeAudio(output, duration);
+    return decodeAudio(output, duration);
 }
 
 static int open_codec_context(int *stream_idx,

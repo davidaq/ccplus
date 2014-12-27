@@ -23,6 +23,19 @@ using namespace CCPlus;
 bool CCPlus::continueRunning = false;
 int CCPlus::renderProgress = 0;
 
+void traceRam() {
+#ifdef TRACE_RAM_USAGE
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+    if (KERN_SUCCESS != task_info(mach_task_self(),
+                TASK_BASIC_INFO, (task_info_t)&t_info, 
+                &t_info_count)) {
+    } else {
+        L() << "RAM used:" << (int64_t)t_info.resident_size;
+    }
+#endif
+}
+
 void CCPlus::stop() {
     continueRunning = false;
 }
@@ -45,7 +58,6 @@ typedef void (*FinishFunc)(void*);
 void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     if (!continueRunning) return;
     Context* ctx = Context::getContext();
-    ctx->collector->limit = 5;
     ctx->collector->prepare();
     profileBegin(GL_INIT);
     void* glCtx = createGLContext();
@@ -61,7 +73,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     void* writeCtx = beginFunc ? beginFunc() : 0;
     for (float i = 0; i <= duration; i += delta) {
         renderProgress = (i * 98 / duration) + 1;
-        while(continueRunning && ctx->collector->finished() < i) {
+        while(continueRunning && ctx->collector->finished() <= i + 0.01) {
             log(logINFO) << "wait --" << ctx->collector->finished();
             usleep(500000);
         }
@@ -69,7 +81,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             log(logINFO) << "----Rendering process is terminated!---";
             return;
         }
-        ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
+        //ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         if(writeFuc) {
             Frame cpu_frame = frame->toCPU();
@@ -80,29 +92,9 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
         }
         if(fn & 1) {
             log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
+            traceRam();
 
-#ifdef TRACE_RAM_USAGE
-            struct task_basic_info t_info;
-            mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-            if (KERN_SUCCESS != task_info(mach_task_self(),
-                        TASK_BASIC_INFO, (task_info_t)&t_info, 
-                        &t_info_count)) {
-            } else {
-                L() << "RAM used:" << (int64_t)t_info.resident_size;
-            }
-#endif
-
-            for(auto item = ctx->renderables.begin();
-                    item != ctx->renderables.end(); ) {
-                Renderable* r = item->second;
-                if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                    log(logINFO) << "release" << item->first;
-                    r->release();
-                    ctx->renderables.erase(item++);
-                } else {
-                    item++;
-                }
-            }
+            ctx->collector->clean(i);
         }
     }
     if(finishFunc)

@@ -14,6 +14,7 @@ public:
     ~VideoRenderable();
 
     void prepare();
+    void preparePart(float start, float duration);
     void release();
     float getDuration();
 
@@ -22,7 +23,6 @@ public:
 private:
     float duration = 999999;
     bool audioOnly;
-    void preparePart(float start, float duration);
     int time2frame(float time);
     bool useSlowerCompress = false;
 
