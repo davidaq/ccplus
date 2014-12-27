@@ -66,45 +66,40 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
     return ret;
 }
 
-//std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "xfile://") || stringStartsWith(uri, "file://")) {
-            //if(!_extMap)
-            //    _extMap = new std::map<std::string, std::function<Renderable*(const std::string&)> >();
-            //std::map<std::string, std::function<Renderable*(const std::string&)> >& extMap = *_extMap;
             std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
-            if(extMap.empty()) {
-                auto imageExt = [](const std::string& uri) {
-                    return new ImageRenderable(uri);
-                };
-                extMap["jpg"]       = imageExt;
-                extMap["png"]       = imageExt;
-                extMap["bmp"]       = imageExt;
-                auto gifExt = [](const std::string& uri) {
-                    return new GifRenderable(uri);
-                };
-                extMap["gif"]       = gifExt;
-                auto audioExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri, true);
-                };
-                extMap["mp3"]       = audioExt;
-                extMap["aac"]       = audioExt;
-                extMap["flac"]      = audioExt;
-                extMap["wav"]       = audioExt;
-                extMap["asf"]       = audioExt;
-                extMap["wma"]       = audioExt;
-                extMap["ogg"]       = audioExt;
-                extMap["rm"]        = audioExt;
-                extMap["caf"]       = audioExt;
-                // Just treat everything else as video
-                auto videoExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri, false);
-                };
-                extMap["default"]   = videoExt;
-            }
+            auto imageExt = [](const std::string& uri) {
+                return new ImageRenderable(uri);
+            };
+            extMap["jpg"]       = imageExt;
+            extMap["png"]       = imageExt;
+            extMap["bmp"]       = imageExt;
+            auto gifExt = [](const std::string& uri) {
+                return new GifRenderable(uri);
+            };
+            extMap["gif"]       = gifExt;
+            auto audioExt = [](const std::string& uri) {
+                return new VideoRenderable(uri, true);
+            };
+            extMap["mp3"]       = audioExt;
+            extMap["aac"]       = audioExt;
+            extMap["flac"]      = audioExt;
+            extMap["wav"]       = audioExt;
+            extMap["asf"]       = audioExt;
+            extMap["wma"]       = audioExt;
+            extMap["ogg"]       = audioExt;
+            extMap["rm"]        = audioExt;
+            extMap["caf"]       = audioExt;
+            // Just treat everything else as video
+            auto videoExt = [](const std::string& uri) {
+                return new VideoRenderable(uri, false);
+            };
+            extMap["default"]   = videoExt;
+
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
             ext = toLower(ext);

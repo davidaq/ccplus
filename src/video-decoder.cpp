@@ -61,16 +61,14 @@ VideoInfo VideoDecoder::getVideoInfo() {
 }
 
 void VideoDecoder::seekTo(float time) {
-    if (decoderFlag & DECODE_VIDEO) {
-        initContext();
-        if(invalid) return;
-        cursorTime = time;
-        time -= 1;
-        if(time < 1) {
-            time = 0;
-        }
-        av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+    initContext();
+    if(invalid) return;
+    cursorTime = time;
+    time -= 1;
+    if(time < 1) {
+        time = 0;
     }
+    av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
 }
 
 bool VideoDecoder::readNextFrameIfNeeded() {
@@ -91,7 +89,9 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 }
 
 float VideoDecoder::decodeImage() {
-    bool prevHaveDecodedeImageState = haveDecodedImage;
+    initContext();
+    if(!(decoderFlag & DECODE_VIDEO))
+        return -1;
     haveDecodedImage = false;
     if(decodedImage)
         delete decodedImage;
@@ -350,7 +350,6 @@ void VideoDecoder::initContext() {
         decodeContext->info.height = decodeContext->video_dec_ctx->height;
         decodeContext->info.rheight = decodeContext->video_dec_ctx->height;
         
-        
         AVDictionaryEntry *tag = NULL;
         tag = av_dict_get(decodeContext->video_stream->metadata, "rotate", tag, AV_DICT_MATCH_CASE);
         if(tag) {
@@ -366,6 +365,7 @@ void VideoDecoder::initContext() {
         decodeContext->audio_stream = decodeContext->fmt_ctx->streams[decodeContext->audio_stream_idx];
         decodeContext->audio_dec_ctx = decodeContext->audio_stream->codec;
     }
+
     if (!decodeContext->audio_stream && !decodeContext->video_stream) {
         releaseContext();
         return;
@@ -381,6 +381,14 @@ void VideoDecoder::initContext() {
     decodeContext->pkt.data = NULL;
     decodeContext->pkt.size = 0;
     invalid = false;
+
+    if(decoderFlag & DECODE_VIDEO && decodeContext->video_stream) {
+        decodeImage();
+        if(decodeImage() < 0) {
+            decoderFlag -= DECODE_VIDEO;
+        }
+        seekTo(0);
+    }
 }
 
 void VideoDecoder::releaseContext() {
