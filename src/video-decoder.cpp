@@ -64,8 +64,7 @@ void VideoDecoder::seekTo(float time) {
     initContext();
     if(invalid) return;
     cursorTime = time;
-    time -= 1;
-    if(time < 1) {
+    if(time < 0) {
         time = 0;
     }
     av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
@@ -224,7 +223,7 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
 }
 
 float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
-    float start = cursorTime - 0.5;
+    float start = cursorTime + 0.5;
     bool goon = true;
     float realStart = -1;
     float ctime;
@@ -235,7 +234,7 @@ float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)>
                 if(ctime >= 0)
                     realStart = ctime;
                 if(ret < 0)
-                    goon = false;
+                    break;
                 decodeContext->pkt.data += ret;
                 decodeContext->pkt.size -= ret;
             } while(goon && decodeContext->pkt.size > 0);

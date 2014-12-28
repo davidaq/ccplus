@@ -49,34 +49,29 @@ void VideoRenderable::release() {
     }
 }
 
-//void VideoRenderable::prepare() {
-//    if (prepared) {
-//        return;
-//    }
-//    prepared = true;
-//    // FIXME
-//    //for(const auto& part : usedFragments)
-//    //    preparePart((part.first - 0.5), (part.second - part.first + 1));
-//    preparePart(0, this->duration);
-//}
-
 GPUFrame VideoRenderable::getGPUFrame(float time) {
     int frameNum = time2frame(time);
     if(lastFrame && frameNum == lastFrameNum)
         return lastFrame;
     if(!framesCache.count(frameNum))
         lastFrame = GPUFrame();
-    Frame frame = framesCache[frameNum].decompressed();
-    if(frameRefer.count(frameNum)) {
-        frame.image = framesCache[frameNum].decompressed().image;
+    else {
+        Frame frame;
+        if(frameRefer.count(frameNum)) {
+            frame = framesCache[frameRefer[frameNum]].decompressed();
+            frame.ext.audio = framesCache[frameNum].ext.audio;
+        } else {
+            frame = framesCache[frameNum].decompressed();
+        }
+        lastFrame = frame.toGPU(false);
     }
-    lastFrame = frame.toGPU(false);
+    lastFrameNum = frameNum;
     return lastFrame;
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
-    int fnum = time2frame(start);
-    int fend = time2frame(start + duration) + 1;
+    int fnum = start * frameRate;
+    int fend = (start + duration) * frameRate + 1;
     while(fnum <= fend) {
         if(framesCache.count(fnum)) {
             fnum++;
@@ -87,7 +82,6 @@ void VideoRenderable::preparePart(float start, float duration) {
             partEnd++;
         float partBeginTime = fnum * 1.0 / frameRate;
         decoder->seekTo(partBeginTime);
-        L() << "00";
         std::vector<int16_t> audios = decoder->decodeAudio((partEnd - fnum + 1) * 1.0 / frameRate);
         decoder->seekTo(partBeginTime);
         float t = decoder->decodeImage() * frameRate;
@@ -95,133 +89,30 @@ void VideoRenderable::preparePart(float start, float duration) {
         for(; fnum <= partEnd; fnum++) {
             Frame cframe;
             if(t >= 0) {
-                if(t < fnum + 1) {
+                if(lastImageFrame < 0 || t < fnum + 1) {
                     cframe = decoder->getDecodedImage();
                     cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
                         if(!cframe.image.empty())
                             cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
-                    while(t < fnum + 1)
+                    while(t >= 0 && t < fnum + 1)
                         t = decoder->decodeImage() * frameRate;
                     lastImageFrame = fnum;
-                } else if(lastImageFrame >= 0) {
+                } else {
                     frameRefer[fnum] = lastImageFrame;
                 }
             }
-            int audioFrameStart = (fnum * 1.0 / frameRate - partBeginTime) * audioSampleRate;
-            int audioFrameEnd = ((fnum + 1) * 1.0 / frameRate - partBeginTime) * audioSampleRate;
-            if(audios.size() > audioFrameEnd) {
-                cframe.ext.audio = cv::Mat(1, audioFrameEnd - audioFrameStart, CV_16S);
-                memcpy(cframe.ext.audio.data, &audios[audioFrameStart], (audioFrameEnd - audioFrameStart) * 2);
+            if(!audios.empty()) {
+                int audioFrameEnd = ((fnum + 1) * 1.0 / frameRate - partBeginTime) * audioSampleRate;
+                if(audios.size() > audioFrameEnd) {
+                    int audioFrameStart = (fnum * 1.0 / frameRate - partBeginTime) * audioSampleRate;
+                    cframe.ext.audio = cv::Mat(1, audioFrameEnd - audioFrameStart, CV_16S);
+                    memcpy(cframe.ext.audio.data, &audios[audioFrameStart], (audioFrameEnd - audioFrameStart) * 2);
+                }
             }
             framesCache[fnum] = cframe.compressed();
         }
-    }
-    return;
-    //L() << this->getUri() << start << " " << duration;
-    profile(videoDecode) {
-        // Audio
-        decoder->seekTo(start);
-        std::vector<int16_t> audios = decoder->decodeAudio(duration);
-
-        float gap = -1;
-        float pos = -1;
-        int lastFrame = -1;
-
-        auto makeup_frames = [&](int f, int last_f) {
-            if(!framesCache.count(last_f)) return;
-            if (last_f == -1 || f - last_f <= 1) return;
-            for (int j = 1; j + last_f < f; j++) {
-                int insf = j + last_f;
-                if(!framesCache.count(insf)) {
-                    frameRefer[insf] = last_f;
-                }
-            }
-        };
-
-        int startFrameNumber = time2frame(start);
-        auto subAudio = [&startFrameNumber, this] (
-                const std::vector<int16_t>& apart, 
-                int f) {
-            int rela = f - startFrameNumber;
-            int nsig = audioSampleRate / frameRate;
-            int pos = nsig * rela;
-            int size = std::min<int>(nsig, apart.size() - pos);
-            if(size > 0) {
-                cv::Mat ret(1, size, CV_16S);
-                memcpy(ret.data, ((const int16_t*)(&apart[0]) + pos), size * 2);
-                return ret;
-            } else {
-                return cv::Mat();
-            }
-        };
-
-        bool dropFrame = false;
-        // video
-        if(!audioOnly) {
-            decoder->seekTo(start);
-            if(alpha_decoder)
-                alpha_decoder->seekTo(start);
-            cv::Mat alpha;
-            while((pos = decoder->decodeImage()) + 0.001 > 0) {
-                if(gap < 0.001)
-                    gap = (pos - start) / 3;
-                int f = time2frame(pos);
-
-                // make up lost frames
-                makeup_frames(f, lastFrame);
-                
-                // assume alpha channel video is synchronized with color channel video
-                if(alpha_decoder)
-                    alpha_decoder->decodeImage();
-                if (!framesCache.count(f)) {
-                    if(renderMode == FINAL_MODE || (dropFrame = !dropFrame)) {
-                        Frame ret = decoder->getDecodedImage();
-                        if(alpha_decoder) {
-                            Frame opac = alpha_decoder->getDecodedImage();
-                            unsigned char* opacData = opac.image.data;
-                            unsigned char* frameData = ret.image.data;
-                            if(opac.image.cols == ret.image.cols &&
-                                    opac.image.rows == ret.image.rows) {
-                                for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
-                                    frameData[i] = opacData[i - 1];
-                                }
-                            }
-                        }
-                        ret.ext.audio = subAudio(audios, f);
-#ifdef __ANDROID__
-                        if(!ret.image.empty())
-                            cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
-#endif
-                        ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderMode == PREVIEW_MODE);
-                        framesCache[f] = ret.compressed(useSlowerCompress);
-                        lastFrame = f;
-                    }
-                }
-                if(pos - start + gap > duration) {
-                    break;
-                }
-            }
-        }
-        if (lastFrame == -1) {
-            // Audio only
-            float inter = 1.0 / frameRate;
-            for (float i = start; i <= start + duration + inter; i += inter) {
-                int f = time2frame(i);
-                makeup_frames(f, lastFrame);
-                if (!framesCache.count(f)) {
-                    Frame ret;
-                    ret.ext.audio = subAudio(audios, f);
-                    framesCache[f] = ret;
-                    lastFrame = f;
-                }
-            }    
-        }
-
-        // Make up some missed frame :
-        // Used while decoding low fps video
-        makeup_frames(time2frame(start + duration), lastFrame);
     }
 }
 
