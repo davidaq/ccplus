@@ -22,7 +22,8 @@ public:
 
     CCPlus::Semaphore signal;
     float renderTime = 0;
-    float windowDuration = CCPlus::collectorTimeInterval * 4;
+    int windowSize = 4;
+
     //Lock renderTimeLock;
     float finishedTime;
     CCPlus::Composition* main = 0;

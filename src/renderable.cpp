@@ -3,7 +3,9 @@
 
 using namespace CCPlus;
 
-Renderable::Renderable() {}
+Renderable::Renderable() {
+    refCounter = 0;
+}
 
 Renderable::~Renderable() {
 }
@@ -32,9 +34,8 @@ GPUFrame Renderable::getGPUFrame(float time) {
 }
 
 GPUFrame Renderable::getWrapedGPUFrame(float time) {
-    // FIXME
-    //if(usedFragments.empty())
-    //    return GPUFrame();
+    if(usedFragmentSlices.empty())
+        return GPUFrame();
     float d = getDuration();
     float duration = d + 1.0 / frameRate;
     while(time < 0)
@@ -59,8 +60,14 @@ std::string Renderable::getUri() {
 }
 
 void Renderable::preparePart(float from, float duration) {
+    refCounter++;
     prepare();
 }
 
 void Renderable::releasePart(float from, float duration) {
+    refCounter--;
+    if(refCounter <= 0) {
+        refCounter = 0;
+        release();
+    }
 }

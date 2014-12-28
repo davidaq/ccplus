@@ -15,6 +15,7 @@ public:
 
     //void prepare();
     void preparePart(float start, float duration);
+    void releasePart(float start, float duration);
     void release();
     float getDuration();
 
@@ -29,6 +30,7 @@ private:
     VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::Frame> framesCache;
     std::map<int, int> frameRefer;
+    std::map<int, int> frameCounter;
     CCPlus::GPUFrame lastFrame;
     int lastFrameNum = 0;
 };

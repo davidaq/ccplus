@@ -69,11 +69,27 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
     return lastFrame;
 }
 
+void VideoRenderable::releasePart(float start, float duration) {
+    int fnum = start * frameRate;
+    int fend = (start + duration) * frameRate + 1;
+    for(; fnum <= fend; fnum++) {
+        if(frameCounter.count(fnum)) {
+            frameCounter[fnum]--;
+            if(frameCounter[fnum] <= 0) {
+                frameRefer.erase(fnum);
+                framesCache.erase(fnum);
+                frameCounter.erase(fnum);
+            }
+        }
+    }
+}
+
 void VideoRenderable::preparePart(float start, float duration) {
     int fnum = start * frameRate;
     int fend = (start + duration) * frameRate + 1;
     while(fnum <= fend) {
         if(framesCache.count(fnum)) {
+            frameCounter[fnum]++;
             fnum++;
             continue;
         }
@@ -112,6 +128,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 }
             }
             framesCache[fnum] = cframe.compressed();
+            frameCounter[fnum]++;
         }
     }
 }
