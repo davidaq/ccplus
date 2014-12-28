@@ -62,7 +62,7 @@ void FootageCollector::doPrepare() {
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
     }
-    finishedTime += 1000.0; // Make sure other thread know its done
+    finishedTime = main->duration + 1000.0; // Make sure other thread know its done
 }
 
 void FootageCollector::stop() {

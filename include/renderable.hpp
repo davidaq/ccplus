@@ -12,7 +12,8 @@ public:
     virtual void release();
     virtual void releasePart(float from, float duration);
     virtual float getDuration();
-    virtual void preparePart(float from, float duration);
+    //virtual void releasePart(int idx);
+    virtual void preparePart(float from, float duration);//, int idx);
 
     GPUFrame getWrapedGPUFrame(float time);
     virtual GPUFrame getGPUFrame(float time);

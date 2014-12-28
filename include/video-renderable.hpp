@@ -13,7 +13,7 @@ public:
     VideoRenderable(const std::string& uri, bool audioOnly);
     ~VideoRenderable();
 
-    void prepare();
+    //void prepare();
     void preparePart(float start, float duration);
     void release();
     float getDuration();
