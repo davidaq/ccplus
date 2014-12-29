@@ -73,7 +73,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     void* writeCtx = beginFunc ? beginFunc() : 0;
     for (float i = 0; i <= duration; i += delta) {
         renderProgress = (i * 98 / duration) + 1;
-        while(continueRunning && ctx->collector->finished() <= i + 0.01) {
+        while(continueRunning && ctx->collector->finished() <= i + 0.1) {
             log(logINFO) << "wait --" << ctx->collector->finished();
             usleep(500000);
         }

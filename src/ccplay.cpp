@@ -37,7 +37,9 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
     stop();
     keepRunning = true;
     while (!buffer.empty()) {
+        BufferObj* tmp = buffer.front();
         buffer.pop();
+        delete tmp;
     }
     buffer_thread = ParallelExecutor::runInNewThread([zimDir] () {
         int lastFrame = 0x7fffffff;
