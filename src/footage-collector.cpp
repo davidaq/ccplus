@@ -37,6 +37,7 @@ void FootageCollector::doPrepare() {
     int idx = 0;
 
     std::map<std::string, Renderable*>& renderables = Context::getContext()->renderables;
+    float windowDuration = windowSize * collectorTimeInterval;
     while (finishedTime < main->duration && continueRunning) {
         if (finishedTime - renderTime > windowDuration) {
             //L() << "I'm waiting" << finishedTime << renderTime;
@@ -61,8 +62,21 @@ void FootageCollector::doPrepare() {
         finishedTime += CCPlus::collectorTimeInterval;
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
+
+        int releaseIdx = idx - windowSize - 2;
+        if(releaseIdx >= 0) {
+            for (auto& kv : renderables) {
+                Renderable* renderable = kv.second;
+                if (renderable->usedFragmentSlices.count(releaseIdx)) {
+                    std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[releaseIdx];
+                    for (auto& i : *fragments) {
+                        renderable->releasePart(i.first, i.second - i.first);
+                    }
+                }
+            }
+        }
     }
-    finishedTime += 1000.0; // Make sure other thread know its done
+    finishedTime = main->duration + 1000.0; // Make sure other thread know its done
 }
 
 void FootageCollector::stop() {

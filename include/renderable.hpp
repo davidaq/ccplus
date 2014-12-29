@@ -10,8 +10,8 @@ public:
 
     virtual void prepare();
     virtual void release();
-    virtual void releasePart(float from, float duration);
     virtual float getDuration();
+    virtual void releasePart(float from, float duration);
     virtual void preparePart(float from, float duration);
 
     GPUFrame getWrapedGPUFrame(float time);
@@ -31,4 +31,5 @@ protected:
 private:
     std::map<int, Frame> frames;
     std::string uri;
+    int refCounter;
 };

@@ -51,7 +51,7 @@ make_bin_header:
 	#find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
 
 .dependency:make_bin_header
-	@-./scripts/run load.py
+	#@-./scripts/run load.py
 
 build/Makefile: .dependency
 	-dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi

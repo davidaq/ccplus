@@ -64,8 +64,7 @@ void VideoDecoder::seekTo(float time) {
     initContext();
     if(invalid) return;
     cursorTime = time;
-    time -= 1;
-    if(time < 1) {
+    if(time < 0) {
         time = 0;
     }
     av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
@@ -169,23 +168,18 @@ Frame VideoDecoder::getDecodedImage() {
     return *decodedImage;
 }
 
-int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, 
-        float duration, float &start, float &gap, float* realTime) {
+int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float& retTime) {
     int gotFrame = 0;
     int ret = avcodec_decode_audio4(decodeContext->audio_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
     if(ret < 0)
         return -1;
     if(gotFrame) {
-        float retTime = av_rescale_q(av_frame_get_best_effort_timestamp(decodeContext->frame), 
-                                decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
-                                AV_TIME_BASE_Q)
-                    * 0.000001;
+        retTime = av_rescale_q(
+            av_frame_get_best_effort_timestamp(decodeContext->frame), 
+            decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
+            AV_TIME_BASE_Q) * 0.000001;
         if(retTime + 0.5 >= cursorTime) {
-            if(realTime)
-                *realTime = retTime;
             cursorTime = retTime;
-            if(gap < 0)
-                gap = (cursorTime - start) / 3;
             AVCodecContext *dec = decodeContext->audio_stream->codec;
             if(!decodeContext->swrContext) {
                 decodeContext->swrContext = swr_alloc();
@@ -221,29 +215,33 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
             swr_convert(decodeContext->swrContext, decodeContext->swrDestBuffer, unpadded_linesize,
                     (const uint8_t**)(decodeContext->frame->extended_data), decodeContext->frame->nb_samples);
             output(decodeContext->swrDestBuffer[0], 1, unpadded_linesize);
-            if(duration > 0 && cursorTime - start - gap > duration){
-                return -5;
-            }
+        } else {
+            retTime = -1;
         }
     }
     return ret;
 }
 
 float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
-    float start = cursorTime;
-    float gap = 1;
+    float start = cursorTime + 0.5;
     bool goon = true;
     float realStart = -1;
+    float ctime;
     while(goon && readNextFrameIfNeeded()) {
         if (decodeContext->pkt.stream_index == decodeContext->audio_stream_idx) {
             do {
-                int ret = decodeAudioFrame(output, duration, start, gap, realStart > 0 ? 0 : &realStart);
-                goon = ret > 0;
+                int ret = decodeAudioFrame(output, ctime);
+                if(ctime >= 0)
+                    realStart = ctime;
+                if(ret < 0)
+                    break;
                 decodeContext->pkt.data += ret;
                 decodeContext->pkt.size -= ret;
             } while(goon && decodeContext->pkt.size > 0);
         }
-        //av_free_packet(&(decodeContext->currentPkt));
+        if(ctime - start > duration)
+            goon = false;
+        av_free_packet(&(decodeContext->currentPkt));
         decodeContext->haveCurrentPkt = false;
     }
     return realStart;
