@@ -110,7 +110,7 @@ function getScenes(template)
         end 
     end 
 
-    log(ret);
+    --log(ret);
     return ret;
 end
 
@@ -171,11 +171,22 @@ function generateResourcesComp(userinfo)
             l.properties.volume = {}
             l.properties.volume["0"] = {md.volume}
         end
+
+        -- call c func
+        local has_volume = false;
+        if md.type == "video" and md.volume and md.volume ~= "0" then
+            local path = md.filename
+            if string.sub(path, 1, 1) ~= "/" then 
+                path = USER_JSON_DIR .. path
+            end
+            has_volume = hasVolume(path, start, comp.duration)
+        end 
         
         table.insert(ret, {
             name= name,
             type= md.type,
-            comp= comp
+            comp= comp,
+            has_volume= has_volume
         })
         idx = idx + 1
     end
@@ -238,8 +249,12 @@ function fit(comps, scenes)
             name= scene.name,
             matched_comps= {},
             matched_rand_comps= {},
-            scene_path= scene.paths
+            scene_path= scene.paths,
+            mute_bgm= false
         }
+        if scene.num_ele == 1 and comps[idx].has_volume then
+            tmp.mute_bgm = true
+        end
         for i = idx, idx + scene.num_ele - 1 do 
             table.insert(tmp.matched_comps, comps[i].name)
         end 
@@ -258,7 +273,6 @@ function fit(comps, scenes)
         end 
         idx = idx + scene.num_ele 
         scene.used = scene.used + 1
-
         table.insert(ret, tmp)
         if preferredDuration == 6.0 then
             preferredDuration = 3.6;
@@ -286,7 +300,8 @@ function fit(comps, scenes)
             name= last_scene.name, 
             matched_comps= tmp, 
             matched_rand_comps= rand_tmp,
-            scene_path= last_scene.paths
+            scene_path= last_scene.paths,
+            mute_bgm= false
         })
     end
     log(ret)
@@ -357,7 +372,7 @@ function fillTML(fitted, template, userinfo, aux_template)
             return comp
         end 
         local comp = cloneScene(cname)
-        table.insert(candidates, {"$" .. i, comp.duration, overlap})
+        table.insert(candidates, {"$" .. i, comp.duration, overlap, fit.mute_bgm})
     end 
     
     -- Copy compositions from aux to comps
@@ -381,6 +396,7 @@ function fillTML(fitted, template, userinfo, aux_template)
     }
     local main_comp = comps[main_name]
     local ret_layers = main_comp.layers
+    local bgm_volume = {}
     local currentTime = 0
     local overlap = 0
     function appendScene(name, duration) 
@@ -424,15 +440,29 @@ function fillTML(fitted, template, userinfo, aux_template)
 
     -- Append scenes
     for i = 1, #candidates do 
+        if candidates[i][4] then -- If mute BGM
+            bgm_volume[tostring(currentTime)] = 1.0;
+            bgm_volume[tostring(currentTime + 0.5)] = 0.1;
+            bgm_volume[tostring(currentTime + candidates[i][2] - overlap - 0.5)] = 0.1;
+            bgm_volume[tostring(currentTime + candidates[i][2]) - overlap] = 1.0;
+        end 
         appendScene(candidates[i][1], candidates[i][2])
         overlap = candidates[i][3]
     end
+    --log(bgm_volume)
 
     -- Append end scenes
     appendScene("#END", comps["#END"].duration)
 
     -- Append background music
     main_comp.duration = currentTime
+    bgm_volume["0"] = 0.0
+    if not bgm_volume["0.5"] then
+        bgm_volume["0.5"] = 1.0
+    end
+    bgm_volume[tostring(main_comp.duration - 1.5)] = 1;
+    bgm_volume[tostring(main_comp.duration)] = 0;
+    template.bgm_volume = bgm_volume
     if userinfo.musicURL and userinfo.musicURL ~= "" then
         local music = {
             start= 0,
@@ -442,12 +472,12 @@ function fillTML(fitted, template, userinfo, aux_template)
             properties= {
                 volume= {}
             },
-            uri= "file://" .. userinfo.musicURL
+            uri= "xfile://" .. userinfo.musicURL
         }
-        music.properties.volume['0'] = {0};
-        music.properties.volume['0.5'] = {1};
-        music.properties.volume[tostring(main_comp.duration - 1.5)] = {1};
-        music.properties.volume[tostring(main_comp.duration)] = {0};
+
+        for tm, val in pairs(bgm_volume) do 
+            music.properties.volume[tm] = {val};
+        end
 
         table.insert(ret_layers, music)
     end 
@@ -533,6 +563,9 @@ end
 local template = json.decode(TPL_JSON, 1, nil);
 local userinfo = json.decode(USER_JSON, 1, nil);
 local aux_template = json.decode(TPL_AUX_JSON, 1, nil)
+if USER_JSON_DIR:sub(USER_JSON_DIR:len()) ~= "/" then
+    USER_JSON_DIR = USER_JSON_DIR .. "/"
+end
 
 -- Deal with URI in template
 local templateDir = userinfo.templateURL

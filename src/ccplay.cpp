@@ -117,7 +117,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                         if (playerInterface) {
                             playerInterface(key, desiredTime, buf->image.data, 
                                     buf->image.cols, buf->image.rows,
-                                    buf->ext.audio.data, buf->ext.audio.total() * 2, 1.0);
+                                    buf->ext.audio.data, buf->ext.audio.total() * 2, buf->bgmVolume);
                         }
                         if (buf->eov) {
                             //log(logINFO) << "DONE! ";

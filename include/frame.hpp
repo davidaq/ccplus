@@ -24,6 +24,7 @@ public:
     CCPlus::FrameExt ext;
     // Mark whether this frame are the End-Of-Video
     bool eov = false;
+    float bgmVolume = 1;
 
     cv::Mat zimCompressed(int quality = 85) const;
     void readZimCompressed(const cv::Mat&);

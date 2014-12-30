@@ -27,6 +27,19 @@ Composition* TMLReader::read(const std::string& s) const {
         fps = pt.get<int>("preview_fps", fps);
     }
     setFrameRate(fps);
+    Context* ctx = Context::getContext();
+    for (auto& child : pt.get_child("bgm_volume")) {
+        float t = std::atof(child.first.data());
+        float v = std::atof(child.second.data().c_str());
+        ctx->bgmVolumes.push_back(std::make_pair(t, v));
+    }
+    auto pairCompare = [] (const std::pair<float, float>& a, const std::pair<float, float>& b) {
+        return a.first < b.first;
+    };
+    std::sort(ctx->bgmVolumes.begin(), ctx->bgmVolumes.end(), pairCompare);
+    for (auto& kv : ctx->bgmVolumes) {
+        L() << kv.first << kv.second;
+    }
 
     for (auto& child: pt.get_child("compositions")) {
         ptree& comp = child.second;

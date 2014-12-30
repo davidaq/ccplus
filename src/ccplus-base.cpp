@@ -87,6 +87,29 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             if (i + delta > duration) {
                 cpu_frame.eov = true;
             }
+            auto bgmItp = [ctx] (float i) {
+                float low = -1, high = -1;
+                float low_time = -1, high_time = -1;
+                for (int j = 0; j < ctx->bgmVolumes.size(); j++) {
+                    float t = ctx->bgmVolumes[j].first;
+                    float v = ctx->bgmVolumes[j].second;
+                    if (std::abs(v - i) < 0.01) {
+                        return v;
+                    }
+                    if (t < i) {
+                        low_time = t;
+                        low = v;
+                    } else if (t > i) {
+                        high_time = t;
+                        high = v;
+                    }
+                    if (high != -1 && low != -1) break;
+                }
+                if (high == -1 || low == -1) return 1.0f;
+                //L() << "aaa" << low_time << high_time;
+                return (i - low_time) / (high_time - low_time) * (high - low) + low;
+            };
+            cpu_frame.bgmVolume = bgmItp(i);
             writeFuc(cpu_frame, fn++, writeCtx);
         }
         if(fn & 1) {

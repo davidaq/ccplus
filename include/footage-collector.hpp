@@ -25,7 +25,7 @@ public:
     int windowSize = 4;
 
     //Lock renderTimeLock;
-    float finishedTime;
+    float finishedTime = 0;
     CCPlus::Composition* main = 0;
     bool continueRunning = true;
 

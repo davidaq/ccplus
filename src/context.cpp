@@ -42,6 +42,7 @@ void Context::end() {
     deleteRetained();
     GPUFrameCache::clear();
     GLProgramManager::getManager()->clean();
+    bgmVolumes.clear();
     active = false;
 }
 

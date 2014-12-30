@@ -16,6 +16,7 @@ public:
 
     std::string tmlDir = "";
     std::map<std::string, Renderable*> renderables;
+    std::vector<std::pair<float, float> > bgmVolumes; // Time -> volume
 
     Composition* mainComposition;
     FootageCollector* collector = nullptr;

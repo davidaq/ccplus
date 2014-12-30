@@ -15,6 +15,19 @@ extern "C" {
 #include "externals/lua/lauxlib.h"
 }
 
+int hasVolume(lua_State* L) {
+    if (lua_isstring(L, 1)) {
+        lua_pushboolean(L, true);
+        std::string s = lua_tostring(L, 1);
+        float t = lua_tonumber(L, 2);
+        float d = lua_tonumber(L, 3);
+        return CCPlus::hasAudio(s, t, d);
+    } else {
+        lua_pushboolean(L, false);
+    }
+    return 1;
+}
+
 std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
     using boost::property_tree::ptree;
     ptree jsont;
@@ -33,7 +46,6 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         luaL_openlibs(L);
 
         std::string dkjson_path = generatePath(CCPlus::assetsPath, "dkjson.lua");
-        //L() << dkjson_path;
         lua_pushstring(L, dkjson_path.c_str());
         lua_setglobal(L, "DKJSON_PATH");
 
@@ -44,6 +56,8 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_setglobal(L, "TPL_JSON");
         lua_pushstring(L, slurp(configFile).c_str());
         lua_setglobal(L, "USER_JSON");
+        lua_pushstring(L, dirName(configFile).c_str());
+        lua_setglobal(L, "USER_JSON_DIR");
         //lua_pushstring(L, readTextAsset("wrap/wrap.tml").c_str());
         lua_pushstring(L, readTextAsset("aux_tpl/aux.tml").c_str());
         lua_setglobal(L, "TPL_AUX_JSON");
@@ -53,6 +67,9 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
 
         lua_pushboolean(L, halfSize);
         lua_setglobal(L, "HALF_SIZE");
+
+        lua_pushcfunction(L, hasVolume);
+        lua_setglobal(L, "hasVolume");
 
         std::string script_path = generatePath(tmlPath, "gen_tml.lua");
         if (!file_exists(script_path)) {

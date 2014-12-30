@@ -38,8 +38,8 @@ void FootageCollector::doPrepare() {
 
     std::map<std::string, Renderable*>& renderables = Context::getContext()->renderables;
     float windowDuration = windowSize * collectorTimeInterval;
-    ParallelExecutor executor(collectorThreadsNumber);
     while (finishedTime < main->duration && continueRunning) {
+        ParallelExecutor executor(collectorThreadsNumber);
         if (finishedTime - renderTime > windowDuration) {
             //L() << "I'm waiting" << finishedTime << renderTime;
             usleep(10000);
@@ -60,7 +60,7 @@ void FootageCollector::doPrepare() {
             }
         }
 
-        //executor.waitForAll();
+        executor.waitForAll();
         finishedTime += CCPlus::collectorTimeInterval;
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
