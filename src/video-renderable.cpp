@@ -131,6 +131,8 @@ void VideoRenderable::preparePart(float start, float duration) {
             if(!audios.empty()) {
                 int audioFrameSZ = audioSampleRate / frameRate;
                 int audioFrameStart = (fnum * 1.0 / frameRate - audioStartTime) * audioSampleRate;
+                if(audioFrameStart < 0)
+                    audioFrameStart = 0;
                 int audioFrameEnd = audioFrameStart + audioFrameSZ;
                 if(audios.size() >= audioFrameEnd) {
                     cframe.ext.audio = cv::Mat(1, audioFrameSZ, CV_16S);
