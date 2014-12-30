@@ -17,6 +17,7 @@
 namespace CCPlus {
     cv::Mat readAsset(const char* name);
     int getImageRotation(const std::string& jpgpath); 
+    bool hasAudio(const std::string& uri, float start, float duration);
 }
 
 static inline double getSystemTime() { 
@@ -251,3 +252,4 @@ static inline int nearestPOT(int n) {
     }
     return ret;
 }
+

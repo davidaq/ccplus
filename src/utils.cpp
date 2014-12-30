@@ -1,5 +1,6 @@
 #include "global.hpp"
 #include "utils.hpp"
+#include "video-decoder.hpp"
 
 #include <cstdio>
 #include <map>
@@ -150,4 +151,39 @@ cv::Mat CCPlus::readAsset(const char* _name) {
     fread(ret.data, 1, len, fp);
     fclose(fp);
     return ret;
+}
+
+static inline bool hasAudio(const std::vector<int16_t>& data) {
+    if(data.empty())
+        return false;
+    int total = 0;
+    for(int i = 1; i < data.size(); i++) {
+        int d = data[i] - data[i - 1];
+        if(d < 0)
+            total -= d;
+        else
+            total += d;
+    }
+    total /= data.size();
+    return total > 10;
+}
+
+bool CCPlus::hasAudio(const std::string& uri, float start, float duration) {
+    VideoDecoder decoder(uri, VideoDecoder::DECODE_AUDIO);
+    const float vduration = decoder.getVideoInfo().duration;
+    if(start + duration > vduration) {
+        start = 0;
+        duration = vduration;
+    }
+    if(duration < 0.5) {
+        decoder.seekTo(start);
+        return ::hasAudio(decoder.decodeAudio(duration));
+    }
+    for(float t = 0; t < duration; t += 1.5) {
+        decoder.seekTo(start + t);
+        if(::hasAudio(decoder.decodeAudio(0.3))) {
+            return true;
+        }
+    }
+    return false;
 }
