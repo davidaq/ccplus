@@ -60,14 +60,15 @@ VideoInfo VideoDecoder::getVideoInfo() {
     return decodeContext->info;
 }
 
-void VideoDecoder::seekTo(float time) {
+void VideoDecoder::seekTo(float time, bool realSeek) {
     initContext();
     if(invalid) return;
-    cursorTime = time;
     if(time < 0) {
         time = 0;
     }
-    av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+    cursorTime = time;
+    if(realSeek)
+        av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
 }
 
 bool VideoDecoder::readNextFrameIfNeeded() {
@@ -178,55 +179,54 @@ int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_
             av_frame_get_best_effort_timestamp(decodeContext->frame), 
             decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
             AV_TIME_BASE_Q) * 0.000001;
-        if(retTime + 0.5 >= cursorTime) {
-            cursorTime = retTime;
-            AVCodecContext *dec = decodeContext->audio_stream->codec;
-            if(!decodeContext->swrContext) {
-                decodeContext->swrContext = swr_alloc();
-
-                av_opt_set_int(decodeContext->swrContext, "in_channel_layout", dec->channel_layout, 0);
-                av_opt_set_int(decodeContext->swrContext, "in_sample_rate", dec->sample_rate, 0);
-                av_opt_set_sample_fmt(decodeContext->swrContext, "in_sample_fmt", dec->sample_fmt, 0);
-
-                av_opt_set_int(decodeContext->swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-                av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::audioSampleRate, 0);
-                av_opt_set_sample_fmt(decodeContext->swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
-
-                if(swr_init(decodeContext->swrContext) < 0) {
-                    log(logERROR) << "Can't init SWResample context";
-                    return -1;
-                }
-            }
-            int dst_nb_samples = av_rescale_rnd(0
-                    + decodeContext->frame->nb_samples, CCPlus::audioSampleRate, dec->sample_rate, AV_ROUND_UP);
-            if(dst_nb_samples > decodeContext->swrDestSamples) {
-                decodeContext->swrDestSamples = dst_nb_samples;
-                int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);
-                if(decodeContext->swrDestBuffer)
-                    av_free(decodeContext->swrDestBuffer[0]);
-                int res = av_samples_alloc_array_and_samples(
-                        &(decodeContext->swrDestBuffer), &(decodeContext->swrLinesize), dst_nb_channels, dst_nb_samples, AV_SAMPLE_FMT_S16, 0);
-                if(res < 0) {
-                    log(logERROR) << "Failed to alloc memory";
-                    return -1;
-                }
-            }
-            size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            swr_convert(decodeContext->swrContext, decodeContext->swrDestBuffer, unpadded_linesize,
-                    (const uint8_t**)(decodeContext->frame->extended_data), decodeContext->frame->nb_samples);
-            output(decodeContext->swrDestBuffer[0], 1, unpadded_linesize);
-        } else {
-            retTime = -1;
+        if(retTime + 0.5 < cursorTime) {
+            retTime = -1; 
+            return ret;
         }
+        cursorTime = retTime;
+        AVCodecContext *dec = decodeContext->audio_stream->codec;
+        if(!decodeContext->swrContext) {
+            decodeContext->swrContext = swr_alloc();
+
+            av_opt_set_int(decodeContext->swrContext, "in_channel_layout", dec->channel_layout, 0);
+            av_opt_set_int(decodeContext->swrContext, "in_sample_rate", dec->sample_rate, 0);
+            av_opt_set_sample_fmt(decodeContext->swrContext, "in_sample_fmt", dec->sample_fmt, 0);
+
+            av_opt_set_int(decodeContext->swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
+            av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::audioSampleRate, 0);
+            av_opt_set_sample_fmt(decodeContext->swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+
+            if(swr_init(decodeContext->swrContext) < 0) {
+                log(logERROR) << "Can't init SWResample context";
+                return -1;
+            }
+        }
+        int dst_nb_samples = av_rescale_rnd(0
+                + decodeContext->frame->nb_samples, CCPlus::audioSampleRate, dec->sample_rate, AV_ROUND_UP);
+        if(dst_nb_samples > decodeContext->swrDestSamples) {
+            decodeContext->swrDestSamples = dst_nb_samples;
+            int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);
+            if(decodeContext->swrDestBuffer)
+                av_free(decodeContext->swrDestBuffer[0]);
+            int res = av_samples_alloc_array_and_samples(
+                    &(decodeContext->swrDestBuffer), &(decodeContext->swrLinesize), dst_nb_channels, dst_nb_samples, AV_SAMPLE_FMT_S16, 0);
+            if(res < 0) {
+                log(logERROR) << "Failed to alloc memory";
+                return -1;
+            }
+        }
+        size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+        swr_convert(decodeContext->swrContext, decodeContext->swrDestBuffer, unpadded_linesize,
+                (const uint8_t**)(decodeContext->frame->extended_data), decodeContext->frame->nb_samples);
+        output(decodeContext->swrDestBuffer[0], 1, unpadded_linesize);
     }
     return ret;
 }
 
 float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
-    float start = cursorTime + 0.5;
     bool goon = true;
     float realStart = -1;
-    float ctime;
+    float ctime = -1;
     while(goon && readNextFrameIfNeeded()) {
         if (decodeContext->pkt.stream_index == decodeContext->audio_stream_idx) {
             do {
@@ -239,7 +239,7 @@ float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)>
                 decodeContext->pkt.size -= ret;
             } while(decodeContext->pkt.size > 0);
         }
-        if(ctime - start > duration)
+        if(realStart >= 0 && ctime - realStart > duration)
             goon = false;
         av_free_packet(&(decodeContext->currentPkt));
         decodeContext->haveCurrentPkt = false;

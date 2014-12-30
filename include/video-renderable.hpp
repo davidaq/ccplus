@@ -33,4 +33,8 @@ private:
     std::map<int, int> frameCounter;
     CCPlus::GPUFrame lastFrame;
     int lastFrameNum = 0;
+
+    float audioStartTime = -1;
+    float audioEndTime = -1;
+    std::vector<int16_t> audios;
 };

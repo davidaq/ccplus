@@ -25,7 +25,7 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
         while(0 <= (t = decoder.decodeImage())) {
             d = t;
         }
-        d += vinfo.frameTime;
+        d += vinfo.frameTime + 1.0 / frameRate;
         t = duration - d;
         if(t < 0)
             t = -t;
@@ -44,6 +44,7 @@ VideoRenderable::~VideoRenderable() {
 void VideoRenderable::release() {
     framesCache.clear();
     frameRefer.clear();
+    audios = std::vector<int16_t>();
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
@@ -82,9 +83,19 @@ void VideoRenderable::releasePart(float start, float duration) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
+    const static int audioOverlapSize = 100;
+    const static int audioBufferSize = 15;
     VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+    if(audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration) {
+        audios = std::vector<int16_t>();
+        decoder.seekTo(start, false);
+        audioStartTime = decoder.decodeAudio(audios, audioBufferSize);
+        audioEndTime = audioStartTime + audioBufferSize;
+    }
     int fnum = start * frameRate;
-    int fend = (start + duration) * frameRate + 1;
+    if(fnum > 0)
+        fnum--;
+    int fend = (start + duration) * frameRate + 2;
     while(fnum <= fend) {
         if(framesCache.count(fnum)) {
             frameCounter[fnum]++;
@@ -94,24 +105,22 @@ void VideoRenderable::preparePart(float start, float duration) {
         int partEnd = fnum + 1;
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
+        int partStart = fnum;
         float partBeginTime = fnum * 1.0 / frameRate;
-        decoder.seekTo(partBeginTime);
-        std::vector<int16_t> audios = decoder.decodeAudio((partEnd - fnum + 1) * 1.0 / frameRate);
         decoder.seekTo(partBeginTime);
         float t = decoder.decodeImage() * frameRate;
         int lastImageFrame = -1;
-        int audioFrameStart = 0;
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))
                 continue;
             Frame cframe;
-            if(t >= 0) {
+            if(lastImageFrame > 0 || t >= 0) {
                 if(lastImageFrame < 0 || t < fnum + 1) {
                     cframe = decoder.getDecodedImage();
                     cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
-                        if(!cframe.image.empty())
-                            cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
+                    if(!cframe.image.empty())
+                        cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
                     while(t >= 0 && t < fnum + 1)
                         t = decoder.decodeImage() * frameRate;
@@ -122,6 +131,7 @@ void VideoRenderable::preparePart(float start, float duration) {
             }
             if(!audios.empty()) {
                 int audioFrameSZ = audioSampleRate / frameRate;
+                int audioFrameStart = (fnum * 1.0 / frameRate - audioStartTime) * audioSampleRate;
                 int audioFrameEnd = audioFrameStart + audioFrameSZ;
                 if(audios.size() >= audioFrameEnd) {
                     cframe.ext.audio = cv::Mat(1, audioFrameSZ, CV_16S);

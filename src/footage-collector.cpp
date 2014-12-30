@@ -46,18 +46,18 @@ void FootageCollector::doPrepare() {
             continue;
         }
         for (auto& kv : renderables) {
-            Renderable* renderable = kv.second;
-            if (renderable->usedFragmentSlices.count(idx)) {
-                std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
-                for (auto& i : *fragments) {
-                    executor.execute([i, renderable] {
-                        renderable->preparePart(i.first, i.second - i.first);
-                    });
+            executor.execute([&, kv]() {
+                Renderable* renderable = kv.second;
+                if (renderable->usedFragmentSlices.count(idx)) {
+                    std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
+                    for (auto& i : *fragments) {
+                            renderable->preparePart(i.first, i.second - i.first);
+                    }
                 }
-            }
-            if (renderTime > renderable->lastAppearTime) {
-                renderable->release();
-            }
+                if (renderTime > renderable->lastAppearTime) {
+                    renderable->release();
+                }
+            });
         }
 
         executor.waitForAll();

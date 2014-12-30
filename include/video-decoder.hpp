@@ -33,7 +33,7 @@ public:
     VideoInfo getVideoInfo();
     
     // Sets the cursor to a specific time (in seconds)
-    void seekTo(float time);
+    void seekTo(float time, bool realSeek = true);
     
     // Try to decode an image frame at the current cursor poisition
     // @return the time (in seconds) of the decoded frame
