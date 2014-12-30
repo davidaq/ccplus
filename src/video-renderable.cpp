@@ -83,8 +83,7 @@ void VideoRenderable::releasePart(float start, float duration) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
-    const static int audioOverlapSize = 100;
-    const static int audioBufferSize = 15;
+    const static int audioBufferSize = 8;
     VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
     if(audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration) {
         audios = std::vector<int16_t>();

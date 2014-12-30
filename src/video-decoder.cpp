@@ -138,17 +138,19 @@ Frame VideoDecoder::getDecodedImage() {
     if(!haveDecodedImage) {
         return Frame();
     } else if(!decodedImage) {
+        int sw = decodeContext->frame->width;
+        int sh = decodeContext->frame->height;
         if(!decodeContext->swsContext) {
-            decodeContext->swsContext = sws_getContext(decodeContext->info.width, decodeContext->info.height, 
+            decodeContext->swsContext = sws_getContext(sw, sh, 
                                             decodeContext->video_dec_ctx->pix_fmt,
-                                            decodeContext->info.width, decodeContext->info.height,
+                                            sw, sh,
                                             PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
-            decodeContext->imagebuff.linesize[0] = decodeContext->info.width * 4;
-            decodeContext->imagebuff.data[0] = (uint8_t*)malloc(decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
+            decodeContext->imagebuff.linesize[0] = sw * 4;
+            //decodeContext->imagebuff.data[0] = (uint8_t*)malloc(decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
         }
-        sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 0, decodeContext->info.height, decodeContext->imagebuff.data, decodeContext->imagebuff.linesize);
-        cv::Mat data = cv::Mat(decodeContext->info.height, decodeContext->info.width, CV_8UC4);
-        memcpy(data.data, decodeContext->imagebuff.data[0], decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
+        cv::Mat data = cv::Mat(sh, sw, CV_8UC4);
+        sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 
+                0, sh, &(data.data), decodeContext->imagebuff.linesize);
         if(decodeContext->rotate) {
             switch(decodeContext->rotate) {
             case 180:
@@ -165,6 +167,8 @@ Frame VideoDecoder::getDecodedImage() {
         }
         decodedImage = new Frame();
         decodedImage->image = data;
+        decodedImage->ext.scaleAdjustX = decodeContext->info.rwidth * 1.0 / data.cols;
+        decodedImage->ext.scaleAdjustY = decodeContext->info.rheight * 1.0 / data.rows;
     }
     return *decodedImage;
 }
@@ -423,7 +427,7 @@ void VideoDecoder::releaseContext() {
         av_frame_free(&decodeContext->frame);
     if(decodeContext->swsContext) {
         sws_freeContext(decodeContext->swsContext);
-        free(decodeContext->imagebuff.data[0]);
+        //free(decodeContext->imagebuff.data[0]);
         decodeContext->swsContext = 0;
     }
     if(decodeContext->swrContext) {
