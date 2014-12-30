@@ -60,8 +60,11 @@ std::string Renderable::getUri() {
 }
 
 void Renderable::preparePart(float from, float duration) {
+    if(refCounter <= 0) {
+        refCounter = 0;
+        prepare();
+    }
     refCounter++;
-    prepare();
 }
 
 void Renderable::releasePart(float from, float duration) {

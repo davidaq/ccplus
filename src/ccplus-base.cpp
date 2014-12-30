@@ -81,7 +81,6 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             log(logINFO) << "----Rendering process is terminated!---";
             return;
         }
-        //ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
         GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
         if(writeFuc) {
             Frame cpu_frame = frame->toCPU();

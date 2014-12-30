@@ -22,10 +22,7 @@ float ImageRenderable::getDuration() {
 }
 
 void ImageRenderable::prepare() {
-    if (prepared) {
-        return;
-    }
-    prepared = true;
+    gpuCache = GPUFrame();
     std::string filepath = parseUri2File(uri);
     Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
     if (!org.data) {

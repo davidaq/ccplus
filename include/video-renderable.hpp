@@ -22,12 +22,12 @@ public:
     CCPlus::GPUFrame getGPUFrame(float time);
 
 private:
+    std::string path;
     float duration = 999999;
     bool audioOnly;
     int time2frame(float time);
-    bool useSlowerCompress = false;
+    bool isUserRes = false;
 
-    VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::Frame> framesCache;
     std::map<int, int> frameRefer;
     std::map<int, int> frameCounter;

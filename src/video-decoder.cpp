@@ -231,13 +231,13 @@ float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)>
         if (decodeContext->pkt.stream_index == decodeContext->audio_stream_idx) {
             do {
                 int ret = decodeAudioFrame(output, ctime);
-                if(ctime >= 0)
+                if(realStart < 0)
                     realStart = ctime;
                 if(ret < 0)
                     break;
                 decodeContext->pkt.data += ret;
                 decodeContext->pkt.size -= ret;
-            } while(goon && decodeContext->pkt.size > 0);
+            } while(decodeContext->pkt.size > 0);
         }
         if(ctime - start > duration)
             goon = false;
@@ -270,7 +270,11 @@ void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
 std::vector<int16_t> VideoDecoder::decodeAudio(float duration) {
     std::vector<int16_t> ret;
     float cTime = cursorTime;
-    float realStart = decodeAudio(ret, duration);
+    float sTime = cTime - 0.5;
+    if(sTime < 0)
+        sTime = 0;
+    seekTo(sTime);
+    float realStart = decodeAudio(ret, duration + 1);
     cTime -= realStart;
     if(cTime > 0 && !ret.empty()) {
         int s = (int)(cTime * CCPlus::audioSampleRate);
@@ -392,10 +396,14 @@ void VideoDecoder::initContext() {
     decodeContext->pkt.size = 0;
     invalid = false;
 
+    decodeContext->info.hasVideoStream = false;
     if(decoderFlag & DECODE_VIDEO && decodeContext->video_stream) {
-        decodeImage();
-        if(decodeImage() < 0) {
+        float t1 = decodeImage(), t2 = decodeImage();
+        if(t1 < 0 || t2 < 0) {
             decoderFlag -= DECODE_VIDEO;
+        } else {
+            decodeContext->info.frameTime = t2 - t1;
+            decodeContext->info.hasVideoStream = true;
         }
         seekTo(0);
     }

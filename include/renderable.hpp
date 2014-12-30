@@ -26,8 +26,6 @@ public:
     std::string getUri();
 
     bool isPreserved = false;
-protected:
-    bool prepared = false;
 private:
     std::map<int, Frame> frames;
     std::string uri;

@@ -38,6 +38,7 @@ void FootageCollector::doPrepare() {
 
     std::map<std::string, Renderable*>& renderables = Context::getContext()->renderables;
     float windowDuration = windowSize * collectorTimeInterval;
+    ParallelExecutor executor(collectorThreadsNumber);
     while (finishedTime < main->duration && continueRunning) {
         if (finishedTime - renderTime > windowDuration) {
             //L() << "I'm waiting" << finishedTime << renderTime;
@@ -49,10 +50,11 @@ void FootageCollector::doPrepare() {
             if (renderable->usedFragmentSlices.count(idx)) {
                 std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
                 for (auto& i : *fragments) {
-                    renderable->preparePart(i.first, i.second - i.first);
+                    executor.execute([i, renderable] {
+                        renderable->preparePart(i.first, i.second - i.first);
+                    });
                 }
             }
-
             if (renderTime > renderable->lastAppearTime) {
                 renderable->release();
             }
@@ -63,7 +65,7 @@ void FootageCollector::doPrepare() {
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
 
-        int releaseIdx = idx - windowSize - 2;
+        int releaseIdx = idx - windowSize - 3;
         if(releaseIdx >= 0) {
             for (auto& kv : renderables) {
                 Renderable* renderable = kv.second;
