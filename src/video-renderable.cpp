@@ -14,7 +14,9 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
     isUserRes = uri[0] == 'x';
     path = parseUri2File(uri);
 
-    VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+    this->decoder = new VideoDecoder(path, 
+            audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+    VideoDecoder& decoder = *(this->decoder);
     VideoInfo vinfo = decoder.getVideoInfo();
     duration = vinfo.duration;
     if(vinfo.hasVideoStream) {
@@ -39,6 +41,7 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
 
 VideoRenderable::~VideoRenderable() {
     release();
+    delete decoder;
 }
 
 void VideoRenderable::release() {
@@ -52,16 +55,25 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
     if(lastFrame && frameNum == lastFrameNum)
         return lastFrame;
     if(!framesCache.count(frameNum)) {
-        lastFrame = GPUFrame();
+        return GPUFrame();
     } else {
         Frame frame;
-        if(frameRefer.count(frameNum)) {
-            frame = framesCache[frameRefer[frameNum]].decompressed();
-            frame.ext.audio = framesCache[frameNum].ext.audio;
-        } else {
-            frame = framesCache[frameNum].decompressed();
+        int imageFrameNum = frameNum;
+        while(frameRefer.count(imageFrameNum)) {
+            imageFrameNum = frameRefer[imageFrameNum];
         }
-        lastFrame = frame.toGPU(false);
+        if(lastFrame && lastFrameImageFrameNum > 0 && lastFrameImageFrameNum == imageFrameNum) {
+            lastFrame->ext.audio = framesCache[frameNum].ext.audio;
+        } else {
+            if(imageFrameNum != frameNum) {
+                frame = framesCache[imageFrameNum].decompressed();
+                frame.ext.audio = framesCache[frameNum].ext.audio;
+            } else {
+                frame = framesCache[frameNum].decompressed();
+            }
+            lastFrame = frame.toGPU(false);
+        }
+        lastFrameImageFrameNum = imageFrameNum;
     }
     lastFrameNum = frameNum;
     return lastFrame;
@@ -84,7 +96,9 @@ void VideoRenderable::releasePart(float start, float duration) {
 
 void VideoRenderable::preparePart(float start, float duration) {
     const static int audioBufferSize = 8;
+    //VideoDecoder& decoder = *(this->decoder);
     VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+    decoder.seekTo(0);
     if(audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration) {
         audios = std::vector<int16_t>();
         decoder.seekTo(start, false);
@@ -104,29 +118,30 @@ void VideoRenderable::preparePart(float start, float duration) {
         int partEnd = fnum + 1;
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
-        int partStart = fnum;
         float partBeginTime = fnum * 1.0 / frameRate;
         decoder.seekTo(partBeginTime);
         float t = decoder.decodeImage() * frameRate;
+        if(t < 0) {
+            L() << "NO IMAGE" << getUri();
+        }
         int lastImageFrame = -1;
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))
                 continue;
             Frame cframe;
-            if(lastImageFrame > 0 || t >= 0) {
-                if(lastImageFrame < 0 || t < fnum + 1) {
-                    cframe = decoder.getDecodedImage();
-                    cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
+            if(t >= 0 && (lastImageFrame < 0 || t < fnum + 1)) {
+                cframe = decoder.getDecodedImage();
+                cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
-                    if(!cframe.image.empty())
-                        cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
+                if(!cframe.image.empty())
+                    cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
-                    while(t >= 0 && t < fnum + 1)
-                        t = decoder.decodeImage() * frameRate;
-                    lastImageFrame = fnum;
-                } else {
-                    frameRefer[fnum] = lastImageFrame;
-                }
+                while(t >= 0 && t < fnum + 1)
+                    t = decoder.decodeImage() * frameRate;
+                lastImageFrame = fnum;
+            } else if(lastImageFrame >= 0) {
+                L() << "ref" << getUri() << fnum << lastImageFrame;
+                frameRefer[fnum] = lastImageFrame;
             }
             if(!audios.empty()) {
                 int audioFrameSZ = audioSampleRate / frameRate;

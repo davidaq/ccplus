@@ -33,6 +33,9 @@ private:
     std::map<int, int> frameCounter;
     CCPlus::GPUFrame lastFrame;
     int lastFrameNum = 0;
+    int lastFrameImageFrameNum = -1;
+
+    CCPlus::VideoDecoder* decoder = 0;
 
     float audioStartTime = -1;
     float audioEndTime = -1;
