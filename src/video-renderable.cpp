@@ -14,9 +14,7 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
     isUserRes = uri[0] == 'x';
     path = parseUri2File(uri);
 
-    this->decoder = new VideoDecoder(path, 
-            audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
-    VideoDecoder& decoder = *(this->decoder);
+    VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
     VideoInfo vinfo = decoder.getVideoInfo();
     duration = vinfo.duration;
     if(vinfo.hasVideoStream) {
@@ -41,7 +39,6 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
 
 VideoRenderable::~VideoRenderable() {
     release();
-    delete decoder;
 }
 
 void VideoRenderable::release() {
@@ -96,10 +93,8 @@ void VideoRenderable::releasePart(float start, float duration) {
 
 void VideoRenderable::preparePart(float start, float duration) {
     const static int audioBufferSize = 8;
-    //VideoDecoder& decoder = *(this->decoder);
-    VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
-    decoder.seekTo(0);
     if(audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration) {
+        VideoDecoder decoder(path, VideoDecoder::DECODE_AUDIO);
         audios = std::vector<int16_t>();
         decoder.seekTo(start, false);
         audioStartTime = decoder.decodeAudio(audios, audioBufferSize);
@@ -119,11 +114,11 @@ void VideoRenderable::preparePart(float start, float duration) {
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
         float partBeginTime = fnum * 1.0 / frameRate;
-        decoder.seekTo(partBeginTime);
-        float t = decoder.decodeImage() * frameRate;
-        if(t < 0) {
-            L() << "NO IMAGE" << getUri();
-        }
+        VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
+        decoder.seekTo(partBeginTime - 1);
+        float t = 0;
+        while(t >= 0 && fnum - 1 > (t = decoder.decodeImage() * frameRate));
+
         int lastImageFrame = -1;
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))
@@ -140,7 +135,6 @@ void VideoRenderable::preparePart(float start, float duration) {
                     t = decoder.decodeImage() * frameRate;
                 lastImageFrame = fnum;
             } else if(lastImageFrame >= 0) {
-                L() << "ref" << getUri() << fnum << lastImageFrame;
                 frameRefer[fnum] = lastImageFrame;
             }
             if(!audios.empty()) {
