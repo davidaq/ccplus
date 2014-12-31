@@ -441,10 +441,14 @@ function fillTML(fitted, template, userinfo, aux_template)
     -- Append scenes
     for i = 1, #candidates do 
         if candidates[i][4] then -- If mute BGM
-            bgm_volume[tostring(currentTime)] = 1.0;
+            if i == 1 or not candidates[i - 1][4] then 
+                bgm_volume[tostring(currentTime)] = 1.0;
+            else 
+                bgm_volume[tostring(currentTime)] = 0.1;
+            end
             bgm_volume[tostring(currentTime + 0.5)] = 0.1;
             bgm_volume[tostring(currentTime + candidates[i][2] - overlap - 0.5)] = 0.1;
-            bgm_volume[tostring(currentTime + candidates[i][2]) - overlap] = 1.0;
+            bgm_volume[tostring(currentTime + candidates[i][2] - overlap)] = 1.0;
         end 
         appendScene(candidates[i][1], candidates[i][2])
         overlap = candidates[i][3]
