@@ -548,7 +548,13 @@ function rescaleTemplate(template, scale)
         for i = 1, #comp.layers do 
             local layer = comp.layers[i]
             for pname, resizer in pairs(resizers) do
-                resize(layer.properties[pname], resizer)
+                if pname == "mask" then
+                    if layer.uri:sub(1, 14) == "composition://" then
+                        resize(layer.properties[pname], resizer)
+                    end
+                else
+                    resize(layer.properties[pname], resizer)
+                end
             end
             local trans = layer.properties.transform
             if trans and layer.uri:sub(1, 14) ~= "composition://" then
