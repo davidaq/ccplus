@@ -13,8 +13,6 @@ struct CCPlus::VideoInfo {
     float duration;
     int width, height;
     int rwidth, rheight;
-    float frameTime;
-    bool hasVideoStream;
 };
 
 

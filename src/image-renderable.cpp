@@ -48,7 +48,8 @@ void ImageRenderable::prepare() {
         }
     }; 
 
-    if (stringEndsWith(toLower(filepath), ".jpg")) {
+    if (stringEndsWith(toLower(filepath), ".jpg") ||
+            stringEndsWith(toLower(filepath), ".jpeg")) {
         try {
             int degree = getImageRotation(filepath);
             if (degree == -1) {

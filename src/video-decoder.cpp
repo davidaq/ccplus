@@ -91,7 +91,7 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 float VideoDecoder::decodeImage() {
     initContext();
     if(!(decoderFlag & DECODE_VIDEO))
-        return -1;
+        return -100;
     haveDecodedImage = false;
     if(decodedImage)
         delete decodedImage;
@@ -105,7 +105,7 @@ float VideoDecoder::decodeImage() {
             int gotFrame = 0;
             int ret = avcodec_decode_video2(decodeContext->video_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
             if(ret < 0)
-                return -1;
+                return -100;
             if(gotFrame) {
                 retTime = av_rescale_q(av_frame_get_best_effort_timestamp(decodeContext->frame), 
                                         decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
@@ -128,7 +128,7 @@ float VideoDecoder::decodeImage() {
         }
     }
     if(brutal <= 0) {
-        return -1;
+        return -100;
     }
     cursorTime = retTime;
     return retTime;
@@ -399,18 +399,6 @@ void VideoDecoder::initContext() {
     decodeContext->pkt.data = NULL;
     decodeContext->pkt.size = 0;
     invalid = false;
-
-    decodeContext->info.hasVideoStream = false;
-    if(decoderFlag & DECODE_VIDEO && decodeContext->video_stream) {
-        float t1 = decodeImage(), t2 = decodeImage();
-        if(t1 < 0 || t2 < 0) {
-            decoderFlag -= DECODE_VIDEO;
-        } else {
-            decodeContext->info.frameTime = t2 - t1;
-            decodeContext->info.hasVideoStream = true;
-        }
-        seekTo(0);
-    }
 }
 
 void VideoDecoder::releaseContext() {

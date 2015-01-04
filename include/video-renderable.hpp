@@ -24,7 +24,6 @@ public:
 private:
     std::string path;
     float duration = 999999;
-    bool audioOnly;
     int time2frame(float time);
     bool isUserRes = false;
 
@@ -38,4 +37,6 @@ private:
     float audioStartTime = -1;
     float audioEndTime = -1;
     std::vector<int16_t> audios;
+
+    int flags = 0;
 };

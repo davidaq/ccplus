@@ -9,6 +9,7 @@
 void* CCPlus::createGLContext() {
     EAGLContext* glContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
     [EAGLContext setCurrentContext:glContext];
+    return 0;
 }
 
 void CCPlus::destroyGLContext(void*) {

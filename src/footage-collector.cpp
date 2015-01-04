@@ -51,7 +51,7 @@ void FootageCollector::doPrepare() {
                 if (renderable->usedFragmentSlices.count(idx)) {
                     std::vector<std::pair<float, float> >* fragments = &renderable->usedFragmentSlices[idx];
                     for (auto& i : *fragments) {
-                            renderable->preparePart(i.first, i.second - i.first);
+                        renderable->preparePart(i.first, i.second - i.first);
                     }
                 }
                 if (renderTime > renderable->lastAppearTime) {
@@ -92,3 +92,4 @@ void FootageCollector::clean(float time) {
 float FootageCollector::finished() {
     return finishedTime;
 }
+

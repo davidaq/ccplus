@@ -89,6 +89,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
                 return new ImageRenderable(uri);
             };
             extMap["jpg"]       = imageExt;
+            extMap["jpeg"]      = imageExt;
             extMap["png"]       = imageExt;
             extMap["bmp"]       = imageExt;
             auto gifExt = [](const std::string& uri) {
@@ -107,11 +108,27 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             extMap["ogg"]       = audioExt;
             extMap["rm"]        = audioExt;
             extMap["caf"]       = audioExt;
-            // Just treat everything else as video
             auto videoExt = [](const std::string& uri) {
                 return new VideoRenderable(uri, false);
             };
-            extMap["default"]   = videoExt;
+            extMap["mp4"]       = videoExt;
+            extMap["mov"]       = videoExt;
+            extMap["rmvb"]      = videoExt;
+            extMap["flv"]       = videoExt;
+            extMap["f4v"]       = videoExt;
+            extMap["webm"]      = videoExt;
+            extMap["ogv"]       = videoExt;
+            // Unguessable from extension, probe file
+            auto defaultExt = [](const std::string& uri) {
+                Renderable* ret = 0;
+                if(cv::imread(Renderable::parseUri2File(uri)).empty()) {
+                    ret = new VideoRenderable(uri, false);
+                } else {
+                    ret = new ImageRenderable(uri);
+                }
+                return ret;
+            };
+            extMap["default"] = defaultExt;
 
             size_t dotPos = uri.find_last_of('.');
             std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";

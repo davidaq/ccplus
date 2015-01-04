@@ -165,7 +165,7 @@ static inline bool hasAudio(const std::vector<int16_t>& data) {
             total += d;
     }
     total /= data.size();
-    return total > 10;
+    return total > 20;
 }
 
 bool CCPlus::hasAudio(const std::string& uri, float start, float duration) {

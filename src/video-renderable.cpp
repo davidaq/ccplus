@@ -6,34 +6,34 @@
 #include "profile.hpp"
 #include "ccplus.hpp"
 
+namespace CCPlus {
+    namespace VideoRenderableFlags {
+        const int AUDIO  = 1 << 1;
+        const int VIDEO  = 1 << 2;
+        const int STATIC = 1 << 3;
+    };
+};
 using namespace CCPlus;
+using namespace CCPlus::VideoRenderableFlags;
 
-VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
-    audioOnly(_audioOnly)
-{
+VideoRenderable::VideoRenderable(const std::string& uri, bool audioOnly) {
     isUserRes = uri[0] == 'x';
     path = parseUri2File(uri);
 
     VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
     VideoInfo vinfo = decoder.getVideoInfo();
     duration = vinfo.duration;
-    if(vinfo.hasVideoStream) {
-        float d = duration - 1, t;
-        if(d < 0)
-            d = 0;
-        decoder.seekTo(d);
-        while(0 <= (t = decoder.decodeImage())) {
-            d = t;
-        }
-        d += vinfo.frameTime + 1.0 / frameRate;
-        t = duration - d;
-        if(t < 0)
-            t = -t;
-        if(t < 2) {
-            duration = d;
-        }
-    } else {
-        audioOnly = false;
+
+    // probe file
+    float t1 = decoder.decodeImage(), t2 = decoder.decodeImage();
+    if(t1 > -10 && t2 > -10 && t2 > t1) {
+        flags |= VIDEO;
+    }
+    if(!decoder.decodeAudio(1).empty()) {
+        flags |= AUDIO;
+    }
+    if(!flags && t1 > -10) {
+        flags |= STATIC;
     }
 }
 
@@ -45,10 +45,18 @@ void VideoRenderable::release() {
     framesCache.clear();
     frameRefer.clear();
     audios = std::vector<int16_t>();
+    lastFrame = GPUFrame();
+    lastFrameNum = 0;
+    lastFrameImageFrameNum = -1;
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
+    if(!flags)
+        return GPUFrame();
     int frameNum = time2frame(time);
+    if(flags & STATIC) {
+        frameNum = 0;
+    }
     if(lastFrame && frameNum == lastFrameNum)
         return lastFrame;
     if(!framesCache.count(frameNum)) {
@@ -63,10 +71,10 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
             lastFrame->ext.audio = framesCache[frameNum].ext.audio;
         } else {
             if(imageFrameNum != frameNum) {
-                frame = framesCache[imageFrameNum].decompressed();
+                frame = framesCache[imageFrameNum];
                 frame.ext.audio = framesCache[frameNum].ext.audio;
             } else {
-                frame = framesCache[frameNum].decompressed();
+                frame = framesCache[frameNum];
             }
             lastFrame = frame.toGPU(false);
         }
@@ -77,6 +85,10 @@ GPUFrame VideoRenderable::getGPUFrame(float time) {
 }
 
 void VideoRenderable::releasePart(float start, float duration) {
+    if(flags & STATIC) {
+        Renderable::releasePart(start, duration);
+        return;
+    }
     int fnum = start * frameRate;
     int fend = (start + duration) * frameRate + 1;
     for(; fnum <= fend; fnum++) {
@@ -92,8 +104,15 @@ void VideoRenderable::releasePart(float start, float duration) {
 }
 
 void VideoRenderable::preparePart(float start, float duration) {
+    if(flags & STATIC) {
+        Renderable::preparePart(start, duration);
+        VideoDecoder decoder(path, VideoDecoder::DECODE_VIDEO);
+        decoder.decodeImage();
+        framesCache[0] = decoder.getDecodedImage();
+        return;
+    }
     const static int audioBufferSize = 8;
-    if(audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration) {
+    if(flags & AUDIO && (audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration)) {
         VideoDecoder decoder(path, VideoDecoder::DECODE_AUDIO);
         audios = std::vector<int16_t>();
         decoder.seekTo(start, false);
@@ -114,25 +133,30 @@ void VideoRenderable::preparePart(float start, float duration) {
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
         float partBeginTime = fnum * 1.0 / frameRate;
-        VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
-        decoder.seekTo(partBeginTime - 1);
-        float t = 0;
-        while(t >= 0 && fnum - 1 > (t = decoder.decodeImage() * frameRate));
+        VideoDecoder *decoder = 0;
+        float t = -100;
+        if(flags & VIDEO) {
+            decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
+            decoder->seekTo(partBeginTime - 1);
+            do {
+                t = decoder->decodeImage();
+            } while(t > -10 && fnum > t * frameRate);
+        }
 
         int lastImageFrame = -1;
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))
                 continue;
             Frame cframe;
-            if(t >= 0 && (lastImageFrame < 0 || t < fnum + 1)) {
-                cframe = decoder.getDecodedImage();
+            if(t > -10 && (lastImageFrame < 0 || t * frameRate < fnum + 1)) {
+                cframe = decoder->getDecodedImage();
                 cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
                 if(!cframe.image.empty())
                     cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
-                while(t >= 0 && t < fnum + 1)
-                    t = decoder.decodeImage() * frameRate;
+                while(t > -10 && t * frameRate < fnum + 1)
+                    t = decoder->decodeImage();
                 lastImageFrame = fnum;
             } else if(lastImageFrame >= 0) {
                 frameRefer[fnum] = lastImageFrame;
@@ -152,6 +176,8 @@ void VideoRenderable::preparePart(float start, float duration) {
             framesCache[fnum] = cframe.compressed();
             frameCounter[fnum]++;
         }
+        if(decoder)
+            delete decoder;
     }
 }
 
