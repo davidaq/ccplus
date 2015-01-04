@@ -146,7 +146,6 @@ Frame VideoDecoder::getDecodedImage() {
                                             sw, sh,
                                             PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
             decodeContext->imagebuff.linesize[0] = sw * 4;
-            //decodeContext->imagebuff.data[0] = (uint8_t*)malloc(decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
         }
         cv::Mat data = cv::Mat(sh, sw, CV_8UC4);
         sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 

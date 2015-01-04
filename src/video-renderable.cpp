@@ -118,6 +118,22 @@ void VideoRenderable::preparePart(float start, float duration) {
         decoder.seekTo(start, false);
         audioStartTime = decoder.decodeAudio(audios, audioBufferSize);
         audioEndTime = audioStartTime + audioBufferSize;
+        if(this->duration > 2) {
+            if(audioStartTime < 0.5) {
+                int from = 0;
+                int to = (0.5 - audioStartTime) * audioSampleRate;
+                for(int i = from; i <= to && i < audios.size(); i++) {
+                    audios[i] *= (i - from) * 2.0 / audioSampleRate;
+                }
+            }
+            if(audioEndTime > this->duration - 0.5) {
+                int from = (this->duration - 0.5 - audioStartTime) * audioSampleRate;
+                int to = (this->duration - audioStartTime) * audioSampleRate;
+                for(int i = from; i <= to && i < audios.size(); i++) {
+                    audios[i] *= (to - i) * 2.0 / audioSampleRate;
+                }
+            }
+        }
     }
     int fnum = start * frameRate;
     if(fnum > 0)
