@@ -216,6 +216,12 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
     }
     stream->id = ctx->ctx->nb_streams - 1;
     AVCodecContext* codecCtx = stream->codec;
+    if(codec_id == AV_CODEC_ID_H264) {
+        av_opt_set(codecCtx->priv_data, "threads", "2", 0);
+        av_opt_set(codecCtx->priv_data, "preset", "veryfast", 0);
+        av_opt_set(codecCtx->priv_data, "profile", "baseline", 0);
+        av_opt_set(codecCtx->priv_data, "crf", "24", 0);
+    }
     switch(codec->type) {
         case AVMEDIA_TYPE_AUDIO:
             codecCtx->sample_fmt  = AV_SAMPLE_FMT_FLTP;
@@ -267,9 +273,9 @@ void VideoEncoder::initContext() {
         fprintf(stderr, "Can't initialize encoding context\n");
     }
     ctx->fmt = ctx->ctx->oformat;
-    ctx->fmt->video_codec = AV_CODEC_ID_MPEG4;
+    ctx->fmt->video_codec = AV_CODEC_ID_H264;
     ctx->fmt->audio_codec = AV_CODEC_ID_AAC;
-    ctx->video_st = initStream(ctx->video_codec, AV_CODEC_ID_MPEG4);
+    ctx->video_st = initStream(ctx->video_codec, AV_CODEC_ID_H264);
     ctx->audio_st = initStream(ctx->audio_codec, AV_CODEC_ID_AAC);
 
     // init video codec

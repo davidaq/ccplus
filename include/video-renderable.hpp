@@ -13,7 +13,6 @@ public:
     VideoRenderable(const std::string& uri, bool audioOnly);
     ~VideoRenderable();
 
-    //void prepare();
     void preparePart(float start, float duration);
     void releasePart(float start, float duration);
     void release();
@@ -37,6 +36,9 @@ private:
     float audioStartTime = -1;
     float audioEndTime = -1;
     std::vector<int16_t> audios;
+
+    VideoDecoder* decoder = 0;
+    float decoderTime = 0;
 
     int flags = 0;
 };

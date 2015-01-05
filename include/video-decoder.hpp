@@ -39,7 +39,7 @@ public:
     float decodeImage();
     
     // @return the frame image in the previous successful decode from calling decodeImage()
-    CCPlus::Frame getDecodedImage();
+    CCPlus::Frame getDecodedImage(int maxSize=512);
     
     // Decode audio stream into PCM raw data from current position
     // Can be used for both video & audio files
@@ -50,6 +50,8 @@ public:
     std::vector<int16_t> decodeAudio(float durationLimit = -1);
 
     bool invalid = true;
+
+    float glimpseImage();
     
 private:
     std::string inputFile;

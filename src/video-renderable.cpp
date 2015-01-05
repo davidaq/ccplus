@@ -48,6 +48,9 @@ void VideoRenderable::release() {
     lastFrame = GPUFrame();
     lastFrameNum = 0;
     lastFrameImageFrameNum = -1;
+    if(decoder)
+        delete decoder;
+    decoder = 0;
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
@@ -149,30 +152,56 @@ void VideoRenderable::preparePart(float start, float duration) {
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
         float partBeginTime = fnum * 1.0 / frameRate;
-        VideoDecoder *decoder = 0;
+        //VideoDecoder *decoder = 0;
         float t = -100;
         if(flags & VIDEO) {
-            decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
-            decoder->seekTo(partBeginTime - 1);
-            do {
-                t = decoder->decodeImage();
-            } while(t > -10 && fnum > t * frameRate);
+            profile(decodeImageINIT) {
+                if(decoder) {
+                    int d = decoderTime * frameRate - fnum;
+                    if(d < 0)
+                        d = -d;
+                    if(d > 1) {
+                        delete decoder;
+                        decoder = 0;
+                    } else {
+                        t = decoderTime;
+                    }
+                }
+                if(!decoder) {
+                    decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
+                    decoder->seekTo(partBeginTime);
+                    do {
+                        t = decoder->decodeImage();
+                    } while(t > -10 && fnum > t * frameRate);
+                    decoderTime = t;
+                } else {
+                    L() << "REUSE";
+                }
+            }
         }
 
         int lastImageFrame = -1;
+        int maxsz = 512;
+        if(renderMode == PREVIEW_MODE) {
+            maxsz = isUserRes ? 200 : 300;
+        }
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))
                 continue;
             Frame cframe;
             if(t > -10 && (lastImageFrame < 0 || t * frameRate < fnum + 1)) {
-                cframe = decoder->getDecodedImage();
-                cframe.toNearestPOT(512, renderMode == PREVIEW_MODE);
+                profile(getDecodedImage) {
+                    cframe = decoder->getDecodedImage(maxsz);
+                }
+                cframe.toNearestPOT(maxsz, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
                 if(!cframe.image.empty())
                     cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
-                while(t > -10 && t * frameRate < fnum + 1)
+                profile(decodeImage)
+                while(t > -10 && t * frameRate < fnum + (renderMode == PREVIEW_MODE ? 1.4 : 1))
                     t = decoder->decodeImage();
+                decoderTime = t;
                 lastImageFrame = fnum;
             } else if(lastImageFrame >= 0) {
                 frameRefer[fnum] = lastImageFrame;
@@ -192,8 +221,6 @@ void VideoRenderable::preparePart(float start, float duration) {
             framesCache[fnum] = cframe.compressed();
             frameCounter[fnum]++;
         }
-        if(decoder)
-            delete decoder;
     }
 }
 

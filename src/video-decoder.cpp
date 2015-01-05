@@ -67,8 +67,10 @@ void VideoDecoder::seekTo(float time, bool realSeek) {
         time = 0;
     }
     cursorTime = time;
-    if(realSeek)
-        av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+    if(realSeek) {
+        //av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+        avformat_seek_file(decodeContext->fmt_ctx, -1, INT64_MIN, time * AV_TIME_BASE, INT64_MAX, 0);
+    }
 }
 
 bool VideoDecoder::readNextFrameIfNeeded() {
@@ -86,6 +88,25 @@ bool VideoDecoder::readNextFrameIfNeeded() {
     decodeContext->currentPkt = decodeContext->pkt;
     decodeContext->haveCurrentPkt = true;
     return true;
+}
+
+float VideoDecoder::glimpseImage() {
+    initContext();
+    if(!decodeContext->video_stream)
+        return -100;
+    if(decodeContext->haveCurrentPkt) {
+        av_free_packet(&(decodeContext->currentPkt));
+        decodeContext->haveCurrentPkt = false;
+    }
+    if(!readNextFrameIfNeeded()) {
+        return -100;
+    }
+    if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
+        return (decodeContext->pkt.pts - decodeContext->video_stream->start_time)
+            * decodeContext->video_stream->time_base.num * 1.0 / decodeContext->video_stream->time_base.den;
+    } else {
+        return glimpseImage();
+    }
 }
 
 float VideoDecoder::decodeImage() {
@@ -134,20 +155,26 @@ float VideoDecoder::decodeImage() {
     return retTime;
 }
 
-Frame VideoDecoder::getDecodedImage() {
+Frame VideoDecoder::getDecodedImage(int maxSize) {
     if(!haveDecodedImage) {
         return Frame();
     } else if(!decodedImage) {
         int sw = decodeContext->frame->width;
         int sh = decodeContext->frame->height;
+        int tw = sw;
+        int th = sh;
+        if(tw > maxSize)
+            tw = maxSize;
+        if(th > maxSize)
+            th = maxSize;
         if(!decodeContext->swsContext) {
             decodeContext->swsContext = sws_getContext(sw, sh, 
                                             decodeContext->video_dec_ctx->pix_fmt,
-                                            sw, sh,
+                                            tw, th,
                                             PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
-            decodeContext->imagebuff.linesize[0] = sw * 4;
+            decodeContext->imagebuff.linesize[0] = tw * 4;
         }
-        cv::Mat data = cv::Mat(sh, sw, CV_8UC4);
+        cv::Mat data = cv::Mat(th, tw, CV_8UC4);
         sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 
                 0, sh, &(data.data), decodeContext->imagebuff.linesize);
         if(decodeContext->rotate) {
