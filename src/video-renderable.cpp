@@ -174,8 +174,6 @@ void VideoRenderable::preparePart(float start, float duration) {
                         t = decoder->decodeImage();
                     } while(t > -10 && fnum > t * frameRate);
                     decoderTime = t;
-                } else {
-                    L() << "REUSE";
                 }
             }
         }

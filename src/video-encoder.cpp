@@ -221,6 +221,7 @@ AVStream* VideoEncoder::initStream(AVCodec*& codec, enum AVCodecID codec_id) {
         av_opt_set(codecCtx->priv_data, "preset", "veryfast", 0);
         av_opt_set(codecCtx->priv_data, "profile", "baseline", 0);
         av_opt_set(codecCtx->priv_data, "crf", "24", 0);
+        av_opt_set(codecCtx->priv_data, "pix_fmt", "yuv420p", 0);
     }
     switch(codec->type) {
         case AVMEDIA_TYPE_AUDIO:

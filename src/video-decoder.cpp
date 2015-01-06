@@ -5,8 +5,18 @@
 #include <stdlib.h>
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
+#ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN -0x7fffffffffffffffLL
+#endif
+#ifndef INT64_MAX
+#define INT64_MAX 0x7fffffffffffffffLL
+#endif
 extern "C" {
     #include <libavutil/imgutils.h>
     #include <libavutil/samplefmt.h>
@@ -92,6 +102,7 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 
 float VideoDecoder::glimpseImage() {
     initContext();
+    if(invalid) return -100;
     if(!decodeContext->video_stream)
         return -100;
     if(decodeContext->haveCurrentPkt) {
@@ -111,7 +122,7 @@ float VideoDecoder::glimpseImage() {
 
 float VideoDecoder::decodeImage() {
     initContext();
-    if(!(decoderFlag & DECODE_VIDEO))
+    if(invalid || !(decoderFlag & DECODE_VIDEO))
         return -100;
     haveDecodedImage = false;
     if(decodedImage)
