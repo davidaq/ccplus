@@ -327,7 +327,7 @@ function fillTML(fitted, template, userinfo, aux_template)
                     if layer.uri:sub(16) == "0" then 
                         layer.uri = "composition://" .. fit.matched_rand_comps[idx]
                         layer.properties.volume = {};
-                        layer.properties.volume["0"] = 0;
+                        layer.properties.volume["0"] = {0};
                         idx = idx + 1
                     else
                         local id = 1
