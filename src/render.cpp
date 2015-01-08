@@ -143,6 +143,9 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
 }
 
 void CCPlus::fillSprite() {
+    if (!isGLFramebufferComplete()) {
+        return;
+    }
     glBindBuffer(GL_ARRAY_BUFFER, squareVBO);
     glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
     glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -150,6 +153,9 @@ void CCPlus::fillSprite() {
 }
 
 void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
+    if (!isGLFramebufferComplete()) {
+        return;
+    }
     if (pnts.size() % 3 != 0 || pnts.size() == 0) {
         log(logERROR) << "Invalid fillTriangles parameters number: " << pnts.size();
         return;
@@ -170,6 +176,9 @@ void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
 }
 
 void CCPlus::fillDensedSprite() {
+    if (!isGLFramebufferComplete()) {
+        return;
+    }
     glBindBuffer(GL_ARRAY_BUFFER, densedSquareVBO);
     glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION);
     glVertexAttribPointer(ATTRIB_VERTEX_POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);

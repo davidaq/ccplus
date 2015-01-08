@@ -16,12 +16,8 @@ void GPUFrameImpl::bindFBO(bool clear) {
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
     glViewport(0, 0, width, height);
 
-    if (clear) {
+    if (clear && fboID) {
         glClear(GL_COLOR_BUFFER_BIT);
-    }
-    int tmp = glGetError();
-    if (tmp) {
-        log(logFATAL) << "Found error: " << tmp;
     }
 }
 

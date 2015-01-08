@@ -18,6 +18,9 @@ namespace CCPlus {
     cv::Mat readAsset(const char* name);
     int getImageRotation(const std::string& jpgpath); 
     bool hasAudio(const std::string& uri, float start, float duration);
+    bool checkGLError();
+    bool checkGLFramebuffer();
+    bool isGLFramebufferComplete();
 }
 
 static inline double getSystemTime() { 

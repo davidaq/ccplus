@@ -187,3 +187,36 @@ bool CCPlus::hasAudio(const std::string& uri, float start, float duration) {
     }
     return false;
 }
+
+bool CCPlus::checkGLError() {
+    int status = glGetError();
+    bool flag = status ? true : false;
+    while (status) {
+        switch(status) {
+            case 0:
+                break;
+                return false;
+            default:
+                log(logERROR) << "gl error: " << status;
+                break;
+        }
+        status = glGetError();
+    }
+    return flag;
+}
+
+bool CCPlus::checkGLFramebuffer() {
+    int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != 0x8cd5) {
+       log(logERROR) << "Framebuffer status:" << status; 
+    }
+    return false;
+}
+
+bool CCPlus::isGLFramebufferComplete() {
+    int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        return false;
+    }
+    return true;
+}
