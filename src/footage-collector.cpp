@@ -90,6 +90,6 @@ void FootageCollector::clean(float time) {
 }
 
 float FootageCollector::finished() {
-    return finishedTime;
+    return finishedTime - 0.1;
 }
 

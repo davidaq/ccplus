@@ -169,10 +169,12 @@ void VideoRenderable::preparePart(float start, float duration) {
                 }
                 if(!decoder) {
                     decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
-                    decoder->seekTo(partBeginTime);
+                    if(fnum > 1) {
+                        decoder->seekTo(partBeginTime - 0.1);
+                    }
                     do {
                         t = decoder->decodeImage();
-                    } while(t > -10 && fnum > t * frameRate);
+                    } while(t > -10 && fnum - 0.01 > t * frameRate);
                     decoderTime = t;
                 }
             }
@@ -191,7 +193,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                 profile(getDecodedImage) {
                     cframe = decoder->getDecodedImage(maxsz);
                 }
-                cframe.toNearestPOT(maxsz, renderMode == PREVIEW_MODE);
+                //cframe.toNearestPOT(maxsz, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
                 if(!cframe.image.empty())
                     cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);

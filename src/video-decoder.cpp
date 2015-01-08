@@ -178,6 +178,8 @@ Frame VideoDecoder::getDecodedImage(int maxSize) {
             tw = maxSize;
         if(th > maxSize)
             th = maxSize;
+        tw = nearestPOT(tw);
+        th = nearestPOT(th);
         if(!decodeContext->swsContext) {
             decodeContext->swsContext = sws_getContext(sw, sh, 
                                             decodeContext->video_dec_ctx->pix_fmt,

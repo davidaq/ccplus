@@ -55,7 +55,8 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
 }
 
 void GPUFrameCache::reuse(GPUFrameImpl* frame) {
-    cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
+    if(frame && frame->width > 0 && frame->height > 0)
+        cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
 }
 
 void GPUFrameCache::clear() {
