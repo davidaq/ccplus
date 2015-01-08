@@ -2,6 +2,7 @@
 #include "video-decoder.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+#include "ccplus.hpp"
 #include <stdlib.h>
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -182,9 +183,10 @@ Frame VideoDecoder::getDecodedImage(int maxSize) {
         th = nearestPOT(th);
         if(!decodeContext->swsContext) {
             decodeContext->swsContext = sws_getContext(sw, sh, 
-                                            decodeContext->video_dec_ctx->pix_fmt,
-                                            tw, th,
-                                            PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
+                        decodeContext->video_dec_ctx->pix_fmt,
+                        tw, th, PIX_FMT_BGRA,
+                        renderMode == PREVIEW_MODE ? SWS_POINT : SWS_FAST_BILINEAR, 
+                        NULL, NULL, NULL);
             decodeContext->imagebuff.linesize[0] = tw * 4;
         }
         cv::Mat data = cv::Mat(th, tw, CV_8UC4);

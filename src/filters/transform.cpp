@@ -87,7 +87,6 @@ CCPLUS_FILTER(transform) {
 
         finalTrans = trans * finalTrans;
     }
-    //std::cout << finalTrans << std::endl;
     int potWidth = nearestPOT(width);
     int potHeight = nearestPOT(height);
     Mat tmp = (Mat_<double>(4, 4) << 
@@ -96,7 +95,6 @@ CCPLUS_FILTER(transform) {
             0, 0, 1, 0,
             0, 0, 0, 1);
     finalTrans = tmp * finalTrans;
-    //std::cout << finalTrans << std::endl;
 
     /*****************************
      * Calculate Camera parameters

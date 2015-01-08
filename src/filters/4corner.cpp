@@ -25,8 +25,8 @@ CCPLUS_FILTER(4corner) {
         for (int j = 0; j <= 1; j++) {
             double x1 = frame->width * j;
             double y1 = frame->height * i;
-            double x2 = parameters[idx * 2];
-            double y2 = parameters[idx * 2 + 1];
+            double x2 = parameters[idx * 2] / frame->ext.scaleAdjustX;
+            double y2 = parameters[idx * 2 + 1] / frame->ext.scaleAdjustY;
 
             maxX = std::max(maxX, x2);
             minX = std::min(minX, x2);
@@ -60,6 +60,7 @@ CCPLUS_FILTER(4corner) {
     Mat H = A * C;
     H.push_back(1.0);
     H = H.reshape(0, 3);
+
     float homography[9];
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -67,13 +68,14 @@ CCPLUS_FILTER(4corner) {
         }
     }
 
+    int retWidth = nearestPOT(maxX - minX + 1, true);
+    int retHeight = nearestPOT(maxY - minY + 1, true);
+
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint trans, src_dst_size, transition;
     GLuint program = manager->getProgram(filter_4corner, &trans, &src_dst_size, &transition);
     glUseProgram(program);
 
-    float retWidth = maxX - minX + 1;
-    float retHeight = maxY - minY + 1;
     GPUFrame ret = GPUFrameCache::alloc(retWidth, retHeight);
     ret->bindFBO();
     ret->ext = frame->ext;

@@ -609,8 +609,6 @@ if JSON_BEAUTIFY == nil then
 end
 if HALF_SIZE then
     rescaleTemplate(template, 0.6)
-else
-    rescaleTemplate(template, 0.8)
 end
 RESULT = json.encode(template, {
     indent= JSON_BEAUTIFY

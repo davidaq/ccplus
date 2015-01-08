@@ -63,3 +63,4 @@ GPUFrame GPUFrameImpl::alphaMultiplied() {
     fillSprite();
     return ret;
 }
+
