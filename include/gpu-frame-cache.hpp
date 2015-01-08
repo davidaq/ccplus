@@ -27,4 +27,5 @@ protected:
     };
     // @first -> textureID, @second -> fboID
     static std::map<Size, std::vector<std::pair<GLuint, GLuint>>> cache;
+    static Lock sync;
 };
