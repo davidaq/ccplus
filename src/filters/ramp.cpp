@@ -57,5 +57,7 @@ CCPLUS_FILTER(ramp) {
 
     fillSprite();
 
-    return mergeFrame(frame, tmp_frame, (BlendMode)0);
+    GPUFrame ret = mergeFrame(frame, tmp_frame, (BlendMode)0);
+    ret->ext = frame->ext;
+    return ret;
 }

@@ -19,10 +19,6 @@ void GPUFrameImpl::bindFBO(bool clear) {
     if (clear) {
         glClear(GL_COLOR_BUFFER_BIT);
     }
-    int tmp = glGetError();
-    if (tmp) {
-        log(logFATAL) << "Found error: " << tmp;
-    }
 }
 
 #ifdef __ANDROID__
@@ -67,3 +63,4 @@ GPUFrame GPUFrameImpl::alphaMultiplied() {
     fillSprite();
     return ret;
 }
+

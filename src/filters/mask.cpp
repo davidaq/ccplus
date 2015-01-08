@@ -65,5 +65,7 @@ CCPLUS_FILTER(mask) {
     }
 
     program = manager->getProgram(filter_mask_merge);
-    return blendUsingProgram(program, frame, mask);
+    GPUFrame ret = blendUsingProgram(program, frame, mask);
+    ret->ext = frame->ext;
+    return ret;
 }

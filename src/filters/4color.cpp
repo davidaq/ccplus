@@ -93,5 +93,7 @@ CCPLUS_FILTER(4color) {
     }
     fillSprite();
 
-    return mergeFrame(frame, tmp_frame, (BlendMode)mode);
+    GPUFrame ret = mergeFrame(frame, tmp_frame, (BlendMode)mode);
+    ret->ext = frame->ext;
+    return ret;
 }
