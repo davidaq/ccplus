@@ -32,6 +32,8 @@ void Context::begin(const std::string& tmlPath) {
     flags.clear();
     GPUFrameCache::clear();
     active = true;
+
+    std::srand(1421121622);
 }
 
 void Context::end() {

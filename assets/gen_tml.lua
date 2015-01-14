@@ -92,7 +92,7 @@ function getScenes(template)
         return cnt, cnt_random, got_child
     end
     for cname, comp in spairs(comps) do 
-        if string.sub(cname, 1, 1) == "#" and cname ~= "#+1" and string.upper(cname) ~= "#COVER" then
+        if string.sub(cname, 1, 1) == "#" and cname ~= "#+1" and string.upper(cname) ~= "#COVER" and string.upper(cname) ~= "#TEXT" then
             local layers = comp.layers;
             local num_ele 
             local paths = {}
@@ -122,73 +122,80 @@ function generateResourcesComp(userinfo)
     local ret = {}
     local idx = 0
     for k, md in pairs(medias) do 
-        local comp = {}
-        local name = "@" .. idx
-        if md.type == "image" then
-            comp.duration = 3.0
-        elseif md.type == "video" then 
-            comp.duration = 5.0
-        end
-        if md.duration then 
-            comp.duration = tonumber(md.duration)
-        end
-        local start = 0
-        if md.start then
-            start = tonumber(md.start)
-        end 
+        if md.type == "text" then 
+            table.insert(ret, {
+                type= md.type,
+                text= md.text,
+            })
+        else
+            local comp = {}
+            local name = "@" .. idx
+            if md.type == "image" then
+                comp.duration = 3.0
+            elseif md.type == "video" then 
+                comp.duration = 5.0
+            end
+            if md.duration then 
+                comp.duration = tonumber(md.duration)
+            end
+            local start = 0
+            if md.start then
+                start = tonumber(md.start)
+            end 
 
-        comp.resolution = {
-            width= WIDTH,
-            height= HEIGHT
-        }
-
-        if type(md.x) == "string" then md.x = tonumber(md.x) end
-        if type(md.y) == "string" then md.y = tonumber(md.y) end
-        if type(md.w) == "string" then md.w = tonumber(md.w) end
-        if type(md.h) == "string" then md.h = tonumber(md.h) end
-        local l = {
-            uri= "xfile://" .. md.filename,
-            time= 0,
-            duration= comp.duration,
-            start= start,
-            last= comp.duration, 
-            properties= {
-                transform= {}
+            comp.resolution = {
+                width= WIDTH,
+                height= HEIGHT
             }
-        }
-        l.properties.transform["0"] = {
-            WIDTH / 2.0, HEIGHT / 2.0, 0, 
-            md.x + md.w / 2.0, md.y + md.h / 2.0, 0, 
-            WIDTH / md.w, HEIGHT / md.h, 1,
-            0, 0, 0
-        }
-        comp.layers = {l}
 
-        if md.volume then 
-            if type(md.volume) == "string" then 
-                md.volume = tonumber(md.volume) 
+            if type(md.x) == "string" then md.x = tonumber(md.x) end
+            if type(md.y) == "string" then md.y = tonumber(md.y) end
+            if type(md.w) == "string" then md.w = tonumber(md.w) end
+            if type(md.h) == "string" then md.h = tonumber(md.h) end
+            local l = {
+                uri= "xfile://" .. md.filename,
+                time= 0,
+                duration= comp.duration,
+                start= start,
+                last= comp.duration, 
+                properties= {
+                    transform= {}
+                }
+            }
+            l.properties.transform["0"] = {
+                WIDTH / 2.0, HEIGHT / 2.0, 0, 
+                md.x + md.w / 2.0, md.y + md.h / 2.0, 0, 
+                WIDTH / md.w, HEIGHT / md.h, 1,
+                0, 0, 0
+            }
+            comp.layers = {l}
+
+            if md.volume then 
+                if type(md.volume) == "string" then 
+                    md.volume = tonumber(md.volume) 
+                end
+                l.properties.volume = {}
+                l.properties.volume["0"] = {md.volume}
             end
-            l.properties.volume = {}
-            l.properties.volume["0"] = {md.volume}
+
+            -- call c func
+            local has_volume = false;
+            if md.type == "video" and md.volume and md.volume ~= "0" then
+                local path = md.filename
+                if string.sub(path, 1, 1) ~= "/" then 
+                    path = USER_JSON_DIR .. path
+                end
+                has_volume = hasVolume(path, start, comp.duration)
+            end 
+
+            table.insert(ret, {
+                name= name,
+                type= md.type,
+                comp= comp,
+                has_volume= has_volume
+            })
+            idx = idx + 1
         end
-
-        -- call c func
-        local has_volume = false;
-        if md.type == "video" and md.volume and md.volume ~= "0" then
-            local path = md.filename
-            if string.sub(path, 1, 1) ~= "/" then 
-                path = USER_JSON_DIR .. path
-            end
-            has_volume = hasVolume(path, start, comp.duration)
-        end 
-        
-        table.insert(ret, {
-            name= name,
-            type= md.type,
-            comp= comp,
-            has_volume= has_volume
-        })
-        idx = idx + 1
     end
     --log(ret)
     return ret
@@ -422,7 +429,7 @@ function fillTML(fitted, template, userinfo, aux_template)
     -- Fill text and append TITLE
     local start_comp = comps['#TITLE']
     local text_comp = comps['#T']
-    if text_comp and start_comp then 
+    if text_comp and start_comp and userinfo.videoTitle and userinfo.videoTitle:len() > 0 then 
         text_comp.layers[1]['text-properties']['text']["0"] = userinfo.videoTitle
         local l = {
             start= 0,
@@ -597,7 +604,6 @@ end
 
 local scenes = getScenes(template);
 local comps = generateResourcesComp(userinfo);
--- Put @s into template
 for i = 1, #comps do 
     template.compositions[comps[i].name] = comps[i].comp;
 end
@@ -613,6 +619,3 @@ end
 RESULT = json.encode(template, {
     indent= JSON_BEAUTIFY
 })
-
-
-

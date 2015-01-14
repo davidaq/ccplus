@@ -17,11 +17,10 @@ extern "C" {
 
 int hasVolume(lua_State* L) {
     if (lua_isstring(L, 1)) {
-        lua_pushboolean(L, true);
         std::string s = lua_tostring(L, 1);
         float t = lua_tonumber(L, 2);
         float d = lua_tonumber(L, 3);
-        return CCPlus::hasAudio(s, t, d);
+        lua_pushboolean(L, CCPlus::hasAudio(s, t, d));
     } else {
         lua_pushboolean(L, false);
     }
@@ -73,7 +72,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
 
         std::string script_path = generatePath(tmlPath, "gen_tml.lua");
         if (!file_exists(script_path)) {
-            script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
+            script_path = generatePath(CCPlus::assetsPath, "gen_tml_new.lua");
         }
         //L() << script_path;
         profile(ExecutingLuaMain) {
