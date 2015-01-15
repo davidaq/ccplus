@@ -143,13 +143,16 @@ local function prepare(comps, name)
     local search_path, num_rand_ele, overlap, has_ele = scanScene(comps, name)
     ret.overlap = overlap
     ret.search_path = search_path
-    if name == "#TEXT" then
+    if name == "#TEXT" or name == "#TEXT_SINGLE" then
         ret.type = "text"
+        ret.num_text = (name == "#TEXT") and 2 or 1
         ret.fill = function(idx, media, last)
             cloneAndFill(ret, "$" .. idx, comps, function(layer) 
                 if layer["text-properties"] and layer["text-properties"]["text"]["0"] == "#TITLE#" then
+                    layer.uri = "text://" .. media.text[1]
                     layer["text-properties"]["text"]["0"] = media.text[1]
                 elseif layer["text-properties"] and layer["text-properties"]["text"]["0"] == "#SUBTITLE#" then
+                    layer.uri = "text://" .. media.text[2]
                     layer["text-properties"]["text"]["0"] = media.text[2]
                 elseif layer.uri == "composition://#+1" then
                     if last then
@@ -287,7 +290,7 @@ end
 local function _generateMainComp() 
     local currentTime, overlap = 0, 0
     local preferredDuration, bgm_volume = 6.0, {}
-    local textScene, last_scene = nil, nil
+    local last_scene = nil
     local template, scenes, medias, ret_layers = nil, nil, nil, nil
     local random_candicate_medias = {}
     local scene_idx = 0
@@ -317,21 +320,21 @@ local function _generateMainComp()
 
     local function appendTextScene(media) 
         -- Assume only one text scene
-        if textScene == nil then
-            for i=1, #scenes do 
-                if scenes[i].type == "text" then 
-                    textScene = scenes[i] 
-                    break
-                end 
+        local text_scene = nil
+        for i=1, #scenes do 
+            if scenes[i].type == "text" and scenes[i].num_text == #media.text then 
+                text_scene = scenes[i] 
+                break
             end 
         end 
-        if not textScene then return end
+        if not text_scene then return nil end
         local last = false
         if not last_scene and scene_idx == #medias - 1 then
             last = true
         end 
-        textScene.fill(scene_idx, media, last)
-        appendScene("$" .. scene_idx, textScene)
+        text_scene.fill(scene_idx, media, last)
+        appendScene("$" .. scene_idx, text_scene)
+        print(media.text[1], "=>", text_scene.name)
         scene_idx = scene_idx + 1
     end 
 

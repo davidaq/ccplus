@@ -37,9 +37,9 @@ Composition* TMLReader::read(const std::string& s) const {
         return a.first < b.first;
     };
     std::sort(ctx->bgmVolumes.begin(), ctx->bgmVolumes.end(), pairCompare);
-    for (auto& kv : ctx->bgmVolumes) {
-        L() << kv.first << kv.second;
-    }
+    //for (auto& kv : ctx->bgmVolumes) {
+    //    L() << kv.first << kv.second;
+    //}
 
     for (auto& child: pt.get_child("compositions")) {
         ptree& comp = child.second;
