@@ -412,7 +412,7 @@ local function _generateMainComp()
         if #random_candicate_medias == 0 then 
             for i=1, #medias do
                 if medias[i].type ~= "text" then
-                    table.insert(random_candicate_medias, medias[i])
+                    table.insert(random_candicate_medias, medias[i].name)
                 end 
             end 
         end 
