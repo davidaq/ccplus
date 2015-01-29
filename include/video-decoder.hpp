@@ -7,7 +7,8 @@
 namespace CCPlus {
     struct VideoInfo;
     struct DecodeContext;
-}
+    IVideoDecoderRef openDecoder(std::string uri, int flags, bool isUser=false);
+};
 
 struct CCPlus::VideoInfo {
     float duration;
@@ -16,44 +17,53 @@ struct CCPlus::VideoInfo {
 };
 
 
-#ifdef VIDEO_DECODER
-#define OuputF std::function<const void*, size_t, size_t>
-#endif
+class CCPlus::IVideoDecoder : public CCPlus::Object {
+public:
+    virtual VideoInfo getVideoInfo() = 0;
+    
+    // Sets the cursor to a specific time (in seconds)
+    virtual void seekTo(float time, bool realSeek = true) = 0;
+    
+    // Try to decode an image frame at the current cursor poisition
+    // @return the time (in seconds) of the decoded frame
+    // @return negative value if no frame can be decoded
+    virtual float decodeImage() = 0;
+    
+    // @return the frame image in the previous decode from calling decodeImage()
+    virtual CCPlus::Frame getDecodedImage(int maxSize=512) = 0;
+    
+    // Decode audio stream into PCM raw data from current position
+    // Can be used for both video & audio files
+    virtual float decodeAudio(std::vector<int16_t>& vec, float durationLimit = -1) = 0;
+    inline std::vector<int16_t> decodeAudio(float durationLimit = -1) {
+        std::vector<int16_t> ret;
+        decodeAudio(ret, durationLimit);
+        return ret;
+    };
+};
 
-class CCPlus::VideoDecoder {
+class CCPlus::VideoDecoder : public CCPlus::IVideoDecoder {
 public:
     VideoDecoder(const std::string& inputFile, int decoderFlag=CCPlus::VideoDecoder::DECODE_VIDEO|CCPlus::VideoDecoder::DECODE_AUDIO);
     ~VideoDecoder();
     
     const static int DECODE_VIDEO = 1, DECODE_AUDIO = 2;
     
-    // Retrieve video basic information
     VideoInfo getVideoInfo();
     
-    // Sets the cursor to a specific time (in seconds)
     void seekTo(float time, bool realSeek = true);
-    
-    // Try to decode an image frame at the current cursor poisition
-    // @return the time (in seconds) of the decoded frame
-    // @return negative value if no frame can be decoded
     float decodeImage();
     
-    // @return the frame image in the previous successful decode from calling decodeImage()
     CCPlus::Frame getDecodedImage(int maxSize=512);
-    
-    // Decode audio stream into PCM raw data from current position
-    // Can be used for both video & audio files
-    // Output writen to file
-    void decodeAudio(const std::string& outputFile, float durationLimit = -1);
-    // Output to a vec
+
     float decodeAudio(std::vector<int16_t>& vec, float durationLimit = -1);
-    std::vector<int16_t> decodeAudio(float durationLimit = -1);
 
     bool invalid = true;
-
-    float glimpseImage();
     
 private:
+#ifdef VIDEO_DECODER
+#define OuputF std::function<const void*, size_t, size_t>
+#endif
     std::string inputFile;
     int decoderFlag;
     float cursorTime = 0;

@@ -61,10 +61,10 @@ inline std::vector<float> GenerateSeparableGaussKernel(int kernelSize) {
 
 CCPLUS_FILTER(gaussian) {
     if (parameters.size() < 2) {
-        log(logERROR) << "In sufficient parameters for gaussian filter";
+        log(logERROR) << "Insufficient parameters for gaussian filter";
         return frame;
     }
-    int size = (int) parameters[0];
+    int size = (int)(parameters[0] * 3 / 2);
     if (size <= 2) return frame;
     
     int scale = 1;

@@ -24,7 +24,8 @@ Layer::Layer(
     float _height,
     int _blendMode,
     int _trkMat,
-    bool _showup
+    bool _showup,
+    bool _motionBlur
 ) :
     time(_time),
     duration(_duration),
@@ -33,6 +34,7 @@ Layer::Layer(
     blendMode(_blendMode),
     trkMat(_trkMat),
     show(_showup),
+    motionBlur(_motionBlur),
     renderableUri(_renderableUri),
     width(_width),
     height(_height)
@@ -104,7 +106,6 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     
     return ret;
 }
-
 GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
         return GPUFrame();
@@ -113,7 +114,59 @@ GPUFrame Layer::getFilteredFrame(float t) {
     if(frame) {
         for (auto& k : (*filterOrder)) {
             if (!properties.count(k)) continue;
-            const auto& params = interpolate(k, t);
+            std::vector<float> params;
+            if(k == "transform") {
+                params.reserve(25);
+                params = interpolate("opacity", t);
+                if(params.empty())
+                    params.push_back(1.0);
+                if(motionBlur) {
+                    std::vector<float> prev;
+                    bool added = false;
+                    for(int i = 0; i < 50; i++) {
+                        std::vector<float> p = interpolate(k, t - 0.0002 * i);
+                        if(p.size() >= 12) {
+                            if(!prev.empty() && prev.size() == p.size()) {
+                                bool same = true;
+                                for(int i = 0, c = prev.size(); i < c;) {
+                                    float d = 0;
+                                    for(int j = 0; j < 12; j++, i++) {
+                                        d += abs(prev[i] - p[i]);
+                                        if(j > 8) {
+                                            d += abs(prev[i] - p[i]) * 360;
+                                        }
+                                    }
+                                    if(d > 0.0000001) {
+                                        same = false;
+                                        break;
+                                    }
+                                }
+                                if(same) {
+                                    continue;
+                                }
+                            }
+                            if(added) {
+                                static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
+                                params.reserve(params.size() + p.size() + 12);
+                                params.insert(params.end(), sep, sep + 12);
+                            } else {
+                                params.reserve(params.size() + p.size());
+                            }
+                            params.insert(params.end(), p.begin(), p.end());
+                            added = true;
+                            prev = p;
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    std::vector<float> p = interpolate(k, t);
+                    params.reserve(1 + p.size());
+                    params.insert(params.end(), p.begin(), p.end());
+                }
+            } else {
+                params = interpolate(k, t);
+            }
             frame = Filter(k).apply(frame, params, width, height);
         }
     }

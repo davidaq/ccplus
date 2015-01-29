@@ -8,7 +8,9 @@ namespace CCPlus {
     class Layer;
     class Profiler;
     class Logger;
+    class IVideoDecoder;
     class VideoDecoder;
+    class IVideoEncoder;
     class VideoEncoder;
     class ParallelExecutor;
     class TMLReader;
@@ -50,5 +52,6 @@ namespace CCPlus {
 
 namespace CCPlus {
     typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
+    typedef boost::shared_ptr<IVideoDecoder> IVideoDecoderRef;
 }
 #include "platform.hpp"

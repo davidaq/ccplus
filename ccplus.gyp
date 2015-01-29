@@ -33,6 +33,8 @@
                 ['OS=="ios"', {
                     'sources': [
                         'src/platform/ios.mm',
+                        'src/platform/video-decoder-ios.mm',
+                        'src/platform/video-encoder-ios.mm',
                     ]
                 }],
             ],

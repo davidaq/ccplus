@@ -27,6 +27,7 @@ namespace CCPlus {
 
     CCPlus::GPUFrame blendUsingProgram(GLuint, const GPUFrame&, const GPUFrame& top);
 
+    GPUFrame motionBlurAcuum(const GPUFrame& buffer, const GPUFrame& top, float ratio);
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();
 

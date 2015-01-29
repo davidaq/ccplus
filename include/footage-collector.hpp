@@ -22,7 +22,7 @@ public:
 
     CCPlus::Semaphore signal;
     float renderTime = 0;
-    int windowSize = 10;
+    int windowSize = 3;
 
     //Lock renderTimeLock;
     float finishedTime = 0;

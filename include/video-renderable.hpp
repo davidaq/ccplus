@@ -37,7 +37,7 @@ private:
     float audioEndTime = -1;
     std::vector<int16_t> audios;
 
-    VideoDecoder* decoder = 0;
+    IVideoDecoderRef decoder;
     float decoderTime = 0;
 
     int flags = 0;

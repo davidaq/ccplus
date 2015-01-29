@@ -9,6 +9,7 @@ public:
 
     GPUFrame getGPUFrame(float time);
     void prepare();
+    void prepareWithFileData(const uint8_t* data, uint32_t len, int rotate=0);
     void release();
     void releaseGPUCache();
     float getDuration();

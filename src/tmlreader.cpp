@@ -29,18 +29,19 @@ Composition* TMLReader::read(const std::string& s) const {
     }
     setFrameRate(fps);
     Context* ctx = Context::getContext();
-    for (auto& child : pt.get_child("bgm_volume")) {
-        float t = std::atof(child.first.data());
-        float v = std::atof(child.second.data().c_str());
-        ctx->bgmVolumes.push_back(std::make_pair(t, v));
+    try {
+        for (auto& child : pt.get_child("bgm_volume")) {
+            float t = std::atof(child.first.data());
+            float v = std::atof(child.second.data().c_str());
+            ctx->bgmVolumes.push_back(std::make_pair(t, v));
+        }
+    } catch(...) {
+        ctx->bgmVolumes.push_back(std::make_pair(0, 1));
     }
     auto pairCompare = [] (const std::pair<float, float>& a, const std::pair<float, float>& b) {
         return a.first < b.first;
     };
     std::sort(ctx->bgmVolumes.begin(), ctx->bgmVolumes.end(), pairCompare);
-    //for (auto& kv : ctx->bgmVolumes) {
-    //    L() << kv.first << kv.second;
-    //}
     
     std::queue<std::string> queue;
     queue.push(main_name);
@@ -56,11 +57,6 @@ Composition* TMLReader::read(const std::string& s) const {
             }
         }
     }
-
-    //for (auto& child: pt.get_child("compositions")) {
-    //    ptree& comp = child.second;
-    //    initComposition(child.first.data(), comp);
-    //}
     
     return (Composition*)Context::getContext()->getRenderable("composition://" + main_name);
 }
@@ -149,9 +145,17 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
             };
             extMap["default"] = defaultExt;
 
-            size_t dotPos = uri.find_last_of('.');
-            std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
-            ext = toLower(ext);
+            std::string ext;
+#ifdef __IOS__
+            const char* alext = assetsLibraryExt(uri.c_str());
+            if(alext)
+                ext = alext;
+#endif
+            if(ext.empty()) {
+                size_t dotPos = uri.find_last_of('.');
+                ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
+                ext = toLower(ext);
+            }
             
             log(logINFO) << "Got file extention: " << ext;
             if(!extMap.count(ext)) {
@@ -194,7 +198,7 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     Layer l = Layer(
             uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
-            blendMode, trkMat, showup);
+            blendMode, trkMat, showup, pt.get("motionBlur", false));
     l.setProperties(readProperties(pt));
     return l;
 }

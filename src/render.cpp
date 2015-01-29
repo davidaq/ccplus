@@ -121,6 +121,14 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     return frame;
 }
 
+GPUFrame CCPlus::motionBlurAcuum(const GPUFrame& buffer, const GPUFrame& top, float ratio) {
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint ratioU;
+    GLuint program = manager->getProgram(motion_blur_acuum, &ratioU);
+    glUniform1f(ratioU, ratio);
+    return blendUsingProgram(program, buffer, top);
+}
+
 GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?

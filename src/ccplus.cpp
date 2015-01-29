@@ -125,7 +125,19 @@ void CCPlus::go(const RenderTarget& target) {
                 copyAssets();
 
                 if(!stringEndsWith(path, ".tml")) {
-                    path = generateTML(path, mode==PREVIEW_MODE);
+                    bool bad = true;
+                    for(int i = 0; i < 5; i++) {
+                        std::string result = generateTML(path, mode==PREVIEW_MODE);
+                        if(result != "<ERROR>") {
+                            path = result;
+                            bad = false;
+                            break;
+                        }
+                        sleep(1);
+                    }
+                    if(bad) {
+                        log(logFATAL) << "Can not generate tml correctly";
+                    }
                 }
                 profile(InitContext) {
                     CCPlus::initContext(path);

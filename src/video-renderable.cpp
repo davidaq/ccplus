@@ -20,16 +20,16 @@ VideoRenderable::VideoRenderable(const std::string& uri, bool audioOnly) {
     isUserRes = uri[0] == 'x';
     path = parseUri2File(uri);
 
-    VideoDecoder decoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
-    VideoInfo vinfo = decoder.getVideoInfo();
+    IVideoDecoderRef decoder = openDecoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO, isUserRes);
+    VideoInfo vinfo = decoder->getVideoInfo();
     duration = vinfo.duration;
 
     // probe file
-    float t1 = decoder.decodeImage(), t2 = decoder.decodeImage();
+    float t1 = decoder->decodeImage(), t2 = decoder->decodeImage();
     if(t1 > -10 && t2 > -10 && t2 > t1) {
         flags |= VIDEO;
     }
-    if(!decoder.decodeAudio(1).empty()) {
+    if(!decoder->decodeAudio(2).empty()) {
         flags |= AUDIO;
     }
     if(!flags && t1 > -10) {
@@ -48,8 +48,6 @@ void VideoRenderable::release() {
     lastFrame = GPUFrame();
     lastFrameNum = 0;
     lastFrameImageFrameNum = -1;
-    if(decoder)
-        delete decoder;
     decoder = 0;
 }
 
@@ -109,17 +107,17 @@ void VideoRenderable::releasePart(float start, float duration) {
 void VideoRenderable::preparePart(float start, float duration) {
     if(flags & STATIC) {
         Renderable::preparePart(start, duration);
-        VideoDecoder decoder(path, VideoDecoder::DECODE_VIDEO);
-        decoder.decodeImage();
-        framesCache[0] = decoder.getDecodedImage();
+        IVideoDecoderRef decoder = openDecoder(path, VideoDecoder::DECODE_VIDEO, isUserRes);
+        decoder->decodeImage();
+        framesCache[0] = decoder->getDecodedImage();
         return;
     }
     const static int audioBufferSize = 8;
     if(flags & AUDIO && (audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration)) {
-        VideoDecoder decoder(path, VideoDecoder::DECODE_AUDIO);
+        IVideoDecoderRef decoder = openDecoder(path, VideoDecoder::DECODE_AUDIO, isUserRes);
         audios = std::vector<int16_t>();
-        decoder.seekTo(start, false);
-        audioStartTime = decoder.decodeAudio(audios, audioBufferSize);
+        decoder->seekTo(start, false);
+        audioStartTime = decoder->decodeAudio(audios, audioBufferSize);
         audioEndTime = audioStartTime + audioBufferSize;
         if(this->duration > 2) {
             if(audioStartTime < 0.5) {
@@ -152,7 +150,6 @@ void VideoRenderable::preparePart(float start, float duration) {
         while(partEnd < fend && !framesCache.count(partEnd))
             partEnd++;
         float partBeginTime = fnum * 1.0 / frameRate;
-        //VideoDecoder *decoder = 0;
         float t = -100;
         if(flags & VIDEO) {
             profile(decodeImageINIT) {
@@ -161,14 +158,13 @@ void VideoRenderable::preparePart(float start, float duration) {
                     if(d < 0)
                         d = -d;
                     if(d > 1) {
-                        delete decoder;
                         decoder = 0;
                     } else {
                         t = decoderTime;
                     }
                 }
                 if(!decoder) {
-                    decoder = new VideoDecoder(path, VideoDecoder::DECODE_VIDEO);
+                    decoder = openDecoder(path, VideoDecoder::DECODE_VIDEO, isUserRes);
                     if(fnum > 1) {
                         decoder->seekTo(partBeginTime - 0.1);
                     }
@@ -193,7 +189,6 @@ void VideoRenderable::preparePart(float start, float duration) {
                 profile(getDecodedImage) {
                     cframe = decoder->getDecodedImage(maxsz);
                 }
-                //cframe.toNearestPOT(maxsz, renderMode == PREVIEW_MODE);
 #ifdef __ANDROID__
                 if(!cframe.image.empty())
                     cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);

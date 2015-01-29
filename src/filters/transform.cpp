@@ -6,18 +6,27 @@
 using namespace cv;
 using namespace CCPlus;
 
-CCPLUS_FILTER(transform) {
-    if (parameters.size() < 12 || parameters.size() % 12 != 0) {
-        log(CCPlus::logERROR) << "Not enough parameters for transform";
-        return frame;
-    }
+Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height) {
+    if(parameters.size() - ptr < 12)
+        return Mat();
     Mat finalTrans = (Mat_<double>(4, 4) << 
             frame->ext.scaleAdjustX, 0, 0, 0, 
             0, frame->ext.scaleAdjustY, 0, 0, 
             0, 0, 1, 0,
             0, 0, 0, 1);
-
-    for (int set = 0; set < parameters.size(); set += 12) {
+    int sbegin = ptr;
+    for (int& set = ptr; set < parameters.size(); set += 12) {
+        bool bad = true;
+        for(int i = 0; i < 12; i++) {
+            if(abs(parameters[i + set]) > 0.0001) {
+                bad = false;
+                break;
+            }
+        }
+        if(bad) {
+            ptr += 12;
+            break;
+        }
         float pos_x = parameters[0 + set];
         float pos_y = parameters[1 + set];
         float pos_z = parameters[2 + set];
@@ -94,40 +103,60 @@ CCPLUS_FILTER(transform) {
             0, potHeight * 1.0f / height, 0, 0,
             0, 0, 1, 0,
             0, 0, 0, 1);
-    finalTrans = tmp * finalTrans;
+    return tmp * finalTrans;
+}
+
+CCPLUS_FILTER(transform) {
+    const float & opa = parameters[0];
+    int ptr = 1;
+    std::vector<Mat> tlist;
+    while(true) {
+        const auto& m = nextTrans(parameters, ptr, frame, width, height);
+        if(m.empty())
+            break;
+        tlist.push_back(m);
+    }
+    if (tlist.empty()) {
+        log(CCPlus::logERROR) << "Not enough parameters for transform";
+        return frame;
+    }
+
+    GLProgramManager* manager = GLProgramManager::getManager();
+    GLuint trans, src_dst_size, zoom, alpha;
+    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size, &zoom, &alpha);
+    glUseProgram(program);
+
+    int potWidth = nearestPOT(width);
+    int potHeight = nearestPOT(height);
+    GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
+    ret->bindFBO();
 
     /*****************************
      * Calculate Camera parameters
      * Currently will only support one default camera
      * TODO: Customizable camera 
      *****************************/
-
     float dov = 141.73 / 102.05 * width;
-
-    //std::cout << finalTrans << std::endl;
-    float tmatrix[16];
-    for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 4; j++) {
-            tmatrix[i * 4 + j] = finalTrans.at<double>(j, i);
-        }
-    }
-
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint trans, src_dst_size, zoom;
-    GLuint program = manager->getProgram(filter_transform, &trans, &src_dst_size, &zoom);
-    glUseProgram(program);
-
-    GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
-    ret->bindFBO();
-
-    glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
     glUniform1f(zoom, dov);
 
     glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
 
-    fillSprite();
+    glUniform1f(alpha, opa / tlist.size());
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    float tmatrix[16];
+    for(const Mat& t : tlist) {
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++) {
+                tmatrix[i * 4 + j] = t.at<double>(j, i);
+            }
+        }
+        glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
+        fillSprite();
+    }
+    glDisable(GL_BLEND);
 
     ret->ext = frame->ext;
     ret->ext.anchorAdjustX = ret->ext.anchorAdjustY = 0;

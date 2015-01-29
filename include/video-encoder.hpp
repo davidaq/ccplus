@@ -19,6 +19,9 @@ public:
     // will be called on destruct
     void finish();
 private:
+#ifdef NEVER_DEFINED
+    const void* encodeContext;
+#else
     void initContext();
     void releaseContext();
 #ifdef __FFMPEG__
@@ -33,5 +36,6 @@ private:
     std::string outputPath;
     int width = 0, height = 0, fps = 0, quality = 100;
     int frameNum = 0;
+#endif
 
 };

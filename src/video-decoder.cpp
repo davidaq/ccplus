@@ -101,26 +101,6 @@ bool VideoDecoder::readNextFrameIfNeeded() {
     return true;
 }
 
-float VideoDecoder::glimpseImage() {
-    initContext();
-    if(invalid) return -100;
-    if(!decodeContext->video_stream)
-        return -100;
-    if(decodeContext->haveCurrentPkt) {
-        av_free_packet(&(decodeContext->currentPkt));
-        decodeContext->haveCurrentPkt = false;
-    }
-    if(!readNextFrameIfNeeded()) {
-        return -100;
-    }
-    if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
-        return (decodeContext->pkt.pts - decodeContext->video_stream->start_time)
-            * decodeContext->video_stream->time_base.num * 1.0 / decodeContext->video_stream->time_base.den;
-    } else {
-        return glimpseImage();
-    }
-}
-
 float VideoDecoder::decodeImage() {
     initContext();
     if(invalid || !(decoderFlag & DECODE_VIDEO))
@@ -131,9 +111,12 @@ float VideoDecoder::decodeImage() {
     decodedImage = 0;
     float retTime = -1;
     int brutal = 10;
-    while(!haveDecodedImage && brutal > 0) {
-        if(!readNextFrameIfNeeded())
+    int atemptLimit = 30;
+    while(!haveDecodedImage && brutal > 0 && atemptLimit-->0) {
+        if(!readNextFrameIfNeeded()) {
             brutal--;
+            atemptLimit++;
+        }
         if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
             int gotFrame = 0;
             int ret = avcodec_decode_video2(decodeContext->video_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
@@ -292,44 +275,6 @@ float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)>
     return realStart;
 }
 
-void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
-    if(!(decoderFlag & DECODE_AUDIO)) {
-        return;
-    }
-    initContext();
-    if(invalid) return;
-    FILE* destFile = fopen(outputFile.c_str(), "wb");
-    if(!destFile)
-        return;
-    decodeAudio(destFile, duration);
-    fclose(destFile);
-}
-
-void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
-    auto output = [&destFile] (const void* buffer, size_t size, size_t count) {
-        fwrite(buffer, size, count, destFile);    
-    };
-    decodeAudio(output, duration);
-}
-
-std::vector<int16_t> VideoDecoder::decodeAudio(float duration) {
-    std::vector<int16_t> ret;
-    float cTime = cursorTime;
-    float sTime = cTime - 0.5;
-    if(sTime < 0)
-        sTime = 0;
-    seekTo(sTime);
-    float realStart = decodeAudio(ret, duration + 1);
-    cTime -= realStart;
-    if(cTime > 0 && !ret.empty()) {
-        int s = (int)(cTime * CCPlus::audioSampleRate);
-        if(s > 0) {
-            ret = std::vector<int16_t>(ret.begin() + s, ret.end());
-        }
-    }
-    return ret;
-}
-
 float VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
     auto output = [&ret] (const void* buffer, size_t size, size_t count) {
         // 2 bytes per int16_t
@@ -473,3 +418,15 @@ void VideoDecoder::releaseContext() {
     cursorTime = -1;
 }
 
+#ifdef __IOS__
+#include "video-decoder-ios.hpp"
+#endif
+
+IVideoDecoderRef CCPlus::openDecoder(std::string uri, int flags, bool isUser) {
+#ifdef __IOS__
+    if(isUser || stringEndsWith(uri, ".mp4")) {
+        return IVideoDecoderRef(new VideoDecoderIOS(uri));
+    }
+#endif
+    return IVideoDecoderRef(new VideoDecoder(uri, flags));
+}

@@ -204,6 +204,7 @@ Export.prototype.exportLayer = function(layer) {
     ret.duration = layer.outPoint - layer.inPoint;
     ret.start = layer.inPoint - layer.startTime;
     ret.last = ret.duration;
+    ret.motionBlur = layer.motionBlur;
     ret.properties = {};
     var defaultFilter = function () {
         var ret = [];

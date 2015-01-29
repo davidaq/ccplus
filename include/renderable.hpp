@@ -17,7 +17,7 @@ public:
     GPUFrame getWrapedGPUFrame(float time);
     virtual GPUFrame getGPUFrame(float time);
 
-    static std::string parseUri2File(std::string uri);
+    static std::string parseUri2File(std::string uri, int* rotate = 0);
 
     // first and last moments this renderable is visible in the main composition
     float firstAppearTime = 0, lastAppearTime = 0;

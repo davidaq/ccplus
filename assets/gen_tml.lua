@@ -239,8 +239,17 @@ local function prepareUserMedias(userinfo)
             if type(md.y) == "string" then md.y = tonumber(md.y) end
             if type(md.w) == "string" then md.w = tonumber(md.w) end
             if type(md.h) == "string" then md.h = tonumber(md.h) end
+
+            -- hack for fixing android rotate bug
+            local rte = ""
+            if md.type == "image" then
+                if md.rotate then
+                    rte = "?" .. tostring(md.rotate ).. "?"
+                end
+            end
+
             local l = {
-                uri= "xfile://" .. md.filename,
+                uri= "xfile://" .. rte .. md.filename,
                 time= 0,
                 duration= comp.duration,
                 start= start,
@@ -618,5 +627,9 @@ generateMainComp(template, scenes, user_medias, userinfo)
 -- MAIN
 
 if JSON_BEAUTIFY == nil then JSON_BEAUTIFY = true end
-if HALF_SIZE then rescaleTemplate(template, 0.6) end
+if HALF_SIZE then 
+    rescaleTemplate(template, 0.4) 
+else
+    rescaleTemplate(template, 0.8) 
+end
 RESULT = json.encode(template, {indent= JSON_BEAUTIFY})
