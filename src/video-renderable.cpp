@@ -177,9 +177,9 @@ void VideoRenderable::preparePart(float start, float duration) {
         }
 
         int lastImageFrame = -1;
-        int maxsz = 512;
+        int maxsz = 450;
         if(renderMode == PREVIEW_MODE) {
-            maxsz = isUserRes ? 200 : 300;
+            maxsz = 200;
         }
         for(; fnum <= partEnd; fnum++) {
             if(framesCache.count(fnum))

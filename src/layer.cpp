@@ -5,6 +5,7 @@
 #include "renderable.hpp"
 #include "composition.hpp"
 #include "render.hpp"
+#include "ccplus.hpp"
 #include "filter.hpp"
 
 #include "image-renderable.hpp"
@@ -106,6 +107,23 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     
     return ret;
 }
+
+#define MAX_BLUR_DIFF 40
+static inline int diff(const std::vector<float>& a1, const std::vector<float>& a2) {
+    if(a1.size() == a2.size()) {
+        float diff = 0;
+        for(int i = 0, c = a1.size(); i < c; i++) {
+            const float& v = abs(a1[i] - a2[i]);
+            diff += v;
+            if(diff > MAX_BLUR_DIFF)
+                break;
+        }
+        return diff;
+    } else {
+        return 0xfffffff;
+    }
+}
+
 GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
         return GPUFrame();
@@ -120,43 +138,28 @@ GPUFrame Layer::getFilteredFrame(float t) {
                 params = interpolate("opacity", t);
                 if(params.empty())
                     params.push_back(1.0);
-                if(motionBlur) {
-                    std::vector<float> prev;
-                    bool added = false;
-                    for(int i = 0; i < 50; i++) {
-                        std::vector<float> p = interpolate(k, t - 0.0002 * i);
-                        if(p.size() >= 12) {
-                            if(!prev.empty() && prev.size() == p.size()) {
-                                bool same = true;
-                                for(int i = 0, c = prev.size(); i < c;) {
-                                    float d = 0;
-                                    for(int j = 0; j < 12; j++, i++) {
-                                        d += abs(prev[i] - p[i]);
-                                        if(j > 8) {
-                                            d += abs(prev[i] - p[i]) * 360;
-                                        }
-                                    }
-                                    if(d > 0.0000001) {
-                                        same = false;
-                                        break;
-                                    }
-                                }
-                                if(same) {
-                                    continue;
-                                }
-                            }
-                            if(added) {
-                                static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
-                                params.reserve(params.size() + p.size() + 12);
-                                params.insert(params.end(), sep, sep + 12);
-                            } else {
-                                params.reserve(params.size() + p.size());
-                            }
-                            params.insert(params.end(), p.begin(), p.end());
-                            added = true;
-                            prev = p;
-                        } else {
-                            break;
+                if(renderMode == FINAL_MODE && motionBlur) {
+                    float blurTime = 1.0 / frameRate;
+                    const std::vector<float>& right = interpolate(k, t);
+                    std::vector<float> left = interpolate(k, t - blurTime);
+                    params.insert(params.end(), right.begin(), right.end());
+                    int d = diff(left, right);
+                    const static float minStep = 0.0002;
+                    while(d > MAX_BLUR_DIFF && blurTime > minStep) {
+                        blurTime /= 2;
+                        left = interpolate(k, t - blurTime);
+                        d = diff(left, right);
+                    }
+                    if(d > 0 && blurTime > minStep) {
+                        float step = blurTime / 20;
+                        if(step < minStep)
+                            step = minStep;
+                        for(float b = step; b < blurTime; b += step) {
+                            left = interpolate(k, t - b);
+                            static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
+                            params.reserve(params.size() + left.size() + 12);
+                            params.insert(params.end(), sep, sep + 12);
+                            params.insert(params.end(), left.begin(), left.end());
                         }
                     }
                 } else {

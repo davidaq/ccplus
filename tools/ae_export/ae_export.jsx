@@ -40,11 +40,14 @@ var blendingModes = {
  */
 var Export = function() {
     this.comp = {};
+    this.asis = confirm("Export AS IS?\nExport as is will not process comps with @ or #", false, "Export as is?");
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
-                throw "Duplicate composition name: " + item.name;
+            if(this.comp[item.name]) { 
+                if (this.asis || (item.name[0] != '@' && item.name != '#+1')) {
+                    throw "Duplicate composition name: " + item.name;
+                }
             }
             this.comp[item.name] = item;
         }
@@ -59,11 +62,14 @@ Export.prototype.exportTo = function(filePath) {
     this.colors = {};
     try {
         this.exportList = [];
-        if(this.comp.MAIN)
+        if(!this.asis) {
+            for(var k in this.comp) {
+                if(k[0] == '#') {
+                    this.exportList.push(k);
+                }
+            }
+        } else if(this.comp.MAIN) {
             this.exportList = ['MAIN'];
-        for(var k in this.comp) {
-            if(k[0] == '#')
-                this.exportList.push(k);
         }
         if(this.exportList.length <= 0) {
             throw "Main or scene compositions doesn't exist";
@@ -73,13 +79,16 @@ Export.prototype.exportTo = function(filePath) {
         for(var k in this.exportList) {
             this.compsCount += this.getCompsCount(this.comp[this.exportList[k]]);
         }
-        this.exported = {'@':true,'#+1':true};
+        if(!this.asis)
+            this.exported = {'@':true,'#+1':true};
+        else
+            this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
         var comma = false;
         while(this.exportList.length > 0) {
             var compName = this.exportList.pop();
-            if(this.exported[compName]||compName[0]=='@')
+            if(this.exported[compName]||(!this.asis && compName[0]=='@'))
                 continue;
             if(comma)
                 this.tmlFile.write(',');
@@ -96,8 +105,12 @@ Export.prototype.exportTo = function(filePath) {
     alert('Export Done!');
 };
 Export.prototype.getCompsCount = function(comp) {
-    if(this.exported[comp.name] || comp.name[0] == '@' || comp.name == '#+1')
+    if(this.exported[comp.name])
         return 0;
+    if(!this.asis) {
+        if(comp.name[0] == '@' || comp.name == '#+1')
+            return 0;
+    }
     this.exported[comp.name] = true;
     var count = 1;
     for(var i = 1; i <= comp.layers.length; i++) {

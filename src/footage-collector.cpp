@@ -65,7 +65,7 @@ void FootageCollector::doPrepare() {
         idx++;
         log(logINFO) << "Already prepared: " << finishedTime << "seconds.";
 
-        int releaseIdx = idx - windowSize - 3;
+        int releaseIdx = idx - windowSize - 2;
         if(releaseIdx >= 0) {
             for (auto& kv : renderables) {
                 Renderable* renderable = kv.second;

@@ -2,11 +2,12 @@
 #include "glprogram-manager.hpp"
 #include "gpu-frame.hpp"
 #include "render.hpp"
+#include "ccplus.hpp"
 
 using namespace cv;
 using namespace CCPlus;
 
-Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height) {
+Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height, bool& hadRotate) {
     if(parameters.size() - ptr < 12)
         return Mat();
     Mat finalTrans = (Mat_<double>(4, 4) << 
@@ -46,6 +47,8 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
         float angle_x = parameters[9 + set];
         float angle_y = parameters[10 + set];
         float angle_z = parameters[11 + set];
+        if(!hadRotate && abs(angle_x) + abs(angle_y) + abs(angle_z) > 0.000001)
+            hadRotate = true;
 
         // Put original image into the large layer image 
         angle_x = angle_x * M_PI / 180.0;
@@ -110,8 +113,9 @@ CCPLUS_FILTER(transform) {
     const float & opa = parameters[0];
     int ptr = 1;
     std::vector<Mat> tlist;
+    bool hadRotate = false;
     while(true) {
-        const auto& m = nextTrans(parameters, ptr, frame, width, height);
+        const auto& m = nextTrans(parameters, ptr, frame, width, height, hadRotate);
         if(m.empty())
             break;
         tlist.push_back(m);
@@ -129,7 +133,6 @@ CCPLUS_FILTER(transform) {
     int potWidth = nearestPOT(width);
     int potHeight = nearestPOT(height);
     GPUFrame ret = GPUFrameCache::alloc(potWidth, potHeight);
-    ret->bindFBO();
 
     /*****************************
      * Calculate Camera parameters
@@ -142,12 +145,36 @@ CCPLUS_FILTER(transform) {
     glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
+    
+    float tmatrix[16] = {0};
+    // anti-alias
+    GPUFrame antiAliasSrc;
+    if(hadRotate && renderMode == FINAL_MODE) {
+        tmatrix[0] = 0.9;
+        tmatrix[5] = 0.9;
+        tmatrix[10] = 1;
+        tmatrix[15] = 1;
+        glUniform1f(alpha, 1.0f);
+        glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
+        antiAliasSrc = GPUFrameCache::alloc(potWidth, potHeight);
+        antiAliasSrc->bindFBO();
+        fillSprite();
+        glBindTexture(GL_TEXTURE_2D, antiAliasSrc->textureID);
+    }
+    ret->bindFBO();
 
     glUniform1f(alpha, opa / tlist.size());
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
-    float tmatrix[16];
-    for(const Mat& t : tlist) {
+    for(Mat t : tlist) {
+        if(hadRotate && renderMode == FINAL_MODE) {
+            Mat tmp = (Mat_<double>(4, 4) << 
+                    1/0.9, 0, 0, 0,
+                    0, 1/0.9, 0, 0,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1);
+            t =  t * tmp;
+        }
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++) {
                 tmatrix[i * 4 + j] = t.at<double>(j, i);

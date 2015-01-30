@@ -36,9 +36,6 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
      */
     uint32_t jpgLen = NEXT(uint32_t);
     if (jpgLen >= 125) {
-        //image = cv::Mat(height, width, CV_8UC4);
-        //memcpy(image.data, ptr, jpgLen);
-
         vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
         profile(DecodeImage) {
             image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
@@ -272,14 +269,22 @@ Frame Frame::compressed(bool slower) const {
     } else {
         ret.ext = ext;
         if(!image.empty()) {
-            int srcLen = image.rows * image.cols * 4;
+            int total = image.total();
+            int srcLen = total * 4;
             uint8_t* srcData = image.data;
+            //uint8_t* srcData = new uint8_t[srcLen];
+            //uint8_t* oData = image.data;
+            //for(int i = 0; i < srcLen; i++) {
+            //    int j = (i & 3) * total + (i >> 2);
+            //    srcData[j] = oData[i];
+            //}
             int sz = LZ4_compressBound(srcLen);
             char* dest = new char[sz];
             sz = LZ4_compress((char*)srcData, dest, srcLen);
             ret.image = cv::Mat(1, sz, CV_8U);
             memcpy(ret.image.data, dest, sz);
             delete[] dest;
+            //delete[] srcData;
         }
     }
     return ret;
@@ -291,9 +296,17 @@ Frame Frame::decompressed() const {
         ret.readZimCompressed(image);
     } else {
         if(!image.empty()) {
-            int sz = expectedWidth * expectedHeight * 4;
+            int total = expectedWidth * expectedHeight;
+            int sz = total * 4;
             ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
+            //uint8_t* tmp = new uint8_t[sz];
             LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+            //uint8_t* oData = ret.image.data;
+            //for(int i = 0; i < sz; i++) {
+            //    int j = (i & 3) * total + (i >> 2);
+            //    oData[i] = tmp[j];
+            //}
+            //delete[] tmp;
         }
         ret.ext = ext;
     }
