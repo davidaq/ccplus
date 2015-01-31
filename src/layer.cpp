@@ -116,7 +116,7 @@ static inline int diff(const std::vector<float>& a1, const std::vector<float>& a
             const float& v = Fabs(a1[i] - a2[i]);
             const int& j = i % 12;
             if(j > 8)
-                diff += v * 5;
+                diff += v * 2;
             else if(j >5)
                 diff += v;
             else
@@ -162,7 +162,7 @@ GPUFrame Layer::getFilteredFrame(float t) {
                             step = minStep;
                         for(float b = step; b < blurTime; b += step) {
                             const std::vector<float>& np = interpolate(k, t - b);
-                            if(diff(left, np) > 0) {
+                            if(diff(left, np) > 5) {
                                 left = np;
                                 static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
                                 params.reserve(params.size() + left.size() + 12);
