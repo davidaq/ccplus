@@ -94,3 +94,14 @@ void Lock::unlock() {
     pthread_mutex_unlock(&mutex);
 }
 
+ScopeHelper::ScopeHelper(std::function<void()> action) {
+    this->action = action;
+}
+
+ScopeHelper::~ScopeHelper() {
+    action();
+}
+
+ScopeHelper::operator bool() {
+    return passed++ == 0;
+}

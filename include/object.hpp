@@ -15,6 +15,16 @@ private:
     pthread_mutex_t mutex;
 };
 
+class CCPlus::ScopeHelper {
+public:
+    ScopeHelper(std::function<void()> action);
+    ~ScopeHelper();
+    operator bool();
+private:
+    std::function<void()> action;
+    int passed = 0;
+};
+
 class CCPlus::Semaphore {
 public:
     Semaphore(std::string name = "");
@@ -40,3 +50,4 @@ private:
     Object* retainer = 0;
     std::set<Object*> retains;
 };
+

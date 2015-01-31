@@ -1,6 +1,5 @@
 #include "global.hpp"
 #include "ccplay.hpp"
-#include "ccplus.hpp"
 #include "parallel-executor.hpp"
 #include "frame.hpp"
 #include <time.h>
@@ -42,6 +41,9 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
         delete tmp;
     }
     buffer_thread = ParallelExecutor::runInNewThread([zimDir] () {
+        ScopeHelper SH([]() {
+            buffer_thread = 0;
+        });
         int lastFrame = 0x7fffffff;
         while (keepRunning) {
             // Clean useless frame
@@ -54,7 +56,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
             buffer_lock.unlock();
 
             // Make sure buffer is not too big
-            if (buffer.size() > BUFFER_DURATION * getFrameRate()) {
+            if (buffer.size() > BUFFER_DURATION * frameRate) {
                 usleep(5000); // Sleep 5 msecs
                 continue;
             }
@@ -88,9 +90,11 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
 
             usleep(5000); // Sleep 5 msecs
         }
-        buffer_thread = 0;
     });
     play_thread = ParallelExecutor::runInNewThread([key] () {
+        ScopeHelper SH([]() {
+            play_thread = 0;
+        });
         float playerTime = 0.0;
         currentFrame = 0;
         const int WAITING = 0;
@@ -102,7 +106,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
             if (status == PLAYING) {
                 double now = getSystemTime();
                 float d = now - beforeTime;
-                float frameTime = 1.0 / getFrameRate();
+                float frameTime = 1.0 / frameRate;
                 if(d > 1.5 * frameTime)
                     d = 1.5 * frameTime;
                 float desiredTime = currentFrame * frameTime;
@@ -134,22 +138,21 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                     buffer_lock.unlock();
                 }
             } else if (status == INITING) {
-                if (buffer.size() > BUFFER_DURATION * getFrameRate() / 3) {
+                if (buffer.size() > BUFFER_DURATION * frameRate / 3) {
                     status = PLAYING;
                 }
             } else {
                 buffer_lock.lock();
                 bool flag = (buffer.size() && buffer.back()->frame.eov);
                 buffer_lock.unlock();
-                if (buffer.size() >= BUFFER_DURATION * getFrameRate() || flag) {
+                if (buffer.size() >= BUFFER_DURATION * frameRate || flag) {
                     status = PLAYING;
                 } else if (progressInterface) {
-                    progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * getFrameRate()));
+                    progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * frameRate));
                 }
             }
             usleep(5000);
         }
-        play_thread = 0;
     });
     if (blocking) {
         if (play_thread) {
@@ -165,9 +168,11 @@ void CCPlus::CCPlay::stop() {
     keepRunning = false;
     if (play_thread) {
         pthread_join(play_thread, NULL);
+        play_thread = 0;
     }
     if (buffer_thread) {
         pthread_join(buffer_thread, NULL);
+        buffer_thread = 0;
     }
 }
 

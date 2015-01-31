@@ -10,7 +10,7 @@ using namespace CCPlus;
 Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height, bool& hadRotate) {
     if(parameters.size() - ptr < 12)
         return Mat();
-    Mat finalTrans = (Mat_<double>(4, 4) << 
+    Mat finalTrans = (Mat_<float>(4, 4) << 
             frame->ext.scaleAdjustX, 0, 0, 0, 
             0, frame->ext.scaleAdjustY, 0, 0, 
             0, 0, 1, 0,
@@ -33,7 +33,7 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
         float pos_z = parameters[2 + set];
         float anchor_x = parameters[3 + set];
         float anchor_y = parameters[4 + set];
-        if(set == 0) {
+        if(set == sbegin) {
             anchor_x += frame->ext.anchorAdjustX;
             anchor_y += frame->ext.anchorAdjustY;
         }
@@ -52,56 +52,47 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
 
         // Put original image into the large layer image 
         angle_x = angle_x * M_PI / 180.0;
-        double cx = cos(angle_x);
-        double sx = sin(angle_x);
+        float cx = cos(angle_x);
+        float sx = sin(angle_x);
         angle_y = angle_y * M_PI / 180.0;
-        double cy = cos(angle_y);
-        double sy = sin(angle_y);
+        float cy = cos(angle_y);
+        float sy = sin(angle_y);
         angle_z = angle_z * M_PI / 180.0;
-        double cz = cos(angle_z);
-        double sz = sin(angle_z);
+        float cz = cos(angle_z);
+        float sz = sin(angle_z);
 
-        Mat trans = (Mat_<double>(4, 4) << 
+        Mat trans = (Mat_<float>(4, 4) << 
                 1, 0, 0, -anchor_x, 
                 0, 1, 0, -anchor_y, 
                 0, 0, 1, -anchor_z,
                 0, 0, 0, 1);
 
-        //std::cout << "====================================" << std::endl;
-        //std::cout << "Init : " << std::endl << trans << std::endl;
-
-        Mat scale = (Mat_<double>(4, 4) << 
+        Mat scale = (Mat_<float>(4, 4) << 
                 scale_x, 0, 0, 0,
                 0, scale_y, 0, 0,
                 0, 0, scale_z, 0,
                 0, 0, 0, 1);
         trans = scale * trans;
 
-        //std::cout << "After scale: " << std::endl << trans << std::endl;
-
-        Mat rotate = (Mat_<double>(4, 4) << 
+        Mat rotate = (Mat_<float>(4, 4) << 
                 cy * cz,                -cy * sz,               sy,         0,
                 cz * sx * sy + cx * sz, cx * cz - sx * sy * sz, -cy * sx,   0,
                 -cx * cz * sy + sx * sz, cz * sx + sx * sy * sz, cx * cy,   0,
                 0,                      0,                      0,          1);
         trans = rotate * trans;
 
-        //std::cout << "After rotate: " << std::endl << trans << std::endl;
-
-        Mat translate_back = (Mat_<double>(4, 4) << 
+        Mat translate_back = (Mat_<float>(4, 4) << 
                 1, 0, 0, pos_x,
                 0, 1, 0, pos_y, 
                 0, 0, 1, pos_z,
                 0, 0, 0, 1);
         trans = translate_back * trans;
 
-        //std::cout << "After translate back: " << std::endl << trans << std::endl;
-
         finalTrans = trans * finalTrans;
     }
     int potWidth = nearestPOT(width);
     int potHeight = nearestPOT(height);
-    Mat tmp = (Mat_<double>(4, 4) << 
+    Mat tmp = (Mat_<float>(4, 4) << 
             potWidth * 1.0f / width, 0, 0, 0,
             0, potHeight * 1.0f / height, 0, 0,
             0, 0, 1, 0,
@@ -146,16 +137,28 @@ CCPLUS_FILTER(transform) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
     
-    float tmatrix[16] = {0};
     // anti-alias
     GPUFrame antiAliasSrc;
-    if(hadRotate && renderMode == FINAL_MODE) {
-        tmatrix[0] = 0.9;
-        tmatrix[5] = 0.9;
-        tmatrix[10] = 1;
-        tmatrix[15] = 1;
+    hadRotate = hadRotate && renderMode == FINAL_MODE;
+    if(hadRotate) {
+        Mat tmp = (Mat_<float>(4, 4) << 
+                1, 0, 0, -0.5 * frame->width,
+                0, 1, 0, -0.5 * frame->height,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+        tmp = (Mat_<float>(4, 4) << 
+                0.96, 0, 0, 0,
+                0, 0.96, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1) * tmp;
+        tmp = (Mat_<float>(4, 4) << 
+                1, 0, 0, 0.5 * frame->width,
+                0, 1, 0, 0.5 * frame->height,
+                0, 0, 1, 0,
+                0, 0, 0, 1) * tmp;
+        cv::transpose(tmp, tmp);
         glUniform1f(alpha, 1.0f);
-        glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
+        glUniformMatrix4fv(trans, 1, GL_FALSE, (float*)tmp.data);
         antiAliasSrc = GPUFrameCache::alloc(potWidth, potHeight);
         antiAliasSrc->bindFBO();
         fillSprite();
@@ -166,21 +169,32 @@ CCPLUS_FILTER(transform) {
     glUniform1f(alpha, opa / tlist.size());
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
+
+    Mat antiAliasRestore;
+    if(hadRotate) {
+        Mat tmp = (Mat_<float>(4, 4) << 
+                1, 0, 0, -0.5 * frame->width,
+                0, 1, 0, -0.5 * frame->height,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+        tmp = (Mat_<float>(4, 4) << 
+                1/0.96, 0, 0, 0,
+                0, 1/0.96, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1) * tmp;
+        tmp = (Mat_<float>(4, 4) << 
+                1, 0, 0, 0.5 * frame->width,
+                0, 1, 0, 0.5 * frame->height,
+                0, 0, 1, 0,
+                0, 0, 0, 1) * tmp;
+        antiAliasRestore = tmp;
+    }
     for(Mat t : tlist) {
         if(hadRotate && renderMode == FINAL_MODE) {
-            Mat tmp = (Mat_<double>(4, 4) << 
-                    1/0.9, 0, 0, 0,
-                    0, 1/0.9, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-            t =  t * tmp;
+            t =  t * antiAliasRestore;
         }
-        for(int i = 0; i < 4; i++) {
-            for(int j = 0; j < 4; j++) {
-                tmatrix[i * 4 + j] = t.at<double>(j, i);
-            }
-        }
-        glUniformMatrix4fv(trans, 1, GL_FALSE, tmatrix);
+        cv::transpose(t, t);
+        glUniformMatrix4fv(trans, 1, GL_FALSE, (float*)t.data);
         fillSprite();
     }
     glDisable(GL_BLEND);

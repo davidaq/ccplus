@@ -22,5 +22,5 @@ namespace CCPlus {
     extern int collectorTimeInterval;
     extern int frameRate;
     extern int renderMode;
-}
+};
 

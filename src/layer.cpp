@@ -108,17 +108,20 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
-#define MAX_BLUR_DIFF 40
+#define MAX_BLUR_DIFF 500
 static inline int diff(const std::vector<float>& a1, const std::vector<float>& a2) {
     if(a1.size() == a2.size()) {
         float diff = 0;
         for(int i = 0, c = a1.size(); i < c; i++) {
             const float& v = abs(a1[i] - a2[i]);
-            diff += v;
+            if((i % 12) > 8)
+                diff += v * 5;
+            else
+                diff += v;
             if(diff > MAX_BLUR_DIFF)
                 break;
         }
-        return diff;
+        return diff * 10;
     } else {
         return 0xfffffff;
     }
@@ -139,12 +142,12 @@ GPUFrame Layer::getFilteredFrame(float t) {
                 if(params.empty())
                     params.push_back(1.0);
                 if(renderMode == FINAL_MODE && motionBlur) {
-                    float blurTime = 1.0 / frameRate;
+                    float blurTime = 0.05;
                     const std::vector<float>& right = interpolate(k, t);
                     std::vector<float> left = interpolate(k, t - blurTime);
                     params.insert(params.end(), right.begin(), right.end());
                     int d = diff(left, right);
-                    const static float minStep = 0.0002;
+                    const static float minStep = 0.00002;
                     while(d > MAX_BLUR_DIFF && blurTime > minStep) {
                         blurTime /= 2;
                         left = interpolate(k, t - blurTime);
@@ -155,11 +158,14 @@ GPUFrame Layer::getFilteredFrame(float t) {
                         if(step < minStep)
                             step = minStep;
                         for(float b = step; b < blurTime; b += step) {
-                            left = interpolate(k, t - b);
-                            static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
-                            params.reserve(params.size() + left.size() + 12);
-                            params.insert(params.end(), sep, sep + 12);
-                            params.insert(params.end(), left.begin(), left.end());
+                            const std::vector<float>& np = interpolate(k, t - b);
+                            if(diff(left, np) > 0) {
+                                left = np;
+                                static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
+                                params.reserve(params.size() + left.size() + 12);
+                                params.insert(params.end(), sep, sep + 12);
+                                params.insert(params.end(), left.begin(), left.end());
+                            }
                         }
                     }
                 } else {

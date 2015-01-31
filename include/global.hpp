@@ -3,6 +3,7 @@
 namespace CCPlus {
     class Object;
     class Lock;
+    class ScopeHelper;
     class Semaphore;
     class Context;
     class Layer;
