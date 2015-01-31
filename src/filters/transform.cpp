@@ -19,7 +19,7 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
     for (int& set = ptr; set < parameters.size(); set += 12) {
         bool bad = true;
         for(int i = 0; i < 12; i++) {
-            if(abs(parameters[i + set]) > 0.0001) {
+            if(Fabs(parameters[i + set]) > 0.0001) {
                 bad = false;
                 break;
             }
@@ -38,16 +38,13 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
             anchor_y += frame->ext.anchorAdjustY;
         }
         float anchor_z = parameters[5 + set];
-        if (anchor_z != 0) {
-            log(CCPlus::logWARN) << "Anchor z is not supported";
-        }
         float scale_x = parameters[6 + set];
         float scale_y = parameters[7 + set];
         float scale_z = parameters[8 + set];
         float angle_x = parameters[9 + set];
         float angle_y = parameters[10 + set];
         float angle_z = parameters[11 + set];
-        if(!hadRotate && abs(angle_x) + abs(angle_y) + abs(angle_z) > 0.000001)
+        if(!hadRotate && Fabs(angle_x) + Fabs(angle_y) + Fabs(angle_z) > 1)
             hadRotate = true;
 
         // Put original image into the large layer image 
@@ -133,13 +130,11 @@ CCPLUS_FILTER(transform) {
     float dov = 141.73 / 102.05 * width;
     glUniform1f(zoom, dov);
 
-    glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, frame->textureID);
     
     // anti-alias
     GPUFrame antiAliasSrc;
-    hadRotate = hadRotate && renderMode == FINAL_MODE;
     if(hadRotate) {
         Mat tmp = (Mat_<float>(4, 4) << 
                 1, 0, 0, -0.5 * frame->width,
@@ -161,10 +156,12 @@ CCPLUS_FILTER(transform) {
         glUniformMatrix4fv(trans, 1, GL_FALSE, (float*)tmp.data);
         antiAliasSrc = GPUFrameCache::alloc(potWidth, potHeight);
         antiAliasSrc->bindFBO();
+        glUniform4f(src_dst_size, frame->width, frame->height, frame->width, frame->height);
         fillSprite();
         glBindTexture(GL_TEXTURE_2D, antiAliasSrc->textureID);
     }
     ret->bindFBO();
+    glUniform4f(src_dst_size, frame->width, frame->height, potWidth, potHeight);
 
     glUniform1f(alpha, opa / tlist.size());
     glEnable(GL_BLEND);
@@ -190,8 +187,8 @@ CCPLUS_FILTER(transform) {
         antiAliasRestore = tmp;
     }
     for(Mat t : tlist) {
-        if(hadRotate && renderMode == FINAL_MODE) {
-            t =  t * antiAliasRestore;
+        if(hadRotate) {
+            t = t * antiAliasRestore;
         }
         cv::transpose(t, t);
         glUniformMatrix4fv(trans, 1, GL_FALSE, (float*)t.data);

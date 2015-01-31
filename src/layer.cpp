@@ -113,11 +113,14 @@ static inline int diff(const std::vector<float>& a1, const std::vector<float>& a
     if(a1.size() == a2.size()) {
         float diff = 0;
         for(int i = 0, c = a1.size(); i < c; i++) {
-            const float& v = abs(a1[i] - a2[i]);
-            if((i % 12) > 8)
+            const float& v = Fabs(a1[i] - a2[i]);
+            const int& j = i % 12;
+            if(j > 8)
                 diff += v * 5;
-            else
+            else if(j >5)
                 diff += v;
+            else
+                diff += (int)v;
             if(diff > MAX_BLUR_DIFF)
                 break;
         }
@@ -141,13 +144,13 @@ GPUFrame Layer::getFilteredFrame(float t) {
                 params = interpolate("opacity", t);
                 if(params.empty())
                     params.push_back(1.0);
-                if(renderMode == FINAL_MODE && motionBlur) {
-                    float blurTime = 0.05;
+                if(motionBlur) {
+                    float blurTime = renderMode == FINAL_MODE ? 0.05 : 0.02;
                     const std::vector<float>& right = interpolate(k, t);
                     std::vector<float> left = interpolate(k, t - blurTime);
                     params.insert(params.end(), right.begin(), right.end());
                     int d = diff(left, right);
-                    const static float minStep = 0.00002;
+                    const float& minStep = 0.0005;
                     while(d > MAX_BLUR_DIFF && blurTime > minStep) {
                         blurTime /= 2;
                         left = interpolate(k, t - blurTime);

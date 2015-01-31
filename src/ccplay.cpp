@@ -113,11 +113,13 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                 if (playerTime + d >= desiredTime) {
                     beforeTime = now;
                     playerTime += d;
+                    Frame* buf = 0;
                     buffer_lock.lock();
                     if (buffer.size() > 0 && buffer.front()->fid == currentFrame) {
-                        // Invoke callback
-                        //log(logINFO) << "Playing: " << playerTime;
-                        Frame* buf = &buffer.front()->frame;
+                        buf = &buffer.front()->frame;
+                    }
+                    buffer_lock.unlock();
+                    if(buf) {
                         if (playerInterface) {
                             playerInterface(key, desiredTime, buf->image.data, 
                                     buf->image.cols, buf->image.rows,
@@ -125,7 +127,6 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                         }
                         if (buf->eov) {
                             //log(logINFO) << "DONE! ";
-                            buffer_lock.unlock();
                             playerInterface(key, 0, 0, 0, 0, 0, 0, 0);
                             keepRunning = false;
                             break;
@@ -135,7 +136,6 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                         //log(logINFO) << "Start warting: " << currentFrame;
                         status = WAITING;
                     }
-                    buffer_lock.unlock();
                 }
             } else if (status == INITING) {
                 if (buffer.size() > BUFFER_DURATION * frameRate / 3) {

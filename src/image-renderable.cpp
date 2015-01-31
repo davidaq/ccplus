@@ -98,7 +98,7 @@ void ImageRenderable::prepare() {
 }
 
 void ImageRenderable::release() {
-    image.image = cv::Mat();
+    image = Frame();
     gpuCache = GPUFrame();
 }
 

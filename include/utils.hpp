@@ -258,3 +258,9 @@ static inline int nearestPOT(const int n, bool larger=false) {
     return ret;
 }
 
+static inline float Fabs(float v) {
+    if(v > 0)
+        return v;
+    return -v;
+}
+

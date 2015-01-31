@@ -47,8 +47,10 @@ Composition* TMLReader::read(const std::string& s) const {
     queue.push(main_name);
     while (!queue.empty()) {
         std::string name = queue.front();
-        initComposition(name, pt.get_child("compositions." + name));
+        bool ok = initComposition(name, pt.get_child("compositions." + name));
         queue.pop();
+        if(!ok)
+            continue;
         for (auto& child : pt.get_child("compositions." + name + ".layers")) {
             std::string uri = child.second.get("uri", "");
             if (stringStartsWith(uri, "composition://")) {
@@ -61,9 +63,9 @@ Composition* TMLReader::read(const std::string& s) const {
     return (Composition*)Context::getContext()->getRenderable("composition://" + main_name);
 }
 
-void TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
+bool TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
     if (Context::getContext()->hasRenderable("composition://" + name)) {
-        return;
+        return false;
     }
     Composition* comp = new Composition(
             pt.get("duration", 0.0f),
@@ -77,6 +79,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
     }
 
     Context::getContext()->putRenderable("composition://" + name, comp);
+    return true;
 }
 
 std::map<std::string, Property> TMLReader::readProperties(const boost::property_tree::ptree& pt) const {

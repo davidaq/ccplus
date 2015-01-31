@@ -75,6 +75,15 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
             script_path = generatePath(CCPlus::assetsPath, "gen_tml.lua");
         }
         profile(ExecutingLuaMain) {
+            // load makeMain
+            if (luaL_dofile(L, script_path.c_str())) {
+                lua_error(L);
+                lua_close(L);
+                log(logWARN) << "Failed executing script";
+                return "<ERROR>";
+            }
+            // execute with env
+            script_path = generatePath(CCPlus::assetsPath, "gen_tml_env.lua");
             if (luaL_dofile(L, script_path.c_str())) {
                 lua_error(L);
                 lua_close(L);
