@@ -55,6 +55,27 @@ typedef void* (*BeginFunc)(void);
 typedef void (*WriteFunc)(const Frame&, int, void* ctx);
 typedef void (*FinishFunc)(void*);
 
+static inline float bgmItp(Context* ctx, float i) {
+    float low = -1, high = -1;
+    float low_time = -1, high_time = -1;
+    for (int j = 0; j < ctx->bgmVolumes.size(); j++) {
+        float t = ctx->bgmVolumes[j].first;
+        float v = ctx->bgmVolumes[j].second;
+        if (std::abs(v - i) < 0.01) {
+            return v;
+        }
+        if (t < i) {
+            low_time = t;
+            low = v;
+        } else if (t > i) {
+            high_time = t;
+            high = v;
+        }
+        if (high != -1 && low != -1) break;
+    }
+    if (high == -1 || low == -1) return 1.0f;
+    return (i - low_time) / (high_time - low_time) * (high - low) + low;
+};
 void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     if (!continueRunning) return;
     Context* ctx = Context::getContext();
@@ -71,6 +92,12 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     int fn = 0;
 
     void* writeCtx = beginFunc ? beginFunc() : 0;
+    ScopeHelper onEnd([writeCtx, &finishFunc, glCtx]{
+        if(finishFunc) {
+            finishFunc(writeCtx);
+        }
+        destroyGLContext(glCtx);
+    });
     for (float i = 0; i <= duration; i += delta) {
         renderProgress = (i * 98 / duration) + 1;
         while(continueRunning && ctx->collector->finished() <= i + 0.1) {
@@ -87,29 +114,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             if (i + delta > duration) {
                 cpu_frame.eov = true;
             }
-            auto bgmItp = [ctx] (float i) {
-                float low = -1, high = -1;
-                float low_time = -1, high_time = -1;
-                for (int j = 0; j < ctx->bgmVolumes.size(); j++) {
-                    float t = ctx->bgmVolumes[j].first;
-                    float v = ctx->bgmVolumes[j].second;
-                    if (std::abs(v - i) < 0.01) {
-                        return v;
-                    }
-                    if (t < i) {
-                        low_time = t;
-                        low = v;
-                    } else if (t > i) {
-                        high_time = t;
-                        high = v;
-                    }
-                    if (high != -1 && low != -1) break;
-                }
-                if (high == -1 || low == -1) return 1.0f;
-                //L() << "aaa" << low_time << high_time;
-                return (i - low_time) / (high_time - low_time) * (high - low) + low;
-            };
-            cpu_frame.bgmVolume = bgmItp(i);
+            cpu_frame.bgmVolume = bgmItp(ctx, i);
             writeFuc(cpu_frame, fn++, writeCtx);
         }
         if(fn & 1) {
@@ -121,7 +126,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     }
     if(finishFunc)
         finishFunc(writeCtx);
-    destroyGLContext(glCtx);
+    finishFunc = 0;
 
     renderProgress = 100;
 }

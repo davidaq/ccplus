@@ -201,7 +201,8 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     Layer l = Layer(
             uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
-            blendMode, trkMat, showup, pt.get("motionBlur", false));
+            blendMode, trkMat, showup, pt.get("motionBlur", false), 
+            pt.get("rawTransform", false));
     l.setProperties(readProperties(pt));
     return l;
 }

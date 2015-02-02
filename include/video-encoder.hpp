@@ -1,6 +1,7 @@
 #pragma once
 #include "global.hpp"
 #include <string>
+#include <list>
 #include <opencv2/opencv.hpp>
 
 namespace CCPlus {
@@ -36,6 +37,12 @@ private:
     std::string outputPath;
     int width = 0, height = 0, fps = 0, quality = 100;
     int frameNum = 0;
+    bool finished = false;
+
+    pthread_t workerThread = 0;
+    void doAppendFrame(const Frame& frame);
+    std::list<CCPlus::Frame> queue;
+    CCPlus::Lock queueLock;
 #endif
 
 };

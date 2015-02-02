@@ -316,15 +316,6 @@ end
 
 function rescaleTemplate(template, scale) 
     local resizers = {
-        transform= function(len) 
-            local ret = {}
-            for i = 1, len, 12 do 
-                for j = 0, 5 do
-                    table.insert(ret, i + j)
-                end 
-            end
-            return ret
-        end,
         mask= function(len)
             local ret = {}
             for i = 1, len do
@@ -342,6 +333,15 @@ function rescaleTemplate(template, scale)
     resizers["4color"] = function() 
         return {1, 2, 6, 7, 11, 12, 16, 17}
     end
+    local transformResizer = function(len) 
+        local ret = {}
+        for i = 1, len, 12 do 
+            for j = 0, 5 do
+                table.insert(ret, i + j)
+            end 
+        end
+        return ret
+    end
 
     local function resize(props, resizer)
         if not props then return end
@@ -353,7 +353,9 @@ function rescaleTemplate(template, scale)
         end
     end
 
+    local compPreTransformRaw  = {1.0/scale, 0, 0, 0, 0, 1.0/scale, 0, 0, 0, 0, 1.0/scale, 0}
     local footageTransform = {0, 0, 0, 0, 0, 0, scale, scale, scale, 0, 0, 0}
+    local footageTransformRaw = {scale, 0, 0, 0, 0, scale, 0, 0, 0, 0, scale, 0}
     for name, comp in pairs(template.compositions) do
         comp.resolution.width = comp.resolution.width * scale
         comp.resolution.height = comp.resolution.height * scale
@@ -363,11 +365,41 @@ function rescaleTemplate(template, scale)
                 for pname, resizer in pairs(resizers) do
                     resize(layer.properties[pname], resizer)
                 end
+                local trans = layer.properties.transform
+                if trans then
+                    if layer.rawTransform then
+                        for time, prop in pairs(trans) do
+                            local tmp = {}
+                            for i = 1, 12 do
+                                table.insert(tmp, compPreTransformRaw[i])
+                            end
+                            for i = 1, #prop do
+                                table.insert(tmp, prop[i])
+                            end
+                            for i = 1, 12 do
+                                table.insert(tmp, footageTransformRaw[i])
+                            end
+                            trans[time] = tmp
+                        end
+                    else
+                        resize(trans, transformResizer)
+                    end
+                end
             else
                 local trans = layer.properties.transform
-                for time, prop in pairs(trans) do
-                    for i = 1, #prop do
-                        table.insert(prop, footageTransform[i])
+                if trans then
+                    if layer.rawTransform then
+                        for time, prop in pairs(trans) do
+                            for i = 1, 12 do
+                                table.insert(prop, footageTransformRaw[i])
+                            end
+                        end
+                    else
+                        for time, prop in pairs(trans) do
+                            for i = 1, 12 do
+                                table.insert(prop, footageTransform[i])
+                            end
+                        end
                     end
                 end
             end
@@ -420,6 +452,6 @@ if JSON_BEAUTIFY == nil then JSON_BEAUTIFY = true end
 if HALF_SIZE then 
     rescaleTemplate(template, 0.4) 
 else
-    rescaleTemplate(template, 0.8) 
+    rescaleTemplate(template, 0.4) 
 end
 RESULT = json.encode(template, {indent= JSON_BEAUTIFY})

@@ -26,7 +26,8 @@ Layer::Layer(
     int _blendMode,
     int _trkMat,
     bool _showup,
-    bool _motionBlur
+    bool _motionBlur,
+    bool _rawTransform
 ) :
     time(_time),
     duration(_duration),
@@ -36,6 +37,7 @@ Layer::Layer(
     trkMat(_trkMat),
     show(_showup),
     motionBlur(_motionBlur),
+    rawTransform(_rawTransform),
     renderableUri(_renderableUri),
     width(_width),
     height(_height)
@@ -140,10 +142,11 @@ GPUFrame Layer::getFilteredFrame(float t) {
             if (!properties.count(k)) continue;
             std::vector<float> params;
             if(k == "transform") {
-                params.reserve(25);
                 params = interpolate("opacity", t);
+                params.reserve(26);
                 if(params.empty())
                     params.push_back(1.0);
+                params.push_back(rawTransform ? 1 : -1);
                 if(motionBlur) {
                     float blurTime = renderMode == FINAL_MODE ? 0.05 : 0.02;
                     const std::vector<float>& right = interpolate(k, t);

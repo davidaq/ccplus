@@ -24,7 +24,8 @@ public:
         int blendMode = 0,
         int trkMat = 0,
         bool showup = true,
-        bool motionBlur = false
+        bool motionBlur = false,
+        bool rawTransform = false
     );
 
     CCPlus::Renderable* getRenderObject(); 
@@ -60,7 +61,7 @@ public:
      */
     bool show = true;
 
-    bool motionBlur;
+    bool motionBlur = false, rawTransform = false;
     // return a GPUFrame containing the result passed through filters
     GPUFrame getFilteredFrame(float time);
 

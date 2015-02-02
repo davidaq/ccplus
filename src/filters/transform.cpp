@@ -7,7 +7,7 @@
 using namespace cv;
 using namespace CCPlus;
 
-Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height, bool& hadRotate) {
+Mat nextTrans(bool isRaw, const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height, bool& hadRotate) {
     if(parameters.size() - ptr < 12)
         return Mat();
     Mat finalTrans = (Mat_<float>(4, 4) << 
@@ -27,6 +27,17 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
         if(bad) {
             ptr += 12;
             break;
+        }
+        if(isRaw) {
+            // raw 2D transform matrix
+            const float* p = &parameters[set];
+            Mat tmp = (Mat_<float>(4, 4) << 
+                    p[0], p[1], p[2], p[3],
+                    p[4], p[5], p[6], p[7],
+                    p[8], p[9], p[10], p[11],
+                    0, 0, 0, 1);
+            finalTrans = tmp * finalTrans;
+            continue;
         }
         float pos_x = parameters[0 + set];
         float pos_y = parameters[1 + set];
@@ -99,18 +110,23 @@ Mat nextTrans(const std::vector<float> parameters, int& ptr, const GPUFrame& fra
 
 CCPLUS_FILTER(transform) {
     const float & opa = parameters[0];
-    int ptr = 1;
+    bool isRawTrans = parameters[1] > 0;
+    int ptr = 2;
     std::vector<Mat> tlist;
     bool hadRotate = false;
     while(true) {
-        const auto& m = nextTrans(parameters, ptr, frame, width, height, hadRotate);
+        const auto& m = nextTrans(isRawTrans, parameters, ptr, frame, width, height, hadRotate);
         if(m.empty())
             break;
         tlist.push_back(m);
     }
     if (tlist.empty()) {
         log(CCPlus::logERROR) << "Not enough parameters for transform";
-        return frame;
+        if(frame->ext.audio.empty())
+            return GPUFrame();
+        GPUFrame ret = GPUFrameCache::alloc(0, 0);
+        ret->ext.audio = frame->ext.audio;
+        return ret;
     }
 
     GLProgramManager* manager = GLProgramManager::getManager();

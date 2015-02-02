@@ -15,6 +15,7 @@ extern "C" {
 #include "video-encoder.hpp"
 #include "frame.hpp"
 #include "context.hpp"
+#include "parallel-executor.hpp"
 
 using namespace CCPlus;
 
@@ -52,21 +53,7 @@ VideoEncoder::~VideoEncoder() {
     finish();
 }
 
-void VideoEncoder::appendFrame(const Frame& frame) {
-    if(!ctx) {
-        if(width == 0 && height == 0) {
-            width = frame.image.cols;
-            height = frame.image.rows;
-        }
-        if(width == 0 || height == 0)
-            return;
-        if(width & 1)
-            width += 1;
-        if(height & 1)
-            height += 1;
-        initContext();
-        frameNum = 0;
-    }
+void VideoEncoder::doAppendFrame(const Frame& frame) {
     cv::Mat img;
     if(frame.image.cols == 0 || frame.image.rows == 0) {
         img = cv::Mat::zeros(height, width, CV_8UC4);
@@ -82,6 +69,56 @@ void VideoEncoder::appendFrame(const Frame& frame) {
     }
     writeAudioFrame(mat);
     frameNum++;
+}
+
+void VideoEncoder::appendFrame(const Frame& frame) {
+    if(!ctx) {
+        if(width == 0 && height == 0) {
+            width = frame.image.cols;
+            height = frame.image.rows;
+        }
+        if(width == 0 || height == 0)
+            return;
+        if(width & 1)
+            width += 1;
+        if(height & 1)
+            height += 1;
+        initContext();
+        frameNum = 0;
+    }
+    doAppendFrame(frame);
+    return;
+    while(true) {
+        queueLock.lock();
+        if(queue.size() < 20) {
+            queueLock.unlock();
+            break;
+        }
+        queueLock.unlock();
+        usleep(100);
+    }
+    queueLock.lock();
+    queue.push_back(frame);
+    queueLock.unlock();
+    if(!workerThread) {
+        workerThread = ParallelExecutor::runInNewThread([&] {
+            while(true) {
+                queueLock.lock();
+                if(queue.empty()) {
+                    queueLock.unlock();
+                    if(finished)
+                        break;
+                    usleep(100);
+                    continue;
+                }
+                Frame iframe = queue.front();
+                queue.pop_front();
+                queueLock.unlock();
+                doAppendFrame(iframe);
+            }
+            workerThread = 0;
+        });
+    }
 }
 
 void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
@@ -356,6 +393,9 @@ void VideoEncoder::initContext() {
 void VideoEncoder::finish() {
     if(!ctx)
         return;
+    finished = true;
+    if(workerThread)
+        pthread_join(workerThread, 0);
     writeVideoFrame(cv::Mat(), true);
     writeAudioFrame(cv::Mat(), true);
     if(0 > av_write_trailer(ctx->ctx)) {
