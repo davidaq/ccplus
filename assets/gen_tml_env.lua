@@ -451,7 +451,5 @@ makeMain(template, user_medias, userinfo)
 if JSON_BEAUTIFY == nil then JSON_BEAUTIFY = true end
 if HALF_SIZE then 
     rescaleTemplate(template, 0.4) 
-else
-    rescaleTemplate(template, 0.4) 
 end
 RESULT = json.encode(template, {indent= JSON_BEAUTIFY})
