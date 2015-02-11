@@ -47,6 +47,9 @@ namespace CCPlus {
 
     };
 
+    void onPause();
+    void onResume();
+
     // @ easy one shot render shortcut
     // pass thorugh init, render, wait, release procedure 
     void go(const RenderTarget&);

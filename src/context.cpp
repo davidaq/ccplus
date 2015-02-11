@@ -30,7 +30,6 @@ void Context::begin(const std::string& tmlPath) {
     }
     collector = new FootageCollector(mainComposition);
     flags.clear();
-    GPUFrameCache::clear();
     active = true;
 
     std::srand(1421121622);

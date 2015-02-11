@@ -10,26 +10,15 @@ var NULL;
 
 // Blend Mode map
 var blendingModes = {
-    // CS6
-    4412: 0,
-    4420: 1,
-    4416: 2,
-    4422: 3,
-    4413: 4,
-    4415: 5,
-    4421: 6,
-    4426: 7,
-    4433: 8,
-    // CC
-    4612: 0,
-    4620: 1,
-    4616: 2,
-    4622: 3,
-    4613: 4,
-    4615: 5,
-    4621: 6,
-    4626: 7,
-    4633: 8
+    12: 0,
+    20: 1,
+    16: 2,
+    22: 3,
+    13: 4,
+    15: 5,
+    21: 6,
+    26: 7,
+    33: 8
 };
 
 /*******
@@ -249,7 +238,7 @@ Export.prototype.exportLayer = function(layer) {
 
     ret.trkMat = layer.trackMatteType % 10 - 2;
     ret.visible = layer.enabled ? 1 : 0;
-    ret.blend = blendingModes[layer.blendingMode];
+    ret.blend = blendingModes[layer.blendingMode % 100];
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
     ret.start = layer.inPoint - layer.startTime;

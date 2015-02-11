@@ -27,7 +27,6 @@ namespace CCPlus {
 
     CCPlus::GPUFrame blendUsingProgram(GLuint, const GPUFrame&, const GPUFrame& top);
 
-    GPUFrame motionBlurAcuum(const GPUFrame& buffer, const GPUFrame& top, float ratio);
     // draw a rectangle of (-1, 1, 2, 2)
     void fillSprite();
 
@@ -39,4 +38,11 @@ namespace CCPlus {
     // Useful when generating masks
     // size of pnts must satisfy pnts.size() % 3 = 0
     void fillTriangles(const std::vector<std::pair<float, float>>& pnts);
+
+
+    static inline void checkPaused() {
+        if(appPaused) {
+            throw 0xfff;
+        }
+    }
 }

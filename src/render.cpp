@@ -5,6 +5,8 @@
 
 using namespace CCPlus;
 
+uint16_t CCPlus::gpuContextCounter = 0;
+
 GLuint squareVBO;
 GLuint densedSquareVBO;
 float squareCoord[8] = {
@@ -18,6 +20,8 @@ const int DENSED_VERTEX_NUM = 2.0 / DENSED_SQUARE_LEN * 2.0 / DENSED_SQUARE_LEN 
 float densedSquareCoord[DENSED_VERTEX_NUM];
 
 void CCPlus::initGL() {
+    GPUFrameCache::clear();
+
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -84,6 +88,7 @@ cv::Mat mergeAudio(cv::Mat base, cv::Mat in) {
 }
 
 GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const GPUFrame& top) {
+    checkPaused();
     if (!bottom) return top;
     if (!top) return bottom;
     if ((bottom->width != top->width || bottom->height != top->height)) {
@@ -121,14 +126,6 @@ GPUFrame CCPlus::blendUsingProgram(GLuint program, const GPUFrame& bottom, const
     return frame;
 }
 
-GPUFrame CCPlus::motionBlurAcuum(const GPUFrame& buffer, const GPUFrame& top, float ratio) {
-    GLProgramManager* manager = GLProgramManager::getManager();
-    GLuint ratioU;
-    GLuint program = manager->getProgram(motion_blur_acuum, &ratioU);
-    glUniform1f(ratioU, ratio);
-    return blendUsingProgram(program, buffer, top);
-}
-
 GPUFrame CCPlus::mergeFrame(GPUFrame bottom, GPUFrame top, BlendMode blendmode) {
     GLProgramManager* manager = GLProgramManager::getManager();
     GLuint program = (blendmode >= 0 && blendmode < BLEND_MODE_COUNT) ?
@@ -151,6 +148,7 @@ GPUFrame CCPlus::trackMatte(GPUFrame color, GPUFrame alpha, TrackMatteMode mode)
 }
 
 void CCPlus::fillSprite() {
+    checkPaused();
     if (!isGLFramebufferComplete()) {
         return;
     }
@@ -161,6 +159,7 @@ void CCPlus::fillSprite() {
 }
 
 void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
+    checkPaused();
     if (!isGLFramebufferComplete()) {
         return;
     }
@@ -184,6 +183,7 @@ void CCPlus::fillTriangles(const std::vector<std::pair<float, float>>& pnts) {
 }
 
 void CCPlus::fillDensedSprite() {
+    checkPaused();
     if (!isGLFramebufferComplete()) {
         return;
     }

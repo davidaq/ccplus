@@ -212,7 +212,7 @@ Export.prototype.exportLayer = function(layer) {
 
     ret.trkMat = layer.trackMatteType % 10 - 2;
     ret.visible = layer.enabled ? 1 : 0;
-    ret.blend = blendingModes[layer.blendingMode];
+    ret.blend = blendingModes[layer.blendingMode % 100];
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
     ret.start = layer.inPoint - layer.startTime;

@@ -7,12 +7,18 @@
 
 using namespace CCPlus;
 
+GPUFrameImpl::GPUFrameImpl() {
+    myGpuContextCounter = gpuContextCounter;
+}
+
 GPUFrameImpl::~GPUFrameImpl() {
     ext = FrameExt();
-    GPUFrameCache::reuse(this);
+    if(myGpuContextCounter == gpuContextCounter)
+        GPUFrameCache::reuse(this);
 }
 
 void GPUFrameImpl::bindFBO(bool clear) {
+    checkPaused();
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
     glViewport(0, 0, width, height);
 

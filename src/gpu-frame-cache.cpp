@@ -2,7 +2,6 @@
 #include "gpu-frame-impl.hpp"
 
 using namespace cv;
-using namespace boost;
 using namespace CCPlus;
 
 std::map<CCPlus::GPUFrameCache::Size, std::vector<std::pair<GLuint, GLuint>>> GPUFrameCache::cache;
@@ -11,7 +10,7 @@ Lock GPUFrameCache::sync;
 
 GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {
-        return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
+        return GPUFrame(new GPUFrameImpl()); 
     }
     sync.lock();
     auto* p = &cache[Size(width, height)];
@@ -24,7 +23,7 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         frame->fboID = (*p)[sz - 1].second;
         p->pop_back();
         sync.unlock();
-        return boost::shared_ptr<GPUFrameImpl>(frame); 
+        return GPUFrame(frame);
     } else {
         sync.unlock();
         GPUFrameImpl* frame = new GPUFrameImpl();
@@ -68,6 +67,7 @@ void GPUFrameCache::reuse(GPUFrameImpl* frame) {
 
 void GPUFrameCache::clear() {
     sync.lock();
+    gpuContextCounter++;
     cache.clear();
     sync.unlock();
 }

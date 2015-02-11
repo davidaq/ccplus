@@ -52,7 +52,10 @@ namespace CCPlus {
 #include "profile.hpp"
 
 namespace CCPlus {
-    typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
+    extern bool appPaused;
+    extern uint16_t gpuContextCounter;
+#include "gpu-frame-ref.hpp"
     typedef boost::shared_ptr<IVideoDecoder> IVideoDecoderRef;
-}
+};
+
 #include "platform.hpp"

@@ -19,11 +19,11 @@
 
 using namespace CCPlus;
 
-
+bool CCPlus::appPaused = false;
 bool CCPlus::continueRunning = false;
 int CCPlus::renderProgress = 0;
 
-void traceRam() {
+static inline void traceRam() {
 #ifdef TRACE_RAM_USAGE
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
@@ -53,7 +53,7 @@ void CCPlus::releaseContext() {
 
 typedef void* (*BeginFunc)(void);
 typedef void (*WriteFunc)(const Frame&, int, void* ctx);
-typedef void (*FinishFunc)(void*);
+typedef void (*FinishFunc)(void*, bool isFinish);
 
 static inline float bgmItp(Context* ctx, float i) {
     float low = -1, high = -1;
@@ -80,10 +80,8 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     if (!continueRunning) return;
     Context* ctx = Context::getContext();
     ctx->collector->prepare();
-    profileBegin(GL_INIT);
     void* glCtx = createGLContext();
     initGL();
-    profileEnd(GL_INIT);
     float delta = 1.0f / frameRate;
     float duration = ctx->mainComposition->getDuration();
 
@@ -94,7 +92,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
     void* writeCtx = beginFunc ? beginFunc() : 0;
     ScopeHelper onEnd([writeCtx, &finishFunc, glCtx]{
         if(finishFunc) {
-            finishFunc(writeCtx);
+            finishFunc(writeCtx, false);
         }
         destroyGLContext(glCtx);
     });
@@ -108,24 +106,37 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
             log(logINFO) << "----Rendering process is terminated!---";
             return;
         }
-        GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-        if(writeFuc) {
-            Frame cpu_frame = frame->toCPU();
-            if (i + delta > duration) {
-                cpu_frame.eov = true;
+        try {
+            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
+            if(writeFuc) {
+                Frame cpu_frame = frame->toCPU();
+                if (i + delta > duration) {
+                    cpu_frame.eov = true;
+                }
+                cpu_frame.bgmVolume = bgmItp(ctx, i);
+                writeFuc(cpu_frame, fn++, writeCtx);
             }
-            cpu_frame.bgmVolume = bgmItp(ctx, i);
-            writeFuc(cpu_frame, fn++, writeCtx);
-        }
-        if(fn & 1) {
-            log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
-            traceRam();
-
-            ctx->collector->clean(i);
+            if(fn & 1) {
+                log(logINFO) << "render --" << i << ':' << renderProgress << '%';
+                traceRam();
+                ctx->collector->clean(i);
+            }
+        } catch(int e) {
+            if(e == 0xfff) {
+                GPUFrameCache::clear();
+                do {
+                    sleep(1);
+                } while(appPaused && continueRunning);
+                if(continueRunning) {
+                    glCtx = createGLContext();
+                    initGL();
+                    i -= delta;
+                }
+            }
         }
     }
     if(finishFunc)
-        finishFunc(writeCtx);
+        finishFunc(writeCtx, true);
     finishFunc = 0;
 
     renderProgress = 100;
@@ -146,7 +157,7 @@ void writeVideo(const Frame& frame, int fn, void* ctx) {
     encoder->appendFrame(frame);
 }
 
-void finishVideo(void* ctx) {
+void finishVideo(void* ctx, bool isFinish) {
     VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
     encoder->finish();
     delete encoder;
@@ -158,9 +169,11 @@ void writePreview(const Frame& frame, int fn, void* ctx) {
     frame.write(Context::getContext()->getStoragePath(buf));
 }
 
-void writeEOF(void* ctx) {
-    std::string path = Context::getContext()->getStoragePath("eov.zim");
-    spit(path, "I'm an extremly bored EOV -- End Of Video.");
+void writeEOF(void* ctx, bool isFinish) {
+    if(isFinish) {
+        std::string path = Context::getContext()->getStoragePath("eov.zim");
+        spit(path, "I'm an extremly bored EOV -- End Of Video.");
+    }
 }
 
 void CCPlus::render() {

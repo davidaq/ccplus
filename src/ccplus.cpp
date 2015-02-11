@@ -158,3 +158,21 @@ void CCPlus::go(const RenderTarget& target) {
         });
     }
 }
+
+namespace CCPlus {
+    bool resuming = false;
+};
+
+void CCPlus::onPause() {
+    appPaused = true;
+    resuming = false;
+}
+
+void CCPlus::onResume() {
+    resuming = true;
+    ParallelExecutor::runInNewThread([] () {
+        usleep(100000);
+        if(resuming)
+            appPaused = false;
+    });
+}
