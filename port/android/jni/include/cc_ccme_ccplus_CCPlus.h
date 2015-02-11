@@ -142,5 +142,4 @@ JNIEXPORT void JNICALL Java_cc_ccme_ccplus_CCPlus_onResume
 #ifdef __cplusplus
 }
 #endif
-x
 #endif
