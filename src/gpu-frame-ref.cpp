@@ -62,24 +62,3 @@ void GPUFrameRef::deref() {
     }
 }
 
-GPUFrameRef::operator GPUFrameImpl* () const {
-    return ptr;
-}
-
-GPUFrameImpl* GPUFrameRef::operator -> () const {
-    return ptr;
-}
-
-GPUFrameImpl& GPUFrameRef::operator * () const {
-    return *ptr;
-}
-
-GPUFrameRef::operator bool() const {
-    if(!ptr)
-        return false;
-    if(myGpuContextCounter != gpuContextCounter) {
-        L() << "bad ref";
-        return false;
-    }
-    return true;
-};

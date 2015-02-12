@@ -15,9 +15,6 @@ GPUFrameImpl::~GPUFrameImpl() {
     ext = FrameExt();
     if(myGpuContextCounter == gpuContextCounter)
         GPUFrameCache::reuse(this);
-    else {
-        L() << "unreusable";
-    }
 }
 
 void GPUFrameImpl::bindFBO(bool clear) {

@@ -12,7 +12,7 @@ namespace CCPlus{
             Frame frame;
             int fid;
         };
-        int BUFFER_DURATION = 2;
+        const int BUFFER_DURATION = 1;
         bool keepRunning = false;
         int currentFrame = 0; // Latest frame that hasn't/has been showed
         Lock buffer_lock;
@@ -31,6 +31,7 @@ void CCPlus::CCPlay::play(const char* _zimDir, bool blocking) {
     play(0, _zimDir, blocking);
 }
 
+const int WAIT_TIME = 30000;
 void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
     std::string zimDir(_zimDir);
     stop();
@@ -57,13 +58,13 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
 
             // Make sure buffer is not too big
             if (buffer.size() > BUFFER_DURATION * frameRate) {
-                usleep(10000);
+                usleep(WAIT_TIME);
                 continue;
             }
             int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             if (targetFrame > lastFrame) {
-                usleep(10000);
+                usleep(WAIT_TIME);
                 continue;
             }
 
@@ -88,7 +89,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                 buffer.push(obj);
             }
 
-            usleep(10000);
+            usleep(WAIT_TIME);
         }
     });
     play_thread = ParallelExecutor::runInNewThread([key] () {
@@ -151,7 +152,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                     progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * frameRate));
                 }
             }
-            usleep(10000);
+            usleep(WAIT_TIME);
         }
     });
     if (blocking) {
@@ -177,7 +178,6 @@ void CCPlus::CCPlay::stop() {
 }
 
 void CCPlus::CCPlay::setBufferDuration(int buffer_duration) {
-    BUFFER_DURATION = buffer_duration;
 }
 
 void CCPlus::CCPlay::attachPlayerInterface(PlayerInterface interface) {

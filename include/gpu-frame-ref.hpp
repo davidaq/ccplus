@@ -15,10 +15,21 @@ public:
     ~GPUFrameRef();
 
     const GPUFrameRef& operator = (const GPUFrameRef& o);
-    operator GPUFrameImpl* () const ;
-    GPUFrameImpl* operator -> () const;
-    GPUFrameImpl& operator * () const;
-    operator bool() const;
+
+    inline operator GPUFrameImpl* () const {
+        return ptr;
+    }
+
+    inline GPUFrameImpl* operator -> () const {
+        return ptr;
+    }
+
+    inline GPUFrameImpl& operator * () const {
+        return *ptr;
+    }
+    inline operator bool() const {
+        return ptr && myGpuContextCounter == gpuContextCounter;
+    }
 };
 
 typedef GPUFrameRef GPUFrame;

@@ -12,6 +12,7 @@ ImageRenderable::ImageRenderable(const std::string& uri) {
 
 GPUFrame ImageRenderable::getGPUFrame(float) {
     if(!gpuCache) {
+        L() << "load" << uri;
         gpuCache = image.toGPU();
     }
     return gpuCache;
@@ -80,7 +81,9 @@ void ImageRenderable::prepare() {
     int rotation = 0;
     std::string filepath = parseUri2File(uri, &rotation);
 #ifdef __IOS__
-    getAssetsLibraryImage(filepath.c_str(), this, ::prepareWithFileData);
+    profile(IOS_IMAGE) {
+        getAssetsLibraryImage(filepath.c_str(), this, ::prepareWithFileData);
+    }
     if(!image.image.empty())
         return;
 #endif
