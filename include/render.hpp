@@ -39,7 +39,6 @@ namespace CCPlus {
     // size of pnts must satisfy pnts.size() % 3 = 0
     void fillTriangles(const std::vector<std::pair<float, float>>& pnts);
 
-
     static inline void checkPaused() {
         if(appPaused) {
             throw 0xfff;

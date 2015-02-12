@@ -122,7 +122,9 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
                 ctx->collector->clean(i);
             }
         } catch(int e) {
+            L() << "Render interupted";
             if(e == 0xfff) {
+                L() << "Render paused";
                 GPUFrameCache::clear();
                 do {
                     sleep(1);

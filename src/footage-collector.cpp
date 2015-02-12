@@ -23,13 +23,13 @@ FootageCollector::~FootageCollector() {
     }
 }
 
-void FootageCollector::prepare() {
-    prepareThread = ParallelExecutor::runInNewThread([this] () {
-        this->doPrepare();
+void FootageCollector::prepare(float startTime) {
+    prepareThread = ParallelExecutor::runInNewThread([&] () {
+        doPrepare(startTime);
     });
 }
 
-void FootageCollector::doPrepare() {
+void FootageCollector::doPrepare(float startTime) {
     DependencyWalker dep(*main);
     dep.walkThrough();
 

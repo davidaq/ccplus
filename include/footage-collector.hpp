@@ -13,7 +13,7 @@ public:
     FootageCollector(CCPlus::Composition* main);
     ~FootageCollector();
 
-    void prepare();
+    void prepare(float startTime = 0);
     void stop();
 
     // Clean all footage before @time
@@ -22,7 +22,7 @@ public:
 
     CCPlus::Semaphore signal;
     float renderTime = 0;
-    int windowSize = 1;
+    int windowSize = 2;
 
     //Lock renderTimeLock;
     float finishedTime = 0;
@@ -31,5 +31,5 @@ public:
 
     Lock sync;
 private:
-    void doPrepare();
+    void doPrepare(float startTime);
 };

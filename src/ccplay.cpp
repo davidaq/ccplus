@@ -57,13 +57,13 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
 
             // Make sure buffer is not too big
             if (buffer.size() > BUFFER_DURATION * frameRate) {
-                usleep(5000); // Sleep 5 msecs
+                usleep(10000);
                 continue;
             }
             int targetFrame = buffer.empty() ? currentFrame : (buffer.back()->fid + 1);
 
             if (targetFrame > lastFrame) {
-                usleep(5000);
+                usleep(10000);
                 continue;
             }
 
@@ -88,7 +88,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                 buffer.push(obj);
             }
 
-            usleep(5000); // Sleep 5 msecs
+            usleep(10000);
         }
     });
     play_thread = ParallelExecutor::runInNewThread([key] () {
@@ -151,7 +151,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
                     progressInterface(key, 100.0 * buffer.size() / (1.0 * BUFFER_DURATION * frameRate));
                 }
             }
-            usleep(5000);
+            usleep(10000);
         }
     });
     if (blocking) {

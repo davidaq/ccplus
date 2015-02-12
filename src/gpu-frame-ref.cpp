@@ -77,7 +77,9 @@ GPUFrameImpl& GPUFrameRef::operator * () const {
 GPUFrameRef::operator bool() const {
     if(!ptr)
         return false;
-    if(myGpuContextCounter != gpuContextCounter)
+    if(myGpuContextCounter != gpuContextCounter) {
+        L() << "bad ref";
         return false;
+    }
     return true;
 };
