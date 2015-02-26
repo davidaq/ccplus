@@ -58,7 +58,7 @@ void RenderTarget::stop() {
 
 void RenderTarget::waitFinish() {
     while (isProcessing()) {
-        usleep(100000);
+        usleep(300000);
     }
 }
 
@@ -104,6 +104,7 @@ void CCPlus::go(const RenderTarget& target) {
          * Only this thread will be able to modify @activeTarget
          ************************************/
         render_thread = ParallelExecutor::runInNewThread([] () {
+            THREAD_NAME(Render Control);
             while (true) {
                 renderLock.lock();
                 if (!pendingTarget || activeTarget) {
@@ -144,6 +145,7 @@ void CCPlus::go(const RenderTarget& target) {
                 }
                 // Keep GL context in a seprated thread context
                 pthread_t glThread = ParallelExecutor::runInNewThread([] () {
+                    THREAD_NAME(Render GL Thread);
                     CCPlus::render();
                 });
                 pthread_join(glThread, NULL);

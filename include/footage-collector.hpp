@@ -22,14 +22,12 @@ public:
 
     CCPlus::Semaphore signal;
     float renderTime = 0;
-    int windowSize = 2;
 
     //Lock renderTimeLock;
     float finishedTime = 0;
     CCPlus::Composition* main = 0;
     bool continueRunning = true;
 
-    Lock sync;
 private:
     void doPrepare(float startTime);
 };

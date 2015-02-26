@@ -42,6 +42,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
         delete tmp;
     }
     buffer_thread = ParallelExecutor::runInNewThread([zimDir] () {
+        THREAD_NAME(CCPlay Buffer);
         ScopeHelper SH([]() {
             buffer_thread = 0;
         });
@@ -93,6 +94,7 @@ void CCPlus::CCPlay::play(int key, const char* _zimDir, bool blocking) {
         }
     });
     play_thread = ParallelExecutor::runInNewThread([key] () {
+        THREAD_NAME(CCPlay Display);
         ScopeHelper SH([]() {
             play_thread = 0;
         });

@@ -100,7 +100,7 @@ void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
         renderProgress = (i * 98 / duration) + 1;
         while(continueRunning && ctx->collector->finished() <= i + 0.1) {
             log(logINFO) << "wait --" << ctx->collector->finished();
-            usleep(200000);
+            ctx->collector->signal.wait();
         }
         if (!continueRunning) {
             log(logINFO) << "----Rendering process is terminated!---";

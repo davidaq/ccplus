@@ -86,20 +86,21 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         initContext();
         frameNum = 0;
     }
-    doAppendFrame(frame);
-    return;
+    //doAppendFrame(frame);
+    //return;
     while(true) {
         queueLock.lock();
-        if(queue.size() < 20) {
+        if(queue.size() < 5) {
             queueLock.unlock();
             break;
         }
         queueLock.unlock();
-        usleep(100);
+        queueOutSync.wait();
     }
     queueLock.lock();
     queue.push_back(frame);
     queueLock.unlock();
+    queueInSync.notify();
     if(!workerThread) {
         workerThread = ParallelExecutor::runInNewThread([&] {
             while(true) {
@@ -108,12 +109,13 @@ void VideoEncoder::appendFrame(const Frame& frame) {
                     queueLock.unlock();
                     if(finished)
                         break;
-                    usleep(100);
+                    queueInSync.wait();
                     continue;
                 }
                 Frame iframe = queue.front();
                 queue.pop_front();
                 queueLock.unlock();
+                queueOutSync.notify();
                 doAppendFrame(iframe);
             }
             workerThread = 0;
@@ -394,8 +396,10 @@ void VideoEncoder::finish() {
     if(!ctx)
         return;
     finished = true;
+    queueInSync.discard();
     if(workerThread)
         pthread_join(workerThread, 0);
+    queueOutSync.discard();
     writeVideoFrame(cv::Mat(), true);
     writeAudioFrame(cv::Mat(), true);
     if(0 > av_write_trailer(ctx->ctx)) {

@@ -326,7 +326,7 @@ void VideoDecoder::initContext() {
     if(!avregistered) {
         avregistered = true;
         av_register_all();
-        sleep(1);
+        usleep(100000);
     }
     if(avformat_open_input(&(decodeContext->fmt_ctx), inputFile.c_str(), NULL, NULL) < 0) {
         log(logERROR) << "Faild to open decode context for: " << inputFile;

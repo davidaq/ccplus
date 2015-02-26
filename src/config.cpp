@@ -6,10 +6,12 @@ using namespace CCPlus;
 std::string CCPlus::assetsPath          = "assets";
 std::string CCPlus::outputPath          = "tmp";
 int CCPlus::audioSampleRate             = 44100;
-int CCPlus::collectorThreadsNumber      = 2;
 int CCPlus::frameRate                   = 18;
 int CCPlus::renderMode                  = FINAL_MODE;
-int CCPlus::collectorTimeInterval       = 1;
+
+int CCPlus::collectorThreadsNumber      = 4;
+float CCPlus::collectorTimeInterval     = 0.4;
+int CCPlus::collectorWindowSize         = 5;
 
 
 void CCPlus::setAudioSampleRate(int val) {

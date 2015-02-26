@@ -42,6 +42,7 @@ private:
     pthread_t workerThread = 0;
     void doAppendFrame(const Frame& frame);
     std::list<CCPlus::Frame> queue;
+    CCPlus::Semaphore queueInSync, queueOutSync;
     CCPlus::Lock queueLock;
 #endif
 

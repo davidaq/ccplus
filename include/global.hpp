@@ -45,6 +45,15 @@ namespace CCPlus {
 #include "externals/gl2.h"
 #include "externals/gl2ext.h"
 
+#ifndef __DARWIN__
+#ifdef __OSX__
+#define __DARWIN__
+#endif
+#ifdef __IOS__
+#define __DARWIN__
+#endif
+#endif
+
 #include "config.hpp"
 #include "object.hpp"
 #include "utils.hpp"

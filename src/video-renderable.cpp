@@ -194,7 +194,7 @@ void VideoRenderable::preparePart(float start, float duration) {
                     cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
 #endif
                 profile(decodeImage)
-                while(t > -10 && t * frameRate < fnum + (renderMode == PREVIEW_MODE ? 1.4 : 1))
+                while(t > -10 && t * frameRate < fnum + 1)
                     t = decoder->decodeImage();
                 decoderTime = t;
                 lastImageFrame = fnum;
