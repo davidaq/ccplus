@@ -4,6 +4,7 @@
 #include "context.hpp"
 #include "dependency-walker.hpp"
 #include "parallel-executor.hpp"
+#include "ccplus.hpp"
 
 #include <algorithm>
 
@@ -37,7 +38,7 @@ void FootageCollector::doPrepare(float startTime) {
     int idx = 0;
 
     std::map<std::string, Renderable*>& renderables = Context::getContext()->renderables;
-    float windowDuration = collectorWindowSize * collectorTimeInterval;
+    float windowDuration = collectorWindowSize * collectorTimeInterval * (renderMode == PREVIEW_MODE ? 2 : 1);
     ParallelExecutor executor(collectorThreadsNumber);
     while (finishedTime < main->duration && continueRunning) {
         if (finishedTime - renderTime > windowDuration) {

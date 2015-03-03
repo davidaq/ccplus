@@ -11,7 +11,7 @@ int CCPlus::renderMode                  = FINAL_MODE;
 
 int CCPlus::collectorThreadsNumber      = 4;
 float CCPlus::collectorTimeInterval     = 0.4;
-int CCPlus::collectorWindowSize         = 5;
+int CCPlus::collectorWindowSize         = 3;
 
 
 void CCPlus::setAudioSampleRate(int val) {
