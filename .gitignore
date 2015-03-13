@@ -54,7 +54,6 @@ dependency/
 
 # tmp
 tmp/
-port/
 *undefinedlog
 
 # Test
