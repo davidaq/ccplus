@@ -61,7 +61,7 @@ std::string CCPlus::generateTML(const std::string& configFile, bool halfSize) {
         lua_pushstring(L, readTextAsset("aux_tpl/aux.tml").c_str());
         lua_setglobal(L, "TPL_AUX_JSON");
 
-        lua_pushboolean(L, JSON_BEUTIFY);
+        lua_pushboolean(L, renderFlag & JSON_BEUTIFY);
         lua_setglobal(L, "JSON_BEAUTIFY");
 
         lua_pushboolean(L, halfSize);

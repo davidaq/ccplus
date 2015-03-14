@@ -153,7 +153,7 @@ GPUFrame Layer::getFilteredFrame(float t) {
                     std::vector<float> left = interpolate(k, t - blurTime);
                     params.insert(params.end(), right.begin(), right.end());
                     int d = diff(left, right);
-                    const float& minStep = 0.0005;
+                    const float& minStep = 0.0003;
                     while(d > MAX_BLUR_DIFF && blurTime > minStep) {
                         blurTime /= 2;
                         left = interpolate(k, t - blurTime);
@@ -165,7 +165,7 @@ GPUFrame Layer::getFilteredFrame(float t) {
                             step = minStep;
                         for(float b = step; b < blurTime; b += step) {
                             const std::vector<float>& np = interpolate(k, t - b);
-                            if(diff(left, np) > 5) {
+                            if(diff(left, np) > 4) {
                                 left = np;
                                 static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
                                 params.reserve(params.size() + left.size() + 12);

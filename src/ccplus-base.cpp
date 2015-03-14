@@ -150,12 +150,17 @@ void* beginVideo() {
     if(!stringEndsWith(outfile, ".mp4")) {
         outfile = Context::getContext()->getStoragePath("result.mp4");
     }
-    return new VideoEncoder(outfile, frameRate, 
-            nearestPOT(ctx->mainComposition->width), nearestPOT(ctx->mainComposition->height));
+    float ratio = ctx->mainComposition->width * 1.0 / ctx->mainComposition->height;
+    int w = nearestPOT(ctx->mainComposition->width);
+    int h = (int)(w / ratio);
+    return new VideoEncoder(outfile, frameRate, w, h);
 }
 
 void writeVideo(const Frame& frame, int fn, void* ctx) {
     VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
+    if(!frame.image.empty() && (frame.image.cols != encoder->getWidth() || frame.image.rows != encoder->getHeight())) {
+        cv::resize(frame.image, frame.image, cv::Size(encoder->getWidth(), encoder->getHeight()));
+    }
     encoder->appendFrame(frame);
 }
 

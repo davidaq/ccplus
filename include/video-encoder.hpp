@@ -19,6 +19,13 @@ public:
     // @ finish the encoding, the object should not be used after this
     // will be called on destruct
     void finish();
+    inline int getWidth() const {
+        return width;
+    }
+    inline int getHeight() const {
+        return height;
+    }
+
 private:
 #ifdef NEVER_DEFINED
     const void* encodeContext;

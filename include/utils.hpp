@@ -51,7 +51,7 @@ static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
 }
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
-    int pos = content.rfind(suffix);
+    size_t pos = content.rfind(suffix);
     if(pos < 0)
         return false;
     return pos == (content.length() - suffix.length());
@@ -239,8 +239,11 @@ static inline std::string readTextAsset(const std::string& path) {
 
 // get nearest power of two
 static inline int nearestPOT(const int n, bool larger=false) {
-    if(!USE_POT_TEXTURE)
-        return n;
+    if(!(CCPlus::renderFlag & CCPlus::FORCE_POT)) {
+        if(n < 2048)
+            return n;
+        return 2048;
+    }
     const static int pots[] = {16, 32, 64, 128, 256, 512, 1024, 2048};
     const static int potsN = 8;
     int pd = 0xffff;

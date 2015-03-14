@@ -267,30 +267,28 @@ Frame Frame::compressed(bool slower) const {
         ret.zimCompressedFlag = true;
         ret.image = zimCompressed(70);
     } else {
+        if(renderFlag & LARGE_MEM) {
+            return *this;
+        }
         ret.ext = ext;
         if(!image.empty()) {
             int total = image.total();
             int srcLen = total * 4;
             uint8_t* srcData = image.data;
-            //uint8_t* srcData = new uint8_t[srcLen];
-            //uint8_t* oData = image.data;
-            //for(int i = 0; i < srcLen; i++) {
-            //    int j = (i & 3) * total + (i >> 2);
-            //    srcData[j] = oData[i];
-            //}
             int sz = LZ4_compressBound(srcLen);
             char* dest = new char[sz];
             sz = LZ4_compress((char*)srcData, dest, srcLen);
             ret.image = cv::Mat(1, sz, CV_8U);
             memcpy(ret.image.data, dest, sz);
             delete[] dest;
-            //delete[] srcData;
         }
     }
     return ret;
 }
 
 Frame Frame::decompressed() const {
+    if(!isCompressed())
+        return *this;
     Frame ret;
     if(zimCompressedFlag) {
         ret.readZimCompressed(image);
@@ -299,14 +297,7 @@ Frame Frame::decompressed() const {
             int total = expectedWidth * expectedHeight;
             int sz = total * 4;
             ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
-            //uint8_t* tmp = new uint8_t[sz];
             LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
-            //uint8_t* oData = ret.image.data;
-            //for(int i = 0; i < sz; i++) {
-            //    int j = (i & 3) * total + (i >> 2);
-            //    oData[i] = tmp[j];
-            //}
-            //delete[] tmp;
         }
         ret.ext = ext;
     }
