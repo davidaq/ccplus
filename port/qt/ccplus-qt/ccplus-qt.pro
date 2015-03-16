@@ -109,4 +109,4 @@ INCLUDEPATH += \
     $$PWD/../../../dependency/freetype \
     $$PWD/../../../dependency/opencv/headers
 
-include(linklibs.pro)
+include(platform.pro)

@@ -30,6 +30,7 @@ namespace CCPlus {
         int fps = 18;
         std::string inputPath = "";
         std::string outputPath = "tmp";
+        std::string footageDir = "";
         int mode = FINAL_MODE;
 
         void stop();

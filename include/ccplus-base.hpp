@@ -2,7 +2,7 @@
 
 namespace CCPlus {
     void stop();
-    void initContext(const std::string& tmlPath);
+    void initContext(const std::string& tmlPath, const std::string& footageDir="");
     void releaseContext();
 
     void render();

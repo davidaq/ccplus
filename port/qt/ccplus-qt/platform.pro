@@ -13,3 +13,5 @@ LIBS += \
     $$PWD/../../../dependency/opencv/libs-mac/libopencv_objdetect.a \
     $$PWD/../../../dependency/opencv/libs-mac/libopencv_photo.a \
     $$PWD/../../../dependency/opencv/libs-mac/libzlib.a
+
+DEFINES += __OSX__

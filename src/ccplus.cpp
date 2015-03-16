@@ -1,6 +1,7 @@
 #include "global.hpp"
 #include "ccplus.hpp"
 #include "ccplus-base.hpp"
+#include "context.hpp"
 #include "parallel-executor.hpp"
 
 
@@ -141,7 +142,7 @@ void CCPlus::go(const RenderTarget& target) {
                     }
                 }
                 profile(InitContext) {
-                    CCPlus::initContext(path);
+                    CCPlus::initContext(path, activeTarget.footageDir);
                 }
                 // Keep GL context in a seprated thread context
                 pthread_t glThread = ParallelExecutor::runInNewThread([] () {

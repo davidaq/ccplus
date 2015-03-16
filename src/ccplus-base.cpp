@@ -40,9 +40,9 @@ void CCPlus::stop() {
     continueRunning = false;
 }
 
-void CCPlus::initContext(const std::string& tmlPath) {
+void CCPlus::initContext(const std::string& tmlPath, const std::string& footageDir) {
     if (!continueRunning) return;
-    Context::getContext()->begin(tmlPath);
+    Context::getContext()->begin(tmlPath, footageDir);
 }
 
 void CCPlus::releaseContext() {
