@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
     if(flags.contains("M")) {
         CCPlus::collectorTimeInterval     = 1;
         CCPlus::collectorWindowSize       = 10;
+        CCPlus::collectorThreadsNumber    = 8;
         CCPlus::renderFlag |= CCPlus::LARGE_MEM;
     }
     QApplication app(argc, argv);
