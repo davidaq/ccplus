@@ -52,7 +52,7 @@ static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
     size_t pos = content.rfind(suffix);
-    if(pos < 0)
+    if(pos == std::string::npos)
         return false;
     return pos == (content.length() - suffix.length());
 }

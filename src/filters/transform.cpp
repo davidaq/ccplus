@@ -8,7 +8,7 @@ using namespace cv;
 using namespace CCPlus;
 
 Mat nextTrans(bool isRaw, const std::vector<float> parameters, int& ptr, const GPUFrame& frame, int width, int height, bool& hadRotate) {
-    if(parameters.size() - ptr < 12)
+    if((int)parameters.size() - ptr < 12)
         return Mat();
     Mat finalTrans = (Mat_<float>(4, 4) << 
             frame->ext.scaleAdjustX, 0, 0, 0, 
@@ -16,7 +16,7 @@ Mat nextTrans(bool isRaw, const std::vector<float> parameters, int& ptr, const G
             0, 0, 1, 0,
             0, 0, 0, 1);
     int sbegin = ptr;
-    for (int& set = ptr; set < parameters.size(); set += 12) {
+    for (int& set = ptr; set < (int)parameters.size(); set += 12) {
         bool bad = true;
         for(int i = 0; i < 12; i++) {
             if(Fabs(parameters[i + set]) > 0.0001) {

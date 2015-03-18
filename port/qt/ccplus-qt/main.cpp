@@ -93,5 +93,6 @@ int main(int argc, char *argv[]) {
     t.waitFinish();
     app.exit(0);
     qDebug() << "Elapsed: " << timer.elapsed() * 0.001 << "s";
+    qDebug() << "END";
     return 0;
 }
