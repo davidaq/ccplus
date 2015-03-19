@@ -61,7 +61,7 @@ void VideoEncoder::doAppendFrame(const Frame& frame) {
         img = frame.image;
     writeVideoFrame(img);
     cv::Mat mat = frame.ext.audio;
-    int sz = audioSampleRate / frameRate;
+    size_t sz = audioSampleRate / frameRate;
     if(mat.empty()) {
         mat = cv::Mat(1, sz, CV_16S, cv::Scalar(0));
     } else if(mat.total() != sz) {
@@ -86,8 +86,8 @@ void VideoEncoder::appendFrame(const Frame& frame) {
         initContext();
         frameNum = 0;
     }
-    //doAppendFrame(frame);
-    //return;
+//    doAppendFrame(frame);
+//    return;
     while(true) {
         queueLock.lock();
         if(queue.size() < 5) {
@@ -123,24 +123,48 @@ void VideoEncoder::appendFrame(const Frame& frame) {
     }
 }
 
-void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
-    if(!flush) {
-        cv::Mat frame = image;
-        if(image.cols != width || image.rows != height) {
-            cv::resize(image, frame, cv::Size(width, height));
+void VideoEncoder::flushStream(AVStream* stream) {
+    if (!(stream->codec->codec->capabilities & CODEC_CAP_DELAY))
+        return;
+
+    int gotPacket;
+    while(true) {
+        AVPacket pkt = {0};
+        av_init_packet(&pkt);
+
+        int (*encodeFunc)(AVCodecContext *avctx, AVPacket *avpkt,
+                                  const AVFrame *frame, int *got_packet_ptr);
+        if(stream == ctx->audio_st) {
+            encodeFunc = avcodec_encode_audio2;
+        } else {
+            encodeFunc = avcodec_encode_video2;
         }
-        int linesize = frame.cols * 4;
-        sws_scale(ctx->sws, &frame.data, &linesize,
-                0, frame.rows, ctx->destPic.data, ctx->destPic.linesize);
+        if(0 > encodeFunc(stream->codec, &pkt, NULL, &gotPacket)) {
+            break;
+        }
+        if(gotPacket) {
+            writeFrame(stream, pkt);
+        } else {
+            break;
+        }
     }
+}
+
+void VideoEncoder::writeVideoFrame(const cv::Mat& image) {
+    cv::Mat frame = image;
+    if(image.cols != width || image.rows != height) {
+        cv::resize(image, frame, cv::Size(width, height));
+    }
+    int linesize = frame.cols * 4;
+    sws_scale(ctx->sws, &frame.data, &linesize,
+            0, frame.rows, ctx->destPic.data, ctx->destPic.linesize);
 
     AVPacket pkt = {0};
     av_init_packet(&pkt);
 
     ctx->frame->pts = frameNum;
     int gotPacket;
-    if(0 > avcodec_encode_video2(ctx->video_st->codec, &pkt, 
-                flush ? NULL : ctx->frame, &gotPacket)) {
+    if(0 > avcodec_encode_video2(ctx->video_st->codec, &pkt, ctx->frame, &gotPacket)) {
         fprintf(stderr, "Encode image failed\n");
         return;
     }
@@ -149,43 +173,30 @@ void VideoEncoder::writeVideoFrame(const cv::Mat& image, bool flush) {
     }
 }
 
-void VideoEncoder::writeAudioFrame(const cv::Mat& audio, bool flush) {
-    if(flush) {
-        AVPacket pkt = {0};
-        av_init_packet(&pkt);
-        int gotPacket;
-        if(0 > avcodec_encode_audio2(ctx->audio_st->codec, &pkt, NULL, &gotPacket)) {
-            fprintf(stderr, "Error encoding audio\n");
-            return;
-        }
-        if(gotPacket) {
-            writeFrame(ctx->audio_st, pkt);
-        }
+void VideoEncoder::writeAudioFrame(const cv::Mat& audio) {
+    int income = audio.total() * ctx->bytesPerSample;
+    int audioFrameByteSize = ctx->audioFrameSize * ctx->bytesPerSample;
+    if(ctx->audioPendingBuffLen + income < audioFrameByteSize) {
+        memcpy(ctx->audioPendingBuff + ctx->audioPendingBuffLen, audio.data, income);
+        ctx->audioPendingBuffLen += income;
     } else {
-        int income = audio.total() * ctx->bytesPerSample;
-        int audioFrameByteSize = ctx->audioFrameSize * ctx->bytesPerSample;
-        if(ctx->audioPendingBuffLen + income < audioFrameByteSize) {
-            memcpy(ctx->audioPendingBuff + ctx->audioPendingBuffLen, audio.data, income);
-            ctx->audioPendingBuffLen += income;
-        } else {
-            uint8_t* ptr = audio.data;
-            if(ctx->audioPendingBuffLen > 0) {
-                int d = audioFrameByteSize - ctx->audioPendingBuffLen;
-                memcpy(ctx->audioPendingBuff + ctx->audioPendingBuffLen, audio.data, d);
-                writePartedAudioFrame(ctx->audioPendingBuff);
-                ptr += d;
-                income -= d;
-            }
-            while(income >= audioFrameByteSize) {
-                writePartedAudioFrame(ptr);
-                ptr += audioFrameByteSize;
-                income -= audioFrameByteSize;
-            }
-            if(income > 0) {
-                memcpy(ctx->audioPendingBuff, ptr, income);
-            }
-            ctx->audioPendingBuffLen = income;
+        uint8_t* ptr = audio.data;
+        if(ctx->audioPendingBuffLen > 0) {
+            int d = audioFrameByteSize - ctx->audioPendingBuffLen;
+            memcpy(ctx->audioPendingBuff + ctx->audioPendingBuffLen, audio.data, d);
+            writePartedAudioFrame(ctx->audioPendingBuff);
+            ptr += d;
+            income -= d;
         }
+        while(income >= audioFrameByteSize) {
+            writePartedAudioFrame(ptr);
+            ptr += audioFrameByteSize;
+            income -= audioFrameByteSize;
+        }
+        if(income > 0) {
+            memcpy(ctx->audioPendingBuff, ptr, income);
+        }
+        ctx->audioPendingBuffLen = income;
     }
 }
 
@@ -193,7 +204,7 @@ void VideoEncoder::writePartedAudioFrame(const uint8_t* sampleBuffer) {
     AVPacket pkt = {0};
     av_init_packet(&pkt);
 
-    int nb_samples = ctx->audioFrameSize;
+    size_t nb_samples = ctx->audioFrameSize;
     AVCodecContext* c = ctx->audio_st->codec;
 
     if(ctx->currentAudioBuffSize < nb_samples) {
@@ -400,8 +411,8 @@ void VideoEncoder::finish() {
     if(workerThread)
         pthread_join(workerThread, 0);
     queueOutSync.discard();
-    writeVideoFrame(cv::Mat(), true);
-    writeAudioFrame(cv::Mat(), true);
+    flushStream(ctx->video_st);
+    flushStream(ctx->audio_st);
     if(0 > av_write_trailer(ctx->ctx)) {
         fprintf(stderr, "Error writing trailer\n");
         return;

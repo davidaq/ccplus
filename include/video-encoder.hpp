@@ -34,10 +34,11 @@ private:
     void releaseContext();
 #ifdef __FFMPEG__
     AVStream* initStream(AVCodec*&, enum AVCodecID);
-    void writeVideoFrame(const cv::Mat&, bool flush=false);
-    void writeAudioFrame(const cv::Mat&, bool flush=false);
+    void writeVideoFrame(const cv::Mat&);
+    void writeAudioFrame(const cv::Mat&);
     void writePartedAudioFrame(const uint8_t* sampleBuffer);
     void writeFrame(AVStream* stream, AVPacket& pkt);
+    void flushStream(AVStream* stream);
 #endif
 
     EncodeContext *ctx = 0;
