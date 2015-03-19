@@ -6,18 +6,24 @@ using namespace CCPlus;
 void* ParallelExecutor::executeFunc(void* ctx) {
     ParallelExecutor& executor = *((ParallelExecutor*)ctx);
     while(true) {
-        sem_wait(&executor.listSemaphore);
+        executor.listSemaphore.wait();
         std::function<void() > job;
         bool run = false;
-        pthread_mutex_lock(&executor.jobListLock);
+        executor.jobListLock.lock();
         if(!executor.jobList.empty()) {
             run = true;
             job = executor.jobList.front();
             executor.jobList.pop_front();
         }
-        pthread_mutex_unlock(&executor.jobListLock);
+        executor.jobListLock.unlock();
         if(run) {
+            executor.jobListLock.lock();
+            executor.busyExtraThread++;
+            executor.jobListLock.unlock();
             job();
+            executor.jobListLock.lock();
+            executor.busyExtraThread--;
+            executor.jobListLock.unlock();
         } else if(executor.ended) {
             break;
         }
@@ -27,8 +33,6 @@ void* ParallelExecutor::executeFunc(void* ctx) {
 
 ParallelExecutor::ParallelExecutor(int threadCount) {
     extraThreadsCount = threadCount - 1;
-    pthread_mutex_init(&jobListLock, 0);
-    sem_init(&listSemaphore, 0, 0);
     if(extraThreadsCount > 0) {
         extraThreads = new pthread_t[extraThreadsCount];
         for(int i = 0; i < extraThreadsCount; i++) {
@@ -48,29 +52,53 @@ ParallelExecutor::~ParallelExecutor() {
 
 void ParallelExecutor::execute(std::function<void()> job) {
     bool runNow = false;
-    pthread_mutex_lock(&jobListLock);
+    jobListLock.lock();
     if(jobList.size() < extraThreadsCount * 2) {
         jobList.push_back(job);
-        sem_post(&listSemaphore);
+        listSemaphore.notify();
     } else
         runNow = true;
-    pthread_mutex_unlock(&jobListLock);
+    jobListLock.unlock();
     if(runNow)
         job();
 }
 
-void ParallelExecutor::waitForAll() {
+void ParallelExecutor::waitForAll(bool destroy) {
     if(ended)
         return;
-    ended = true;
-    // Activate other sleeping thread
-    for(int i = 0; i < extraThreadsCount; i++)
-        sem_post(&listSemaphore);
-    // Main thread start running
-    sem_post(&listSemaphore);
-    executeFunc(this);
-    for(int i = 0; i < extraThreadsCount; i++) 
-        pthread_join(extraThreads[i], 0);
+    if(destroy) {
+        ended = true;
+        listSemaphore.discard();
+        executeFunc(this);
+        for(int i = 0; i < extraThreadsCount; i++) 
+            pthread_join(extraThreads[i], 0);
+    } else if(extraThreadsCount > 0){
+        listSemaphore.notifyAll();
+        while(true) {
+            std::function<void() > job;
+            bool run = false;
+            jobListLock.lock();
+            if(!jobList.empty()) {
+                run = true;
+                job = jobList.front();
+                jobList.pop_front();
+            }
+            jobListLock.unlock();
+            if(run) {
+                job();
+            } else {
+                break;
+            }
+        }
+        while(true) {
+            jobListLock.lock();
+            bool busy = busyExtraThread > 0;
+            jobListLock.unlock();
+            if(!busy)
+                break;
+            usleep(10000);
+        }
+    }
 }
 
 pthread_t ParallelExecutor::runInNewThread(std::function<void()> job) {

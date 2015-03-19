@@ -16,15 +16,18 @@
 
 namespace CCPlus {
     cv::Mat readAsset(const char* name);
-    int getImageRotation(const std::string& jpgpath); 
+    int getImageRotation(const uint8_t* data, uint32_t len); 
+    bool hasAudio(const std::string& uri, float start, float duration);
+    bool checkGLError();
+    bool checkGLFramebuffer();
+    bool isGLFramebufferComplete();
 }
 
 static inline double getSystemTime() { 
     // Might not work at multicore situation
     struct timeval now;
     gettimeofday (&now, NULL);
-    long long tmp = now.tv_usec + (uint64_t)now.tv_sec * 1000000;
-    return tmp / 1000000.0;
+    return now.tv_usec / 1000000.0 + now.tv_sec;
 }
 
 inline bool file_exists(const std::string& s) {
@@ -48,8 +51,8 @@ static inline std::string getFormatedTime(const std::string& fmt, int n = 256) {
 }
 
 static inline bool stringEndsWith(std::string content, std::string suffix) {
-    int pos = content.rfind(suffix);
-    if(pos < 0)
+    size_t pos = content.rfind(suffix);
+    if(pos == std::string::npos)
         return false;
     return pos == (content.length() - suffix.length());
 }
@@ -212,16 +215,20 @@ static inline void utf8toWStr(std::wstring& dest, const std::string& src){
 }
 
 static inline void mat3to4(cv::Mat& org) {
-    if (org.channels() == 3) {
-        cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
-        static const int from_to[] = {0, 0, 1, 1, 2, 2};
-        mixChannels(&org, 1, &newimg, 1, from_to, 3);
+    if(org.channels() == 4)
+        return;
+    cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
+    if(org.channels() < 1 || org.channels() > 3) {
         org = newimg;
-    } else if(org.channels() == 1) {
-        cv::Mat newimg = cv::Mat(org.rows, org.cols, CV_8UC4, {0, 0, 0, 255});
-        static const int from_to[] = {0, 0, 0, 1, 0, 2};
-        mixChannels(&org, 1, &newimg, 1, from_to, 3);
+        return;
     }
+    static const int from_to[][6] {
+        {0, 0, 0, 1, 0, 2}, // 1 channel
+        {0, 0, 0, 1, 0, 2}, // 2 channel
+        {0, 0, 1, 1, 2, 2}, // 3 channel
+    };
+    mixChannels(&org, 1, &newimg, 1, from_to[org.channels() - 1], 3);
+    org = newimg;
 }
 
 static inline std::string readTextAsset(const std::string& path) {
@@ -231,9 +238,12 @@ static inline std::string readTextAsset(const std::string& path) {
 }
 
 // get nearest power of two
-static inline int nearestPOT(int n) {
-    if(!USE_POT_TEXTURE)
-        return n;
+static inline int nearestPOT(const int n, bool larger=false) {
+    if(!(CCPlus::renderFlag & CCPlus::FORCE_POT)) {
+        if(n < 2048)
+            return n;
+        return 2048;
+    }
     const static int pots[] = {16, 32, 64, 128, 256, 512, 1024, 2048};
     const static int potsN = 8;
     int pd = 0xffff;
@@ -246,5 +256,14 @@ static inline int nearestPOT(int n) {
             pd = d;
         }
     }
+    if(larger && ret < n)
+        ret *= 2;
     return ret;
 }
+
+static inline float Fabs(float v) {
+    if(v > 0)
+        return v;
+    return -v;
+}
+

@@ -13,22 +13,32 @@ public:
     VideoRenderable(const std::string& uri, bool audioOnly);
     ~VideoRenderable();
 
-    void prepare();
+    void preparePart(float start, float duration);
+    void releasePart(float start, float duration);
     void release();
     float getDuration();
 
     CCPlus::GPUFrame getGPUFrame(float time);
 
 private:
+    std::string path;
     float duration = 999999;
-    bool audioOnly;
-    void preparePart(float start, float duration);
     int time2frame(float time);
-    bool useSlowerCompress = false;
+    bool isUserRes = false;
 
-    VideoDecoder *decoder, *alpha_decoder;
     std::map<int, CCPlus::Frame> framesCache;
     std::map<int, int> frameRefer;
+    std::map<int, int> frameCounter;
     CCPlus::GPUFrame lastFrame;
     int lastFrameNum = 0;
+    int lastFrameImageFrameNum = -1;
+
+    float audioStartTime = -1;
+    float audioEndTime = -1;
+    std::vector<int16_t> audios;
+
+    IVideoDecoderRef decoder;
+    float decoderTime = 0;
+
+    int flags = 0;
 };

@@ -30,56 +30,67 @@ void Object::unretain(Object* obj) {
     retains.erase(obj);
 }
 
-Semaphore::Semaphore(std::string name) {
-#ifdef __OSX__
-    if(name == "") {
-        static int counter = 0;
-        char sname[20];
-        sprintf(sname, "annonymous%d", counter++);
-        name = sname;
-    }
-    name = "CCPLUS_" + name;
-    this->name = name;
-    sem_unlink(name.c_str());
-    sem = sem_open(name.c_str(), O_CREAT, 0655, 0);
+Semaphore::Semaphore() {
+#ifdef __DARWIN__
+    sem = dispatch_semaphore_create(0);
 #else
-    sem = (sem_t*)-1;
+    sem_init(&sem, 0, 0);
 #endif
-    if(sem == (sem_t*)-1) {
-        sem = new sem_t;
-        sem_init(sem, 0, 0);
-        named = false;
-    } else {
-        named = true;
-    }
 }
 
 Semaphore::~Semaphore() {
-#ifdef __OSX__
-    sem_close(sem);
-    sem_unlink(name.c_str());
+    discard();
+}
+
+void Semaphore::discard() {
+    if(discarded)
+        return;
+    discarded = true;
+    notifyAll();
+#ifdef __DARWIN__
+    dispatch_release(sem);
+#else
+    sem_destroy(&sem);
 #endif
-    if(!named && sem && sem != ((sem_t*)-1)) {
-        sem_destroy(sem);
-        delete sem;
-    }
 }
 
 void Semaphore::wait() {
-    usleep(100000);
-    sem_wait(sem);
+    if(discarded)
+        return;
+    lock.lock();
+    waits++;
+    lock.unlock();
+#ifdef __DARWIN__
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+#else
+    sem_wait(&sem);
+#endif
+}
+
+static inline void notify(os_sem_t& sem) {
+#ifdef __DARWIN__
+    dispatch_semaphore_signal(sem);
+#else
+    sem_post(&sem);
+#endif
 }
 
 void Semaphore::notify() {
-    sem_post(sem);
+    lock.lock();
+    if(waits > 0) {
+        waits--;
+        ::notify(sem);
+    }
+    lock.unlock();
 }
 
 void Semaphore::notifyAll() {
-    int waits;
-    sem_getvalue(sem, &waits);
-    while(waits-- > 0) {
-        sem_post(sem);
+    lock.lock();
+    while(waits --> 0) {
+        ::notify(sem);
     }
+    waits = 0;
+    lock.unlock();
 }
 
 Lock::Lock() {
@@ -94,3 +105,14 @@ void Lock::unlock() {
     pthread_mutex_unlock(&mutex);
 }
 
+ScopeHelper::ScopeHelper(std::function<void()> action) {
+    this->action = action;
+}
+
+ScopeHelper::~ScopeHelper() {
+    action();
+}
+
+ScopeHelper::operator bool() {
+    return passed++ == 0;
+}

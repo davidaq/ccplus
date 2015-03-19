@@ -38,6 +38,14 @@ CCPLUS_PROGRAM( filter_transform, "shaders/filters/transform.v.glsl", "shaders/f
     CACHE_UNIFORM(trans);
     CACHE_UNIFORM(src_dst_size);
     CACHE_UNIFORM(zoom);
+    CACHE_UNIFORM(alpha);
+})
+
+CCPLUS_PROGRAM( filter_4corner, "shaders/filters/4corner.v.glsl", "shaders/plain.f.glsl", SETUP_FUNC_DECL {
+    SET_UNIFORM(tex, 0);
+    CACHE_UNIFORM(trans);
+    CACHE_UNIFORM(src_dst_size);
+    CACHE_UNIFORM(transition);
 })
 
 CCPLUS_PROGRAM( filter_4color, "shaders/fill.v.glsl", "shaders/filters/4color.f.glsl", SETUP_FUNC_DECL {
@@ -105,6 +113,12 @@ CCPLUS_PROGRAM( filter_ramp_radial, "shaders/fill.v.glsl", "shaders/filters/ramp
 
 CCPLUS_PROGRAM( alpha_premultiply, "shaders/fill.v.glsl", "shaders/alpha_premultiply.f.glsl", SETUP_FUNC_DECL {
     SET_UNIFORM(tex, 0);
+})
+
+CCPLUS_PROGRAM( motion_blur_acuum, "shaders/fill.v.glsl", "shaders/mtblur.f.glsl", SETUP_FUNC_DECL {
+    SET_UNIFORM(tex_up, 1);
+    SET_UNIFORM(tex_down, 2);
+    CACHE_UNIFORM(ratio);
 })
 
 #undef SETUP_FUNC_DECL

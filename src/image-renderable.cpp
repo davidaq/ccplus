@@ -21,47 +21,43 @@ float ImageRenderable::getDuration() {
     return 100000;
 }
 
-void ImageRenderable::prepare() {
-    if (prepared) {
-        return;
-    }
-    prepared = true;
-    std::string filepath = parseUri2File(uri);
-    Mat org = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
+void ImageRenderable::prepareWithFileData(const uint8_t* data, uint32_t len, int rot) {
+    Mat org = imdecode(std::vector<uint8_t>(data, data + len), CV_LOAD_IMAGE_UNCHANGED);
     if (!org.data) {
-        log(logERROR) << "Could not open or find the image: " << filepath;
+        log(logERROR) << "Could not open or find the image: " << uri;
         return;
     }
-
     mat3to4(org);
-
-    auto rotateCWRightAngle = [&org] (int angle) {
-        if (angle % 90 != 0) {
-            log(logWARN) << "Unexpected rotation angle: " << angle;
-        }
-
-        if (angle == 180) {
-            flip(org, org, -1); 
-        } else if (angle == 90) {
-            transpose(org, org);
-            flip(org, org, 1); 
-        } else if (angle == 270) {
-            transpose(org, org);
-            flip(org, org, 0); 
-        }
-    }; 
-
-    if (stringEndsWith(toLower(filepath), ".jpg")) {
-        try {
-            int degree = getImageRotation(filepath);
-            if (degree == -1) {
-                log(logWARN) << "Failed getting image's rotation angle: " << filepath;
-            } else {
-                rotateCWRightAngle(degree);
+    int degree = 0;
+    try {
+        degree = getImageRotation(data, len);
+        if (degree == -1) {
+            throw "fail";
+        } 
+    } catch (...) {
+        degree = 0;
+        log(logWARN) << "Failed getting image rotationg angle";
+    }
+    try {
+        degree += rot;
+        if(degree != 0) {
+            int angle = degree;
+            if (angle % 90 != 0) {
+                log(logWARN) << "Unexpected rotation angle: " << angle;
             }
-        } catch (...) {
-            log(logWARN) << "Failed getting image rotationg angle";
+
+            if (angle == 180) {
+                flip(org, org, -1); 
+            } else if (angle == 90) {
+                transpose(org, org);
+                flip(org, org, 1); 
+            } else if (angle == 270) {
+                transpose(org, org);
+                flip(org, org, 0); 
+            }
         }
+    } catch (...) {
+        log(logWARN) << "Failed rotating image";
     }
     image.image = org;
 
@@ -73,8 +69,38 @@ void ImageRenderable::prepare() {
     image = image.compressed();
 }
 
+#ifdef __IOS__
+void prepareWithFileData(void* ctx, const uint8_t* data, uint32_t len) {
+    ((ImageRenderable*)ctx)->prepareWithFileData(data, len);
+}
+
+#endif
+void ImageRenderable::prepare() {
+    gpuCache = GPUFrame();
+    int rotation = 0;
+    std::string filepath = parseUri2File(uri, &rotation);
+#ifdef __IOS__
+    profile(IOS_IMAGE) {
+        getAssetsLibraryImage(filepath.c_str(), this, ::prepareWithFileData);
+    }
+    if(!image.image.empty())
+        return;
+#endif
+    FILE* fp = fopen(filepath.c_str(), "rb");
+    if(!fp) 
+        return;
+    fseek(fp, 0, SEEK_END);
+    uint32_t len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    uint8_t* data = new uint8_t[len];
+    fread(data, 1, len, fp);
+    fclose(fp);
+    prepareWithFileData(data, len, rotation);
+    delete[] data;
+}
+
 void ImageRenderable::release() {
-    image.image = cv::Mat();
+    image = Frame();
     gpuCache = GPUFrame();
 }
 

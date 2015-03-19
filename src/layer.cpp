@@ -5,6 +5,7 @@
 #include "renderable.hpp"
 #include "composition.hpp"
 #include "render.hpp"
+#include "ccplus.hpp"
 #include "filter.hpp"
 
 #include "image-renderable.hpp"
@@ -24,7 +25,9 @@ Layer::Layer(
     float _height,
     int _blendMode,
     int _trkMat,
-    bool _showup
+    bool _showup,
+    bool _motionBlur,
+    bool _rawTransform
 ) :
     time(_time),
     duration(_duration),
@@ -33,6 +36,8 @@ Layer::Layer(
     blendMode(_blendMode),
     trkMat(_trkMat),
     show(_showup),
+    motionBlur(_motionBlur),
+    rawTransform(_rawTransform),
     renderableUri(_renderableUri),
     width(_width),
     height(_height)
@@ -105,6 +110,28 @@ std::vector<float> Layer::interpolate(const std::string& name, float time) const
     return ret;
 }
 
+#define MAX_BLUR_DIFF 500
+static inline int diff(const std::vector<float>& a1, const std::vector<float>& a2) {
+    if(a1.size() == a2.size()) {
+        float diff = 0;
+        for(int i = 0, c = a1.size(); i < c; i++) {
+            const float& v = Fabs(a1[i] - a2[i]);
+            const int& j = i % 12;
+            if(j > 8)
+                diff += v * 2;
+            else if(j >5)
+                diff += v;
+            else
+                diff += (int)v;
+            if(diff > MAX_BLUR_DIFF)
+                break;
+        }
+        return diff * 10;
+    } else {
+        return 0xfffffff;
+    }
+}
+
 GPUFrame Layer::getFilteredFrame(float t) {
     if (!visible(t) || !getRenderObject())
         return GPUFrame();
@@ -113,7 +140,48 @@ GPUFrame Layer::getFilteredFrame(float t) {
     if(frame) {
         for (auto& k : (*filterOrder)) {
             if (!properties.count(k)) continue;
-            const auto& params = interpolate(k, t);
+            std::vector<float> params;
+            if(k == "transform") {
+                params = interpolate("opacity", t);
+                params.reserve(26);
+                if(params.empty())
+                    params.push_back(1.0);
+                params.push_back(rawTransform ? 1 : -1);
+                if(motionBlur) {
+                    float blurTime = renderMode == FINAL_MODE ? 0.05 : 0.02;
+                    const std::vector<float>& right = interpolate(k, t);
+                    std::vector<float> left = interpolate(k, t - blurTime);
+                    params.insert(params.end(), right.begin(), right.end());
+                    int d = diff(left, right);
+                    const float& minStep = 0.0003;
+                    while(d > MAX_BLUR_DIFF && blurTime > minStep) {
+                        blurTime /= 2;
+                        left = interpolate(k, t - blurTime);
+                        d = diff(left, right);
+                    }
+                    if(d > 0 && blurTime > minStep) {
+                        float step = blurTime / 20;
+                        if(step < minStep)
+                            step = minStep;
+                        for(float b = step; b < blurTime; b += step) {
+                            const std::vector<float>& np = interpolate(k, t - b);
+                            if(diff(left, np) > 4) {
+                                left = np;
+                                static const float sep[] = {0,0,0,0,0,0,0,0,0,0,0,0};
+                                params.reserve(params.size() + left.size() + 12);
+                                params.insert(params.end(), sep, sep + 12);
+                                params.insert(params.end(), left.begin(), left.end());
+                            }
+                        }
+                    }
+                } else {
+                    std::vector<float> p = interpolate(k, t);
+                    params.reserve(1 + p.size());
+                    params.insert(params.end(), p.begin(), p.end());
+                }
+            } else {
+                params = interpolate(k, t);
+            }
             frame = Filter(k).apply(frame, params, width, height);
         }
     }

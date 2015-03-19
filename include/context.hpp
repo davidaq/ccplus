@@ -5,7 +5,7 @@ class CCPlus::Context : public CCPlus::Object {
 public:
     static Context* getContext();
 
-    void begin(const std::string& tmlPath);
+    void begin(const std::string& tmlPath, const std::string& footageDir="");
     void end();
     
     std::string getFootagePath(const std::string& relativePath);
@@ -14,8 +14,9 @@ public:
     void putRenderable(const std::string& uri, Renderable* renderable);
     Renderable* getRenderable(const std::string& uri);
 
-    std::string tmlDir = "";
+    std::string footageDir = "";
     std::map<std::string, Renderable*> renderables;
+    std::vector<std::pair<float, float> > bgmVolumes; // Time -> volume
 
     Composition* mainComposition;
     FootageCollector* collector = nullptr;

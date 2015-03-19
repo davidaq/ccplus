@@ -8,6 +8,7 @@
 #include "gif-renderable.hpp"
 #include "color-renderable.hpp"
 #include "ccplus.hpp"
+#include "queue"
 
 using namespace CCPlus;
 
@@ -22,16 +23,50 @@ Composition* TMLReader::read(const std::string& s) const {
     fstream.close();
 
     std::string main_name = pt.get<std::string>("main");
-
-    for (auto& child: pt.get_child("compositions")) {
-        ptree& comp = child.second;
-        initComposition(child.first.data(), comp);
+    int fps = pt.get<int>("fps", frameRate);
+    if(renderMode == PREVIEW_MODE) {
+        fps = pt.get<int>("preview_fps", fps);
     }
-
+    setFrameRate(fps);
+    Context* ctx = Context::getContext();
+    try {
+        for (auto& child : pt.get_child("bgm_volume")) {
+            float t = std::atof(child.first.data());
+            float v = std::atof(child.second.data().c_str());
+            ctx->bgmVolumes.push_back(std::make_pair(t, v));
+        }
+    } catch(...) {
+        ctx->bgmVolumes.push_back(std::make_pair(0, 1));
+    }
+    auto pairCompare = [] (const std::pair<float, float>& a, const std::pair<float, float>& b) {
+        return a.first < b.first;
+    };
+    std::sort(ctx->bgmVolumes.begin(), ctx->bgmVolumes.end(), pairCompare);
+    
+    std::queue<std::string> queue;
+    queue.push(main_name);
+    while (!queue.empty()) {
+        std::string name = queue.front();
+        bool ok = initComposition(name, pt.get_child("compositions." + name));
+        queue.pop();
+        if(!ok)
+            continue;
+        for (auto& child : pt.get_child("compositions." + name + ".layers")) {
+            std::string uri = child.second.get("uri", "");
+            if (stringStartsWith(uri, "composition://")) {
+                std::string newname = uri.substr(14);
+                queue.push(newname);
+            }
+        }
+    }
+    
     return (Composition*)Context::getContext()->getRenderable("composition://" + main_name);
 }
 
-void TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
+bool TMLReader::initComposition(const std::string& name, const boost::property_tree::ptree& pt) const {
+    if (Context::getContext()->hasRenderable("composition://" + name)) {
+        return false;
+    }
     Composition* comp = new Composition(
             pt.get("duration", 0.0f),
             pt.get("resolution.width", 0.0),
@@ -44,6 +79,7 @@ void TMLReader::initComposition(const std::string& name, const boost::property_t
     }
 
     Context::getContext()->putRenderable("composition://" + name, comp);
+    return true;
 }
 
 std::map<std::string, Property> TMLReader::readProperties(const boost::property_tree::ptree& pt) const {
@@ -61,47 +97,68 @@ std::map<std::string, Property> TMLReader::readProperties(const boost::property_
     return ret;
 }
 
-std::map<std::string, std::function<Renderable*(const std::string&)> >* _extMap = 0;
 Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int height) const {
     std::string uri = pt.get("uri", "");
     if (!Context::getContext()->hasRenderable(uri)) {
         Renderable* renderable = 0;
         if (stringStartsWith(uri, "xfile://") || stringStartsWith(uri, "file://")) {
-            if(!_extMap)
-                _extMap = new std::map<std::string, std::function<Renderable*(const std::string&)> >();
-            std::map<std::string, std::function<Renderable*(const std::string&)> >& extMap = *_extMap;
-            if(extMap.empty()) {
-                auto imageExt = [](const std::string& uri) {
-                    return new ImageRenderable(uri);
-                };
-                extMap["jpg"]       = imageExt;
-                extMap["png"]       = imageExt;
-                extMap["bmp"]       = imageExt;
-                auto gifExt = [](const std::string& uri) {
-                    return new GifRenderable(uri);
-                };
-                extMap["gif"]       = gifExt;
-                auto audioExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri, true);
-                };
-                extMap["mp3"]       = audioExt;
-                extMap["aac"]       = audioExt;
-                extMap["flac"]      = audioExt;
-                extMap["wav"]       = audioExt;
-                extMap["asf"]       = audioExt;
-                extMap["wma"]       = audioExt;
-                extMap["ogg"]       = audioExt;
-                extMap["rm"]        = audioExt;
-                extMap["caf"]       = audioExt;
-                // Just treat everything else as video
-                auto videoExt = [](const std::string& uri) {
-                    return new VideoRenderable(uri, false);
-                };
-                extMap["default"]   = videoExt;
+            std::map<std::string, std::function<Renderable*(const std::string&)> > extMap;
+            auto imageExt = [](const std::string& uri) {
+                return new ImageRenderable(uri);
+            };
+            extMap["jpg"]       = imageExt;
+            extMap["jpeg"]      = imageExt;
+            extMap["png"]       = imageExt;
+            extMap["bmp"]       = imageExt;
+            auto gifExt = [](const std::string& uri) {
+                return new GifRenderable(uri);
+            };
+            extMap["gif"]       = gifExt;
+            auto audioExt = [](const std::string& uri) {
+                return new VideoRenderable(uri, true);
+            };
+            extMap["mp3"]       = audioExt;
+            extMap["aac"]       = audioExt;
+            extMap["flac"]      = audioExt;
+            extMap["wav"]       = audioExt;
+            extMap["asf"]       = audioExt;
+            extMap["wma"]       = audioExt;
+            extMap["ogg"]       = audioExt;
+            extMap["rm"]        = audioExt;
+            extMap["caf"]       = audioExt;
+            auto videoExt = [](const std::string& uri) {
+                return new VideoRenderable(uri, false);
+            };
+            extMap["mp4"]       = videoExt;
+            extMap["mov"]       = videoExt;
+            extMap["rmvb"]      = videoExt;
+            extMap["flv"]       = videoExt;
+            extMap["f4v"]       = videoExt;
+            extMap["webm"]      = videoExt;
+            extMap["ogv"]       = videoExt;
+            // Unguessable from extension, probe file
+            auto defaultExt = [](const std::string& uri) {
+                Renderable* ret = 0;
+                if(cv::imread(Renderable::parseUri2File(uri)).empty()) {
+                    ret = new VideoRenderable(uri, false);
+                } else {
+                    ret = new ImageRenderable(uri);
+                }
+                return ret;
+            };
+            extMap["default"] = defaultExt;
+
+            std::string ext;
+#ifdef __IOS__
+            const char* alext = assetsLibraryExt(uri.c_str());
+            if(alext)
+                ext = alext;
+#endif
+            if(ext.empty()) {
+                size_t dotPos = uri.find_last_of('.');
+                ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
+                ext = toLower(ext);
             }
-            size_t dotPos = uri.find_last_of('.');
-            std::string ext = dotPos != std::string::npos ? uri.substr(dotPos + 1) : "";
-            ext = toLower(ext);
             
             log(logINFO) << "Got file extention: " << ext;
             if(!extMap.count(ext)) {
@@ -144,7 +201,8 @@ Layer TMLReader::initLayer(const boost::property_tree::ptree& pt, int width, int
     Layer l = Layer(
             uri, pt.get("time", 0.0f), pt.get("duration", 0.0f),
             pt.get("start", 0.0f), pt.get("last", 0.0f), width, height,
-            blendMode, trkMat, showup);
+            blendMode, trkMat, showup, pt.get("motionBlur", false), 
+            pt.get("rawTransform", false));
     l.setProperties(readProperties(pt));
     return l;
 }

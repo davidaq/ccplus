@@ -4,7 +4,10 @@
 #include "frame.hpp"
 
 class CCPlus::GPUFrameImpl : public Object {
+private:
+    uint16_t myGpuContextCounter;
 public:
+    GPUFrameImpl();
     ~GPUFrameImpl();
     // @ return a cpu copy of the frame
     CCPlus::Frame toCPU();

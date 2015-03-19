@@ -3,14 +3,16 @@
 
 using namespace cv;
 using namespace CCPlus;
-using namespace boost;
 
 std::map<CCPlus::GPUFrameCache::Size, std::vector<std::pair<GLuint, GLuint>>> GPUFrameCache::cache;
 
+Lock GPUFrameCache::sync;
+
 GPUFrame GPUFrameCache::alloc(int width, int height) {
     if (width == 0 && height == 0) {
-        return boost::shared_ptr<GPUFrameImpl>(new GPUFrameImpl()); 
+        return GPUFrame(new GPUFrameImpl()); 
     }
+    sync.lock();
     auto* p = &cache[Size(width, height)];
     int sz = p->size();
     if (sz > 0) {
@@ -20,8 +22,10 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
         frame->textureID = (*p)[sz - 1].first;
         frame->fboID = (*p)[sz - 1].second;
         p->pop_back();
-        return boost::shared_ptr<GPUFrameImpl>(frame); 
+        sync.unlock();
+        return GPUFrame(frame);
     } else {
+        sync.unlock();
         GPUFrameImpl* frame = new GPUFrameImpl();
         frame->width = width;
         frame->height = height;
@@ -55,9 +59,15 @@ GPUFrame GPUFrameCache::alloc(int width, int height) {
 }
 
 void GPUFrameCache::reuse(GPUFrameImpl* frame) {
-    cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
+    sync.lock();
+    if(frame && frame->width > 0 && frame->height > 0)
+        cache[Size(frame->width, frame->height)].push_back({frame->textureID, frame->fboID});
+    sync.unlock();
 }
 
 void GPUFrameCache::clear() {
+    sync.lock();
+    gpuContextCounter++;
     cache.clear();
+    sync.unlock();
 }

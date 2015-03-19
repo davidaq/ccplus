@@ -36,9 +36,6 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
      */
     uint32_t jpgLen = NEXT(uint32_t);
     if (jpgLen >= 125) {
-        //image = cv::Mat(height, width, CV_8UC4);
-        //memcpy(image.data, ptr, jpgLen);
-
         vector<unsigned char> jpgBuff(ptr, ptr + jpgLen);
         profile(DecodeImage) {
             image = cv::imdecode(jpgBuff, CV_LOAD_IMAGE_COLOR);
@@ -81,6 +78,14 @@ void Frame::readZimCompressed(const cv::Mat& inData) {
     if(ptr != endOfFile) {
         ext.scaleAdjustX = NEXT(float);
         ext.scaleAdjustY = NEXT(float);
+    }
+    if (ptr != endOfFile) {
+        int16_t tmp = NEXT(int16_t);
+        eov = (tmp == 1 ? true : false);
+    }
+    if (ptr != endOfFile) {
+        float bgm = NEXT(float);
+        this->bgmVolume = bgm;
     }
 }
 
@@ -156,6 +161,12 @@ void Frame::frameCompress(std::function<void(void*, size_t, size_t)> write, int 
     write(&fval, sizeof(float), 1);
     fval = ext.scaleAdjustY;
     write(&fval, sizeof(float), 1);
+
+    int16_t eov_val = (eov == true ? 1 : 0);
+    write(&eov_val, sizeof(int16_t), 1);
+
+    float bgm_val = bgmVolume;
+    write(&bgm_val, sizeof(float), 1);
 }
 
 cv::Mat Frame::zimCompressed(int quality) const {
@@ -256,27 +267,38 @@ Frame Frame::compressed(bool slower) const {
         ret.zimCompressedFlag = true;
         ret.image = zimCompressed(70);
     } else {
+        if(renderFlag & LARGE_MEM) {
+            return *this;
+        }
         ret.ext = ext;
-        int srcLen = image.rows * image.cols * 4;
-        uint8_t* srcData = image.data;
-        int sz = LZ4_compressBound(srcLen);
-        char* dest = new char[sz];
-        sz = LZ4_compress((char*)srcData, dest, srcLen);
-        ret.image = cv::Mat(1, sz, CV_8U);
-        memcpy(ret.image.data, dest, sz);
-        delete[] dest;
+        if(!image.empty()) {
+            int total = image.total();
+            int srcLen = total * 4;
+            uint8_t* srcData = image.data;
+            int sz = LZ4_compressBound(srcLen);
+            char* dest = new char[sz];
+            sz = LZ4_compress((char*)srcData, dest, srcLen);
+            ret.image = cv::Mat(1, sz, CV_8U);
+            memcpy(ret.image.data, dest, sz);
+            delete[] dest;
+        }
     }
     return ret;
 }
 
 Frame Frame::decompressed() const {
+    if(!isCompressed())
+        return *this;
     Frame ret;
     if(zimCompressedFlag) {
         ret.readZimCompressed(image);
     } else {
-        int sz = expectedWidth * expectedHeight * 4;
-        ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
-        LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+        if(!image.empty()) {
+            int total = expectedWidth * expectedHeight;
+            int sz = total * 4;
+            ret.image = cv::Mat(expectedHeight, expectedWidth, CV_8UC4);
+            LZ4_decompress_fast((const char*)image.data, (char*)ret.image.data, sz);
+        }
         ret.ext = ext;
     }
     return ret;

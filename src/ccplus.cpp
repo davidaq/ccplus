@@ -1,246 +1,181 @@
 #include "global.hpp"
 #include "ccplus.hpp"
+#include "ccplus-base.hpp"
 #include "context.hpp"
-#include "footage-collector.hpp"
-#include "composition.hpp"
-#include "video-encoder.hpp"
-#include "gpu-frame.hpp"
-#include "render.hpp"
-#include "profile.hpp"
 #include "parallel-executor.hpp"
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 
-#ifdef TRACE_RAM_USAGE
-#include <mach/mach.h>
-#include <mach/vm_statistics.h>
-#include <mach/mach_types.h> 
-#include <mach/mach_init.h>
-#include <mach/mach_host.h>
-#endif
 
 using namespace CCPlus;
 
-pthread_t render_thread = 0;
-bool continueRunning = false;
-int renderProgress = 0;
-int fakeProgress = 0;
-bool initing = false;
+// The life-cycle of these two object are managed by rendering thread
+Lock renderLock;
+RenderTarget activeTarget(0);
+RenderTarget pendingTarget(0);
 
-void CCPlus::go(const std::string& tmlPath) {
-    initContext(tmlPath);
-    render();
-    waitRender();
-    releaseContext();
+RenderTarget::RenderTarget(int index) {
+    this->index = index;
+    if(index < 0) {
+        static int counter = 1;
+        this->index = counter++;
+    }
 }
 
-void CCPlus::initContext(const std::string& tmlPath) {
-    releaseContext();
-    initing = true;
-    Context::getContext()->begin(tmlPath);
-    renderProgress = 0;
-    fakeProgress = 0;
-    initing = false;
+bool RenderTarget::isActive() const {
+    renderLock.lock();
+    bool ret = (index > 0 && index == activeTarget.index);
+    renderLock.unlock();
+    return ret;
 }
 
-void CCPlus::releaseContext(bool forceClearCache) {
-    while(initing) {
-        sleep(1);
-    }
-    static bool releasingContext = false;
-    Context* ctx = Context::getContext();
-    if(releasingContext) {
-        // Don't do any thing if someone else is calling release
-        // just wait for end instead 
-        while(releasingContext)
-            sleep(1);
-    } else {
-        renderProgress = 0;
-        releasingContext = true;
-        continueRunning = false;
-        waitRender();
-        ctx->end();
-        render_thread = 0;
-        renderProgress = 0;
-        fakeProgress = 0;
-        releasingContext = false;
-    }
-    if(forceClearCache || renderMode != PREVIEW_MODE) {
-        if(releasingContext) {
-            while(releasingContext)
-                sleep(1);
-        } else {
-            releasingContext = true;
-            // Do something
-            releasingContext = false;
-        }
-    }
-    profileFlush;
+bool RenderTarget::isPending() const {
+    renderLock.lock();
+    bool ret = (index > 0 && index == pendingTarget.index);
+    renderLock.unlock();
+    return ret;
 }
 
-typedef void* (*BeginFunc)(void);
-typedef void (*WriteFunc)(const Frame&, int, void* ctx);
-typedef void (*FinishFunc)(void*);
+bool RenderTarget::isProcessing() const {
+    bool ret = true;
+    if(index > 0) {
+        renderLock.lock();
+        ret = index == pendingTarget.index || index == activeTarget.index;
+        renderLock.unlock();
+    }
+    return ret;
+}
 
-void renderAs(BeginFunc beginFunc, WriteFunc writeFuc, FinishFunc finishFunc) {
-    if (render_thread) {
-        log(logERROR) << "Another render context is currently in use! Aborted.";
+void RenderTarget::stop() {
+    if (isActive()) {
+        CCPlus::stop();
         return;
     }
-    if (!Context::getContext()->isActive()) {
-        log(logERROR) << "Context hasn't been initialized! Aborted rendering.";
+    if (isPending()) {
+        renderLock.lock();
+        pendingTarget = 0;
+        renderLock.unlock();
         return;
     }
-    continueRunning = true;
-    render_thread = ParallelExecutor::runInNewThread([beginFunc, writeFuc, finishFunc] () {
-        Context* ctx = Context::getContext();
-        ctx->collector->limit = 5;
-        ctx->collector->prepare();
-        void* glCtx = createGLContext();
-        initGL();
-        float delta = 1.0f / frameRate;
-        float duration = ctx->mainComposition->getDuration();
+}
 
-        ctx->mainComposition->transparent = false;
-        
-        int fn = 0;
+void RenderTarget::waitFinish() {
+    while (isProcessing()) {
+        usleep(300000);
+    }
+}
 
-        void* writeCtx = beginFunc ? beginFunc() : 0;
-        for (float i = 0; i <= duration; i += delta) {
-            renderProgress = (i * 98 / duration) + 1;
-            while(continueRunning && ctx->collector->finished() < i) {
-                log(logINFO) << "wait --" << ctx->collector->finished();
-                usleep(500000);
-            }
-            if (!continueRunning) {
+int RenderTarget::getProgress() const {
+    if(isActive()) {
+        return renderProgress;
+    }
+    return 0;
+}
+
+void RenderTarget::invalidate() {
+    index = 0;
+}
+
+RenderTarget::operator bool() {
+    return index > 0;
+}
+
+RenderTarget& RenderTarget::operator = (int nindex) {
+    index = nindex;
+    return *this;
+}
+
+void CCPlus::go(const std::string& path, int fps) {
+    RenderTarget target;
+    target.inputPath = path;
+    target.fps = fps;
+    go(target);
+    target.waitFinish();
+}
+
+void CCPlus::go(const RenderTarget& target) {
+    if (target.isProcessing()) {
+        return;
+    }
+    activeTarget.stop();
+    renderLock.lock();
+    pendingTarget = target;
+    renderLock.unlock();
+    static pthread_t render_thread = 0;
+    if (!render_thread) {
+        /*************************************
+         * Only this thread will be able to modify @activeTarget
+         ************************************/
+        render_thread = ParallelExecutor::runInNewThread([] () {
+            THREAD_NAME(Render Control);
+            while (true) {
+                renderLock.lock();
+                if (!pendingTarget || activeTarget) {
+                    renderLock.unlock();
+                    break;
+                }
+                activeTarget = pendingTarget;
+                pendingTarget = 0;
+
                 renderProgress = 0;
-                log(logINFO) << "----Rendering process is terminated!---";
-                return;
-            }
-            ctx->collector->limit = i + (renderMode == PREVIEW_MODE ? 7 : 5);
-            GPUFrame frame = ctx->mainComposition->getGPUFrame(i);
-            if(writeFuc)
-                writeFuc(frame->toCPU(), fn++, writeCtx);
-            if(fn & 1) {
-                log(logINFO) << "render frame --" << i << ':' << renderProgress << '%';
-                
-#ifdef TRACE_RAM_USAGE
-                struct task_basic_info t_info;
-                mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-                if (KERN_SUCCESS != task_info(mach_task_self(),
-                    TASK_BASIC_INFO, (task_info_t)&t_info, 
-                    &t_info_count)) {
-                } else
-                    L() << "RAM used:" << (int64_t)t_info.resident_size;
-#endif
+                continueRunning = true;
+                setOutputPath(activeTarget.outputPath);
+                setFrameRate(activeTarget.fps);
+                int mode = activeTarget.mode;
+                setRenderMode(mode);
+                std::string path = activeTarget.inputPath;
+                renderLock.unlock();
 
-                for(auto item = ctx->renderables.begin();
-                        item != ctx->renderables.end(); ) {
-                    Renderable* r = item->second;
-                    if(r && !r->usedFragments.empty() && r->lastAppearTime < i) {
-                        log(logINFO) << "release" << item->first;
-                        r->release();
-                        ctx->renderables.erase(item++);
-                    } else {
-                        item++;
+                copyAssets();
+
+                if(!stringEndsWith(path, ".tml")) {
+                    bool bad = true;
+                    for(int i = 0; i < 5; i++) {
+                        std::string result = generateTML(path, mode==PREVIEW_MODE);
+                        if(result != "<ERROR>") {
+                            path = result;
+                            bad = false;
+                            break;
+                        }
+                        sleep(1);
+                    }
+                    if(bad) {
+                        log(logFATAL) << "Can not generate tml correctly";
                     }
                 }
+                profile(InitContext) {
+                    CCPlus::initContext(path, activeTarget.footageDir);
+                }
+                // Keep GL context in a seprated thread context
+                pthread_t glThread = ParallelExecutor::runInNewThread([] () {
+                    THREAD_NAME(Render GL Thread);
+                    CCPlus::render();
+                });
+                pthread_join(glThread, NULL);
+                releaseContext();
+
+                renderLock.lock();
+                continueRunning = false;
+                activeTarget = 0;
+                renderLock.unlock();
             }
-        }
-        if(finishFunc)
-            finishFunc(writeCtx);
-        destroyGLContext(glCtx);
-        renderProgress = 100;
+            render_thread = 0;
+        });
+    }
+}
+
+namespace CCPlus {
+    bool resuming = false;
+};
+
+void CCPlus::onPause() {
+    appPaused = true;
+    resuming = false;
+}
+
+void CCPlus::onResume() {
+    resuming = true;
+    ParallelExecutor::runInNewThread([] () {
+        usleep(100000);
+        if(resuming)
+            appPaused = false;
     });
-}
-
-void* beginVideo() {
-    Context* ctx = Context::getContext();
-    std::string outfile = outputPath;
-    if(!stringEndsWith(outfile, ".mp4")) {
-        outfile = Context::getContext()->getStoragePath("result.mp4");
-    }
-    return new VideoEncoder(outfile, frameRate, 
-            nearestPOT(ctx->mainComposition->width), nearestPOT(ctx->mainComposition->height));
-}
-
-void writeVideo(const Frame& frame, int fn, void* ctx) {
-    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
-    encoder->appendFrame(frame);
-}
-
-void finishVideo(void* ctx) {
-    VideoEncoder* encoder = static_cast<VideoEncoder*>(ctx);
-    encoder->finish();
-    delete encoder;
-}
-
-void writePreview(const Frame& frame, int fn, void* ctx) {
-    char buf[20];
-    sprintf(buf, "%07d.zim", fn);
-    frame.write(Context::getContext()->getStoragePath(buf));
-}
-
-void CCPlus::render() {
-    if(renderMode == FINAL_MODE) {
-        renderAs(beginVideo, writeVideo, finishVideo);
-    } else {
-        renderAs(0, writePreview, 0);
-    }
-}
-
-int CCPlus::getRenderProgress() {
-    if(fakeProgress < 5)
-        fakeProgress++;
-    return renderProgress * 0.95 + fakeProgress;
-}
-
-void CCPlus::waitRender() {
-    if (!render_thread) return;
-    pthread_join(render_thread, 0);
-}
-
-int CCPlus::numberOfFrames() {
-    Context* ctx = Context::getContext();
-    float d = 1.0 / frameRate;
-    return ctx->mainComposition->getDuration() / d;
-}
-
-void CCPlus::generateCoverImages(const std::string& tmlPath, const std::string& outputPath) {
-    using boost::property_tree::ptree;
-    ptree pt;
-    read_json(tmlPath, pt);
-    int size = 0;
-    for (auto& child : pt.get_child("compositions")) {
-        const std::string& s = child.first.data();
-        if (s[0] == '@' && s.length() > 1) {
-            size++;
-        }
-    }
-
-    std::string dir = dirName(tmlPath);
-
-    for (int i = 0; i < size; i++) {
-        auto& layers = pt.get_child("compositions.#COVER.layers");
-        for (auto& kv : layers) {
-            if (stringStartsWith(kv.second.get("uri", ""), "composition://@")) {
-                kv.second.put("uri", "composition://@" + toString(i));
-            }
-        }
-        pt.put("main", "#COVER");
-        std::ofstream fileStream;
-        fileStream.open(generatePath(dir, "COVER" + toString(i) + ".tml"));
-        write_json(fileStream, pt, true);
-    }
-
-    setOutputPath(outputPath);
-    for (int i = 0; i < size; i++) {
-        initContext(generatePath(dir, "COVER" + toString(i) + ".tml"));
-        render();
-        waitRender();
-        releaseContext();
-        Frame f;
-        f.read(generatePath(outputPath, "0000000.zim"));
-        imwrite(generatePath(outputPath, toString(i) + ".jpg"), f.image);
-    }
 }

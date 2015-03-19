@@ -23,7 +23,9 @@ public:
         float height,
         int blendMode = 0,
         int trkMat = 0,
-        bool showup = true
+        bool showup = true,
+        bool motionBlur = false,
+        bool rawTransform = false
     );
 
     CCPlus::Renderable* getRenderObject(); 
@@ -59,6 +61,7 @@ public:
      */
     bool show = true;
 
+    bool motionBlur = false, rawTransform = false;
     // return a GPUFrame containing the result passed through filters
     GPUFrame getFilteredFrame(float time);
 
@@ -76,4 +79,5 @@ private:
     int width = 0;
     int height = 0;
     std::map<std::string, Property> properties;
+    GPUFrame motionBlurBuffer;
 };

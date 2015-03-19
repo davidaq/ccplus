@@ -1,4 +1,4 @@
-NDK_PATH := /Users/apple/Lib/android-ndk-r9d
+NDK_PATH := /Users/apple/Lib/android-ndk-r10d
 NDK_TOOLCHAIN_PREFIX := ${NDK_PATH}/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-
 ANDROID_SYS_ROOT := ${NDK_PATH}/platforms/android-9/arch-arm/
 NDK_CC:=${NDK_TOOLCHAIN_PREFIX}gcc -isysroot=${ANDROID_SYS_ROOT} \
@@ -20,6 +20,8 @@ NDK_CXX:=${NDK_TOOLCHAIN_PREFIX}g++ -isysroot=${ANDROID_SYS_ROOT} \
 	-O3 -ffast-math 
 
 NDK_AR:=${NDK_TOOLCHAIN_PREFIX}ar
+
+MEVIDEO_PATH := /Users/apple/Desktop/meVideo-iOS
 
 all: todo
 
@@ -49,7 +51,7 @@ make_bin_header:
 	#find res -type f -exec ./tools/make_bin_header.py {} build/{} \;
 
 .dependency:make_bin_header
-	@-./scripts/run load.py
+	#@-./scripts/run load.py
 
 build/Makefile: .dependency
 	-dependency/gyp/gyp ccplus.gyp --depth=. -f make --generator-output=./build -Icommon.gypi
@@ -64,15 +66,22 @@ build/android/_:
 	-touch $@
 
 android_a:build/android/_
-	echo '(echo "\033[1;32m"$$@" \n\033[0m" && $$@) || killall make' > .tmp.sh
-	chmod a+x .tmp.sh
-	find src -type d -exec mkdir -p build/android/{} \;
-	#find src -name \*.cpp -exec "./.tmp.sh" "if [`stat -f %m {}` -gt `stat -f %m build/android/{}.o`];then ${NDK_CXX} {} -c -o build/android/{}.o; fi" \;
-	find src -name \*.cpp -exec "./.tmp.sh" ${NDK_CXX} {} -c -o build/android/{}.o \;
-	find src -name \*.c -exec "./.tmp.sh" ${NDK_CC} {} -c -o build/android/{}.o \;
-	rm -f .tmp.sh
+	@find src -type d -exec mkdir -p build/android/{} \;
+	@find src -name \*.cpp | while read x; do \
+		if [ ! -f "build/android/$$x.o" ] || [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		echo "\033[1;32m"$$x"\033[0m"; \
+		${NDK_CXX} $$x -c -o build/android/$$x.o; \
+		else echo "\033[2;32m"$$x"\033[0m"; \
+		fi;\
+		done
+	@find src -name \*.c | while read x; do \
+		if [ ! -f "build/android/$$x.o" ] || [ `stat -f %m "$$x"` -gt `stat -f %m "build/android/$$x.o"` ];then \
+		echo "\033[1;32m"$$x"\n\033[0m"; \
+		${NDK_CC} $$x -c -o build/android/$$x.o; \
+		fi;\
+		done
 	@echo "\033[1;32mMake static lib\n\033[0m"
-	${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
+	@${NDK_AR} cr build/android/libccplus.a `find build/android/ -type f -name \*.o`
 
 android_so:
 	@echo "\033[1;32mCompile shared library\n\033[0m"
@@ -87,9 +96,11 @@ ios:
 	dependency/gyp/gyp ccplus.gyp --depth=. -f xcode --generator-output=./build/ios -Icommon.gypi -DOS=ios
 	xcodebuild -project build/ios/ccplus.xcodeproj -configuration Release ARCHS='x86_64 i386 armv7 armv7s arm64' IPHONEOS_DEPLOYMENT_TARGET='6.0' -target libccplus
 	mv -f ./build/Release-iphoneos/libccplus.a ./port/iOS/ccplus.framework/ccplus
-	cp -f ./port/iOS/ccplus.framework/ccplus /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.framework/ccplus 
-	rm -r -f /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
-	cp -r -f ./port/iOS/ccplus.bundle /Users/apple/Documents/workspace/MeVideo/meVideo-iOS/dependency/ccplus.bundle
+	cp -f ./port/iOS/ccplus.framework/ccplus ${MEVIDEO_PATH}/dependency/ccplus.framework/ccplus 
+	rm -r -f ${MEVIDEO_PATH}/dependency/ccplus.bundle
+	cp -r -f ./port/iOS/ccplus.bundle ${MEVIDEO_PATH}/dependency/ccplus.bundle
+	cp -f ./include/ccplus.hpp ${MEVIDEO_PATH}/dependency/ccplus.framework/Headers/ccplus.hpp
+	cp -f ./include/ccplay.hpp ${MEVIDEO_PATH}/dependency/ccplus.framework/Headers/ccplay.hpp
 
 test: testbuild
 	./test.sh '*'

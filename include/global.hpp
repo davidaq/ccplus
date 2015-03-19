@@ -3,12 +3,15 @@
 namespace CCPlus {
     class Object;
     class Lock;
+    class ScopeHelper;
     class Semaphore;
     class Context;
     class Layer;
     class Profiler;
     class Logger;
+    class IVideoDecoder;
     class VideoDecoder;
+    class IVideoEncoder;
     class VideoEncoder;
     class ParallelExecutor;
     class TMLReader;
@@ -42,6 +45,15 @@ namespace CCPlus {
 #include "externals/gl2.h"
 #include "externals/gl2ext.h"
 
+#ifndef __DARWIN__
+#ifdef __OSX__
+#define __DARWIN__
+#endif
+#ifdef __IOS__
+#define __DARWIN__
+#endif
+#endif
+
 #include "config.hpp"
 #include "object.hpp"
 #include "utils.hpp"
@@ -49,6 +61,10 @@ namespace CCPlus {
 #include "profile.hpp"
 
 namespace CCPlus {
-    typedef boost::shared_ptr<GPUFrameImpl> GPUFrame;
-}
+    extern bool appPaused;
+    extern uint16_t gpuContextCounter;
+#include "gpu-frame-ref.hpp"
+    typedef boost::shared_ptr<IVideoDecoder> IVideoDecoderRef;
+};
+
 #include "platform.hpp"

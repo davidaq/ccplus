@@ -1,2 +1,3 @@
 #!/bin/bash
-make testbuild && ./build/out/Debug/test --gtest_filter="$1"
+make testbuild && \
+    lldb -f ./build/out/Debug/test -o 'run --gtest_filter="'$1'"'

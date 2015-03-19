@@ -110,8 +110,7 @@ l_noret luaD_throw (lua_State *L, int errcode) {
     if (G(L)->mainthread->errorJmp) {  /* main thread has a handler? */
       setobjs2s(L, G(L)->mainthread->top++, L->top - 1);  /* copy error obj. */
       luaD_throw(G(L)->mainthread, errcode);  /* re-throw in main thread */
-    }
-    else {  /* no handler at all; abort */
+    }else {  /* no handler at all; abort */
       if (G(L)->panic) {  /* panic function? */
         lua_unlock(L);
         G(L)->panic(L);  /* call it (last chance to jump out) */

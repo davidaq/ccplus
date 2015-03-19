@@ -4,7 +4,14 @@
 #include <iostream>
 #include <set>
 #include <pthread.h>
+
+#ifdef __DARWIN__
+#include <dispatch/dispatch.h>
+#define os_sem_t dispatch_semaphore_t
+#else
 #include <semaphore.h>
+#define os_sem_t sem_t
+#endif
 
 class CCPlus::Lock {
 public:
@@ -15,17 +22,30 @@ private:
     pthread_mutex_t mutex;
 };
 
+class CCPlus::ScopeHelper {
+public:
+    ScopeHelper(std::function<void()> action);
+    ~ScopeHelper();
+    operator bool();
+private:
+    std::function<void()> action;
+    int passed = 0;
+};
+
+
 class CCPlus::Semaphore {
 public:
-    Semaphore(std::string name = "");
+    Semaphore();
     ~Semaphore();
     void wait();
     void notify();
     void notifyAll();
+    void discard();
 private:
-    sem_t* sem;
-    bool named;
-    std::string name;
+    Lock lock;
+    bool discarded = false;
+    int waits = 0;
+    os_sem_t sem;
 };
 
 class CCPlus::Object {
@@ -40,3 +60,4 @@ private:
     Object* retainer = 0;
     std::set<Object*> retains;
 };
+

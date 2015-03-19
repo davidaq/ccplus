@@ -3,13 +3,21 @@
  */
 var Export = function() {
     this.comp = {};
+    this.asis = confirm("Export AS IS?\nExport as is will not process comps with @ or #", false, "Export as is?");
     for(var i = 1; i <= app.project.numItems; i++) {
         var item = app.project.item(i);
         if('[object CompItem]' == item.toString()) {
-            if(this.comp[item.name] && item.name[0] != '@' && item.name != '#+1') {
-                throw "Duplicate composition name: " + item.name;
+            if(this.comp[item.name]) { 
+                if(this.asis) {
+                    this.comp[item.name + '???' + i] = item;
+                    item.ccname = item.name + '???' + i;
+                    continue;
+                } else if (item.name[0] != '@' && item.name != '#+1') {
+                    throw "Duplicate composition name: " + item.name;
+                }
             }
             this.comp[item.name] = item;
+            item.ccname = item.name;
         }
     }
 };
@@ -22,11 +30,15 @@ Export.prototype.exportTo = function(filePath) {
     this.colors = {};
     try {
         this.exportList = [];
-        if(this.comp.MAIN)
+        if(!this.asis) {
+            for(var k in this.comp) {
+                if(k[0] == '#') {
+                    this.exportList.push(k);
+                }
+            }
+        }
+        if(this.comp.MAIN) {
             this.exportList = ['MAIN'];
-        for(var k in this.comp) {
-            if(k[0] == '#')
-                this.exportList.push(k);
         }
         if(this.exportList.length <= 0) {
             throw "Main or scene compositions doesn't exist";
@@ -34,20 +46,24 @@ Export.prototype.exportTo = function(filePath) {
         this.exported = {};
         this.compsCount = 0;
         for(var k in this.exportList) {
-            this.compsCount += this.getCompsCount(this.comp[this.exportList[k]]);
+            var cname = this.exportList[k];
+            this.compsCount += this.getCompsCount(this.comp[cname], cname);
         }
-        this.exported = {'@':true,'#+1':true};
+        if(!this.asis)
+            this.exported = {'@':true,'#+1':true};
+        else
+            this.exported = {};
         this.exportedCount = 0;
         this.tmlFile.write('{"version":0.01,"main":"MAIN","compositions":{');
         var comma = false;
         while(this.exportList.length > 0) {
             var compName = this.exportList.pop();
-            if(this.exported[compName]||compName[0]=='@')
+            if(this.exported[compName]||(!this.asis && compName[0]=='@'))
                 continue;
             if(comma)
                 this.tmlFile.write(',');
             comma = true;
-            var expComp = this.exportComp(this.comp[compName]);
+            var expComp = this.exportComp(this.comp[compName], compName);
             this.tmlFile.write('"' + compName +'":');
             this.tmlFile.write(obj2str(expComp));
             log('  Write comp');
@@ -58,25 +74,29 @@ Export.prototype.exportTo = function(filePath) {
     }
     alert('Export Done!');
 };
-Export.prototype.getCompsCount = function(comp) {
-    if(this.exported[comp.name] || comp.name[0] == '@' || comp.name == '#+1')
+Export.prototype.getCompsCount = function(comp, compname) {
+    if(this.exported[compname])
         return 0;
-    this.exported[comp.name] = true;
+    if(!this.asis) {
+        if(compname[0] == '@' || compname == '#+1')
+            return 0;
+    }
+    this.exported[compname] = true;
     var count = 1;
     for(var i = 1; i <= comp.layers.length; i++) {
         var layer = comp.layers[i];
         if(layer && layer.source && '[object CompItem]' == layer.source.toString()) {
-            count += this.getCompsCount(this.comp[layer.source.name]);
+            count += this.getCompsCount(this.comp[layer.source.ccname]);
         }
     }
     return count;
 };
-Export.prototype.exportComp = function(comp) {
-    if(this.exported[comp.name])
+Export.prototype.exportComp = function(comp, compname) {
+    if(this.exported[compname])
         return NULL;
-    this.exported[comp.name] = true;
-    log('Export Comp: ' + comp.name);
-    setProgressStatus('Composition: ' + comp.name);
+    this.exported[compname] = true;
+    log('Export Comp: ' + compname);
+    setProgressStatus('Composition: ' + compname);
     var ret = {};
     ret.resolution = {
         width: comp.width,
@@ -109,8 +129,8 @@ Export.prototype.exportLayer = function(layer) {
         type = layer.toString();
     log('    Layer type: ' + type)
     if('[object CompItem]' == type) {
-        this.exportList.push(source.name);
-        ret.uri = 'composition://' + source.name;
+        this.exportList.push(source.ccname);
+        ret.uri = 'composition://' + source.ccname;
     } else if('[object FootageItem]' == type) {
         var path;
         if(!source.file) {
@@ -199,11 +219,12 @@ Export.prototype.exportLayer = function(layer) {
 
     ret.trkMat = layer.trackMatteType % 10 - 2;
     ret.visible = layer.enabled ? 1 : 0;
-    ret.blend = blendingModes[layer.blendingMode];
+    ret.blend = blendingModes[layer.blendingMode % 100];
     ret.time = layer.inPoint;
     ret.duration = layer.outPoint - layer.inPoint;
     ret.start = layer.inPoint - layer.startTime;
     ret.last = ret.duration;
+    ret.motionBlur = layer.motionBlur;
     ret.properties = {};
     var defaultFilter = function () {
         var ret = [];

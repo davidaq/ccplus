@@ -17,12 +17,15 @@ Context* Context::getContext() {
     return singleton;
 }
 
-void Context::begin(const std::string& tmlPath) {
+void Context::begin(const std::string& tmlPath, const std::string& footageDir) {
     if(active) {
         log(logFATAL) << "Previous context still active, context begin failed";
         return;
     }
-    this->tmlDir = dirName(tmlPath);
+    if(footageDir.empty())
+        this->footageDir = dirName(tmlPath);
+    else
+        this->footageDir = footageDir;
     
     TMLReader reader;
     profile(TMLRead) {
@@ -31,6 +34,8 @@ void Context::begin(const std::string& tmlPath) {
     collector = new FootageCollector(mainComposition);
     flags.clear();
     active = true;
+
+    std::srand(1421121622);
 }
 
 void Context::end() {
@@ -42,6 +47,7 @@ void Context::end() {
     deleteRetained();
     GPUFrameCache::clear();
     GLProgramManager::getManager()->clean();
+    bgmVolumes.clear();
     active = false;
 }
 
@@ -50,7 +56,7 @@ std::string Context::getStoragePath(const std::string& relativePath) {
 }
 
 std::string Context::getFootagePath(const std::string& relativePath) {
-    return generatePath(this->tmlDir, relativePath);
+    return generatePath(this->footageDir, relativePath);
 }
 
 bool Context::hasRenderable(const std::string& uri) {

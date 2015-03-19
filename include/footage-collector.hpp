@@ -6,28 +6,28 @@
  * Calculate dependency 
  * Use multi-thread to prepare footages
  * Return finished time point
+ * Release footage based on render progress.
  */
-namespace CCPlus {
-    class CollectorThread;
-}
 class CCPlus::FootageCollector : public CCPlus::Object {
 public:
     FootageCollector(CCPlus::Composition* main);
     ~FootageCollector();
 
-    void prepare();
+    void prepare(float startTime = 0);
     void stop();
-    // Return the time point before that all preparation was done
+
+    // Clean all footage before @time
+    void clean(float time);
     float finished();
 
     CCPlus::Semaphore signal;
-    float* finishedTime;
-    CollectorThread** threads;
-    CCPlus::Composition* main = 0;
-    Renderable** sortedList = 0;
-    int sortedListPtr;
+    float renderTime = 0;
 
-    // wait if prepared over limit
-    float limit;
-    Lock sync;
+    //Lock renderTimeLock;
+    float finishedTime = 0;
+    CCPlus::Composition* main = 0;
+    bool continueRunning = true;
+
+private:
+    void doPrepare(float startTime);
 };

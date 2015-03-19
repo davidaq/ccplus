@@ -2,11 +2,22 @@
 #include "video-decoder.hpp"
 #include "global.hpp"
 #include "utils.hpp"
+#include "ccplus.hpp"
 #include <stdlib.h>
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
+#ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN -0x7fffffffffffffffLL
+#endif
+#ifndef INT64_MAX
+#define INT64_MAX 0x7fffffffffffffffLL
+#endif
 extern "C" {
     #include <libavutil/imgutils.h>
     #include <libavutil/samplefmt.h>
@@ -60,16 +71,16 @@ VideoInfo VideoDecoder::getVideoInfo() {
     return decodeContext->info;
 }
 
-void VideoDecoder::seekTo(float time) {
-    if (decoderFlag & DECODE_VIDEO) {
-        initContext();
-        if(invalid) return;
-        cursorTime = time;
-        time -= 1;
-        if(time < 1) {
-            time = 0;
-        }
-        av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+void VideoDecoder::seekTo(float time, bool realSeek) {
+    initContext();
+    if(invalid) return;
+    if(time < 0) {
+        time = 0;
+    }
+    cursorTime = time;
+    if(realSeek) {
+        //av_seek_frame(decodeContext->fmt_ctx, -1, time * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD);
+        avformat_seek_file(decodeContext->fmt_ctx, -1, INT64_MIN, time * AV_TIME_BASE, INT64_MAX, 0);
     }
 }
 
@@ -91,21 +102,26 @@ bool VideoDecoder::readNextFrameIfNeeded() {
 }
 
 float VideoDecoder::decodeImage() {
-    bool prevHaveDecodedeImageState = haveDecodedImage;
+    initContext();
+    if(invalid || !(decoderFlag & DECODE_VIDEO))
+        return -100;
     haveDecodedImage = false;
     if(decodedImage)
         delete decodedImage;
     decodedImage = 0;
     float retTime = -1;
     int brutal = 10;
-    while(!haveDecodedImage && brutal > 0) {
-        if(!readNextFrameIfNeeded())
+    int atemptLimit = 30;
+    while(!haveDecodedImage && brutal > 0 && atemptLimit-->0) {
+        if(!readNextFrameIfNeeded()) {
             brutal--;
+            atemptLimit++;
+        }
         if (decodeContext->pkt.stream_index == decodeContext->video_stream_idx) {
             int gotFrame = 0;
             int ret = avcodec_decode_video2(decodeContext->video_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
             if(ret < 0)
-                return -1;
+                return -100;
             if(gotFrame) {
                 retTime = av_rescale_q(av_frame_get_best_effort_timestamp(decodeContext->frame), 
                                         decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
@@ -128,27 +144,37 @@ float VideoDecoder::decodeImage() {
         }
     }
     if(brutal <= 0) {
-        return -1;
+        return -100;
     }
     cursorTime = retTime;
     return retTime;
 }
 
-Frame VideoDecoder::getDecodedImage() {
+Frame VideoDecoder::getDecodedImage(int maxSize) {
     if(!haveDecodedImage) {
         return Frame();
     } else if(!decodedImage) {
+        int sw = decodeContext->frame->width;
+        int sh = decodeContext->frame->height;
+        int tw = sw;
+        int th = sh;
+        if(tw > maxSize)
+            tw = maxSize;
+        if(th > maxSize)
+            th = maxSize;
+        tw = nearestPOT(tw);
+        th = nearestPOT(th);
         if(!decodeContext->swsContext) {
-            decodeContext->swsContext = sws_getContext(decodeContext->info.width, decodeContext->info.height, 
-                                            decodeContext->video_dec_ctx->pix_fmt,
-                                            decodeContext->info.width, decodeContext->info.height,
-                                            PIX_FMT_BGRA, SWS_POINT, NULL, NULL, NULL);
-            decodeContext->imagebuff.linesize[0] = decodeContext->info.width * 4;
-            decodeContext->imagebuff.data[0] = (uint8_t*)malloc(decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
+            decodeContext->swsContext = sws_getContext(sw, sh, 
+                        decodeContext->video_dec_ctx->pix_fmt,
+                        tw, th, PIX_FMT_BGRA,
+                        renderMode == PREVIEW_MODE ? SWS_POINT : SWS_FAST_BILINEAR, 
+                        NULL, NULL, NULL);
+            decodeContext->imagebuff.linesize[0] = tw * 4;
         }
-        sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 0, decodeContext->info.height, decodeContext->imagebuff.data, decodeContext->imagebuff.linesize);
-        cv::Mat data = cv::Mat(decodeContext->info.height, decodeContext->info.width, CV_8UC4);
-        memcpy(data.data, decodeContext->imagebuff.data[0], decodeContext->imagebuff.linesize[0] * decodeContext->info.height);
+        cv::Mat data = cv::Mat(th, tw, CV_8UC4);
+        sws_scale(decodeContext->swsContext, decodeContext->frame->data, decodeContext->frame->linesize, 
+                0, sh, &(data.data), decodeContext->imagebuff.linesize);
         if(decodeContext->rotate) {
             switch(decodeContext->rotate) {
             case 180:
@@ -165,120 +191,98 @@ Frame VideoDecoder::getDecodedImage() {
         }
         decodedImage = new Frame();
         decodedImage->image = data;
+        decodedImage->ext.scaleAdjustX = decodeContext->info.rwidth * 1.0 / data.cols;
+        decodedImage->ext.scaleAdjustY = decodeContext->info.rheight * 1.0 / data.rows;
     }
     return *decodedImage;
 }
 
-int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float duration, float &start, float &gap) {
+int VideoDecoder::decodeAudioFrame(std::function<void(const void*, size_t, size_t)> output, float& retTime) {
     int gotFrame = 0;
     int ret = avcodec_decode_audio4(decodeContext->audio_dec_ctx, decodeContext->frame, &gotFrame, &(decodeContext->pkt));
     if(ret < 0)
         return -1;
     if(gotFrame) {
-        float retTime = av_rescale_q(av_frame_get_best_effort_timestamp(decodeContext->frame), 
-                                decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
-                                AV_TIME_BASE_Q)
-                    * 0.000001;
-        if(retTime + 0.01 >= cursorTime) {
-            cursorTime = retTime;
-            if(gap < 0)
-                gap = (cursorTime - start) / 3;
-            AVCodecContext *dec = decodeContext->audio_stream->codec;
-            if(!decodeContext->swrContext) {
-                decodeContext->swrContext = swr_alloc();
+        retTime = av_rescale_q(
+            av_frame_get_best_effort_timestamp(decodeContext->frame), 
+            decodeContext->fmt_ctx->streams[decodeContext->pkt.stream_index]->time_base, 
+            AV_TIME_BASE_Q) * 0.000001;
+        if(retTime + 0.5 < cursorTime) {
+            retTime = -1; 
+            return ret;
+        }
+        cursorTime = retTime;
+        AVCodecContext *dec = decodeContext->audio_stream->codec;
+        if(!decodeContext->swrContext) {
+            decodeContext->swrContext = swr_alloc();
 
-                av_opt_set_int(decodeContext->swrContext, "in_channel_layout", dec->channel_layout, 0);
-                av_opt_set_int(decodeContext->swrContext, "in_sample_rate", dec->sample_rate, 0);
-                av_opt_set_sample_fmt(decodeContext->swrContext, "in_sample_fmt", dec->sample_fmt, 0);
+            av_opt_set_int(decodeContext->swrContext, "in_channel_layout", dec->channel_layout, 0);
+            av_opt_set_int(decodeContext->swrContext, "in_sample_rate", dec->sample_rate, 0);
+            av_opt_set_sample_fmt(decodeContext->swrContext, "in_sample_fmt", dec->sample_fmt, 0);
 
-                av_opt_set_int(decodeContext->swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
-                av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::audioSampleRate, 0);
-                av_opt_set_sample_fmt(decodeContext->swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+            av_opt_set_int(decodeContext->swrContext, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
+            av_opt_set_int(decodeContext->swrContext, "out_sample_rate", CCPlus::audioSampleRate, 0);
+            av_opt_set_sample_fmt(decodeContext->swrContext, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
-                if(swr_init(decodeContext->swrContext) < 0) {
-                    log(logERROR) << "Can't init SWResample context";
-                    return -1;
-                }
-            }
-            int dst_nb_samples = av_rescale_rnd(0
-                    + decodeContext->frame->nb_samples, CCPlus::audioSampleRate, dec->sample_rate, AV_ROUND_UP);
-            if(dst_nb_samples > decodeContext->swrDestSamples) {
-                decodeContext->swrDestSamples = dst_nb_samples;
-                int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);
-                if(decodeContext->swrDestBuffer)
-                    av_free(decodeContext->swrDestBuffer[0]);
-                int res = av_samples_alloc_array_and_samples(
-                        &(decodeContext->swrDestBuffer), &(decodeContext->swrLinesize), dst_nb_channels, dst_nb_samples, AV_SAMPLE_FMT_S16, 0);
-                if(res < 0) {
-                    log(logERROR) << "Failed to alloc memory";
-                    return -1;
-                }
-            }
-            size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-            swr_convert(decodeContext->swrContext, decodeContext->swrDestBuffer, unpadded_linesize,
-                    (const uint8_t**)(decodeContext->frame->extended_data), decodeContext->frame->nb_samples);
-            output(decodeContext->swrDestBuffer[0], 1, unpadded_linesize);
-            if(duration > 0 && cursorTime - start - gap > duration){
-                return -5;
+            if(swr_init(decodeContext->swrContext) < 0) {
+                log(logERROR) << "Can't init SWResample context";
+                return -1;
             }
         }
+        int dst_nb_samples = av_rescale_rnd(0
+                + decodeContext->frame->nb_samples, CCPlus::audioSampleRate, dec->sample_rate, AV_ROUND_UP);
+        if(dst_nb_samples > decodeContext->swrDestSamples) {
+            decodeContext->swrDestSamples = dst_nb_samples;
+            int dst_nb_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_MONO);
+            if(decodeContext->swrDestBuffer)
+                av_free(decodeContext->swrDestBuffer[0]);
+            int res = av_samples_alloc_array_and_samples(
+                    &(decodeContext->swrDestBuffer), &(decodeContext->swrLinesize), dst_nb_channels, dst_nb_samples, AV_SAMPLE_FMT_S16, 0);
+            if(res < 0) {
+                log(logERROR) << "Failed to alloc memory";
+                return -1;
+            }
+        }
+        size_t unpadded_linesize = dst_nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+        swr_convert(decodeContext->swrContext, decodeContext->swrDestBuffer, unpadded_linesize,
+                (const uint8_t**)(decodeContext->frame->extended_data), decodeContext->frame->nb_samples);
+        output(decodeContext->swrDestBuffer[0], 1, unpadded_linesize);
     }
     return ret;
 }
 
-void VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
-    float start = cursorTime;
-    float gap = -1;
+float VideoDecoder::decodeAudio(std::function<void(const void*, size_t, size_t)> output, float duration) {
     bool goon = true;
+    float realStart = -1;
+    float ctime = -1;
     while(goon && readNextFrameIfNeeded()) {
         if (decodeContext->pkt.stream_index == decodeContext->audio_stream_idx) {
             do {
-                int ret = decodeAudioFrame(output, duration, start, gap);
-                goon = ret > 0;
+                int ret = decodeAudioFrame(output, ctime);
+                if(realStart < 0)
+                    realStart = ctime;
+                if(ret < 0)
+                    break;
                 decodeContext->pkt.data += ret;
                 decodeContext->pkt.size -= ret;
-            } while(goon && decodeContext->pkt.size > 0);
+            } while(decodeContext->pkt.size > 0);
         }
-        //av_free_packet(&(decodeContext->currentPkt));
+        if(realStart >= 0 && ctime - realStart > duration)
+            goon = false;
+        av_free_packet(&(decodeContext->currentPkt));
         decodeContext->haveCurrentPkt = false;
     }
+    return realStart;
 }
 
-void VideoDecoder::decodeAudio(const std::string& outputFile, float duration) {
-    if(!(decoderFlag & DECODE_AUDIO)) {
-        return;
-    }
-    initContext();
-    if(invalid) return;
-    FILE* destFile = fopen(outputFile.c_str(), "wb");
-    if(!destFile)
-        return;
-    decodeAudio(destFile, duration);
-    fclose(destFile);
-}
-
-void VideoDecoder::decodeAudio(FILE* destFile, float duration) {
-    auto output = 
-        [&destFile] (const void* buffer, size_t size, size_t count) {
-        fwrite(buffer, size, count, destFile);    
-    };
-    decodeAudio(output, duration);
-}
-
-std::vector<int16_t> VideoDecoder::decodeAudio(float duration) {
-    std::vector<int16_t> ret;
-    decodeAudio(ret, duration);
-    return ret;
-}
-
-void VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
+float VideoDecoder::decodeAudio(std::vector<int16_t>& ret, float duration) {
     auto output = [&ret] (const void* buffer, size_t size, size_t count) {
         // 2 bytes per int16_t
         for (int i = 0; i < count / 2; i++) {
             ret.push_back(((int16_t*) buffer)[i]);
         }
     };
-    decodeAudio(output, duration);
+    return decodeAudio(output, duration);
 }
 
 static int open_codec_context(int *stream_idx,
@@ -322,7 +326,7 @@ void VideoDecoder::initContext() {
     if(!avregistered) {
         avregistered = true;
         av_register_all();
-        sleep(1);
+        usleep(100000);
     }
     if(avformat_open_input(&(decodeContext->fmt_ctx), inputFile.c_str(), NULL, NULL) < 0) {
         log(logERROR) << "Faild to open decode context for: " << inputFile;
@@ -350,7 +354,6 @@ void VideoDecoder::initContext() {
         decodeContext->info.height = decodeContext->video_dec_ctx->height;
         decodeContext->info.rheight = decodeContext->video_dec_ctx->height;
         
-        
         AVDictionaryEntry *tag = NULL;
         tag = av_dict_get(decodeContext->video_stream->metadata, "rotate", tag, AV_DICT_MATCH_CASE);
         if(tag) {
@@ -366,6 +369,7 @@ void VideoDecoder::initContext() {
         decodeContext->audio_stream = decodeContext->fmt_ctx->streams[decodeContext->audio_stream_idx];
         decodeContext->audio_dec_ctx = decodeContext->audio_stream->codec;
     }
+
     if (!decodeContext->audio_stream && !decodeContext->video_stream) {
         releaseContext();
         return;
@@ -397,7 +401,7 @@ void VideoDecoder::releaseContext() {
         av_frame_free(&decodeContext->frame);
     if(decodeContext->swsContext) {
         sws_freeContext(decodeContext->swsContext);
-        free(decodeContext->imagebuff.data[0]);
+        //free(decodeContext->imagebuff.data[0]);
         decodeContext->swsContext = 0;
     }
     if(decodeContext->swrContext) {
@@ -414,3 +418,15 @@ void VideoDecoder::releaseContext() {
     cursorTime = -1;
 }
 
+#ifdef __IOS__
+#include "video-decoder-ios.hpp"
+#endif
+
+IVideoDecoderRef CCPlus::openDecoder(std::string uri, int flags, bool isUser) {
+#ifdef __IOS__
+    if(isUser || stringEndsWith(uri, ".mp4")) {
+        return IVideoDecoderRef(new VideoDecoderIOS(uri));
+    }
+#endif
+    return IVideoDecoderRef(new VideoDecoder(uri, flags));
+}

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "ccplus.hpp"
+#include "ccplay.hpp"
 #include "global.hpp"
 
 using namespace CCPlus;
@@ -12,24 +13,44 @@ TEST(Integration, Simple) {
     CCPlus::go("test/res/test2.tml");
 }
 
-extern "C" {
-    void CCPLUS_TEST(const char* _opos);
-}
-TEST(Integration, Shaders) {
-    CCPLUS_TEST("tmp/");
-}
-
 TEST(Integration, Stop) {
-    CCPlus::initContext("test/res/test2.tml");
-    CCPlus::render();
-    CCPlus::render();
+    CCPlus::RenderTarget target;
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
+    sleep(3);
+    target.stop();
+    target.waitFinish();
+}
 
-    sleep(2);
+TEST(Integration, Repeat) {
+    CCPlus::RenderTarget target;
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
+    CCPlus::go(target);
+    CCPlus::go(target);
+    CCPlus::RenderTarget target2;
+    target2.inputPath = "test/res/basic.tml";
+    CCPlus::go(target2);
+    target2.waitFinish();
+}
 
-    CCPlus::releaseContext();
+TEST(Integration, Player) {
+    CCPlus::setRenderMode(PREVIEW_MODE);
+    CCPlus::RenderTarget target;
+    target.inputPath = "test/res/test2.tml";
+    target.mode = PREVIEW_MODE;
+    CCPlus::go(target);
+    CCPlus::CCPlay::play("tmp", true);
+}
 
-    CCPlus::render();
+TEST(Integration, Player_Stop) {
+    CCPlus::setRenderMode(PREVIEW_MODE);
+    CCPlus::RenderTarget target;
+    target.inputPath = "test/res/test2.tml";
+    CCPlus::go(target);
+    CCPlus::CCPlay::play("tmp");
 
-    CCPlus::initContext("test/res/test2.tml");
-    CCPlus::render();
+    sleep(3);
+    CCPlus::CCPlay::stop();
+    target.waitFinish();
 }

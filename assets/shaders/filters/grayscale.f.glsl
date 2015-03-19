@@ -1,6 +1,6 @@
 varying vec2 xy;
 
-uniform float weights[6];
+uniform float weights[7];
 uniform vec2 hue_sat;
 uniform sampler2D tex;
 
@@ -34,11 +34,11 @@ void main() {
     float upper = (idx + 1.0) * delta;
     float lower = idx * delta;
 
-    float tmp = (upper - col.r) / delta * weights[int(mod(idx, 6.0))];
-    tmp += (col.r - lower) / delta * weights[int(mod(idx + 1.0, 6.0))];
+    float tmp = (upper - col.r) / delta * weights[int(idx)];
+    tmp += (col.r - lower) / delta * weights[int(idx + 1.0)];
+    col.b = clamp(col.b * (1.0 - col.g) + tmp * col.b * col.g, 0.0, 1.0); // val
     col.r = hue_sat[0]; // hue
     col.g = hue_sat[1]; // sat
-    col.b = clamp(tmp * col.b, 0.0, 1.0); // val
 
     gl_FragColor = vec4(hsv2rgb(col.rgb) * col.a, col.a);
 }

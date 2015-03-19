@@ -6,30 +6,35 @@
 #include "profile.hpp"
 #include "ccplus.hpp"
 
+namespace CCPlus {
+    namespace VideoRenderableFlags {
+        const int AUDIO  = 1 << 1;
+        const int VIDEO  = 1 << 2;
+        const int STATIC = 1 << 3;
+    };
+};
 using namespace CCPlus;
+using namespace CCPlus::VideoRenderableFlags;
 
-VideoRenderable::VideoRenderable(const std::string& uri, bool _audioOnly) :
-    audioOnly(_audioOnly)
-{
-    if(uri[0] == 'x')
-        useSlowerCompress = true;
-    std::string path = parseUri2File(uri);
-    alpha_decoder = 0;
-    if(audioOnly) {
-        decoder = new VideoDecoder(path);
-    } else {
-        std::string alpha_file = path + ".opacity.mp4";
-        FILE* testFp = fopen(alpha_file.c_str(), "r");
-        if(testFp) {
-            fclose(testFp);
-            alpha_decoder = new VideoDecoder(alpha_file, VideoDecoder::DECODE_VIDEO);
-            decoder = new VideoDecoder(path + ".mp4");
-        } else {
-            decoder = new VideoDecoder(path, VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO);
-        }
+VideoRenderable::VideoRenderable(const std::string& uri, bool audioOnly) {
+    isUserRes = uri[0] == 'x';
+    path = parseUri2File(uri);
+
+    IVideoDecoderRef decoder = openDecoder(path, audioOnly ? VideoDecoder::DECODE_AUDIO : VideoDecoder::DECODE_AUDIO|VideoDecoder::DECODE_VIDEO, isUserRes);
+    VideoInfo vinfo = decoder->getVideoInfo();
+    duration = vinfo.duration;
+
+    // probe file
+    float t1 = decoder->decodeImage(), t2 = decoder->decodeImage();
+    if(t1 > -10 && t2 > -10 && t2 > t1) {
+        flags |= VIDEO;
     }
-    if(decoder)
-        duration = decoder->getVideoInfo().duration;
+    if(!decoder->decodeAudio(2).empty()) {
+        flags |= AUDIO;
+    }
+    if(!flags && t1 > -10) {
+        flags |= STATIC;
+    }
 }
 
 VideoRenderable::~VideoRenderable() {
@@ -39,151 +44,183 @@ VideoRenderable::~VideoRenderable() {
 void VideoRenderable::release() {
     framesCache.clear();
     frameRefer.clear();
-    if(decoder) {
-        delete decoder;
-        decoder = 0;
-    }
-    if(alpha_decoder) {
-        delete alpha_decoder;
-        alpha_decoder = 0;
-    }
-}
-
-void VideoRenderable::prepare() {
-    if (prepared) {
-        return;
-    }
-    prepared = true;
-    for(const auto& part : usedFragments)
-        preparePart((part.first - 0.5), (part.second - part.first + 1));
+    audios = std::vector<int16_t>();
+    lastFrame = GPUFrame();
+    lastFrameNum = 0;
+    lastFrameImageFrameNum = -1;
+    decoder = 0;
 }
 
 GPUFrame VideoRenderable::getGPUFrame(float time) {
+    if(!flags)
+        return GPUFrame();
     int frameNum = time2frame(time);
-    for(;frameRefer.count(frameNum);) {
-        frameNum = frameRefer[frameNum];
+    if(flags & STATIC) {
+        frameNum = 0;
     }
     if(lastFrame && frameNum == lastFrameNum)
         return lastFrame;
-    lastFrameNum = frameNum;
-    if(framesCache.count(frameNum)) {
-        lastFrame = framesCache[frameNum].toGPU(false);
+    if(!framesCache.count(frameNum)) {
+        return GPUFrame();
     } else {
-        lastFrame = GPUFrame();
+        Frame frame;
+        int imageFrameNum = frameNum;
+        while(frameRefer.count(imageFrameNum)) {
+            imageFrameNum = frameRefer[imageFrameNum];
+        }
+        if(lastFrame && lastFrameImageFrameNum > 0 && lastFrameImageFrameNum == imageFrameNum) {
+            lastFrame->ext.audio = framesCache[frameNum].ext.audio;
+        } else {
+            if(imageFrameNum != frameNum) {
+                frame = framesCache[imageFrameNum];
+                frame.ext.audio = framesCache[frameNum].ext.audio;
+            } else {
+                frame = framesCache[frameNum];
+            }
+            lastFrame = frame.toGPU(false);
+        }
+        lastFrameImageFrameNum = imageFrameNum;
     }
+    lastFrameNum = frameNum;
     return lastFrame;
 }
 
+void VideoRenderable::releasePart(float start, float duration) {
+    if(flags & STATIC) {
+        Renderable::releasePart(start, duration);
+        return;
+    }
+    int fnum = start * frameRate;
+    int fend = (start + duration) * frameRate + 1;
+    for(; fnum <= fend; fnum++) {
+        if(frameCounter.count(fnum)) {
+            frameCounter[fnum]--;
+            if(frameCounter[fnum] <= 0) {
+                frameRefer.erase(fnum);
+                framesCache.erase(fnum);
+                frameCounter.erase(fnum);
+            }
+        }
+    }
+}
+
 void VideoRenderable::preparePart(float start, float duration) {
-    if(getUri() == "file:///Users/apple/Documents/workspace/ccplus/assets/aux_tpl/(Footage)/Footage/Logo.mov")
-        L() << start << duration;
-    profile(videoDecode) {
-        // Audio
-        decoder->seekTo(start);
-        std::vector<int16_t> audios = decoder->decodeAudio(duration);
-
-        float gap = -1;
-        float pos = -1;
-        int lastFrame = -1;
-
-        auto makeup_frames = [&](int f, int last_f) {
-            if(!framesCache.count(last_f)) return;
-            if (last_f == -1 || f - last_f <= 1) return;
-            for (int j = 1; j + last_f < f; j++) {
-                int insf = j + last_f;
-                if(!framesCache.count(insf)) {
-                    frameRefer[insf] = last_f;
+    if(flags & STATIC) {
+        Renderable::preparePart(start, duration);
+        IVideoDecoderRef decoder = openDecoder(path, VideoDecoder::DECODE_VIDEO, isUserRes);
+        decoder->decodeImage();
+        framesCache[0] = decoder->getDecodedImage();
+        return;
+    }
+    const static int audioBufferSize = 8;
+    if(flags & AUDIO && (audioStartTime + 0.1 > start || audioEndTime - 0.1 < start + duration)) {
+        IVideoDecoderRef decoder = openDecoder(path, VideoDecoder::DECODE_AUDIO, isUserRes);
+        audios = std::vector<int16_t>();
+        decoder->seekTo(start, false);
+        audioStartTime = decoder->decodeAudio(audios, audioBufferSize);
+        audioEndTime = audioStartTime + audioBufferSize;
+        if(this->duration > 2) {
+            if(audioStartTime < 0.5) {
+                int from = 0;
+                int to = (0.5 - audioStartTime) * audioSampleRate;
+                for(int i = from; i <= to && i < audios.size(); i++) {
+                    audios[i] *= (i - from) * 2.0 / audioSampleRate;
                 }
             }
-        };
-
-        int startFrameNumber = time2frame(start);
-        auto subAudio = [&startFrameNumber, this] (
-                const std::vector<int16_t>& apart, 
-                int f) {
-            int rela = f - startFrameNumber;
-            int nsig = audioSampleRate / frameRate;
-            int pos = nsig * rela;
-            int size = std::min<int>(nsig, apart.size() - pos);
-            if(size > 0) {
-                cv::Mat ret(1, size, CV_16S);
-                memcpy(ret.data, ((const int16_t*)(&apart[0]) + pos), size * 2);
-                return ret;
-            } else {
-                return cv::Mat();
+            if(audioEndTime > this->duration - 0.5) {
+                int from = (this->duration - 0.5 - audioStartTime) * audioSampleRate;
+                int to = (this->duration - audioStartTime) * audioSampleRate;
+                for(int i = from; i <= to && i < audios.size(); i++) {
+                    audios[i] *= (to - i) * 2.0 / audioSampleRate;
+                }
             }
-        };
-
-        bool dropFrame = false;
-        // video
-        if(!audioOnly) {
-            decoder->seekTo(start);
-            if(alpha_decoder)
-                alpha_decoder->seekTo(start);
-            cv::Mat alpha;
-            while((pos = decoder->decodeImage()) + 0.001 > 0) {
-                if(gap < 0.001)
-                    gap = (pos - start) / 3;
-                int f = time2frame(pos);
-
-                // make up lost frames
-                makeup_frames(f, lastFrame);
-                
-                // assume alpha channel video is synchronized with color channel video
-                if(alpha_decoder)
-                    alpha_decoder->decodeImage();
-                if (!framesCache.count(f)) {
-                    if(renderMode == FINAL_MODE || (dropFrame = !dropFrame)) {
-                        Frame ret = decoder->getDecodedImage();
-                        if(alpha_decoder) {
-                            Frame opac = alpha_decoder->getDecodedImage();
-                            unsigned char* opacData = opac.image.data;
-                            unsigned char* frameData = ret.image.data;
-                            if(opac.image.cols == ret.image.cols &&
-                                    opac.image.rows == ret.image.rows) {
-                                for(int i = 3, c = opac.image.total() * 4; i < c; i += 4) {
-                                    frameData[i] = opacData[i - 1];
-                                }
-                            }
-                        }
-                        ret.ext.audio = subAudio(audios, f);
-#ifdef __ANDROID__
-                        if(!ret.image.empty())
-                            cv::cvtColor(ret.image, ret.image, CV_BGRA2RGBA);
-#endif
-                        ret.toNearestPOT(renderMode == PREVIEW_MODE ? 256 : 512, renderMode == PREVIEW_MODE);
-                        framesCache[f] = ret.compressed(useSlowerCompress);
-                        lastFrame = f;
+        }
+    }
+    int fnum = start * frameRate;
+    if(fnum > 0)
+        fnum--;
+    int fend = (start + duration) * frameRate + 2;
+    while(fnum <= fend) {
+        if(framesCache.count(fnum)) {
+            frameCounter[fnum]++;
+            fnum++;
+            continue;
+        }
+        int partEnd = fnum + 1;
+        while(partEnd < fend && !framesCache.count(partEnd))
+            partEnd++;
+        float partBeginTime = fnum * 1.0 / frameRate;
+        float t = -100;
+        if(flags & VIDEO) {
+            profile(decodeImageINIT) {
+                if(decoder) {
+                    int d = decoderTime * frameRate - fnum;
+                    if(d < 0)
+                        d = -d;
+                    if(d > 1) {
+                        decoder = 0;
+                    } else {
+                        t = decoderTime;
                     }
                 }
-                if(pos - start + gap > duration) {
-                    break;
+                if(!decoder) {
+                    decoder = openDecoder(path, VideoDecoder::DECODE_VIDEO, isUserRes);
+                    if(fnum > 1) {
+                        decoder->seekTo(partBeginTime - 0.1);
+                    }
+                    do {
+                        t = decoder->decodeImage();
+                    } while(t > -10 && fnum - 0.01 > t * frameRate);
+                    decoderTime = t;
                 }
             }
         }
-        if (lastFrame == -1) {
-            // Audio only
-            float inter = 1.0 / frameRate;
-            for (float i = start; i <= start + duration + inter; i += inter) {
-                int f = time2frame(i);
-                makeup_frames(f, lastFrame);
-                if (!framesCache.count(f)) {
-                    Frame ret;
-                    ret.ext.audio = subAudio(audios, f);
-                    framesCache[f] = ret;
-                    lastFrame = f;
-                }
-            }    
-        }
 
-        // Make up some missed frame :
-        // Used while decoding low fps video
-        makeup_frames(time2frame(start + duration), lastFrame);
+        int lastImageFrame = -1;
+        int maxsz = 450;
+        if(renderMode == PREVIEW_MODE) {
+            maxsz = 200;
+        }
+        for(; fnum <= partEnd; fnum++) {
+            if(framesCache.count(fnum))
+                continue;
+            Frame cframe;
+            if(t > -10 && (lastImageFrame < 0 || t * frameRate < fnum + 1)) {
+                profile(getDecodedImage) {
+                    cframe = decoder->getDecodedImage(maxsz);
+                }
+#ifdef __ANDROID__
+                if(!cframe.image.empty())
+                    cv::cvtColor(cframe.image, cframe.image, CV_BGRA2RGBA);
+#endif
+                profile(decodeImage)
+                while(t > -10 && t * frameRate < fnum + 1)
+                    t = decoder->decodeImage();
+                decoderTime = t;
+                lastImageFrame = fnum;
+            } else if(lastImageFrame >= 0) {
+                frameRefer[fnum] = lastImageFrame;
+            }
+            if(!audios.empty()) {
+                int audioFrameSZ = audioSampleRate / frameRate;
+                int audioFrameStart = (fnum * 1.0 / frameRate - audioStartTime) * audioSampleRate;
+                if(audioFrameStart < 0)
+                    audioFrameStart = 0;
+                int audioFrameEnd = audioFrameStart + audioFrameSZ;
+                if(audios.size() >= audioFrameEnd) {
+                    cframe.ext.audio = cv::Mat(1, audioFrameSZ, CV_16S);
+                    memcpy(cframe.ext.audio.data, &audios[audioFrameStart], audioFrameSZ * 2);
+                }
+                audioFrameStart = audioFrameEnd;
+            }
+            framesCache[fnum] = cframe.compressed();
+            frameCounter[fnum]++;
+        }
     }
 }
 
 int VideoRenderable::time2frame(float time) {
-    return (int)(time * frameRate);
+    return (int)(time * frameRate + 0.5);
 }
 
 float VideoRenderable::getDuration() {
