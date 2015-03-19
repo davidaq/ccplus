@@ -71,7 +71,7 @@ int TextRenderable::getWidth() const {
 int TextRenderable::getHeight() const {
     int ret = 0;
     for (auto& kv : size) {
-        ret = max<int>(ret, kv.second);
+        ret = max<int>(ret, kv.second * 2.5);
     }
     return ret;
 }
@@ -130,6 +130,7 @@ void TextRenderable::prepareFrame(int time) {
     int height = getHeight();
 
     std::string fontName = get<std::string>(this->font, time);
+
     cv::Mat fontData = readAsset(fontName.c_str());
     if(fontData.empty())
         fontData = readAsset(("fonts/" + fontName).c_str());
@@ -150,7 +151,7 @@ void TextRenderable::prepareFrame(int time) {
         return;
     }
 
-    int size = get(this->size, time);
+    int size = get(this->size, time) * 2;
     float sx = get<float>(this->scale_x, time);
     float sy = get<float>(this->scale_y, time);
     if (FT_Set_Pixel_Sizes(face, (int)size * sx, (int)size * sy)) {
@@ -191,7 +192,7 @@ void TextRenderable::prepareFrame(int time) {
     int y = height * sy;
     int prevAdvance = 0;
     // Calculate correct anchor
-    for (int j = 0; j < s.length(); j++) {
+    for (size_t j = 0; j < s.length(); j++) {
         error = FT_Load_Char(face, s[j], FT_LOAD_RENDER);
         if (error) {
             log(logWARN) << "Can't load character: " << s[j];
@@ -200,19 +201,14 @@ void TextRenderable::prepareFrame(int time) {
             x += prevAdvance;
             FT_GlyphSlot slot = face->glyph;
             int bearing = slot->metrics.horiBearingY / 72;
-            //L() << bearing << y - bearing << "~" << y - bearing + slot->bitmap.rows;
-            //draw(&slot->bitmap, slot->bitmap_left + x, y - slot->bitmap_top);
-            draw(&slot->bitmap, slot->bitmap_left + x, y - bearing);
-            float advance = (slot->advance.x >> 6) - slot->bitmap.width;
-            if(advance < 0.5)
-                advance = 0.5;
-            x += slot->bitmap.width;
-            prevAdvance = (1 + tracking) * advance;
+            draw(&slot->bitmap, slot->metrics.horiBearingX / 72 + x, y - bearing);
+            int adv = slot->metrics.horiAdvance / 72;
+            x += adv;
+            prevAdvance = adv * tracking * 0.18;
         }
     }
     Frame retFrame;
     retFrame.image = ret;
-    //retFrame.ext.anchorAdjustY = y / 1.5;
     retFrame.ext.anchorAdjustY = y - 6;
     switch(get(this->justification, time)) {
         case 0: // left
@@ -225,7 +221,9 @@ void TextRenderable::prepareFrame(int time) {
             retFrame.ext.anchorAdjustX = x;
             break;
     };
-    retFrame.toNearestPOT(1024);
+    retFrame.ext.scaleAdjustX = 0.5;
+    retFrame.ext.scaleAdjustY = 0.5;
+    retFrame.toNearestPOT(2048);
 #ifdef __ANDROID__
     if(!retFrame.image.empty())
         cv::cvtColor(retFrame.image, retFrame.image, CV_BGRA2RGBA);

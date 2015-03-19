@@ -1,6 +1,7 @@
 #include "global.hpp"
 #include "utils.hpp"
 #include "video-decoder.hpp"
+#include "context.hpp"
 
 #include <cstdio>
 #include <map>
@@ -139,8 +140,12 @@ int CCPlus::getImageRotation(const uint8_t* data, uint32_t dataLen) {
 }
 
 cv::Mat CCPlus::readAsset(const char* _name) {
-    std::string name = generatePath(assetsPath, _name);
+    std::string name = generatePath(Context::getContext()->getFootagePath("(assets)"), _name);
     FILE* fp = fopen(name.c_str(), "rb");
+    if(!fp) {
+        name = generatePath(assetsPath, _name);
+        fp = fopen(name.c_str(), "rb");
+    }
     if(!fp) {
         log(logWARN) << "Asset " + name + " not found";
         return cv::Mat();
